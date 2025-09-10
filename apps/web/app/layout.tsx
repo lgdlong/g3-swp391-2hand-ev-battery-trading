@@ -1,4 +1,4 @@
-import "./globals.css"
+import './globals.css';
 // import { Geist, Geist_Mono, Montserrat, Roboto } from "next/font/google"
 
 // const geist = Geist({
@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       // comment bellow to using the default font of shadcn ui, tailwind: font-sans
       // className={`${geist.variable} ${geistMono.variable} ${montserrat.variable} ${roboto.variable}`}
     >
-    <body className="font-sans">{children}</body>
+      <body className="font-sans">{children}</body>
     </html>
-  )
+  );
 }
