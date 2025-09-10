@@ -1,0 +1,49 @@
+# -------------------------------
+# Lockfiles: giảm conflict khi merge
+# -------------------------------
+pnpm-lock.yaml   merge=union
+yarn.lock        merge=union
+package-lock.json merge=union
+bun.lockb        merge=union
+
+# -------------------------------
+# Chuẩn hoá dòng & text/binary
+# (giảm diff noise do CRLF/LF)
+# -------------------------------
+* text=auto
+
+# Ép LF cho file code/script (tuỳ team; bỏ nếu dự án đa-OS cần giữ CRLF)
+*.sh      text eol=lf
+*.bash    text eol=lf
+*.ts      text eol=lf
+*.tsx     text eol=lf
+*.js      text eol=lf
+*.jsx     text eol=lf
+*.json    text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.md      text eol=lf
+*.css     text eol=lf
+*.scss    text eol=lf
+*.html    text eol=lf
+
+# Ảnh & binary (không diff)
+*.png     -text
+*.jpg     -text
+*.jpeg    -text
+*.gif     -text
+*.ico     -text
+*.pdf     -text
+*.ttf     -text
+*.otf     -text
+*.woff    -text
+*.woff2   -text
+
+# -------------------------------
+# Tuỳ chọn: giảm noise với framework
+# -------------------------------
+# Next.js build outputs (nếu lỡ commit)
+.next/** -diff
+out/**   -diff
+dist/**  -diff
+build/** -diff

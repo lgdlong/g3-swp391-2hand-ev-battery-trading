@@ -36,3 +36,30 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# VSCode
+.vscode/
+.vscode
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Mac/Win system files
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Package manager lock files (nếu cần)
+pnpm-lock.yaml
+bun.lockb
+
+# Log/temp folders
+logs/
+tmp/
+temp/
+
+.qodo
