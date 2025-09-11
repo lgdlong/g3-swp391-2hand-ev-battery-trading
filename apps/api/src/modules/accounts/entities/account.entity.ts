@@ -19,7 +19,7 @@ export class Account {
   @Column({ type: 'varchar', length: 120, unique: true, nullable: true })
   email!: string | null;
 
-  @Column({ type: 'varchar', length: 10, unique: true, nullable: true })
+  @Column({ type: 'varchar', length: 15, unique: true, nullable: true })
   phone!: string | null;
 
   @Column({ name: 'password_hashed', type: 'varchar', length: 255 })
