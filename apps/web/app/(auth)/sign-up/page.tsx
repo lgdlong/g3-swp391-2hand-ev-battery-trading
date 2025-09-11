@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Mail, Phone, User, Lock } from 'lucide-react';
 import Link from 'next/link';
+import { Eye, EyeOff, Mail, Phone, User, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,67 +17,74 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { SignupForm, signupSchema } from '@/validations/signup-schema';
+import { signupSchema, type SignupForm } from '@/validations/signup-schema';
+import { createAccount } from '@/lib/api/accountApi';
+import { Account, CreateAccountDto } from '@/types/account';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function SignupPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'email' | 'phone'>('email');
 
   const form = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
+    mode: 'onSubmit',
     defaultValues: {
+      mode: 'email',
       email: '',
       phone: '',
-      password: '',
       fullName: '',
+      password: '',
+      confirmPassword: '',
     },
   });
 
-  const onSubmit = async (data: SignupForm) => {
-    setIsLoading(true);
-
-    try {
-      // Create the payload based on active tab
-      const payload = {
-        fullName: data.fullName,
-        password: data.password,
-        ...(activeTab === 'email' ? { email: data.email } : { phone: data.phone }),
-      };
-
-      console.log('Signup payload:', payload);
-
-      // TODO: Implement API call
-      // const response = await fetch('/api/auth/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(payload),
-      // });
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Handle success - redirect to login or dashboard
-      console.log('Account created successfully');
-    } catch (error) {
-      console.error('Signup error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const activeTab = form.watch('mode');
+  const isSubmitting = form.formState.isSubmitting;
 
   const handleTabChange = (tab: 'email' | 'phone') => {
-    setActiveTab(tab);
-    // Clear the inactive field
-    if (tab === 'email') {
-      form.setValue('phone', '');
-      form.clearErrors('phone');
-    } else {
-      form.setValue('email', '');
-      form.clearErrors('email');
+    form.setValue('mode', tab, { shouldValidate: true });
+    if (tab === 'email') form.clearErrors('phone');
+    else form.clearErrors('email');
+  };
+
+  const onSubmit = async (data: SignupForm) => {
+    try {
+      const payload: CreateAccountDto =
+        data.mode === 'email'
+          ? {
+              fullName: data.fullName.trim(),
+              password: data.password,
+              email: (data.email ?? '').trim(),
+              phone: null,
+            }
+          : {
+              fullName: data.fullName.trim(),
+              password: data.password,
+              email: null,
+              phone: (data.phone ?? '').replace(/\s|-/g, ''),
+            };
+
+      // call api to create an account
+      const account: Account = await createAccount(payload);
+
+      // show success toast
+      toast.success('Account created successfully! Please log in.');
+
+      // navigate to login page after successful signup
+      router.push('/login');
+
+      console.log('[DEBUG] Account create successful: ', account);
+    } catch (e: unknown) {
+      const message =
+        e instanceof Error ? e.message : 'Failed to create account. Please try again.';
+      form.setError('root', { type: 'server', message });
+      toast.error('Failed to sign up', {
+        description: message ?? 'Unexpected error',
+      });
     }
-    form.clearErrors('email'); // Clear the "either email or phone" error
   };
 
   return (
@@ -96,11 +103,12 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => handleTabChange('email')}
+              disabled={isSubmitting}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                 activeTab === 'email'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+              } ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
               <Mail className="h-4 w-4" />
               Email
@@ -108,11 +116,12 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={() => handleTabChange('phone')}
+              disabled={isSubmitting}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all ${
                 activeTab === 'phone'
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
-              }`}
+              } ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
               <Phone className="h-4 w-4" />
               Phone
@@ -120,8 +129,11 @@ export default function SignupPage() {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Email/Phone Field */}
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+              {/* giữ mode trong form để discriminatedUnion hoạt động */}
+              <input type="hidden" {...form.register('mode')} />
+
+              {/* Email / Phone */}
               {activeTab === 'email' ? (
                 <FormField
                   control={form.control}
@@ -168,7 +180,7 @@ export default function SignupPage() {
                 />
               )}
 
-              {/* Full Name Field */}
+              {/* Full Name */}
               <FormField
                 control={form.control}
                 name="fullName"
@@ -186,7 +198,7 @@ export default function SignupPage() {
                 )}
               />
 
-              {/* Password Field */}
+              {/* Password */}
               <FormField
                 control={form.control}
                 name="password"
@@ -209,7 +221,8 @@ export default function SignupPage() {
                           variant="ghost"
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
+                          onClick={() => setShowPassword((v) => !v)}
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
                           {showPassword ? (
                             <EyeOff className="h-4 w-4 text-slate-500" />
@@ -224,7 +237,7 @@ export default function SignupPage() {
                 )}
               />
 
-              {/* Confirm Password Field */}
+              {/* Confirm Password */}
               <FormField
                 control={form.control}
                 name="confirmPassword"
@@ -247,7 +260,10 @@ export default function SignupPage() {
                           variant="ghost"
                           size="sm"
                           className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          aria-label={
+                            showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'
+                          }
                         >
                           {showConfirmPassword ? (
                             <EyeOff className="h-4 w-4 text-slate-500" />
@@ -262,13 +278,20 @@ export default function SignupPage() {
                 )}
               />
 
-              {/* Submit Button */}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              {/* lỗi server */}
+              {form.formState.errors.root?.message && (
+                <p className="text-sm text-red-600" role="alert">
+                  {form.formState.errors.root.message}
+                </p>
+              )}
+
+              {/* Submit */}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                     Creating Account...
-                  </div>
+                  </span>
                 ) : (
                   'Create Account'
                 )}
