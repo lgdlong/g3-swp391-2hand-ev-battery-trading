@@ -17,14 +17,14 @@ export class AccountsController {
     return this.accountsService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.accountsService.findOne(+id);
-  }
-
   @Get('email/:email')
   findByEmail(@Param('email') email: string) {
     return this.accountsService.findByEmail(email);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.accountsService.findOne(+id);
   }
 
   @Patch(':id')
