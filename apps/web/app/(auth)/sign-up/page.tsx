@@ -78,12 +78,9 @@ export default function SignupPage() {
 
       console.log('[DEBUG] Account create successful: ', account);
     } catch (e: unknown) {
-      const message =
-        e instanceof Error ? e.message : 'Failed to create account. Please try again.';
+      const message = (e as Error).message;
       form.setError('root', { type: 'server', message });
-      toast.error('Failed to sign up', {
-        description: message ?? 'Unexpected error',
-      });
+      toast.error('Failed to sign up', { description: message });
     }
   };
 
@@ -278,12 +275,12 @@ export default function SignupPage() {
                 )}
               />
 
-              {/* lỗi server */}
-              {form.formState.errors.root?.message && (
-                <p className="text-sm text-red-600" role="alert">
-                  {form.formState.errors.root.message}
-                </p>
-              )}
+              {/*/!* lỗi server *!/*/}
+              {/*{form.formState.errors.root?.message && (*/}
+              {/*  <p className="text-sm text-red-600" role="alert">*/}
+              {/*    {form.formState.errors.root.message}*/}
+              {/*  </p>*/}
+              {/*)}*/}
 
               {/* Submit */}
               <Button type="submit" className="w-full" disabled={isSubmitting}>
