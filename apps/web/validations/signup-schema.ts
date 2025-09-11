@@ -32,7 +32,7 @@ const phoneSchema = z
   })
   .refine((val) => val.password === val.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'Passwords do not match',
+    message: 'Confirm password does not match',
   });
 
 // Gộp 2 schema lại thành discriminatedUnion
