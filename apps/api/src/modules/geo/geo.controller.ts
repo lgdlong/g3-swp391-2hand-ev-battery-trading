@@ -12,14 +12,36 @@ export class GeoController {
     return this.geoService.create(createGeoDto);
   }
 
+  //////////////////findall/////////////////
   @Get()
   findAll() {
     return this.geoService.findAll();
   }
 
+  @Get('provinces')
+  findAllProvince(){
+    return this.geoService.findAllProvince();
+  }
+
+  @Get('wards')
+  findAllWard(){
+    return this.geoService.findAllWard();
+  }
+
+  @Get('districts')
+  findAllDistrict(){
+    return this.geoService.findAllDistrict();
+  }
+
+  ///////////////findbyid///////////////////
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.geoService.findOne(+id);
+  }
+
+  @Get(':id/districts')
+  getDistrictsByProvinceId(@Param('id') id: string){
+    return this.geoService.getDistrictsByProvinceId(+id)
   }
 
   @Patch(':id')
