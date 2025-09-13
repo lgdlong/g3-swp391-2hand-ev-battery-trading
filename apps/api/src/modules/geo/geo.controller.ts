@@ -40,8 +40,13 @@ export class GeoController {
   }
 
   @Get(':id/districts')
-  getDistrictsByProvinceId(@Param('id') id: string){
+  getDistrictsByProvinceId(@Param('id') id: number){
     return this.geoService.getDistrictsByProvinceId(+id)
+  }
+
+  @Get(':id/wards')
+  getWardsbyDistrictId(@Param('id') id: number){
+    return this.geoService.getWardsbyDistrictId(+id)
   }
 
   @Patch(':id')

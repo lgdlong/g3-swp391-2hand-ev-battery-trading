@@ -5,12 +5,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Province } from './entities/province.entity';
 import { District } from './entities/district.entity';
+import { Ward } from './entities/ward.entity';
 
 @Injectable()
 export class GeoService {
+  
   constructor(
     @InjectRepository(Province) private provincesRepo : Repository<Province>,
     @InjectRepository(District) private districtRepo : Repository<District>,
+    @InjectRepository(Ward) private wardRepo : Repository<Ward>,
   ){}
 
   create(createGeoDto: CreateGeoDto) {
@@ -44,9 +47,17 @@ export class GeoService {
   async getDistrictsByProvinceId(provinceId: number){
     return this.districtRepo.find({
       where: { province_id: provinceId },
-      order: { name: 'ASC'}
+      order: { name: 'ASC'},
     })
   }
+
+  async getWardsbyDistrictId(districtId: number) {
+    return this.wardRepo.find({
+      where: { district_id: districtId },
+      order: { name: 'ASC'},
+    })
+  }
+
 
   update(id: number, updateGeoDto: UpdateGeoDto) {
     return `This action updates a #${id} geo`;
