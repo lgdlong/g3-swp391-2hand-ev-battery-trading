@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_CHARS_REGEX = /^[\d\s\-\+\(\)]+$/;
+const MIN_PHONE_DIGITS = 9;
 
 export const loginSchema = z
   .object({
@@ -27,7 +28,7 @@ export const loginSchema = z
 
     // chuẩn hoá: giữ lại chữ số để check độ dài
     const digits = id.replace(/\D/g, '');
-    if (digits.length < 9) {
+    if (digits.length < MIN_PHONE_DIGITS) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Số điện thoại không hợp lệ',
