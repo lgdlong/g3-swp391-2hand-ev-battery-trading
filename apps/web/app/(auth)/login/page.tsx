@@ -58,7 +58,7 @@ export default function LoginPage() {
       console.log('[DEBUG] Login successful:', data.account);
 
       // get role from login api and convert to lowercase
-      const role: string = data.account.role.toLowerCase() ?? 'user';
+      const role: string = data.account.role.toLowerCase() || 'user';
 
       // redirect admin, user base on roles
       if (role === 'admin') {
