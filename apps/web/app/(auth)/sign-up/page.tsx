@@ -22,6 +22,8 @@ import { createAccount } from '@/lib/api/accountApi';
 import { Account, CreateAccountDto } from '@/types/account';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { handleApiError } from '@/lib/handle-api-error';
+import { FormRootError } from '@/components/FormRootError';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -77,10 +79,8 @@ export default function SignupPage() {
       router.push('/login');
 
       console.log('[DEBUG] Account create successful: ', account);
-    } catch (e: unknown) {
-      const message = (e as Error).message;
-      form.setError('root', { type: 'server', message });
-      toast.error('Failed to sign up', { description: message });
+    } catch (e) {
+      handleApiError(e, form, 'Create account failed');
     }
   };
 
@@ -275,12 +275,8 @@ export default function SignupPage() {
                 )}
               />
 
-              {/*/!* lỗi server *!/*/}
-              {/*{form.formState.errors.root?.message && (*/}
-              {/*  <p className="text-sm text-red-600" role="alert">*/}
-              {/*    {form.formState.errors.root.message}*/}
-              {/*  </p>*/}
-              {/*)}*/}
+              {/* Show form error */}
+              <FormRootError />
 
               {/* Submit */}
               <Button type="submit" className="w-full" disabled={isSubmitting}>
