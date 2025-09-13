@@ -41,7 +41,7 @@ export class AccountsService {
       this.configService.get('HASH_SALT_ROUNDS', DEFAULT_SALT_ROUNDS.toString()),
       10,
     );
-    if (isNaN(saltRounds) || saltRounds < 4) saltRounds = DEFAULT_SALT_ROUNDS;
+    if (isNaN(saltRounds) || saltRounds < 10) saltRounds = DEFAULT_SALT_ROUNDS;
     const salt = await bcrypt.genSalt(saltRounds);
     const passwordHashed = await bcrypt.hash(dto.password, salt);
 
