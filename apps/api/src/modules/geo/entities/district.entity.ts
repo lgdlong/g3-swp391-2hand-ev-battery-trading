@@ -15,7 +15,4 @@ export class District {
   @ManyToOne(() => Province, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'province_id' })
   province!: Province;
-
-  @Column()
-  province_id!: number;
 }
