@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
 import { GeoService } from './geo.service';
 import { CreateGeoDto } from './dto/create-geo.dto';
 import { UpdateGeoDto } from './dto/update-geo.dto';
@@ -38,14 +38,14 @@ export class GeoController {
   findOne(@Param('id') id: string) {
     return this.geoService.findOne(+id);
   }
-
-  @Get(':id/districts')
-  getDistrictsByProvinceId(@Param('id') id: number){
+  //ParseIntPipe giup chuyen doi tu string den number va tra loi 400 thay vi 500 (loi nguy hiem de bi pha)
+  @Get('province/:id/districts')
+  getDistrictsByProvinceId(@Param('id', ParseIntPipe) id: number){
     return this.geoService.getDistrictsByProvinceId(+id)
   }
 
-  @Get(':id/wards')
-  getWardsbyDistrictId(@Param('id') id: number){
+  @Get('district/:id/wards')
+  getWardsbyDistrictId(@Param('id', ParseIntPipe) id: number){
     return this.geoService.getWardsbyDistrictId(+id)
   }
 

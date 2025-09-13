@@ -46,15 +46,15 @@ export class GeoService {
 
   async getDistrictsByProvinceId(provinceId: number){
     return this.districtRepo.find({
-      where: { province_id: provinceId },
-      order: { name: 'ASC'},
+      where: { province: {id: provinceId}  },
+      order: { name: 'ASC'}
     })
   }
 
   async getWardsbyDistrictId(districtId: number) {
     return this.wardRepo.find({
-      where: { district_id: districtId },
-      order: { name: 'ASC'},
+      where: { district: {id: districtId}  },
+      order: { name: 'ASC'}
     })
   }
 
