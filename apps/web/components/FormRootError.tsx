@@ -3,9 +3,15 @@
 import { useFormContext } from 'react-hook-form';
 import { cn } from '@/lib/utils';
 
+interface RootError {
+  root?: {
+    message?: string;
+  };
+}
+
 export function FormRootError({ className }: { className?: string }) {
   const { formState } = useFormContext();
-  const message = (formState.errors as any)?.root?.message as string | undefined;
+  const message = (formState.errors as RootError)?.root?.message;
   if (!message) return null;
 
   return (
