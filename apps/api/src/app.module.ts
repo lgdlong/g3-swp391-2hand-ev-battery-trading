@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Account } from './modules/accounts/entities/account.entity';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       },
     }),
     AccountsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
