@@ -1,5 +1,6 @@
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
+import { Providers } from '@/app/providers';
 // import { Geist, Geist_Mono, Montserrat, Roboto } from "next/font/google"
 
 // const geist = Geist({
@@ -34,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       // className={`${geist.variable} ${geistMono.variable} ${montserrat.variable} ${roboto.variable}`}
     >
       <body className="font-sans">
-        {children}
+        <Providers>{children}</Providers>
         <Toaster />
       </body>
     </html>
