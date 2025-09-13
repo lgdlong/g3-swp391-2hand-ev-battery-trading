@@ -26,6 +26,7 @@ import { handleApiError } from '@/lib/handle-api-error';
 import { FormRootError } from '@/components/FormRootError';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { AccountRole } from '@/types/enums/account-enum';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -57,15 +58,10 @@ export default function LoginPage() {
       }
       console.log('[DEBUG] Login successful:', data.account);
 
-      // get role from login api and convert to lowercase
-      const role: string = data.account.role.toLowerCase() || 'user';
-
-      // redirect admin, user base on roles
-      if (role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
+      const isAdmin =
+        data.account.role === AccountRole.ADMIN ||
+        String(data.account.role).toLowerCase() === 'admin';
+      router.replace(isAdmin ? '/admin' : '/');
 
       toast.success('Logged in successfully');
     },
