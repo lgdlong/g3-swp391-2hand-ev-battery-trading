@@ -30,11 +30,11 @@ export class GeoService {
   }
 
   findAllWard(){
-    return 'find all ward';
+    return this.wardRepo.find({ order: { name: 'ASC' } });
   }
 
   findAllDistrict(){
-    return 'find all district';
+    return this.districtRepo.find({ order: { name: 'ASC' } });
   }
   //////////////////////////////////////////////////////
 
