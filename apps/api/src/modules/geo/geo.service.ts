@@ -36,14 +36,8 @@ export class GeoService {
   findAllDistrict(){
     return this.districtRepo.find({ order: { name: 'ASC' } });
   }
-  //////////////////////////////////////////////////////
-
 
   //////////////findbyid//////////////////////////////
-  findOne(id: number) {
-    return `This action returns a #${id} geo`;
-  }
-
   async getDistrictsByProvinceId(provinceId: number){
     return this.districtRepo.find({
       where: { province: {id: provinceId}  },
@@ -55,6 +49,24 @@ export class GeoService {
     return this.wardRepo.find({
       where: { district: {id: districtId}  },
       order: { name: 'ASC'}
+    })
+  }
+
+  async findProvinceById(provinceId: number){
+    return this.provincesRepo.findOne({
+      where: { id: provinceId }
+    })
+  }
+
+  async findDistrictById(distrctId: number){
+    return this.districtRepo.find({
+      where: { id: distrctId}
+    })
+  }
+
+  async findWardById(wardId: number){
+    return this.wardRepo.find({
+      where: {id: wardId}
     })
   }
 
