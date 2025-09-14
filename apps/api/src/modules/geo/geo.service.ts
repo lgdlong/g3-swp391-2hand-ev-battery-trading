@@ -58,16 +58,16 @@ export class GeoService {
     })
   }
 
-  async findDistrictById(distrctId: number){
-    return this.districtRepo.find({
-      where: { id: distrctId}
-    })
+  async findDistrictById(districtId: number) {
+    return this.districtRepo.findOne({
+      where: { id: districtId },
+    });
   }
 
-  async findWardById(wardId: number){
-    return this.wardRepo.find({
-      where: {id: wardId}
-    })
+  async findWardById(wardId: number) {
+    return this.wardRepo.findOne({
+      where: { id: wardId },
+    });
   }
 
 
