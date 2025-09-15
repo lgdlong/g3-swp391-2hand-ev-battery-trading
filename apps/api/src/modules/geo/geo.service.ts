@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateGeoDto } from './dto/create-geo.dto';
-import { UpdateGeoDto } from './dto/update-geo.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Province } from './entities/province.entity';
@@ -14,15 +12,6 @@ export class GeoService {
     @InjectRepository(District) private districtRepo: Repository<District>,
     @InjectRepository(Ward) private wardRepo: Repository<Ward>,
   ) {}
-
-  create(createGeoDto: CreateGeoDto) {
-    return 'This action adds a new geo';
-  }
-
-  ////////////////////////find all///////////////////
-  findAll() {
-    return `This action returns all geo`;
-  }
 
   findAllProvince() {
     return this.provincesRepo.find({ order: { name: 'ASC' } });
@@ -67,13 +56,5 @@ export class GeoService {
     return this.wardRepo.findOne({
       where: { id: wardId },
     });
-  }
-
-  update(id: number, updateGeoDto: UpdateGeoDto) {
-    return `This action updates a #${id} geo`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} geo`;
   }
 }
