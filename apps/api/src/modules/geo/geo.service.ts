@@ -9,12 +9,11 @@ import { Ward } from './entities/ward.entity';
 
 @Injectable()
 export class GeoService {
-  
   constructor(
-    @InjectRepository(Province) private provincesRepo : Repository<Province>,
-    @InjectRepository(District) private districtRepo : Repository<District>,
-    @InjectRepository(Ward) private wardRepo : Repository<Ward>,
-  ){}
+    @InjectRepository(Province) private provincesRepo: Repository<Province>,
+    @InjectRepository(District) private districtRepo: Repository<District>,
+    @InjectRepository(Ward) private wardRepo: Repository<Ward>,
+  ) {}
 
   create(createGeoDto: CreateGeoDto) {
     return 'This action adds a new geo';
@@ -24,38 +23,38 @@ export class GeoService {
   findAll() {
     return `This action returns all geo`;
   }
-  
+
   findAllProvince() {
-    return this.provincesRepo.find({order: {name: 'ASC'}})
+    return this.provincesRepo.find({ order: { name: 'ASC' } });
   }
 
-  findAllWard(){
+  findAllWard() {
     return this.wardRepo.find({ order: { name: 'ASC' } });
   }
 
-  findAllDistrict(){
+  findAllDistrict() {
     return this.districtRepo.find({ order: { name: 'ASC' } });
   }
 
   //////////////findbyid//////////////////////////////
-  async getDistrictsByProvinceId(provinceId: number){
+  async getDistrictsByProvinceId(provinceId: number) {
     return this.districtRepo.find({
-      where: { province: {id: provinceId}  },
-      order: { name: 'ASC'}
-    })
+      where: { province: { id: provinceId } },
+      order: { name: 'ASC' },
+    });
   }
 
-  async getWardsbyDistrictId(districtId: number) {
+  async getWardsByDistrictId(districtId: number) {
     return this.wardRepo.find({
-      where: { district: {id: districtId}  },
-      order: { name: 'ASC'}
-    })
+      where: { district: { id: districtId } },
+      order: { name: 'ASC' },
+    });
   }
 
-  async findProvinceById(provinceId: number){
+  async findProvinceById(provinceId: number) {
     return this.provincesRepo.findOne({
-      where: { id: provinceId }
-    })
+      where: { id: provinceId },
+    });
   }
 
   async findDistrictById(districtId: number) {
@@ -70,7 +69,6 @@ export class GeoService {
     });
   }
 
-
   update(id: number, updateGeoDto: UpdateGeoDto) {
     return `This action updates a #${id} geo`;
   }
@@ -78,6 +76,4 @@ export class GeoService {
   remove(id: number) {
     return `This action removes a #${id} geo`;
   }
-
-  
 }
