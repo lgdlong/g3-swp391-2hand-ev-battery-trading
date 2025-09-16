@@ -56,19 +56,23 @@ export class AccountsService {
       // role/status... nếu cần default ở entity
     });
 
-    const a = await this.repo.save(account);
+    // 4) Save vào db và trả về account đã save
+    const accountAfterSave: Account = await this.repo.save(account);
 
+    // 5) Tạo một đối tượng summary chỉ show dữ liệu cần thiết
+    // Chú ý: không trả về passwordHashed
     const summaryAccount: SummaryAccountDto = {
-      id: a.id,
-      email: a.email,
-      phone: a.phone,
-      fullName: a.fullName,
-      avatarUrl: a.avatarUrl,
-      role: a.role,
-      status: a.status,
-      createdAt: a.createdAt.toISOString(),
+      id: accountAfterSave.id,
+      email: accountAfterSave.email,
+      phone: accountAfterSave.phone,
+      fullName: accountAfterSave.fullName,
+      avatarUrl: accountAfterSave.avatarUrl,
+      role: accountAfterSave.role,
+      status: accountAfterSave.status,
+      createdAt: accountAfterSave.createdAt.toISOString(),
     } as SummaryAccountDto;
 
+    // 6) Trả về thông báo thành công và account summary
     return {
       account: summaryAccount,
       message: 'Account created successfully!',
