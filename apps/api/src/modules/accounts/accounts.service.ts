@@ -8,6 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import { DEFAULT_SALT_ROUNDS } from '../../shared/constants';
 import * as bcrypt from 'bcrypt';
 import { normalizeEmailOrPhone } from '../../shared/helpers/account.helper';
+import { SummaryAccountDto } from './dto/summary-account.dto';
+import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 
 @Injectable()
 export class AccountsService {
@@ -17,7 +19,7 @@ export class AccountsService {
     private readonly configService: ConfigService,
   ) {}
 
-  async create(dto: CreateAccountDto) {
+  async create(dto: CreateAccountDto): Promise<CreateAccountResponseDto> {
     // 0) Yêu cầu ít nhất 1 trong 2
     if (!dto.email && !dto.phone) {
       throw new BadRequestException('Email or phone is required!');
@@ -54,7 +56,27 @@ export class AccountsService {
       // role/status... nếu cần default ở entity
     });
 
-    return this.repo.save(account);
+    // 4) Save vào db và trả về account đã save
+    const accountAfterSave: Account = await this.repo.save(account);
+
+    // 5) Tạo một đối tượng summary chỉ show dữ liệu cần thiết
+    // Chú ý: không trả về passwordHashed
+    const summaryAccount: SummaryAccountDto = {
+      id: accountAfterSave.id,
+      email: accountAfterSave.email,
+      phone: accountAfterSave.phone,
+      fullName: accountAfterSave.fullName,
+      avatarUrl: accountAfterSave.avatarUrl,
+      role: accountAfterSave.role,
+      status: accountAfterSave.status,
+      createdAt: accountAfterSave.createdAt.toISOString(),
+    } as SummaryAccountDto;
+
+    // 6) Trả về thông báo thành công và account summary
+    return {
+      account: summaryAccount,
+      message: 'Account created successfully!',
+    } as CreateAccountResponseDto;
   }
 
   findAll() {
