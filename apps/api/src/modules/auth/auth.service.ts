@@ -10,7 +10,8 @@ import {
   DEFAULT_JWT_REFRESH_EXPIRATION_TIME,
 } from '../../shared/constants';
 import { Tokens } from './interfaces/tokens.interface';
-import { LoginResponse } from './interfaces/login-response.interface';
+import { LoginResponse } from './dto/login-response.dto';
+import { SummaryAccountDto } from '../accounts/dto/summary-account.dto';
 
 @Injectable()
 export class AuthService {
@@ -69,11 +70,12 @@ export class AuthService {
       account: {
         id: account.id,
         email: account.email,
-        role: account.role,
-        fullName: account.fullName,
         phone: account.phone,
-        avatarUrl: account.avatarUrl,
-      },
+        fullName: account.fullName,
+        role: account.role,
+        status: account.status,
+        createdAt: account.createdAt.toISOString(),
+      } as SummaryAccountDto,
     } as LoginResponse;
   }
 }
