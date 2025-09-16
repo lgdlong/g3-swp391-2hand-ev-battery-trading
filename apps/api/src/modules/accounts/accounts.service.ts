@@ -8,6 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import { DEFAULT_SALT_ROUNDS } from '../../shared/constants';
 import * as bcrypt from 'bcrypt';
 import { normalizeEmailOrPhone } from '../../shared/helpers/account.helper';
+import { SummaryAccountDto } from './dto/summary-account.dto';
+import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 
 @Injectable()
 export class AccountsService {
@@ -17,7 +19,7 @@ export class AccountsService {
     private readonly configService: ConfigService,
   ) {}
 
-  async create(dto: CreateAccountDto) {
+  async create(dto: CreateAccountDto): Promise<CreateAccountResponseDto> {
     // 0) Yêu cầu ít nhất 1 trong 2
     if (!dto.email && !dto.phone) {
       throw new BadRequestException('Email or phone is required!');
@@ -54,7 +56,23 @@ export class AccountsService {
       // role/status... nếu cần default ở entity
     });
 
-    return this.repo.save(account);
+    const a = await this.repo.save(account);
+
+    const summaryAccount: SummaryAccountDto = {
+      id: a.id,
+      email: a.email,
+      phone: a.phone,
+      fullName: a.fullName,
+      avatarUrl: a.avatarUrl,
+      role: a.role,
+      status: a.status,
+      createdAt: a.createdAt.toISOString(),
+    } as SummaryAccountDto;
+
+    return {
+      account: summaryAccount,
+      message: 'Account created successfully!',
+    } as CreateAccountResponseDto;
   }
 
   findAll() {
