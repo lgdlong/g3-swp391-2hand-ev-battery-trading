@@ -3,6 +3,12 @@
 
 Nền tảng thương mại điện tử chuyên về mua bán pin xe điện cũ, được xây dựng với kiến trúc monorepo sử dụng Turborepo.
 
+> [Frontend Docs](apps/web/README.md)
+> 
+> [Backend Docs](apps/api/README.md)
+> 
+> [Database Docs](apps/db/README.md)
+
 ## Mục lục
 
 - [Giới thiệu](#giới-thiệu)
@@ -12,7 +18,6 @@ Nền tảng thương mại điện tử chuyên về mua bán pin xe điện c�
 - [Tính năng chính](#tính-năng-chính)
 - [API Documentation](#api-documentation)
 - [Cơ sở dữ liệu](#cơ-sở-dữ-liệu)
-- [Testing](#testing)
 - [Deployment](#deployment)
 - [Branch & Commit Convention](#branch--commit-convention)
 - [Đóng góp](#đóng-góp)
@@ -164,25 +169,15 @@ pnpm build --filter=web
 ## API Documentation
 
 API endpoints được document chi tiết tại:
-- Development: `http://localhost:8000/api/docs`
-- Production: `[Production URL]/api/docs`
-
-### Main endpoints:
-- `POST /auth/login` - User login
-- `POST /auth/register` - User registration
-- `GET /products` - Get products list
-- `POST /products` - Create new product
-- `GET /users/profile` - Get user profile
+- Development: http://localhost:8000/api
+- Production: `[Production URL]/api`
 
 
 ## Cơ sở dữ liệu
 
 ### Database Schema
-- **Users**: Thông tin người dùng
-- **Products**: Sản phẩm (pin xe điện)
-- **Orders**: Đơn hàng
-- **Reviews**: Đánh giá sản phẩm
-- **Messages**: Tin nhắn chat
+
+>https://dbdiagram.io/d/g3-swp391-68bee64661a46d388e00495e
 
 ### Database Management
 ```bash
@@ -192,23 +187,6 @@ pg_dump -U postgres 2hand_ev_battery_trading > backup.sql
 # Restore database
 psql -U postgres -d 2hand_ev_battery_trading < backup.sql
 ```
-
-## Testing
-
-```bash
-# Run all tests
-pnpm test
-
-# Run tests for specific app
-pnpm test --filter=api
-
-# Run e2e tests
-pnpm test:e2e --filter=api
-
-# Test coverage
-pnpm test:cov --filter=api
-```
-
 
 ## Deployment
 
@@ -332,7 +310,6 @@ git push origin feat/frontend/new-feature
 
 - **Repository**: [g3-swp391-2hand-ev-battery-trading](https://github.com/lgdlong/g3-swp391-2hand-ev-battery-trading)
 - **Issues**: [GitHub Issues](https://github.com/lgdlong/g3-swp391-2hand-ev-battery-trading/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/lgdlong/g3-swp391-2hand-ev-battery-trading/discussions)
 
 
 ## License
