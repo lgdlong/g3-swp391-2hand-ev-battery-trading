@@ -10,6 +10,9 @@ import * as bcrypt from 'bcrypt';
 import { normalizeEmailOrPhone } from '../../shared/helpers/account.helper';
 import { SummaryAccountDto } from './dto/summary-account.dto';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
+import { SafeAccountDto } from './dto/safe-account.dto';
+import { AccountMapper } from './mappers';
+import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 
 @Injectable()
 export class AccountsService {
@@ -79,12 +82,25 @@ export class AccountsService {
     } as CreateAccountResponseDto;
   }
 
-  findAll() {
-    return `This action returns all accounts`;
+  async findAll(limit = 20, offset = 0): Promise<SafeAccountDto[]> {
+    const accounts: Account[] = await this.repo.find({
+      take: limit, // giới hạn số lượng record
+      skip: offset, // số lượng bỏ qua record tính từ đầu (phục vụ pagination)
+    });
+    return AccountMapper.toSafeDtoArray(accounts);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} account`;
+  async findOne(id: number): Promise<SafeAccountDto> {
+    if (!id || id <= 0) {
+      throw new NotFoundException(`Invalid account id: ${id}`);
+    }
+
+    const account: Account | null = await this.repo.findOne({ where: { id } });
+    if (!account) {
+      throw new NotFoundException(`Account with id ${id} not found`);
+    }
+
+    return AccountMapper.toSafeDto(account);
   }
 
   async findOneByEmailOrPhone(value: string): Promise<Account | null> {

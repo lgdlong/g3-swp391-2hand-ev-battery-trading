@@ -1,14 +1,48 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpCode } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
-import { LoginResponse } from './interfaces/login-response.interface';
+import { LoginResponse } from './dto/login-response.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Đăng nhập (email/phone + password)',
+    description:
+      'Trả về access token (Bearer) và set refresh token vào cookie httpOnly (đường dẫn /auth/refresh).',
+  })
+  @ApiBody({ type: LoginRequestDto })
+  @ApiOkResponse({
+    description: 'Đăng nhập thành công. Refresh token nằm trong cookie (httpOnly).',
+    type: LoginResponse,
+  })
+  @ApiUnauthorizedResponse({ description: 'Sai thông tin đăng nhập.' })
+  @ApiBadRequestResponse({ description: 'Thiếu hoặc không hợp lệ tham số.' })
+  @ApiResponse({
+    status: 200,
+    description: 'Header phản hồi có Set-Cookie chứa refresh_token.',
+    headers: {
+      'Set-Cookie': {
+        description:
+          'refresh_token=<JWT>; HttpOnly; SameSite=Lax; Path=/auth/refresh; Max-Age=2592000; Secure(ở prod)',
+        schema: { type: 'string' },
+      },
+    },
+  })
   async login(
     @Body() dto: LoginRequestDto,
     @Res({ passthrough: true }) res: Response,
