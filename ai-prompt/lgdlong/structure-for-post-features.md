@@ -352,9 +352,9 @@ apps/
       │  │  │  │  ├─ car-brand.entity.ts
       │  │  │  │  ├─ car-model.entity.ts
       │  │  │  │  └─ car-trim.entity.ts
-      │  │  │  ├─ cars.controller.ts         # endpoints CRUD brand/model/trim
-      │  │  │  ├─ cars.service.ts
-      │  │  │  └─ cars.module.ts
+      │  │  │  ├─ car-catalog.controller.ts         # endpoints CRUD brand/model/trim
+      │  │  │  ├─ car-catalog.service.ts
+      │  │  │  └─ car-catalog.module.ts
       │  │  └─ bikes/
       │  │     ├─ dto/
       │  │     ├─ entities/

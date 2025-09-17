@@ -2,11 +2,10 @@ import { Module } from '@nestjs/common';
 import databaseConfig from './config/database.config';
 import { envValidationSchema } from './config/validation';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Account } from './modules/accounts/entities/account.entity';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
-
+import { CarCatalogModule } from './modules/catalogs/cars/car-catalog.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -28,7 +27,7 @@ import { AuthModule } from './modules/auth/auth.module';
           username: config.get<string>('USERNAME'),
           password: config.get<string>('PASSWORD'),
           database: config.get<string>('DB_NAME'),
-          entities: [Account],
+          // entities: [Account, CarBrand, CarModel, CarTrim],
           autoLoadEntities: true,
           synchronize: isDev, // chỉ tự động đồng bộ hóa CSDL ở môi trường development
           retryAttempts: 5,
@@ -45,6 +44,7 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     AccountsModule,
     AuthModule,
+    CarCatalogModule,
   ],
   controllers: [],
   providers: [],
