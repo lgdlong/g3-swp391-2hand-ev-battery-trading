@@ -8,7 +8,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Check,
+  OneToMany,
 } from 'typeorm';
+// import { Post } from '../../posts/entities/post.entity';
 
 @Check(`("email" IS NOT NULL OR "phone" IS NOT NULL)`)
 @Entity({ name: 'accounts' })
@@ -50,4 +52,7 @@ export class Account {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
+
+  // @OneToMany(() => Post, (post) => post.seller)
+  // posts!: Post[];
 }
