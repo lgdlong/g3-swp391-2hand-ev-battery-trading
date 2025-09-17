@@ -4,7 +4,6 @@ import { envValidationSchema } from './config/validation';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Account } from './modules/accounts/entities/account.entity';
 import { AccountsModule } from './modules/accounts/accounts.module';
-import { GeoModule } from './modules/geo/geo.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 
@@ -46,7 +45,6 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     AccountsModule,
     AuthModule,
-    GeoModule,
   ],
   controllers: [],
   providers: [],
