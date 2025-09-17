@@ -6,7 +6,7 @@
 
 ## 1) Lựa chọn kiến trúc
 
-### A. FE gọi thẳng (không KEY, chỉ public endpoints)
+### A. FE gọi thẳng (không KEY, chỉ public endpoints)  
 
 * Dùng được khi endpoint **public** (mở CORS hoặc bạn có proxy nội bộ).
 * **Base**: `https://tinhthanhpho.com/api/v1`
@@ -141,92 +141,6 @@ export default function GeoPickerFE() {
 
 ---
 
-## 3) Né CORS mà vẫn FE-only (không KEY)
-
-### 3.1 Next.js **rewrites** (đơn giản nhất)
-
-```js
-// next.config.js
-const nextConfig = {
-  async rewrites() {
-    return [
-      { source: "/ttph/:path*", destination: "https://tinhthanhpho.com/api/v1/:path*" },
-    ];
-  },
-};
-module.exports = nextConfig;
-```
-
-FE gọi nội bộ (cùng origin):
-
-```ts
-fetch(`/ttph/provinces?limit=1000`).then(r => r.json()).then(b => Array.isArray(b) ? b : b.data);
-```
-
-### 3.2 Next.js **Route Handler proxy** (linh hoạt hơn)
-
-```ts
-// app/api/ttph/[...path]/route.ts
-import { NextRequest, NextResponse } from "next/server";
-const BASE = "https://tinhthanhpho.com/api/v1";
-export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
-  const upstream = new URL(`${BASE}/${params.path.join("/")}`);
-  req.nextUrl.searchParams.forEach((v, k) => upstream.searchParams.set(k, v));
-  const res = await fetch(upstream.toString(), { headers: { Accept: "application/json" } });
-  const text = await res.text();
-  return new NextResponse(text, { status: res.status, headers: { "content-type": res.headers.get("content-type") ?? "application/json" } });
-}
-```
-
----
-
-## 4) NestJS – Tích hợp chuẩn (không dùng Zod)
-
-### 4.1 ENV
-
-```
-TINHTHANHPHO_BASE=https://tinhthanhpho.com/api/v1
-TINHTHANHPHO_API_KEY=your_secret_key_here
-```
-
-### 4.2 HTTP client (Axios + retry + chỉ gắn Authorization khi có KEY)
-
-```ts
-// geo.http.ts
-import { Injectable } from "@nestjs/common";
-import axios from "axios"; import axiosRetry from "axios-retry";
-@Injectable()
-export class GeoHttp {
-  private client = axios.create({ baseURL: process.env.TINHTHANHPHO_BASE, timeout: 8000, headers: { Accept: "application/json" } });
-  constructor(){
-    axiosRetry(this.client,{ retries:2, retryDelay:axiosRetry.exponentialDelay, retryCondition:(e)=>!e.response||e.response.status>=500 });
-    this.client.interceptors.request.use((c)=>{ const key = process.env.TINHTHANHPHO_API_KEY; if(key && c.headers){ c.headers.Authorization = `Bearer ${key}`;} return c;});
-  }
-  get<T>(path: string, params?: Record<string, any>){ return this.client.get<T>(path,{ params }).then(r=>r.data); }
-}
-```
-
-### 4.3 Service – unwrap `data`, map theo **code** (string), cache 24h
-
-```ts
-// geo.service.ts (trích)
-function unwrapList(raw:any){ if(Array.isArray(raw)) return raw; if(raw && Array.isArray(raw.data)) return raw.data; throw new Error("Invalid payload shape"); }
-
-async provinces(){ return this.getOrSet("geo:provinces", async ()=>{ const raw=await this.http.get<any>("/provinces",{limit:200}); const list=unwrapList(raw); return list.map((p:any)=>({ id:Number(p.code), code:String(p.code), name:p.name })); }); }
-async districts(provinceCode:string){ const raw=await this.http.get<any>(`/provinces/${provinceCode}/districts`,{limit:500}); const list=unwrapList(raw); return list.map((d:any)=>({ id:Number(d.code), code:String(d.code), name:d.name })); }
-async wards(districtCode:string){ const raw=await this.http.get<any>(`/districts/${districtCode}/wards`,{limit:500}); const list=unwrapList(raw); return list.map((w:any)=>({ id:Number(w.code), code:String(w.code), name:w.name })); }
-```
-
-### 4.4 Controller – nhận **code** (string), không dùng `ParseIntPipe`
-
-```ts
-@Get("districts")
-getDistricts(@Query("province_code") provinceCode: string){ return this.geo.districts(provinceCode); }
-@Get("wards")
-getWards(@Query("district_code") districtCode: string){ return this.geo.wards(districtCode); }
-```
-
----
 
 ## 5) Lỗi thường gặp & cách xử lý
 
