@@ -6,6 +6,7 @@ import { AccountsModule } from './modules/accounts/accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { CarCatalogModule } from './modules/catalogs/cars/car-catalog.module';
+// import { DebugMiddleware } from './core/middleware/debug.middleware';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -50,3 +51,8 @@ import { CarCatalogModule } from './modules/catalogs/cars/car-catalog.module';
   providers: [],
 })
 export class AppModule {}
+// export class AppModule implements NestModule {
+//   configure(consumer: MiddlewareConsumer) {
+//     consumer.apply(DebugMiddleware).forRoutes('*');
+//   }
+// }
