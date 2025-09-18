@@ -1,7 +1,22 @@
-import { Controller, Get, Param, Query, ParseIntPipe, Post, Body } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CarCatalogService } from './car-catalog.service';
 import { ListQueryDto } from '../../../shared/dto/list-query.dto';
 import { CreateBrandDto, CreateModelDto, CreateTrimDto } from './dto/create-car-catalog.dto';
+import { RolesGuard } from '../../../core/guards/roles.guard';
+import { Roles } from '../../../core/decorators/roles.decorator';
+import { AccountRole } from '../../../shared/enums/account-role.enum';
+import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 
 @Controller('car-catalog')
 export class CarCatalogController {
@@ -89,6 +104,8 @@ export class CarCatalogController {
    * POST /car-catalog/brands
    * Body: { "name": "VinFast" }
    */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
   @Post('brands')
   createBrand(@Body() dto: CreateBrandDto) {
     return this.service.createBrand(dto);
@@ -102,6 +119,8 @@ export class CarCatalogController {
    * POST /car-catalog/brands/2/models
    * Body: { "name": "VF 8" }
    */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
   @Post('brands/:brandId/models')
   createModelUnderBrand(
     @Param('brandId', new ParseIntPipe({ errorHttpStatusCode: 400 })) brandId: number,
@@ -118,6 +137,8 @@ export class CarCatalogController {
    * POST /car-catalog/models
    * Body: { "name": "Model 3", "brandId": 5 }
    */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
   @Post('models')
   createModel(@Body() dto: CreateModelDto) {
     return this.service.createModel(dto);
@@ -131,6 +152,8 @@ export class CarCatalogController {
    * POST /car-catalog/models/10/trims
    * Body: { "name": "Long Range" }
    */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
   @Post('models/:modelId/trims')
   createTrimUnderModel(
     @Param('modelId', new ParseIntPipe({ errorHttpStatusCode: 400 })) modelId: number,
@@ -147,8 +170,59 @@ export class CarCatalogController {
    * POST /car-catalog/trims
    * Body: { "name": "RWD", "modelId": 10 }
    */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
   @Post('trims')
   createTrim(@Body() dto: CreateTrimDto) {
     return this.service.createTrim(dto);
+  }
+
+  // ======================================================
+  // ============== DELETE (DELETE) ENDPOINTS =============
+  // ======================================================
+
+  /**
+   * Xoá 1 Brand theo id.
+   * Nếu brandId không tồn tại -> 404.
+   *
+   * Example:
+   * DELETE /car-catalog/brands/3
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Delete('brands/:brandId')
+  @HttpCode(204)
+  deleteBrand(@Param('brandId', new ParseIntPipe({ errorHttpStatusCode: 400 })) brandId: number) {
+    return this.service.deleteBrand(brandId);
+  }
+
+  /**
+   * Xoá 1 Model theo id.
+   * Nếu modelId không tồn tại -> 404.
+   *
+   * Example:
+   * DELETE /car-catalog/models/10
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Delete('models/:modelId')
+  @HttpCode(204)
+  deleteModel(@Param('modelId', new ParseIntPipe({ errorHttpStatusCode: 400 })) modelId: number) {
+    return this.service.deleteModel(modelId);
+  }
+
+  /**
+   * Xoá 1 Trim theo id.
+   * Nếu trimId không tồn tại -> 404.
+   *
+   * Example:
+   * DELETE /car-catalog/trims/5
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Delete('trims/:trimId')
+  @HttpCode(204)
+  deleteTrim(@Param('trimId', new ParseIntPipe({ errorHttpStatusCode: 400 })) trimId: number) {
+    return this.service.deleteTrim(trimId);
   }
 }

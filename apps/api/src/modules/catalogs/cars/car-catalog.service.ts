@@ -163,4 +163,29 @@ export class CarCatalogService {
     }
     throw err;
   }
+
+  // ======================================================
+  // ============== DELETE (DELETE) ENDPOINTS ===============
+  // ======================================================
+
+  async deleteBrand(brandId: number): Promise<void> {
+    const result = await this.brandRepo.delete(brandId);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Brand ${brandId} not found`);
+    }
+  }
+
+  async deleteModel(modelId: number): Promise<void> {
+    const result = await this.modelRepo.delete(modelId);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Model ${modelId} not found`);
+    }
+  }
+
+  async deleteTrim(trimId: number): Promise<void> {
+    const result = await this.trimRepo.delete(trimId);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Trim ${trimId} not found`);
+    }
+  }
 }
