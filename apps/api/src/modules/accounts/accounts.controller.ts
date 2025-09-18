@@ -14,6 +14,8 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
+import { Roles } from '../../core/decorators/roles.decorator';
+import { AccountRole } from '../../shared/enums/account-role.enum';
 import { SafeAccountDto } from './dto/safe-account.dto';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 import {
@@ -73,6 +75,7 @@ export class AccountsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN, AccountRole.USER) // Users can update their own accounts
   @Patch(':id')
   @ApiOperation({ summary: 'Cập nhật account theo id (cần auth)' })
   @ApiBody({ type: UpdateAccountDto })
@@ -85,6 +88,7 @@ export class AccountsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN) // Only admins can delete accounts
   @Delete(':id')
   @ApiOperation({ summary: 'Xoá account theo id (cần auth)' })
   @ApiNoContentResponse({ description: 'Xoá thành công' })
