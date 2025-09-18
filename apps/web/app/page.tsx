@@ -23,14 +23,7 @@ export default function Home() {
 
         {/* Extra section */}
         <section className="mt-12 text-left">
-          <h2 className="text-2xl font-semibold mb-4">Hello</h2>
-          <p className="text-muted-foreground leading-relaxed">
-            Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
-            pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu
-            aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas.
-            Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class
-            aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-          </p>
+
 
           {/* Form component */}
           <div className="mt-6">
