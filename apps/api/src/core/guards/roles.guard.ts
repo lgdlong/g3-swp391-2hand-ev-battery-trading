@@ -2,10 +2,14 @@ import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@
 import { Reflector } from '@nestjs/core';
 import { AccountRole } from '../../shared/enums/account-role.enum';
 import { ROLES_KEY } from '../../shared/constants';
-import { SafeAccountDto } from '../../modules/accounts/dto/safe-account.dto';
+
+export interface AuthUser {
+  sub: number;
+  role: AccountRole;
+}
 
 interface AuthenticatedRequest {
-  user: SafeAccountDto;
+  user: AuthUser;
 }
 
 @Injectable()
@@ -30,10 +34,10 @@ export class RolesGuard implements CanActivate {
 
     /**
      * 3. Lấy thông tin user từ request
-     *    - JwtAuthGuard sẽ gắn user sau khi xác thực thành công
+     *    - JwtAuthGuard sẽ gắn user (JWT payload) sau khi xác thực thành công
      */
     const request: AuthenticatedRequest = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const user: SafeAccountDto = request.user;
+    const user: AuthUser = request.user;
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');

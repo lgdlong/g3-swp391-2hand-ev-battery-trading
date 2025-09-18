@@ -52,10 +52,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials!');
     }
 
+    const aEmail = account.email ? account.email : null;
+    const aPhone = account.phone ? account.phone : null;
+
     // 3. Tạo JWT token
     // Tạo payload cho JWT, có thể thêm thông tin khác nếu cần
     const payload: JwtPayload = {
       sub: account.id,
+      email: aEmail,
+      phone: aPhone,
       role: account.role,
     };
 
