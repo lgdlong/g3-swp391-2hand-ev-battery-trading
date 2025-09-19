@@ -12,11 +12,24 @@ import {
 } from '@nestjs/common';
 import { BikeCatalogService } from './bike-catalog.service';
 import { ListQueryDto } from '../../../shared/dto/list-query.dto';
-import { CreateBrandDto, CreateModelDto, CreateTrimDto } from './dto/create-bike-catalog.dto';
+import {
+  CreateBrandDto,
+  CreateModelDto,
+  CreateTrimDto,
+} from '../shared/dto/create-car-bike-catalog.dto';
 import { Roles } from '../../../core/decorators/roles.decorator';
 import { AccountRole } from '../../../shared/enums/account-role.enum';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../core/guards/roles.guard';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 @Controller('bike-catalog')
 export class BikeCatalogController {
@@ -34,6 +47,12 @@ export class BikeCatalogController {
    * GET /bike-catalog/brands?q=tes&limit=50&offset=0&order=ASC
    */
   @Get('brands')
+  @ApiOperation({ summary: 'Lấy danh sách Brand (hãng xe máy)' })
+  @ApiQuery({ name: 'q', required: false, type: String })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
+  @ApiQuery({ name: 'order', required: false, type: String })
+  @ApiOkResponse({ description: 'Danh sách brand được trả về' })
   getBrands(@Query() query: ListQueryDto) {
     return this.service.getBrands(query);
   }
@@ -46,6 +65,8 @@ export class BikeCatalogController {
    * GET /bike-catalog/brands/1/models?q=mo&limit=50&offset=0&order=ASC
    */
   @Get('brands/:brandId/models')
+  @ApiOperation({ summary: 'Lấy danh sách Model theo Brand' })
+  @ApiOkResponse({ description: 'Danh sách model theo brand' })
   getModelsByBrand(
     @Param('brandId', new ParseIntPipe({ errorHttpStatusCode: 400 })) brandId: number,
     @Query() query: ListQueryDto,
@@ -61,6 +82,8 @@ export class BikeCatalogController {
    * GET /bike-catalog/models/10/trims?q=stan&limit=50&offset=0&order=ASC
    */
   @Get('models/:modelId/trims')
+  @ApiOperation({ summary: 'Lấy danh sách Trim theo Model' })
+  @ApiOkResponse({ description: 'Danh sách trim theo model' })
   getTrimsByModel(
     @Param('modelId', new ParseIntPipe({ errorHttpStatusCode: 400 })) modelId: number,
     @Query() query: ListQueryDto,
@@ -76,6 +99,8 @@ export class BikeCatalogController {
    * GET /bike-catalog/models?brandId=1&q=mo
    */
   @Get('models')
+  @ApiOperation({ summary: 'Lấy danh sách Model (có thể filter theo brandId)' })
+  @ApiOkResponse({ description: 'Danh sách model' })
   getModels(@Query() query: ListQueryDto & { brandId?: number }) {
     // NOTE: Nếu muốn validate brandId (phải là int > 0) -> tạo DTO riêng
     return this.service.getModels(query);
@@ -89,6 +114,8 @@ export class BikeCatalogController {
    * GET /bike-catalog/trims?modelId=10&q=stan
    */
   @Get('trims')
+  @ApiOperation({ summary: 'Lấy danh sách Trim (có thể filter theo modelId)' })
+  @ApiOkResponse({ description: 'Danh sách trim' })
   getTrims(@Query() query: ListQueryDto & { modelId?: number }) {
     return this.service.getTrims(query);
   }
@@ -107,6 +134,10 @@ export class BikeCatalogController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Post('brands')
+  @ApiOperation({ summary: 'Tạo Brand mới (cần ADMIN)' })
+  @ApiBody({ type: CreateBrandDto })
+  @ApiCreatedResponse({ description: 'Brand được tạo thành công' })
+  @ApiBadRequestResponse({ description: 'Dữ liệu không hợp lệ' })
   createBrand(@Body() dto: CreateBrandDto) {
     return this.service.createBrand(dto);
   }
@@ -122,6 +153,9 @@ export class BikeCatalogController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Post('brands/:brandId/models')
+  @ApiOperation({ summary: 'Tạo Model mới theo Brand (cần ADMIN)' })
+  @ApiBody({ type: CreateModelDto })
+  @ApiCreatedResponse({ description: 'Model được tạo thành công' })
   createModelUnderBrand(
     @Param('brandId', new ParseIntPipe({ errorHttpStatusCode: 400 })) brandId: number,
     @Body() dto: CreateModelDto,
@@ -140,6 +174,9 @@ export class BikeCatalogController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Post('models')
+  @ApiOperation({ summary: 'Tạo Model mới (cần ADMIN)' })
+  @ApiBody({ type: CreateModelDto })
+  @ApiCreatedResponse({ description: 'Model được tạo thành công' })
   createModel(@Body() dto: CreateModelDto) {
     return this.service.createModel(dto);
   }
@@ -155,6 +192,9 @@ export class BikeCatalogController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Post('models/:modelId/trims')
+  @ApiOperation({ summary: 'Tạo Trim mới theo Model (cần ADMIN)' })
+  @ApiBody({ type: CreateTrimDto })
+  @ApiCreatedResponse({ description: 'Trim được tạo thành công' })
   createTrimUnderModel(
     @Param('modelId', new ParseIntPipe({ errorHttpStatusCode: 400 })) modelId: number,
     @Body() dto: CreateTrimDto,
@@ -173,6 +213,9 @@ export class BikeCatalogController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Post('trims')
+  @ApiOperation({ summary: 'Tạo Trim mới (cần ADMIN)' })
+  @ApiBody({ type: CreateTrimDto })
+  @ApiCreatedResponse({ description: 'Trim được tạo thành công' })
   createTrim(@Body() dto: CreateTrimDto) {
     return this.service.createTrim(dto);
   }
@@ -192,6 +235,8 @@ export class BikeCatalogController {
   @Roles(AccountRole.ADMIN)
   @Delete('brands/:brandId')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Xoá Brand (cần ADMIN)' })
+  @ApiNoContentResponse({ description: 'Xoá thành công' })
   deleteBrand(@Param('brandId', new ParseIntPipe({ errorHttpStatusCode: 400 })) brandId: number) {
     return this.service.deleteBrand(brandId);
   }
@@ -207,6 +252,8 @@ export class BikeCatalogController {
   @Roles(AccountRole.ADMIN)
   @Delete('models/:modelId')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Xoá Model (cần ADMIN)' })
+  @ApiNoContentResponse({ description: 'Xoá thành công' })
   deleteModel(@Param('modelId', new ParseIntPipe({ errorHttpStatusCode: 400 })) modelId: number) {
     return this.service.deleteModel(modelId);
   }
@@ -222,6 +269,8 @@ export class BikeCatalogController {
   @Roles(AccountRole.ADMIN)
   @Delete('trims/:trimId')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Xoá Trim (cần ADMIN)' })
+  @ApiNoContentResponse({ description: 'Xoá thành công' })
   deleteTrim(@Param('trimId', new ParseIntPipe({ errorHttpStatusCode: 400 })) trimId: number) {
     return this.service.deleteTrim(trimId);
   }
