@@ -4,7 +4,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { User, LogIn, UserPlus, Menu, Bookmark, Bell, Settings, LogOut, ChevronDown, Plus, ToggleLeft, ToggleRight, ShoppingCart, Store } from 'lucide-react';
+import {
+  User,
+  LogIn,
+  UserPlus,
+  Menu,
+  Bookmark,
+  Bell,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Plus,
+  ToggleLeft,
+  ToggleRight,
+  ShoppingCart,
+  Store,
+} from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
 // ===== SIDEBAR MENU COMPONENT =====
@@ -158,17 +173,17 @@ function UserModeToggle({ className }: UserModeToggleProps) {
       value: 'buyer',
       label: 'Người mua',
       icon: ShoppingCart,
-      description: 'Tìm kiếm và mua pin EV'
+      description: 'Tìm kiếm và mua pin EV',
     },
     {
       value: 'seller',
       label: 'Người bán',
       icon: Store,
-      description: 'Bán pin EV của bạn'
-    }
+      description: 'Bán pin EV của bạn',
+    },
   ];
 
-  const currentMode = modes.find(mode => mode.value === selectedMode);
+  const currentMode = modes.find((mode) => mode.value === selectedMode);
 
   const handleModeSelect = (mode: 'buyer' | 'seller') => {
     setSelectedMode(mode);
@@ -203,10 +218,9 @@ function UserModeToggle({ className }: UserModeToggleProps) {
       >
         {currentMode && <currentMode.icon className="h-4 w-4" />}
         <span className="text-sm hidden sm:inline">{currentMode?.label}</span>
-        <ChevronDown className={cn(
-          "h-3 w-3 transition-transform duration-300",
-          isOpen && "rotate-180"
-        )} />
+        <ChevronDown
+          className={cn('h-3 w-3 transition-transform duration-300', isOpen && 'rotate-180')}
+        />
       </Button>
 
       {/* Dropdown Menu */}
@@ -218,8 +232,8 @@ function UserModeToggle({ className }: UserModeToggleProps) {
                 key={mode.value}
                 onClick={() => handleModeSelect(mode.value as 'buyer' | 'seller')}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-3 text-sm text-white hover:bg-white/10 rounded-md transition-colors group",
-                  selectedMode === mode.value && "bg-white/5"
+                  'w-full flex items-center gap-3 px-3 py-3 text-sm text-white hover:bg-white/10 rounded-md transition-colors group',
+                  selectedMode === mode.value && 'bg-white/5',
                 )}
               >
                 <mode.icon className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
@@ -255,16 +269,14 @@ function Logo({ className, size = 'md' }: LogoProps) {
   return (
     <div className={cn('flex items-center gap-2', className)}>
       {/* Battery Icon */}
-      <div className={cn(
-        'bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center text-white font-bold',
-        sizeClasses[size]
-      )}>
-        <svg
-          className="w-2/3 h-2/3"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path d="M15.67 4H14V2c0-.55-.45-1-1-1s-1 .45-1 1v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM11 20v-5.5H9L13 7v5.5h2L11 20z"/>
+      <div
+        className={cn(
+          'bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center text-white font-bold',
+          sizeClasses[size],
+        )}
+      >
+        <svg className="w-2/3 h-2/3" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M15.67 4H14V2c0-.55-.45-1-1-1s-1 .45-1 1v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM11 20v-5.5H9L13 7v5.5h2L11 20z" />
         </svg>
       </div>
 
@@ -283,7 +295,7 @@ interface NavigationProps {
 }
 
 const navigationItems = [
-  { label: 'Brands', href: '#' },
+  { label: 'EV', href: '#' },
   { label: 'Battery', href: '#' },
   { label: 'Service', href: '#' },
 ];
@@ -314,7 +326,12 @@ interface UserActionsProps {
   onUserMenuToggle?: () => void;
 }
 
-function UserActions({ className, isLoggedIn = false, userRole, onUserMenuToggle }: UserActionsProps) {
+function UserActions({
+  className,
+  isLoggedIn = false,
+  userRole,
+  onUserMenuToggle,
+}: UserActionsProps) {
   if (isLoggedIn) {
     return (
       <div className={cn('flex items-center gap-3', className)}>
@@ -324,7 +341,10 @@ function UserActions({ className, isLoggedIn = false, userRole, onUserMenuToggle
           size="sm"
           className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group"
         >
-          <Link href="#" className="flex items-center gap-2 group-hover:scale-105 transition-transform duration-300">
+          <Link
+            href="#"
+            className="flex items-center gap-2 group-hover:scale-105 transition-transform duration-300"
+          >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Đăng tin</span>
           </Link>
@@ -402,7 +422,10 @@ function UserActions({ className, isLoggedIn = false, userRole, onUserMenuToggle
         size="sm"
         className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group"
       >
-        <Link href="/sign-up" className="flex items-center gap-2 group-hover:scale-105 transition-transform duration-300">
+        <Link
+          href="/sign-up"
+          className="flex items-center gap-2 group-hover:scale-105 transition-transform duration-300"
+        >
           <UserPlus className="h-4 w-4" />
           <span className="hidden sm:inline">Sign Up</span>
         </Link>
@@ -431,16 +454,18 @@ export function Header({ className }: HeaderProps) {
 
   return (
     <>
-      <header className={cn(
-        'sticky top-0 z-50 w-full border-b border-border/40',
-        'bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95',
-        'backdrop-blur-md supports-[backdrop-filter]:bg-slate-900/80',
-        'shadow-lg shadow-slate-900/20',
-        'before:absolute before:inset-0 before:bg-gradient-to-r before:from-green-500/10 before:via-transparent before:to-blue-500/10 before:opacity-50',
-        'after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/5 after:to-transparent after:opacity-30',
-        'relative',
-        className
-      )}>
+      <header
+        className={cn(
+          'sticky top-0 z-50 w-full border-b border-border/40',
+          'bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95',
+          'backdrop-blur-md supports-[backdrop-filter]:bg-slate-900/80',
+          'shadow-lg shadow-slate-900/20',
+          'before:absolute before:inset-0 before:bg-gradient-to-r before:from-green-500/10 before:via-transparent before:to-blue-500/10 before:opacity-50',
+          'after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/5 after:to-transparent after:opacity-30',
+          'relative',
+          className,
+        )}
+      >
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-4 -left-4 w-24 h-24 bg-green-500/20 rounded-full blur-xl animate-pulse"></div>
@@ -455,7 +480,10 @@ export function Header({ className }: HeaderProps) {
             <div className="flex items-center gap-4">
               <SidebarMenu onToggle={setIsSidebarOpen} />
               <Link href="/" className="flex items-center group">
-                <Logo size="md" className="group-hover:scale-105 transition-transform duration-300" />
+                <Logo
+                  size="md"
+                  className="group-hover:scale-105 transition-transform duration-300"
+                />
               </Link>
               <UserModeToggle />
             </div>
@@ -486,7 +514,7 @@ export function Header({ className }: HeaderProps) {
       <div
         className={cn(
           'w-full bg-slate-800 border-b border-white/20 shadow-lg transition-all duration-500 ease-in-out',
-          isSidebarOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+          isSidebarOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden',
         )}
         onMouseEnter={() => setIsSidebarOpen(true)}
         onMouseLeave={() => setIsSidebarOpen(false)}
@@ -506,14 +534,14 @@ export function Header({ className }: HeaderProps) {
                 href={item.href}
                 className="flex items-center gap-4 p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-all duration-300 group"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{item.icon}</span>
+                <span className="text-2xl group-hover:scale-110 transition-transform duration-300">
+                  {item.icon}
+                </span>
                 <div>
                   <div className="font-medium text-white group-hover:text-green-400 transition-colors duration-300">
                     {item.label}
                   </div>
-                  <div className="text-xs text-white/60">
-                    Access {item.label.toLowerCase()}
-                  </div>
+                  <div className="text-xs text-white/60">Access {item.label.toLowerCase()}</div>
                 </div>
               </Link>
             ))}
