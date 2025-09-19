@@ -27,10 +27,11 @@ import { FormRootError } from '@/components/FormRootError';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { AccountRole } from '@/types/enums/account-enum';
+import { useAuth } from '@/lib/auth-context';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-
+  const { login } = useAuth();
   const router = useRouter();
 
   const form = useForm<LoginForm>({
@@ -57,6 +58,9 @@ export default function LoginPage() {
         console.log('[DEBUG] Token:', data.accessToken);
       }
       console.log('[DEBUG] Login successful:', data.account);
+
+      // Update auth context
+      login(data.accessToken, data.account);
 
       const isAdmin =
         data.account.role === AccountRole.ADMIN ||
