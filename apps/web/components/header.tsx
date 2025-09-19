@@ -295,9 +295,9 @@ interface NavigationProps {
 }
 
 const navigationItems = [
-  { label: 'EV', href: '#' },
-  { label: 'Battery', href: '#' },
-  { label: 'Service', href: '#' },
+  { label: 'EV', href: '/posts/ev' },
+  { label: 'Battery', href: '/posts/battery' },
+  { label: 'Service', href: '/service' },
 ];
 
 function Navigation({ className }: NavigationProps) {
@@ -342,7 +342,7 @@ function UserActions({
           className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group"
         >
           <Link
-            href="#"
+            href="/posts/create"
             className="flex items-center gap-2 group-hover:scale-105 transition-transform duration-300"
           >
             <Plus className="h-4 w-4" />
