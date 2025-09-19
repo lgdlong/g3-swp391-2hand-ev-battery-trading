@@ -28,3 +28,4 @@ if [ -z "$(psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT 1 FROM pg_tab
 else
   echo "Database already has tables, skipping restore."
 fi
+
