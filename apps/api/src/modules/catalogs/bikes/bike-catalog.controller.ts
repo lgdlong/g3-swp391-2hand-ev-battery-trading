@@ -10,12 +10,17 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CarCatalogService } from './car-catalog.service';
+import { BikeCatalogService } from './bike-catalog.service';
 import { ListQueryDto } from '../../../shared/dto/list-query.dto';
-import { RolesGuard } from '../../../core/guards/roles.guard';
+import {
+  CreateBrandDto,
+  CreateModelDto,
+  CreateTrimDto,
+} from '../shared/dto/create-car-bike-catalog.dto';
 import { Roles } from '../../../core/decorators/roles.decorator';
 import { AccountRole } from '../../../shared/enums/account-role.enum';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
+import { RolesGuard } from '../../../core/guards/roles.guard';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -25,29 +30,24 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
-import {
-  CreateBrandDto,
-  CreateModelDto,
-  CreateTrimDto,
-} from '../shared/dto/create-car-bike-catalog.dto';
 
-@Controller('car-catalog')
-export class CarCatalogController {
-  constructor(private readonly service: CarCatalogService) {}
+@Controller('bike-catalog')
+export class BikeCatalogController {
+  constructor(private readonly service: BikeCatalogService) {}
 
   // ======================================================
   // =============== READ (GET) ENDPOINTS =================
   // ======================================================
 
   /**
-   * Lấy danh sách Brand (hãng xe).
+   * Lấy danh sách Brand (hãng xe máy).
    * Hỗ trợ tìm kiếm (q), phân trang (limit, offset), và sắp xếp (order).
    *
    * Example:
-   * GET /car-catalog/brands?q=tes&limit=50&offset=0&order=ASC
+   * GET /bike-catalog/brands?q=tes&limit=50&offset=0&order=ASC
    */
   @Get('brands')
-  @ApiOperation({ summary: 'Lấy danh sách Brand (hãng xe hơi)' })
+  @ApiOperation({ summary: 'Lấy danh sách Brand (hãng xe máy)' })
   @ApiQuery({ name: 'q', required: false, type: String })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
@@ -62,7 +62,7 @@ export class CarCatalogController {
    * Nếu brandId không tồn tại -> trả 404.
    *
    * Example:
-   * GET /car-catalog/brands/1/models?q=mo&limit=50&offset=0&order=ASC
+   * GET /bike-catalog/brands/1/models?q=mo&limit=50&offset=0&order=ASC
    */
   @Get('brands/:brandId/models')
   @ApiOperation({ summary: 'Lấy danh sách Model theo Brand' })
@@ -79,7 +79,7 @@ export class CarCatalogController {
    * Nếu modelId không tồn tại -> trả 404.
    *
    * Example:
-   * GET /car-catalog/models/10/trims?q=stan&limit=50&offset=0&order=ASC
+   * GET /bike-catalog/models/10/trims?q=stan&limit=50&offset=0&order=ASC
    */
   @Get('models/:modelId/trims')
   @ApiOperation({ summary: 'Lấy danh sách Trim theo Model' })
@@ -96,7 +96,7 @@ export class CarCatalogController {
    * -> brandId là query param tùy chọn.
    *
    * Example:
-   * GET /car-catalog/models?brandId=1&q=mo
+   * GET /bike-catalog/models?brandId=1&q=mo
    */
   @Get('models')
   @ApiOperation({ summary: 'Lấy danh sách Model (có thể filter theo brandId)' })
@@ -111,7 +111,7 @@ export class CarCatalogController {
    * -> modelId là query param tùy chọn.
    *
    * Example:
-   * GET /car-catalog/trims?modelId=10&q=stan
+   * GET /bike-catalog/trims?modelId=10&q=stan
    */
   @Get('trims')
   @ApiOperation({ summary: 'Lấy danh sách Trim (có thể filter theo modelId)' })
@@ -125,11 +125,11 @@ export class CarCatalogController {
   // ======================================================
 
   /**
-   * Tạo mới 1 Brand (hãng xe).
+   * Tạo mới 1 Brand (hãng xe máy).
    *
    * Example:
-   * POST /car-catalog/brands
-   * Body: { "name": "VinFast" }
+   * POST /bike-catalog/brands
+   * Body: { "name": "Honda" }
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -147,8 +147,8 @@ export class CarCatalogController {
    * brandId lấy từ path param, name lấy từ body.
    *
    * Example:
-   * POST /car-catalog/brands/2/models
-   * Body: { "name": "VF 8" }
+   * POST /bike-catalog/brands/2/models
+   * Body: { "name": "CBR600RR" }
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -168,8 +168,8 @@ export class CarCatalogController {
    * brandId được truyền trong body.
    *
    * Example:
-   * POST /car-catalog/models
-   * Body: { "name": "Model 3", "brandId": 5 }
+   * POST /bike-catalog/models
+   * Body: { "name": "Ninja 400", "brandId": 5 }
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -186,8 +186,8 @@ export class CarCatalogController {
    * modelId lấy từ path param, name lấy từ body.
    *
    * Example:
-   * POST /car-catalog/models/10/trims
-   * Body: { "name": "Long Range" }
+   * POST /bike-catalog/models/10/trims
+   * Body: { "name": "ABS" }
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -207,8 +207,8 @@ export class CarCatalogController {
    * modelId được truyền trong body.
    *
    * Example:
-   * POST /car-catalog/trims
-   * Body: { "name": "RWD", "modelId": 10 }
+   * POST /bike-catalog/trims
+   * Body: { "name": "Standard", "modelId": 10 }
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -229,7 +229,7 @@ export class CarCatalogController {
    * Nếu brandId không tồn tại -> 404.
    *
    * Example:
-   * DELETE /car-catalog/brands/3
+   * DELETE /bike-catalog/brands/3
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -246,7 +246,7 @@ export class CarCatalogController {
    * Nếu modelId không tồn tại -> 404.
    *
    * Example:
-   * DELETE /car-catalog/models/10
+   * DELETE /bike-catalog/models/10
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -263,7 +263,7 @@ export class CarCatalogController {
    * Nếu trimId không tồn tại -> 404.
    *
    * Example:
-   * DELETE /car-catalog/trims/5
+   * DELETE /bike-catalog/trims/25
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)

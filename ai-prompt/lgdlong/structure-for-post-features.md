@@ -361,9 +361,9 @@ apps/
       │  │     │  ├─ bike-brand.entity.ts
       │  │     │  ├─ bike-model.entity.ts
       │  │     │  └─ bike-trim.entity.ts
-      │  │     ├─ bikes.controller.ts
-      │  │     ├─ bikes.service.ts
-      │  │     └─ bikes.module.ts
+      │  │     ├─ bike-catalog.controller.ts
+      │  │     ├─ bike-catalog.service.ts
+      │  │     └─ bike-catalog.module.ts
       │  │
       │  ├─ posts/                    # Bounded context: listing (metadata + search)
       │  │  ├─ dto/

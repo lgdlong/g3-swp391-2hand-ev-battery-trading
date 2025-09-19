@@ -1,24 +1,24 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, QueryFailedError, Repository } from 'typeorm';
-import { CarBrand } from './entities/car-brand.entity';
-import { CarModel } from './entities/car-model.entity';
-import { CarTrim } from './entities/car-trim.entity';
+import { BikeBrand } from './entities/bike-brand.entity';
+import { BikeModel } from './entities/bike-model.entity';
+import { BikeTrim } from './entities/bike-trim.entity';
 import { ListQueryDto } from '../../../shared/dto/list-query.dto';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
+import { LiteItem } from '../shared/interfaces/lite-item.interface';
 import {
   CreateBrandDto,
   CreateModelDto,
   CreateTrimDto,
 } from '../shared/dto/create-car-bike-catalog.dto';
-import { LiteItem } from '../shared/interfaces/lite-item.interface';
 
 @Injectable()
-export class CarCatalogService {
+export class BikeCatalogService {
   constructor(
-    @InjectRepository(CarBrand) private readonly brandRepo: Repository<CarBrand>,
-    @InjectRepository(CarModel) private readonly modelRepo: Repository<CarModel>,
-    @InjectRepository(CarTrim) private readonly trimRepo: Repository<CarTrim>,
+    @InjectRepository(BikeBrand) private readonly brandRepo: Repository<BikeBrand>,
+    @InjectRepository(BikeModel) private readonly modelRepo: Repository<BikeModel>,
+    @InjectRepository(BikeTrim) private readonly trimRepo: Repository<BikeTrim>,
   ) {}
 
   // ======================================================
@@ -38,7 +38,7 @@ export class CarCatalogService {
   }
 
   async getModelsByBrand(brandId: number, query: ListQueryDto): Promise<LiteItem[]> {
-    // Đảm bảo brand tồn tại (tuỳ bạn, có thể bỏ check này cho nhanh)
+    // Đảm bảo brand tồn tại
     const exists = await this.brandRepo.exists({ where: { id: brandId } });
     if (!exists) throw new NotFoundException(`Brand ${brandId} not found`);
 
@@ -161,8 +161,7 @@ export class CarCatalogService {
   // -------- helpers --------
 
   private handleUniqueError(err: unknown, message: string): never {
-    // PostgreSQL unique_violation
-    if (err instanceof QueryFailedError && (err as any).driverError?.code === '23505') {
+    if (err instanceof QueryFailedError && err.message.includes('duplicate key')) {
       throw new ConflictException(message);
     }
     throw err;

@@ -8,7 +8,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { BikeModel } from './bike-model.entity';
+import type { BikeModel } from './bike-model.entity';
 
 @Entity({ name: 'bike_trims' })
 @Index('UQ_bike_trims_model_name', ['model', 'name'], { unique: true })
@@ -16,9 +16,11 @@ export class BikeTrim {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => BikeModel, (m) => m.trims, {
-    onDelete: 'RESTRICT',
-  })
+  @ManyToOne(
+    () => require('./bike-model.entity').BikeModel, // ✅ sync require
+    (m: BikeModel) => m.trims,
+    { onDelete: 'RESTRICT' },
+  )
   @JoinColumn({ name: 'model_id' })
   model!: BikeModel;
 

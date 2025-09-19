@@ -7,7 +7,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { BikeModel } from './bike-model.entity';
+import type { BikeModel } from './bike-model.entity';
 
 @Entity({ name: 'bike_brands' })
 export class BikeBrand {
@@ -24,6 +24,9 @@ export class BikeBrand {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
 
-  @OneToMany(() => BikeModel, (m) => m.brand)
+  @OneToMany(
+    () => require('./bike-model.entity').BikeModel, // ✅ sync require
+    (m: BikeModel) => m.brand,
+  )
   models!: BikeModel[];
 }
