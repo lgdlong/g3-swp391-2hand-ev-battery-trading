@@ -6,6 +6,7 @@ import { AccountsModule } from './modules/accounts/accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { CarCatalogModule } from './modules/catalogs/cars/car-catalog.module';
+import { BikeCatalogModule } from './modules/catalogs/bikes/bike-catalog.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { CarCatalogModule } from './modules/catalogs/cars/car-catalog.module';
     AccountsModule,
     AuthModule,
     CarCatalogModule,
+    BikeCatalogModule,
   ],
   controllers: [],
   providers: [],
