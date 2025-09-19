@@ -6,8 +6,12 @@ import { CarModel } from './entities/car-model.entity';
 import { CarTrim } from './entities/car-trim.entity';
 import { ListQueryDto } from '../../../shared/dto/list-query.dto';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import { LiteItem } from './interfaces/lite-item.interface';
-import { CreateBrandDto, CreateModelDto, CreateTrimDto } from './dto/create-car-catalog.dto';
+import {
+  CreateBrandDto,
+  CreateModelDto,
+  CreateTrimDto,
+} from '../shared/dto/create-car-bike-catalog.dto';
+import { LiteItem } from '../shared/interfaces/lite-item.interface';
 
 @Injectable()
 export class CarCatalogService {

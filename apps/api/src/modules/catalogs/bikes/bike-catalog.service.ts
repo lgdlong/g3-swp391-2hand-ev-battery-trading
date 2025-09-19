@@ -6,8 +6,12 @@ import { BikeModel } from './entities/bike-model.entity';
 import { BikeTrim } from './entities/bike-trim.entity';
 import { ListQueryDto } from '../../../shared/dto/list-query.dto';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import { LiteItem } from './interfaces/lite-item.interface';
-import { CreateBrandDto, CreateModelDto, CreateTrimDto } from './dto/create-bike-catalog.dto';
+import { LiteItem } from '../shared/interfaces/lite-item.interface';
+import {
+  CreateBrandDto,
+  CreateModelDto,
+  CreateTrimDto,
+} from '../shared/dto/create-car-bike-catalog.dto';
 
 @Injectable()
 export class BikeCatalogService {
