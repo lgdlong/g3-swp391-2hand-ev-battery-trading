@@ -3,24 +3,21 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { AccountsService } from '../accounts/accounts.service';
-import { SafeAccountDto } from '../accounts/dto/safe-account.dto';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly accountsService: AccountsService,
-  ) {
-    // @ts-ignore
+  constructor(private readonly configService: ConfigService) {
+    const jwtSecret = configService.get<string>('JWT_SECRET');
+    if (!jwtSecret) throw new Error('JWT_SECRET is not configured');
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: jwtSecret,
     });
   }
 
-  async validate(payload: JwtPayload) {
+  validate(payload: JwtPayload) {
     // Handle Google OAuth users differently from regular users
     // if (payload.provider === 'google') {
     //   // For Google users, return a user-like object based on JWT payload
@@ -40,19 +37,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     //   };
     // }
 
-    // For regular users, fetch from database
     const userId: number = payload.sub;
 
     if (isNaN(userId) || userId <= 0) {
       throw new Error('Invalid user ID');
     }
 
-    const user: SafeAccountDto = await this.accountsService.findOne(userId);
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Return the full Account entity which will be available as request.user
-    return user;
+    // Return the JWT payload directly - it contains all we need for role checking
+    return {
+      sub: userId,
+      email: payload.email, // optional - nếu user đăng nhập bằng email
+      phone: payload.phone, // optional - nếu user đăng nhập bằng số điện thoại
+      role: payload.role,
+      provider: payload.provider,
+    } as JwtPayload;
   }
 }
