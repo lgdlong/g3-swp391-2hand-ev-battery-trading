@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable } from '@nestjs/comm
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Account } from './entities/account.entity';
 import { ConfigService } from '@nestjs/config';
 import { DEFAULT_SALT_ROUNDS } from '../../shared/constants';
@@ -105,6 +105,20 @@ export class AccountsService {
 
   async findOneByEmailOrPhone(value: string): Promise<Account | null> {
     return this.repo.findOne({ where: normalizeEmailOrPhone(value) });
+  }
+
+  async fineMe(userId: number): Promise<SafeAccountDto> {
+    const acc = await this.repo.findOne({ where: { id: userId} });
+    if(!acc) throw new NotFoundException('Account not account');
+    return AccountMapper.toSafeDto(acc);
+  }
+
+  async updateMe(userId: number, dto: UpdateAccountDto): Promise<SafeAccountDto>{
+    await this.repo.update({ id: userId }, dto);
+    const updated = await this.repo.findOne ({ where: { id: userId}});
+    if(!updated) throw new NotFoundException('Account not found after update');
+    console.log('DTO nhận được:', dto);
+    return AccountMapper.toSafeDto(updated);
   }
 
   findByEmail(email: string) {

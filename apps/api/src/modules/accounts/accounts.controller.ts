@@ -29,12 +29,33 @@ import {
   ApiBadRequestResponse,
   ApiNoContentResponse,
 } from '@nestjs/swagger';
+import { CurrentUser, ReqUser } from 'src/core/decorators/current-user.decorator';
 
-@ApiTags('Accounts')
 @ApiBearerAuth()
+@ApiTags('Accounts')
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiOperation({ summary: 'Lấy thông tin tài hiện tại (cần auth)'})
+  @ApiOkResponse({ type: SafeAccountDto })
+  async me(@CurrentUser() user: ReqUser): Promise<SafeAccountDto> {
+    return this.accountsService.fineMe(user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  @ApiOperation({ summary: 'Cập nhật tài khoản hiện tại (cần auth)'})
+  @ApiBody({ type: UpdateAccountDto })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Cập nhật thành công'})
+  async updateMe(
+    @CurrentUser() user: ReqUser,
+    @Body() dto: UpdateAccountDto,
+  ): Promise<SafeAccountDto>{
+    return this.accountsService.updateMe(user.sub, dto)
+  }
 
   @Post()
   @ApiOperation({ summary: 'Tạo tài khoản mới (public)' })
@@ -95,4 +116,6 @@ export class AccountsController {
   remove(@Param('id') id: string) {
     return this.accountsService.remove(+id);
   }
+
+
 }

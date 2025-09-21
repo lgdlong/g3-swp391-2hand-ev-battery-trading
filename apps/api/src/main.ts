@@ -12,11 +12,14 @@ async function bootstrap() {
     .setTitle('2Hand EV Battery Trading API')
     .setDescription('The API description')
     .setVersion('1.0')
+    .addBearerAuth()//để nó lấy Bearer token auto luôn khi đã login thành công
     .addTag('ev-battery-trading')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
-
+  SwaggerModule.setup('api', app, documentFactory,{
+    swaggerOptions: { persistAuthorization: true }, // thêm này để Swagger nhớ token
+  });
+      
   // Bật validation cho toàn bộ ứng dụng
   app.useGlobalPipes(
     new ValidationPipe({
