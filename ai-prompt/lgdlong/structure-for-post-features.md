@@ -352,18 +352,18 @@ apps/
       │  │  │  │  ├─ car-brand.entity.ts
       │  │  │  │  ├─ car-model.entity.ts
       │  │  │  │  └─ car-trim.entity.ts
-      │  │  │  ├─ cars.controller.ts         # endpoints CRUD brand/model/trim
-      │  │  │  ├─ cars.service.ts
-      │  │  │  └─ cars.module.ts
+      │  │  │  ├─ car-catalog.controller.ts         # endpoints CRUD brand/model/trim
+      │  │  │  ├─ car-catalog.service.ts
+      │  │  │  └─ car-catalog.module.ts
       │  │  └─ bikes/
       │  │     ├─ dto/
       │  │     ├─ entities/
       │  │     │  ├─ bike-brand.entity.ts
       │  │     │  ├─ bike-model.entity.ts
       │  │     │  └─ bike-trim.entity.ts
-      │  │     ├─ bikes.controller.ts
-      │  │     ├─ bikes.service.ts
-      │  │     └─ bikes.module.ts
+      │  │     ├─ bike-catalog.controller.ts
+      │  │     ├─ bike-catalog.service.ts
+      │  │     └─ bike-catalog.module.ts
       │  │
       │  ├─ posts/                    # Bounded context: listing (metadata + search)
       │  │  ├─ dto/
