@@ -114,10 +114,22 @@ export class AccountsService {
   }
 
   async updateMe(userId: number, dto: UpdateAccountDto): Promise<SafeAccountDto>{
-    await this.repo.update({ id: userId }, dto);
+    if (dto.phone) {
+      const existingAccount = await this.repo.findOne({
+        where: { phone: dto.phone, id: Not(userId) },
+      });
+      if (existingAccount) {
+        throw new ConflictException('Phone number already in use.');
+      }
+    }
+
+    const result = await this.repo.update({ id: userId }, dto);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Account with id ${userId} not found`);
+    }
+
     const updated = await this.repo.findOne ({ where: { id: userId}});
     if(!updated) throw new NotFoundException('Account not found after update');
-    console.log('DTO nhận được:', dto);
     return AccountMapper.toSafeDto(updated);
   }
 
