@@ -19,14 +19,16 @@
 ## 3. Configure Backup Settings
 
 1. In the backup settings:
-  - **Format**: Choose `Custom`
-  - **Options**: Tick these 4 checkboxes:
-    - Use SQL INSERT commands instead of COPY
-    - Discard objects owner
-    - Add DROP database statement
-    - Add CREATE database statement
-  - **Output folder**: Set to `/apps/db/` in your project
-  - **File name pattern**: `dump-${database}-${timestamp}.dump`
+
+- **Format**: Choose `Custom`
+- **Options**: Tick these 4 checkboxes:
+  - Use SQL INSERT commands instead of COPY
+  - Discard objects owner
+  - Add DROP database statement
+  - Add CREATE database statement
+- **Output folder**: Set to `/apps/db/` in your project
+- **File name pattern**: `dump-${database}-${timestamp}.dump`
+
 2. Click **Start** to begin the backup.
 
 <img src="instructions/backup3.png" alt="Backup settings: format, checkboxes, output folder, file name" width="600">

@@ -44,7 +44,7 @@ do swagger for this dto
 
 # Chat
 
-**Ok 👍 để Swagger hiển thị rõ schema cho các DTO này, bạn thêm các decorator `@ApiProperty()` của `@nestjs/swagger` vào từng field. Ví dụ như sau:
+\*\*Ok 👍 để Swagger hiển thị rõ schema cho các DTO này, bạn thêm các decorator `@ApiProperty()` của `@nestjs/swagger` vào từng field. Ví dụ như sau:
 
 ```ts
 import { IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min } from 'class-validator';
@@ -114,9 +114,9 @@ export class CreateTrimDto {
 
 ✅ Giờ khi mở Swagger UI:
 
-* `CreateBrandDto` sẽ hiện field `name`.
-* `CreateModelDto` sẽ có `name` (bắt buộc) và `brandId` (optional).
-* `CreateTrimDto` sẽ có `name` (bắt buộc) và `modelId` (optional).
+- `CreateBrandDto` sẽ hiện field `name`.
+- `CreateModelDto` sẽ có `name` (bắt buộc) và `brandId` (optional).
+- `CreateTrimDto` sẽ có `name` (bắt buộc) và `modelId` (optional).
 
 Bạn có muốn mình viết thêm **response DTO** (`BrandDto`, `ModelDto`, `TrimDto`) với `id`, `createdAt`, `updatedAt`… để Swagger hiển thị kết quả trả về luôn không?
-**
+\*\*

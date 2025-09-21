@@ -1,6 +1,7 @@
 # Prompt
 
 https://chatgpt.com/share/68caced9-5c14-8011-856b-25d9892319af
+
 ```
 ///////////////////////////////////////////////////////
 // AUTH
@@ -287,10 +288,11 @@ created_at timestamp [default: `now()`]
 Indexes { (post_id, position) }
 }
 
-với chema này thì file structure thế nào nestjs 
+với chema này thì file structure thế nào nestjs
 ```
 
 # Chat (gpt-5)
+
 Dựa trên schema mới (EV car/bike tách riêng + catalog + media + review logs), mình gợi ý cấu trúc NestJS theo **bounded modules** rõ ràng, giữ style hiện tại của bạn (DTO/Entities/Mappers tách riêng), Swagger trên DTO. Bạn có thể copy tree này cho `apps/api/src`:
 
 ```txt
@@ -431,17 +433,17 @@ apps/
 
 ## Lý do chia như trên
 
-* **Separation of concerns**: `posts` giữ **metadata + search**; chi tiết theo loại để ở `post-details` (car/bike) → DTO/validate rõ ràng theo `post_type`.
-* **Catalogs** riêng thành `catalogs/` (cars/bikes/colors) để CRUD danh mục độc lập, dễ seed/migrate.
-* **Review** tách module (`post-review`) vì có workflow + audit trail riêng (log table).
-* **Media** tách module giúp controller/service chuyên trách upload, sắp xếp, xóa.
-* **Shared** gom enum/DTO chung (pagination), tránh import vòng.
+- **Separation of concerns**: `posts` giữ **metadata + search**; chi tiết theo loại để ở `post-details` (car/bike) → DTO/validate rõ ràng theo `post_type`.
+- **Catalogs** riêng thành `catalogs/` (cars/bikes/colors) để CRUD danh mục độc lập, dễ seed/migrate.
+- **Review** tách module (`post-review`) vì có workflow + audit trail riêng (log table).
+- **Media** tách module giúp controller/service chuyên trách upload, sắp xếp, xóa.
+- **Shared** gom enum/DTO chung (pagination), tránh import vòng.
 
 ## Import/Export Modules
 
-* `PostsModule` **import** `PostDetailsModule`, `PostMediaModule`, `PostReviewModule` khi cần gọi service (hoặc dùng controller tách route).
-* `PostDetailsModule` **export** `CarDetailsService`, `BikeDetailsService` nếu `PostsService` cần orchestrate trong 1 transaction.
-* `CatalogsModule` export service để `PostDetails` validate brand/model/trim.
+- `PostsModule` **import** `PostDetailsModule`, `PostMediaModule`, `PostReviewModule` khi cần gọi service (hoặc dùng controller tách route).
+- `PostDetailsModule` **export** `CarDetailsService`, `BikeDetailsService` nếu `PostsService` cần orchestrate trong 1 transaction.
+- `CatalogsModule` export service để `PostDetails` validate brand/model/trim.
 
 ## Một số file “xương sống”
 
@@ -454,11 +456,15 @@ import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class PageQueryDto {
   @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 100 })
-  @IsOptional() @IsInt() @Min(1)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   limit = 20;
 
   @ApiPropertyOptional({ default: 0, minimum: 0 })
-  @IsOptional() @IsInt() @Min(0)
+  @IsOptional()
+  @IsInt()
+  @Min(0)
   offset = 0;
 }
 ```
@@ -484,20 +490,30 @@ import { PostStatus, PostType } from '@/shared/enums';
 
 export class PostQueryDto {
   @ApiPropertyOptional({ enum: PostType })
-  @IsOptional() @IsEnum(PostType)
+  @IsOptional()
+  @IsEnum(PostType)
   post_type?: PostType;
 
-  @ApiPropertyOptional() @IsOptional() @IsString()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   ward_code?: string;
 
-  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0)
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
   min_price?: number;
 
-  @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0)
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
+  @Min(0)
   max_price?: number;
 
   @ApiPropertyOptional({ enum: PostStatus })
-  @IsOptional() @IsEnum(PostStatus)
+  @IsOptional()
+  @IsEnum(PostStatus)
   status?: PostStatus;
 }
 ```
@@ -531,11 +547,11 @@ media?: PostMedia[];
 
 ## Controller “rõ route”
 
-* `POST /posts` → tạo metadata (status = DRAFT).
-* `POST /posts/:id/submit` → `post-review.controller.ts` chuyển `DRAFT -> PENDING_REVIEW` + log.
-* `POST /posts/:id/approve` / `reject` → Admin; ghi `post_review_logs`.
-* `POST /posts/:id/car-detail` / `/bike-detail` → ghi bảng 1–1, validate theo `post_type`.
-* `POST /posts/:id/media` (upload), `PATCH /posts/:id/media/reorder`, `DELETE /posts/:id/media/:mediaId`.
+- `POST /posts` → tạo metadata (status = DRAFT).
+- `POST /posts/:id/submit` → `post-review.controller.ts` chuyển `DRAFT -> PENDING_REVIEW` + log.
+- `POST /posts/:id/approve` / `reject` → Admin; ghi `post_review_logs`.
+- `POST /posts/:id/car-detail` / `/bike-detail` → ghi bảng 1–1, validate theo `post_type`.
+- `POST /posts/:id/media` (upload), `PATCH /posts/:id/media/reorder`, `DELETE /posts/:id/media/:mediaId`.
 
 ## Migrations & Seeds (gợi ý)
 
