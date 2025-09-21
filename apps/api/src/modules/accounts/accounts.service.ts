@@ -107,9 +107,10 @@ export class AccountsService {
     return this.repo.findOne({ where: normalizeEmailOrPhone(value) });
   }
 
-  async fineMe(userId: number): Promise<SafeAccountDto> {
-    const acc = await this.repo.findOne({ where: { id: userId} });
-    if(!acc) throw new NotFoundException('Account not account');
+  async findMe(userId: number): Promise<SafeAccountDto> {
+    if (!userId || userId <= 0) throw new NotFoundException(`Invalid account id: ${userId}`);
+    const acc = await this.repo.findOne({ where: { id: userId } });
+    if (!acc) throw new NotFoundException('Account not found');
     return AccountMapper.toSafeDto(acc);
   }
 
