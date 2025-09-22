@@ -1,7 +1,6 @@
 'use client';
 
 import { Header } from '@/components/header';
-import GeoForm from '@/components/GeoForm';
 import { SearchBar } from '@/components/search-bar';
 
 export default function Home() {
@@ -25,14 +24,6 @@ export default function Home() {
             best value.
           </p>
         </div>
-
-        {/* Extra section */}
-        <section className="mt-12 text-left">
-          {/* Form component */}
-          <div className="mt-6">
-            <GeoForm />
-          </div>
-        </section>
       </main>
     </div>
   );

@@ -1,14 +1,5 @@
 import { api } from '@/lib/axios';
-
-export interface Brand {
-  id: number;
-  name: string;
-}
-
-export interface Model {
-  id: number;
-  name: string;
-}
+import { Brand, Model } from '@/types/catalog';
 
 export async function getCarBrands(): Promise<Brand[]> {
   const { data } = await api.get<Brand[]>('car-catalog/brands');

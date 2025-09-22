@@ -5,18 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Car, Battery, Upload, FileText, X } from 'lucide-react';
-import {
-  getCarBrands,
-  getBikeBrands,
-  getCarModels,
-  getBikeModels,
-  Brand,
-  Model,
-} from '@/lib/api/catalogApi';
+import { getCarBrands, getBikeBrands, getCarModels, getBikeModels } from '@/lib/api/catalogApi';
+import { Brand, Model } from '@/types/catalog';
+import { useRouter } from 'next/navigation';
 
 type PostType = 'ev' | 'battery';
 
 export default function CreatePostPage() {
+  const router = useRouter();
   const [postType, setPostType] = useState<PostType | null>(null);
   const [showModal, setShowModal] = useState(true);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -171,7 +167,7 @@ export default function CreatePostPage() {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Chọn loại tin đăng</h2>
                 <button
-                  onClick={() => window.history.back()}
+                  onClick={() => router.back()}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <X className="h-6 w-6" />
