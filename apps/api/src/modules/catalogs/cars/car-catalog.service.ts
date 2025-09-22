@@ -3,14 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, QueryFailedError, Repository } from 'typeorm';
 import { CarBrand } from './entities/car-brand.entity';
 import { CarModel } from './entities/car-model.entity';
-import { CarTrim } from './entities/car-trim.entity';
 import { ListQueryDto } from '../../../shared/dto/list-query.dto';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
-import {
-  CreateBrandDto,
-  CreateModelDto,
-  CreateTrimDto,
-} from '../shared/dto/create-car-bike-catalog.dto';
+import { CreateBrandDto, CreateModelDto } from '../shared/dto/create-car-bike-catalog.dto';
 import { LiteItem } from '../shared/interfaces/lite-item.interface';
 
 @Injectable()
@@ -18,7 +13,6 @@ export class CarCatalogService {
   constructor(
     @InjectRepository(CarBrand) private readonly brandRepo: Repository<CarBrand>,
     @InjectRepository(CarModel) private readonly modelRepo: Repository<CarModel>,
-    @InjectRepository(CarTrim) private readonly trimRepo: Repository<CarTrim>,
   ) {}
 
   // ======================================================
@@ -58,54 +52,6 @@ export class CarCatalogService {
     return rows;
   }
 
-  async getTrimsByModel(modelId: number, query: ListQueryDto): Promise<LiteItem[]> {
-    const exists = await this.modelRepo.exists({ where: { id: modelId } });
-    if (!exists) throw new NotFoundException(`Model ${modelId} not found`);
-
-    const qb = this.trimRepo
-      .createQueryBuilder('t')
-      .leftJoin('t.model', 'm')
-      .where('m.id = :modelId', { modelId });
-
-    if (query.q) qb.andWhere('t.name ILIKE :q', { q: `%${query.q}%` });
-
-    qb.orderBy('t.name', query.order || 'ASC')
-      .offset(query.offset ?? 0)
-      .limit(query.limit ?? 50)
-      .select(['t.id AS id', 't.name AS name']);
-
-    const rows = await qb.getRawMany<LiteItem>();
-    return rows;
-  }
-
-  async getModels(query: ListQueryDto & { brandId?: number }): Promise<LiteItem[]> {
-    const qb = this.modelRepo.createQueryBuilder('m').leftJoin('m.brand', 'b');
-
-    if (query.brandId) qb.where('b.id = :brandId', { brandId: query.brandId });
-    if (query.q) qb.andWhere('m.name ILIKE :q', { q: `%${query.q}%` });
-
-    qb.orderBy('m.name', query.order || 'ASC')
-      .offset(query.offset ?? 0)
-      .limit(query.limit ?? 50)
-      .select(['m.id AS id', 'm.name AS name']);
-
-    return qb.getRawMany<LiteItem>();
-  }
-
-  async getTrims(query: ListQueryDto & { modelId?: number }): Promise<LiteItem[]> {
-    const qb = this.trimRepo.createQueryBuilder('t').leftJoin('t.model', 'm');
-
-    if (query.modelId) qb.where('m.id = :modelId', { modelId: query.modelId });
-    if (query.q) qb.andWhere('t.name ILIKE :q', { q: `%${query.q}%` });
-
-    qb.orderBy('t.name', query.order || 'ASC')
-      .offset(query.offset ?? 0)
-      .limit(query.limit ?? 50)
-      .select(['t.id AS id', 't.name AS name']);
-
-    return qb.getRawMany<LiteItem>();
-  }
-
   // ======================================================
   // ============== CREATE (POST) ENDPOINTS ===============
   // ======================================================
@@ -139,25 +85,6 @@ export class CarCatalogService {
     }
   }
 
-  async createTrim(dto: CreateTrimDto): Promise<LiteItem> {
-    const modelId = dto.modelId;
-    if (!modelId) throw new BadRequestException('modelId is required');
-
-    const model = await this.modelRepo.findOne({ where: { id: modelId } });
-    if (!model) throw new NotFoundException(`Model ${modelId} not found`);
-
-    try {
-      const trim = this.trimRepo.create({
-        name: dto.name.trim(),
-        model,
-      });
-      const saved = await this.trimRepo.save(trim);
-      return { id: saved.id, name: saved.name };
-    } catch (err) {
-      this.handleUniqueError(err, `Trim '${dto.name}' already exists under model ${modelId}`);
-    }
-  }
-
   // -------- helpers --------
 
   private handleUniqueError(err: unknown, message: string): never {
@@ -183,13 +110,6 @@ export class CarCatalogService {
     const result = await this.modelRepo.delete(modelId);
     if (result.affected === 0) {
       throw new NotFoundException(`Model ${modelId} not found`);
-    }
-  }
-
-  async deleteTrim(trimId: number): Promise<void> {
-    const result = await this.trimRepo.delete(trimId);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Trim ${trimId} not found`);
     }
   }
 }
