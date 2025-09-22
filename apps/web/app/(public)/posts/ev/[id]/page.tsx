@@ -21,10 +21,13 @@ const Badge = ({
 );
 import { Calendar, MapPin, User, Car, Battery, Gauge, Palette, Hash } from 'lucide-react';
 
-type Params = { params: { id: string } };
+type Props = {
+  params: Promise<{ id: string }>;
+};
 
-export default function EvDetailPage({ params }: Params) {
-  const post = sampleEvPosts.find((p) => p.id === params.id);
+export default async function EvDetailPage({ params }: Props) {
+  const { id } = await params;
+  const post = sampleEvPosts.find((p) => p.id === id);
   if (!post) return notFound();
 
   const getStatusColor = (status: string) => {

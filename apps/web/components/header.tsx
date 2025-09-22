@@ -443,6 +443,7 @@ export function Header({ className }: HeaderProps) {
   const { isLoggedIn, userRole, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState<string>('');
 
   const menuItems = [
     { label: 'Dashboard Overview', href: '#', icon: '📊' },
@@ -451,6 +452,10 @@ export function Header({ className }: HeaderProps) {
     { label: 'Transaction History', href: '#', icon: '📈' },
     { label: 'System Settings', href: '#', icon: '⚙️' },
   ];
+
+  useEffect(() => {
+    setCurrentTime(new Date().toLocaleTimeString());
+  }, []);
 
   return (
     <>
@@ -554,9 +559,7 @@ export function Header({ className }: HeaderProps) {
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                 <span>System Online</span>
               </div>
-              <div className="text-xs text-white/40">
-                Last updated: {new Date().toLocaleTimeString()}
-              </div>
+              <div className="text-xs text-white/40">Last updated: {currentTime || '--:--:--'}</div>
             </div>
           </div>
         </div>

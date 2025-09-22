@@ -21,10 +21,13 @@ const Badge = ({
 );
 import { Calendar, MapPin, User, Battery, Zap, Activity, TrendingUp } from 'lucide-react';
 
-type Params = { params: { id: string } };
+type Props = {
+  params: Promise<{ id: string }>;
+};
 
-export default function BatteryDetailPage({ params }: Params) {
-  const post = sampleBatteryPosts.find((p) => p.id === params.id);
+export default async function BatteryDetailPage({ params }: Props) {
+  const { id } = await params;
+  const post = sampleBatteryPosts.find((p) => p.id === id);
   if (!post) return notFound();
 
   const getStatusColor = (status: string) => {

@@ -1,14 +1,14 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { sampleBatteryPosts, formatVnd } from './sample-battery';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
-export default function BatteryPostsPage() {
+function BatteryPostsContent() {
   const [sort, setSort] = useState<SortKey>('newest');
   const searchParams = useSearchParams();
   const [query, setQuery] = useState('');
@@ -253,5 +253,13 @@ export default function BatteryPostsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function BatteryPostsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Loading...</div>}>
+      <BatteryPostsContent />
+    </Suspense>
   );
 }
