@@ -162,33 +162,33 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupForm) => {
     setIsLoading(true);
-
+    
     try {
       // Create the payload based on active tab
       const payload = {
         fullName: data.fullName,
         password: data.password,
-        ...(activeTab === 'email'
-          ? { email: data.email }
+        ...(activeTab === 'email' 
+          ? { email: data.email } 
           : { phone: data.phone }
         ),
       };
 
       console.log('Signup payload:', payload);
-
+      
       // TODO: Implement API call
       // const response = await fetch('/api/auth/signup', {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(payload),
       // });
-
+      
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-
+      
       // Handle success - redirect to login or dashboard
       console.log('Account created successfully');
-
+      
     } catch (error) {
       console.error('Signup error:', error);
     } finally {
@@ -220,7 +220,7 @@ export default function SignupPage() {
             Enter your information to create your account
           </CardDescription>
         </CardHeader>
-
+        
         <CardContent className="space-y-6">
           {/* Tab Switcher */}
           <div className="flex rounded-lg bg-slate-100 p-1">
@@ -378,8 +378,8 @@ export default function SignupPage() {
             <Separator />
             <p className="text-center text-sm text-slate-600">
               Already have an account?{' '}
-              <Link
-                href="/auth/signin"
+              <Link 
+                href="/auth/signin" 
                 className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
               >
                 Sign in
@@ -399,7 +399,6 @@ I'll create a modern, responsive sign-up page using Next.js and shadcn/ui compon
 ## Key Features
 
 **Form Validation:**
-
 - Matches your `CreateAccountDto` validation rules
 - Vietnamese phone number validation
 - Email validation
@@ -408,7 +407,6 @@ I'll create a modern, responsive sign-up page using Next.js and shadcn/ui compon
 - Either email OR phone must be provided
 
 **UI/UX:**
-
 - Toggle between email and phone registration
 - Password visibility toggle
 - Loading states
@@ -416,7 +414,6 @@ I'll create a modern, responsive sign-up page using Next.js and shadcn/ui compon
 - Modern glassmorphism-inspired styling
 
 **Technical Details:**
-
 - Uses React Hook Form with Zod validation
 - TypeScript for type safety
 - shadcn/ui components
@@ -440,7 +437,6 @@ npx shadcn-ui@latest add button card form input separator
 ```
 
 ## File Structure
-
 Place this in `app/auth/signup/page.tsx` or your preferred route structure.
 
 The form automatically switches between email and phone input based on the selected tab, and the validation ensures that at least one contact method is provided, exactly matching your backend DTO requirements.

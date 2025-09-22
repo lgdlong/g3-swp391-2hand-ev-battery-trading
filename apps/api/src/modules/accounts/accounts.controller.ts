@@ -39,22 +39,22 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  @ApiOperation({ summary: 'Lấy thông tin tài hiện tại (cần auth)' })
+  @ApiOperation({ summary: 'Lấy thông tin tài hiện tại (cần auth)'})
   @ApiOkResponse({ type: SafeAccountDto })
   async me(@CurrentUser() user: ReqUser): Promise<SafeAccountDto> {
-    return this.accountsService.findMe(user.sub);
+    return this.accountsService.fineMe(user.sub);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
-  @ApiOperation({ summary: 'Cập nhật tài khoản hiện tại (cần auth)' })
+  @ApiOperation({ summary: 'Cập nhật tài khoản hiện tại (cần auth)'})
   @ApiBody({ type: UpdateAccountDto })
-  @ApiOkResponse({ type: SafeAccountDto, description: 'Cập nhật thành công' })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Cập nhật thành công'})
   async updateMe(
     @CurrentUser() user: ReqUser,
     @Body() dto: UpdateAccountDto,
-  ): Promise<SafeAccountDto> {
-    return this.accountsService.updateMe(user.sub, dto);
+  ): Promise<SafeAccountDto>{
+    return this.accountsService.updateMe(user.sub, dto)
   }
 
   @Post()
@@ -116,4 +116,6 @@ export class AccountsController {
   remove(@Param('id') id: string) {
     return this.accountsService.remove(+id);
   }
+
+
 }

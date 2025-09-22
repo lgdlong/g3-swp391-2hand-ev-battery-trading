@@ -8,28 +8,28 @@
 
 ### A. FE gọi thẳng (không KEY, chỉ public endpoints)
 
-- Dùng được khi endpoint **public** (mở CORS hoặc bạn có proxy nội bộ).
-- **Base**: `https://tinhthanhpho.com/api/v1`
-- **Dữ liệu** bọc trong `{ success, data, metadata }` ⇒ phải **lấy `body.data`**.
-- **Path** dùng **code dạng string**:
-  - `/provinces`
-  - `/provinces/{provinceCode}/districts`
-  - `/districts/{districtCode}/wards`
+* Dùng được khi endpoint **public** (mở CORS hoặc bạn có proxy nội bộ).
+* **Base**: `https://tinhthanhpho.com/api/v1`
+* **Dữ liệu** bọc trong `{ success, data, metadata }` ⇒ phải **lấy `body.data`**.
+* **Path** dùng **code dạng string**:
 
-- **CORS**: nếu bị chặn, xử lý bằng **Next.js rewrite/proxy** (phần 3).
-- Ưu: Nhanh, không chạm BE/KEY. Nhược: Phụ thuộc CORS/upstream, khó cache có kiểm soát.
+  * `/provinces`
+  * `/provinces/{provinceCode}/districts`
+  * `/districts/{districtCode}/wards`
+* **CORS**: nếu bị chặn, xử lý bằng **Next.js rewrite/proxy** (phần 3).
+* Ưu: Nhanh, không chạm BE/KEY.  Nhược: Phụ thuộc CORS/upstream, khó cache có kiểm soát.
 
 ### B. Next.js Route Handler (BFF) – có KEY hoặc không KEY
 
-- `app/api/ttph/[...path]/route.ts` làm proxy.
-- Ưu: Giấu KEY (nếu cần), tránh CORS, thêm cache ISR/revalidateTag.
-- Nhược: Logic nằm ở Next; nếu đã có NestJS, có 2 nơi xử lý.
+* `app/api/ttph/[...path]/route.ts` làm proxy.
+* Ưu: Giấu KEY (nếu cần), tránh CORS, thêm cache ISR/revalidateTag.
+* Nhược: Logic nằm ở Next; nếu đã có NestJS, có 2 nơi xử lý.
 
 ### C. NestJS (BE) – chuẩn sản xuất
 
-- FE → **Nest** → Provider.
-- Ưu: Kiến trúc sạch, thêm **retry/timeout/cache/limit/logging**; dễ thay provider.
-- Nhược: Setup lâu hơn BFF.
+* FE → **Nest** → Provider.
+* Ưu: Kiến trúc sạch, thêm **retry/timeout/cache/limit/logging**; dễ thay provider.
+* Nhược: Setup lâu hơn BFF.
 
 ---
 
@@ -40,85 +40,63 @@
 ```ts
 export type Province = { code: string; name: string; type?: string };
 export type District = { code: string; name: string; type?: string; province_code?: string };
-export type Ward = {
-  code: string;
-  name: string;
-  type?: string;
-  district_code?: string;
-  province_code?: string;
-};
+export type Ward     = { code: string; name: string; type?: string; district_code?: string; province_code?: string };
 
-const BASE = 'https://tinhthanhpho.com/api/v1';
+const BASE = "https://tinhthanhpho.com/api/v1";
 
 async function apiGet<T>(path: string, params?: Record<string, any>): Promise<T> {
   // GHÉP PATH an toàn: tránh mất "/api/v1" khi path bắt đầu bằng "/"
-  const joined = `${BASE.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+  const joined = `${BASE.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
   const url = new URL(joined);
   Object.entries(params ?? {}).forEach(([k, v]) => {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   });
 
-  const r = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+  const r = await fetch(url.toString(), { headers: { Accept: "application/json" } });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
   const body = await r.json();
   const data = Array.isArray(body) ? body : body?.data; // wrapper
-  if (!data) throw new Error('Invalid payload shape');
+  if (!data) throw new Error("Invalid payload shape");
   return data as T;
 }
 
-export const getProvinces = (limit = 1000) => apiGet<Province[]>('provinces', { limit });
-export const getDistricts = (provinceCode: string, limit = 1000) =>
-  apiGet<District[]>(`provinces/${provinceCode}/districts`, { limit });
-export const getWards = (districtCode: string, limit = 1000) =>
-  apiGet<Ward[]>(`districts/${districtCode}/wards`, { limit });
+export const getProvinces = (limit = 1000) => apiGet<Province[]>("provinces", { limit });
+export const getDistricts = (provinceCode: string, limit = 1000) => apiGet<District[]>(`provinces/${provinceCode}/districts`, { limit });
+export const getWards = (districtCode: string, limit = 1000) => apiGet<Ward[]>(`districts/${districtCode}/wards`, { limit });
 ```
 
 ### 2.2 Hooks (TanStack Query) – tránh lỗi TS2742
 
 ```ts
-'use client';
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { getProvinces, getDistricts, getWards } from '@/lib/tinhthanhpho';
-import type { Province, District, Ward } from '@/lib/tinhthanhpho';
+"use client";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { getProvinces, getDistricts, getWards } from "@/lib/tinhthanhpho";
+import type { Province, District, Ward } from "@/lib/tinhthanhpho";
 
 type Q<T> = UseQueryResult<T, Error>;
 
 export const useProvinces: () => Q<Province[]> = () =>
-  useQuery<Province[], Error>({
-    queryKey: ['geo', 'provinces'] as const,
-    queryFn: () => getProvinces(),
-    staleTime: 86_400_000,
-  });
+  useQuery<Province[], Error>({ queryKey: ["geo","provinces"] as const, queryFn: () => getProvinces(), staleTime: 86_400_000 });
 
 export const useDistricts: (provinceCode?: string) => Q<District[]> = (provinceCode) =>
-  useQuery<District[], Error>({
-    queryKey: ['geo', 'districts', provinceCode] as const,
-    queryFn: () => getDistricts(provinceCode!),
-    enabled: !!provinceCode,
-    staleTime: 86_400_000,
-  });
+  useQuery<District[], Error>({ queryKey: ["geo","districts", provinceCode] as const, queryFn: () => getDistricts(provinceCode!), enabled: !!provinceCode, staleTime: 86_400_000 });
 
 export const useWards: (districtCode?: string) => Q<Ward[]> = (districtCode) =>
-  useQuery<Ward[], Error>({
-    queryKey: ['geo', 'wards', districtCode] as const,
-    queryFn: () => getWards(districtCode!),
-    enabled: !!districtCode,
-    staleTime: 86_400_000,
-  });
+  useQuery<Ward[], Error>({ queryKey: ["geo","wards", districtCode] as const, queryFn: () => getWards(districtCode!), enabled: !!districtCode, staleTime: 86_400_000 });
 ```
 
 ### 2.3 Component 3 cấp FE
 
 ```tsx
-'use client';
-import { useState } from 'react';
-import { useProvinces, useDistricts, useWards } from '@/hooks/useGeo';
+"use client";
+import { useState } from "react";
+import { useProvinces, useDistricts, useWards } from "@/hooks/useGeo";
 
 export default function GeoPickerFE() {
-  const [provinceCode, setProvinceCode] = useState('');
-  const [districtCode, setDistrictCode] = useState('');
-  const [wardCode, setWardCode] = useState('');
+  const [provinceCode, setProvinceCode] = useState("");
+  const [districtCode, setDistrictCode] = useState("");
+  const [wardCode, setWardCode] = useState("");
 
   const provincesQ = useProvinces();
   const districtsQ = useDistricts(provinceCode || undefined);
@@ -132,56 +110,28 @@ export default function GeoPickerFE() {
     <div className="grid gap-3 md:grid-cols-3">
       <div>
         <label className="text-sm opacity-80">Tỉnh/Thành</label>
-        <select
-          className="rounded-xl border bg-black/20 p-2"
-          value={provinceCode}
-          onChange={(e) => {
-            setProvinceCode(e.target.value);
-            setDistrictCode('');
-            setWardCode('');
-          }}
-        >
+        <select className="rounded-xl border bg-black/20 p-2" value={provinceCode}
+          onChange={(e) => { setProvinceCode(e.target.value); setDistrictCode(""); setWardCode(""); }}>
           <option value="">-- Chọn tỉnh --</option>
-          {provinces.map((p) => (
-            <option key={p.code} value={p.code}>
-              {p.name}
-            </option>
-          ))}
+          {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
         </select>
       </div>
       <div>
         <label className="text-sm opacity-80">Quận/Huyện</label>
-        <select
-          className="rounded-xl border bg-black/20 p-2"
-          value={districtCode}
+        <select className="rounded-xl border bg-black/20 p-2" value={districtCode}
           disabled={!provinceCode || districtsQ.isLoading}
-          onChange={(e) => {
-            setDistrictCode(e.target.value);
-            setWardCode('');
-          }}
-        >
+          onChange={(e) => { setDistrictCode(e.target.value); setWardCode(""); }}>
           <option value="">-- Chọn quận/huyện --</option>
-          {districts.map((d) => (
-            <option key={d.code} value={d.code}>
-              {d.name}
-            </option>
-          ))}
+          {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
         </select>
       </div>
       <div>
         <label className="text-sm opacity-80">Phường/Xã</label>
-        <select
-          className="rounded-xl border bg-black/20 p-2"
-          value={wardCode}
+        <select className="rounded-xl border bg-black/20 p-2" value={wardCode}
           disabled={!districtCode || wardsQ.isLoading}
-          onChange={(e) => setWardCode(e.target.value)}
-        >
+          onChange={(e) => setWardCode(e.target.value)}>
           <option value="">-- Chọn phường/xã --</option>
-          {wards.map((w) => (
-            <option key={w.code} value={w.code}>
-              {w.name}
-            </option>
-          ))}
+          {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
         </select>
       </div>
     </div>
@@ -199,7 +149,9 @@ export default function GeoPickerFE() {
 // next.config.js
 const nextConfig = {
   async rewrites() {
-    return [{ source: '/ttph/:path*', destination: 'https://tinhthanhpho.com/api/v1/:path*' }];
+    return [
+      { source: "/ttph/:path*", destination: "https://tinhthanhpho.com/api/v1/:path*" },
+    ];
   },
 };
 module.exports = nextConfig;
@@ -208,26 +160,21 @@ module.exports = nextConfig;
 FE gọi nội bộ (cùng origin):
 
 ```ts
-fetch(`/ttph/provinces?limit=1000`)
-  .then((r) => r.json())
-  .then((b) => (Array.isArray(b) ? b : b.data));
+fetch(`/ttph/provinces?limit=1000`).then(r => r.json()).then(b => Array.isArray(b) ? b : b.data);
 ```
 
 ### 3.2 Next.js **Route Handler proxy** (linh hoạt hơn)
 
 ```ts
 // app/api/ttph/[...path]/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-const BASE = 'https://tinhthanhpho.com/api/v1';
+import { NextRequest, NextResponse } from "next/server";
+const BASE = "https://tinhthanhpho.com/api/v1";
 export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
-  const upstream = new URL(`${BASE}/${params.path.join('/')}`);
+  const upstream = new URL(`${BASE}/${params.path.join("/")}`);
   req.nextUrl.searchParams.forEach((v, k) => upstream.searchParams.set(k, v));
-  const res = await fetch(upstream.toString(), { headers: { Accept: 'application/json' } });
+  const res = await fetch(upstream.toString(), { headers: { Accept: "application/json" } });
   const text = await res.text();
-  return new NextResponse(text, {
-    status: res.status,
-    headers: { 'content-type': res.headers.get('content-type') ?? 'application/json' },
-  });
+  return new NextResponse(text, { status: res.status, headers: { "content-type": res.headers.get("content-type") ?? "application/json" } });
 }
 ```
 
@@ -246,33 +193,16 @@ TINHTHANHPHO_API_KEY=your_secret_key_here
 
 ```ts
 // geo.http.ts
-import { Injectable } from '@nestjs/common';
-import axios from 'axios';
-import axiosRetry from 'axios-retry';
+import { Injectable } from "@nestjs/common";
+import axios from "axios"; import axiosRetry from "axios-retry";
 @Injectable()
 export class GeoHttp {
-  private client = axios.create({
-    baseURL: process.env.TINHTHANHPHO_BASE,
-    timeout: 8000,
-    headers: { Accept: 'application/json' },
-  });
-  constructor() {
-    axiosRetry(this.client, {
-      retries: 2,
-      retryDelay: axiosRetry.exponentialDelay,
-      retryCondition: (e) => !e.response || e.response.status >= 500,
-    });
-    this.client.interceptors.request.use((c) => {
-      const key = process.env.TINHTHANHPHO_API_KEY;
-      if (key && c.headers) {
-        c.headers.Authorization = `Bearer ${key}`;
-      }
-      return c;
-    });
+  private client = axios.create({ baseURL: process.env.TINHTHANHPHO_BASE, timeout: 8000, headers: { Accept: "application/json" } });
+  constructor(){
+    axiosRetry(this.client,{ retries:2, retryDelay:axiosRetry.exponentialDelay, retryCondition:(e)=>!e.response||e.response.status>=500 });
+    this.client.interceptors.request.use((c)=>{ const key = process.env.TINHTHANHPHO_API_KEY; if(key && c.headers){ c.headers.Authorization = `Bearer ${key}`;} return c;});
   }
-  get<T>(path: string, params?: Record<string, any>) {
-    return this.client.get<T>(path, { params }).then((r) => r.data);
-  }
+  get<T>(path: string, params?: Record<string, any>){ return this.client.get<T>(path,{ params }).then(r=>r.data); }
 }
 ```
 
@@ -300,21 +230,21 @@ getWards(@Query("district_code") districtCode: string){ return this.geo.wards(di
 
 ## 5) Lỗi thường gặp & cách xử lý
 
-- **CORS**: FE gọi trực tiếp → chặn. Dùng **rewrite** hoặc **proxy route handler**.
-- **Sai URL**: `new URL("/path", BASE)` ⇒ mất `/api/v1`. Hãy ghép thủ công (strip `/`).
-- **502**: Bạn map mọi lỗi thành 502. Log `e.response.status` + `e.response.data` để trả đúng 4xx/5xx.
-- **Không unwrap `data`**: Provider trả `{ data: [...] }` ⇒ phải `body.data`.
-- **TS2742 (UseQueryResult)**: Ghi rõ kiểu trả về cho hook.
-- **Mất leading zero**: Đừng dùng `Number(code)` cho hiển thị; giữ `code` là **string**.
+* **CORS**: FE gọi trực tiếp → chặn. Dùng **rewrite** hoặc **proxy route handler**.
+* **Sai URL**: `new URL("/path", BASE)` ⇒ mất `/api/v1`. Hãy ghép thủ công (strip `/`).
+* **502**: Bạn map mọi lỗi thành 502. Log `e.response.status` + `e.response.data` để trả đúng 4xx/5xx.
+* **Không unwrap `data`**: Provider trả `{ data: [...] }` ⇒ phải `body.data`.
+* **TS2742 (UseQueryResult)**: Ghi rõ kiểu trả về cho hook.
+* **Mất leading zero**: Đừng dùng `Number(code)` cho hiển thị; giữ `code` là **string**.
 
 ---
 
 ## 6) Khuyến nghị vận hành
 
-- **Cache**: TTL 12–24h cho địa lý; nếu scale nhiều instance → dùng **Redis**.
-- **Observability**: log timing/err của upstream, tỉ lệ cache hit.
-- **Tách lớp**: FE chỉ nói chuyện `/geo/...` nội bộ (qua BFF/Nest). Về sau đổi provider không phải sửa FE.
-- **An toàn KEY**: Chỉ đặt KEY ở **server** (Nest/BFF). Không bao giờ đẩy xuống FE.
+* **Cache**: TTL 12–24h cho địa lý; nếu scale nhiều instance → dùng **Redis**.
+* **Observability**: log timing/err của upstream, tỉ lệ cache hit.
+* **Tách lớp**: FE chỉ nói chuyện `/geo/...` nội bộ (qua BFF/Nest). Về sau đổi provider không phải sửa FE.
+* **An toàn KEY**: Chỉ đặt KEY ở **server** (Nest/BFF). Không bao giờ đẩy xuống FE.
 
 ---
 
@@ -334,8 +264,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/ttph/:path*',
-        destination: 'https://tinhthanhpho.com/api/v1/:path*',
+        source: "/ttph/:path*",
+        destination: "https://tinhthanhpho.com/api/v1/:path*",
       },
     ];
   },
@@ -348,19 +278,13 @@ module.exports = nextConfig;
 ```ts
 export type Province = { code: string; name: string; type?: string };
 export type District = { code: string; name: string; type?: string; province_code?: string };
-export type Ward = {
-  code: string;
-  name: string;
-  type?: string;
-  district_code?: string;
-  province_code?: string;
-};
+export type Ward     = { code: string; name: string; type?: string; district_code?: string; province_code?: string };
 
 // Gọi qua rewrite /ttph để cùng origin (không bị CORS)
-const BASE = '/ttph';
+const BASE = "/ttph";
 
 function joinUrl(base: string, path: string) {
-  return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+  return `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
 }
 
 async function apiGet<T>(path: string, params?: Record<string, any>): Promise<T> {
@@ -369,43 +293,41 @@ async function apiGet<T>(path: string, params?: Record<string, any>): Promise<T>
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   });
 
-  const r = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+  const r = await fetch(url.toString(), { headers: { Accept: "application/json" } });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
   const body = await r.json();
   const data = Array.isArray(body) ? body : body?.data; // provider bọc trong { data }
-  if (!data) throw new Error('Invalid payload shape');
+  if (!data) throw new Error("Invalid payload shape");
   return data as T;
 }
 
-export const getProvinces = (limit = 1000) => apiGet<Province[]>('provinces', { limit });
-export const getDistricts = (provinceCode: string, limit = 1000) =>
-  apiGet<District[]>(`provinces/${provinceCode}/districts`, { limit });
-export const getWards = (districtCode: string, limit = 1000) =>
-  apiGet<Ward[]>(`districts/${districtCode}/wards`, { limit });
+export const getProvinces = (limit = 1000) => apiGet<Province[]>("provinces", { limit });
+export const getDistricts = (provinceCode: string, limit = 1000) => apiGet<District[]>(`provinces/${provinceCode}/districts`, { limit });
+export const getWards     = (districtCode: string,  limit = 1000) => apiGet<Ward[]>(`districts/${districtCode}/wards`, { limit });
 ```
 
 ## 3) `src/hooks/useGeo.ts` (TanStack Query, khai báo kiểu rõ để tránh TS2742)
 
 ```ts
-'use client';
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { getProvinces, getDistricts, getWards } from '@/lib/tinhthanhpho';
-import type { Province, District, Ward } from '@/lib/tinhthanhpho';
+"use client";
+import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { getProvinces, getDistricts, getWards } from "@/lib/tinhthanhpho";
+import type { Province, District, Ward } from "@/lib/tinhthanhpho";
 
 type Q<T> = UseQueryResult<T, Error>;
 const DAY = 86_400_000;
 
 export const useProvinces: () => Q<Province[]> = () =>
   useQuery<Province[], Error>({
-    queryKey: ['geo', 'provinces'] as const,
+    queryKey: ["geo", "provinces"] as const,
     queryFn: () => getProvinces(),
     staleTime: DAY,
   });
 
 export const useDistricts: (provinceCode?: string) => Q<District[]> = (provinceCode) =>
   useQuery<District[], Error>({
-    queryKey: ['geo', 'districts', provinceCode] as const,
+    queryKey: ["geo", "districts", provinceCode] as const,
     queryFn: () => getDistricts(provinceCode!),
     enabled: !!provinceCode,
     staleTime: DAY,
@@ -413,7 +335,7 @@ export const useDistricts: (provinceCode?: string) => Q<District[]> = (provinceC
 
 export const useWards: (districtCode?: string) => Q<Ward[]> = (districtCode) =>
   useQuery<Ward[], Error>({
-    queryKey: ['geo', 'wards', districtCode] as const,
+    queryKey: ["geo", "wards", districtCode] as const,
     queryFn: () => getWards(districtCode!),
     enabled: !!districtCode,
     staleTime: DAY,
@@ -423,14 +345,14 @@ export const useWards: (districtCode?: string) => Q<Ward[]> = (districtCode) =>
 ## 4) `src/components/geo/GeoPickerFE.tsx`
 
 ```tsx
-'use client';
-import { useState } from 'react';
-import { useProvinces, useDistricts, useWards } from '@/hooks/useGeo';
+"use client";
+import { useState } from "react";
+import { useProvinces, useDistricts, useWards } from "@/hooks/useGeo";
 
 export default function GeoPickerFE() {
-  const [provinceCode, setProvinceCode] = useState('');
-  const [districtCode, setDistrictCode] = useState('');
-  const [wardCode, setWardCode] = useState('');
+  const [provinceCode, setProvinceCode] = useState("");
+  const [districtCode, setDistrictCode] = useState("");
+  const [wardCode, setWardCode] = useState("");
 
   const provincesQ = useProvinces();
   const districtsQ = useDistricts(provinceCode || undefined);
@@ -449,15 +371,13 @@ export default function GeoPickerFE() {
           value={provinceCode}
           onChange={(e) => {
             setProvinceCode(e.target.value);
-            setDistrictCode('');
-            setWardCode('');
+            setDistrictCode("");
+            setWardCode("");
           }}
         >
           <option value="">-- Chọn tỉnh --</option>
           {provinces.map((p) => (
-            <option key={p.code} value={p.code}>
-              {p.name}
-            </option>
+            <option key={p.code} value={p.code}>{p.name}</option>
           ))}
         </select>
       </div>
@@ -470,14 +390,12 @@ export default function GeoPickerFE() {
           disabled={!provinceCode || districtsQ.isLoading}
           onChange={(e) => {
             setDistrictCode(e.target.value);
-            setWardCode('');
+            setWardCode("");
           }}
         >
           <option value="">-- Chọn quận/huyện --</option>
           {districts.map((d) => (
-            <option key={d.code} value={d.code}>
-              {d.name}
-            </option>
+            <option key={d.code} value={d.code}>{d.name}</option>
           ))}
         </select>
       </div>
@@ -492,9 +410,7 @@ export default function GeoPickerFE() {
         >
           <option value="">-- Chọn phường/xã --</option>
           {wards.map((w) => (
-            <option key={w.code} value={w.code}>
-              {w.name}
-            </option>
+            <option key={w.code} value={w.code}>{w.name}</option>
           ))}
         </select>
       </div>
@@ -507,9 +423,9 @@ export default function GeoPickerFE() {
 
 ```tsx
 // src/app/providers.tsx
-'use client';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode, useState } from 'react';
+"use client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactNode, useState } from "react";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [qc] = useState(() => new QueryClient());
@@ -519,7 +435,7 @@ export default function Providers({ children }: { children: ReactNode }) {
 
 ```tsx
 // src/app/layout.tsx
-import Providers from './providers';
+import Providers from "./providers";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
@@ -537,27 +453,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ```md
 Bạn là trợ lý kỹ thuật cho dự án Next.js (App Router) + TanStack Query. Hiện đã có:
-
 - next.config.js dùng rewrites `/ttph/:path* -> https://tinhthanhpho.com/api/v1/:path*` để né CORS.
 - lib `tinhthanhpho.ts` với `getProvinces/getDistricts/getWards` (unwrap `body.data`).
 - Hooks `useProvinces/useDistricts/useWards` (UseQueryResult, staleTime=1d).
 - Component `GeoPickerFE` 3 cấp chọn Tỉnh→Huyện→Xã.
 
 Nhiệm vụ:
-
-1. Thêm ô tìm nhanh (typeahead) dựa trên API search/addresses (nếu có), debounce 300ms.
-2. Thêm persist cache TanStack Query vào localStorage.
-3. Bổ sung fallback UI khi provider lỗi: hiển thị toast + giữ dữ liệu cũ (nếu có) + nút retry.
-4. Viết tests cơ bản (React Testing Library) cho GeoPickerFE.
+1) Thêm ô tìm nhanh (typeahead) dựa trên API search/addresses (nếu có), debounce 300ms.
+2) Thêm persist cache TanStack Query vào localStorage.
+3) Bổ sung fallback UI khi provider lỗi: hiển thị toast + giữ dữ liệu cũ (nếu có) + nút retry.
+4) Viết tests cơ bản (React Testing Library) cho GeoPickerFE.
 
 Ràng buộc:
-
 - Không đụng đến API key hay BE.
 - Không dùng thư viện UI ngoài trừ className/Tailwind hiện có.
 - Mọi URL vẫn gọi qua `/ttph/...`.
 
 Đầu ra:
-
 - Đưa patch code hoàn chỉnh (file path + nội dung), giải thích ngắn gọn quyết định chính, và checklist test chạy.
 ```
 
@@ -565,6 +477,6 @@ Ràng buộc:
 
 ## Quick Notes
 
-- Dùng **code (string)** để tránh mất số 0 đầu.
-- Nếu cần gọi trực tiếp `https://tinhthanhpho.com/api/v1/...`, phải ghép URL an toàn (strip "/"), hoặc luôn dùng `/ttph/...` cho khoẻ.
-- TanStack Query: nhớ khai báo kiểu trả về để tránh TS2742.
+* Dùng **code (string)** để tránh mất số 0 đầu.
+* Nếu cần gọi trực tiếp `https://tinhthanhpho.com/api/v1/...`, phải ghép URL an toàn (strip "/"), hoặc luôn dùng `/ttph/...` cho khoẻ.
+* TanStack Query: nhớ khai báo kiểu trả về để tránh TS2742.

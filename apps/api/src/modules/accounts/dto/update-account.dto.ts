@@ -20,4 +20,5 @@ export class UpdateAccountDto {
   @IsOptional()
   @IsUrl()
   avatarUrl?: string;
+
 }

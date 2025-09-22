@@ -65,14 +65,20 @@ export class CarCatalogController {
   @Get('brands/:brandId/models')
   @ApiOperation({ summary: 'Lấy danh sách Model theo Brand' })
   @ApiOkResponse({ description: 'Danh sách model theo brand' })
-  getModelsByBrand(@Param('brandId', ParseIntPipe) brandId: number, @Query() query: ListQueryDto) {
+  getModelsByBrand(
+    @Param('brandId', ParseIntPipe) brandId: number,
+    @Query() query: ListQueryDto,
+  ) {
     return this.service.getModelsByBrand(brandId, query);
   }
 
   @Get('models/:modelId/trims')
   @ApiOperation({ summary: 'Lấy danh sách Trim theo Model' })
   @ApiOkResponse({ description: 'Danh sách trim theo model' })
-  getTrimsByModel(@Param('modelId', ParseIntPipe) modelId: number, @Query() query: ListQueryDto) {
+  getTrimsByModel(
+    @Param('modelId', ParseIntPipe) modelId: number,
+    @Query() query: ListQueryDto,
+  ) {
     return this.service.getTrimsByModel(modelId, query);
   }
 

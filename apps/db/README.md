@@ -48,7 +48,7 @@ Connection info:
 | -------- | ---------------------------- |
 | DB_HOST  | `127.0.0.1` (or `localhost`) |
 | DB_PORT  | `5432`                       |
-| DB_NAME  | `2hand_ev_battery_trading`   |
+| DB_NAME  | `2hand_ev_battery_trading`             |
 | USERNAME | `postgres`                   |
 | PASSWORD | `postgres`                   |
 
