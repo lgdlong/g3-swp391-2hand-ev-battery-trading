@@ -1,50 +1,85 @@
-// import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
-// import { Account } from '../../accounts/entities/account.entity';
-// // import { PostEvDetail } from './post-ev-detail.entity';
-// import { PostBatteryDetail } from '../../post-details/battery/entities/post-battery-detail.entity';
-//
-// @Entity('posts')
-// export class Post {
-//   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
-//   id!: number;
-//
-//   @ManyToOne(() => Account, (account) => account.posts)
-//   @JoinColumn({ name: 'seller_id' })
-//   seller!: Account;
-//
-//   @Column({ type: 'varchar', length: 120 })
-//   title!: string;
-//
-//   @Column({ type: 'text' })
-//   description!: string;
-//
-//   @Column({ type: 'varchar', length: 10 })
-//   ward_code!: string;
-//
-//   @Column({ type: 'varchar', length: 120, nullable: true })
-//   province_name_cached!: string | null;
-//
-//   @Column({ type: 'varchar', length: 120, nullable: true })
-//   district_name_cached!: string | null;
-//
-//   @Column({ type: 'varchar', length: 120, nullable: true })
-//   ward_name_cached!: string | null;
-//
-//   @Column({ type: 'text', nullable: true })
-//   address_text_cached!: string | null;
-//
-//   @Column({ type: 'numeric', precision: 14, scale: 0 })
-//   price_vnd!: string;
-//
-//   @Column({ type: 'boolean', default: false })
-//   is_negotiable!: boolean;
-//
-//   @Column({ type: 'varchar', default: 'DRAFT' })
-//   status!: string;
-//
-//   @OneToOne(() => PostEvDetail, (ev) => ev.post)
-//   evDetail!: PostEvDetail;
-//
-//   @OneToOne(() => PostBatteryDetail, (battery) => battery.post)
-//   batteryDetail!: PostBatteryDetail;
-// }
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  Index,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
+import type { Account } from '../../accounts/entities/account.entity';
+import { PostStatus } from '../../../shared/enums/post-status.enum';
+import { PostType } from '../../../shared/enums/post-type.enum';
+
+@Entity({ name: 'posts' })
+@Index(['wardCode'])
+@Index(['status', 'submittedAt'])
+@Index(['seller', 'status'])
+export class Post {
+  @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+  id!: string;
+
+  @ManyToOne(
+    () => require('../../accounts/entities/account.entity').Account,
+    (account: Account) => account.posts,
+    { nullable: false, onDelete: 'CASCADE' },
+  )
+  @JoinColumn({ name: 'seller_id' })
+  seller!: Account;
+
+  @Column({ type: 'enum', enum: PostType })
+  postType!: PostType;
+
+  @Column({ type: 'varchar', length: 120 })
+  title!: string;
+
+  @Column({ type: 'text' })
+  description!: string;
+
+  @Column({ type: 'varchar', length: 10 })
+  wardCode!: string;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  provinceNameCached: string | null = null;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  districtNameCached: string | null = null;
+
+  @Column({ type: 'varchar', length: 120, nullable: true })
+  wardNameCached: string | null = null;
+
+  @Column({ type: 'text', nullable: true })
+  addressTextCached: string | null = null;
+
+  @Column({ type: 'numeric', precision: 14, scale: 0 })
+  priceVnd!: string;
+
+  @Column({ type: 'boolean', default: false })
+  isNegotiable!: boolean;
+
+  @Column({ type: 'enum', enum: PostStatus, default: PostStatus.DRAFT })
+  status!: PostStatus;
+
+  @Column({ type: 'timestamp', nullable: true })
+  submittedAt: Date | null = null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  reviewedAt: Date | null = null;
+
+  @ManyToOne(() => require('./../../accounts/entities/account.entity').Account, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'reviewed_by' })
+  reviewedBy: Account | null = null;
+
+  @Column({ type: 'text', nullable: true })
+  rejectReason: string | null = null;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  createdAt!: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
+  updatedAt!: Date;
+}
