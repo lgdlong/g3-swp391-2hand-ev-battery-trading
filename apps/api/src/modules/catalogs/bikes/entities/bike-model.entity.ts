@@ -3,14 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
   Index,
 } from 'typeorm';
 import type { BikeBrand } from './bike-brand.entity';
-import type { BikeTrim } from './bike-trim.entity';
 
 @Entity({ name: 'bike_models' })
 @Index('UQ_bike_models_brand_name', ['brand', 'name'], { unique: true })
@@ -34,10 +32,4 @@ export class BikeModel {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
-
-  @OneToMany(
-    () => require('./bike-trim.entity').BikeTrim, // ✅ sync require
-    (t: BikeTrim) => t.model,
-  )
-  trims!: BikeTrim[];
 }

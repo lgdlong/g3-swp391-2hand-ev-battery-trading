@@ -25,11 +25,7 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
-import {
-  CreateBrandDto,
-  CreateModelDto,
-  CreateTrimDto,
-} from '../shared/dto/create-car-bike-catalog.dto';
+import { CreateBrandDto, CreateModelDto } from '../shared/dto/create-car-bike-catalog.dto';
 
 @Controller('car-catalog')
 export class CarCatalogController {
@@ -72,52 +68,6 @@ export class CarCatalogController {
     @Query() query: ListQueryDto,
   ) {
     return this.service.getModelsByBrand(brandId, query);
-  }
-
-  /**
-   * Lấy tất cả Trim theo 1 Model cụ thể.
-   * Nếu modelId không tồn tại -> trả 404.
-   *
-   * Example:
-   * GET /car-catalog/models/10/trims?q=stan&limit=50&offset=0&order=ASC
-   */
-  @Get('models/:modelId/trims')
-  @ApiOperation({ summary: 'Lấy danh sách Trim theo Model' })
-  @ApiOkResponse({ description: 'Danh sách trim theo model' })
-  getTrimsByModel(
-    @Param('modelId', new ParseIntPipe({ errorHttpStatusCode: 400 })) modelId: number,
-    @Query() query: ListQueryDto,
-  ) {
-    return this.service.getTrimsByModel(modelId, query);
-  }
-
-  /**
-   * Lấy danh sách Model, có thể filter theo brandId hoặc không.
-   * -> brandId là query param tùy chọn.
-   *
-   * Example:
-   * GET /car-catalog/models?brandId=1&q=mo
-   */
-  @Get('models')
-  @ApiOperation({ summary: 'Lấy danh sách Model (có thể filter theo brandId)' })
-  @ApiOkResponse({ description: 'Danh sách model' })
-  getModels(@Query() query: ListQueryDto & { brandId?: number }) {
-    // NOTE: Nếu muốn validate brandId (phải là int > 0) -> tạo DTO riêng
-    return this.service.getModels(query);
-  }
-
-  /**
-   * Lấy danh sách Trim, có thể filter theo modelId hoặc không.
-   * -> modelId là query param tùy chọn.
-   *
-   * Example:
-   * GET /car-catalog/trims?modelId=10&q=stan
-   */
-  @Get('trims')
-  @ApiOperation({ summary: 'Lấy danh sách Trim (có thể filter theo modelId)' })
-  @ApiOkResponse({ description: 'Danh sách trim' })
-  getTrims(@Query() query: ListQueryDto & { modelId?: number }) {
-    return this.service.getTrims(query);
   }
 
   // ======================================================
@@ -163,63 +113,6 @@ export class CarCatalogController {
     return this.service.createModel({ ...dto, brandId });
   }
 
-  /**
-   * Tạo mới 1 Model (dạng body, không cần nested).
-   * brandId được truyền trong body.
-   *
-   * Example:
-   * POST /car-catalog/models
-   * Body: { "name": "Model 3", "brandId": 5 }
-   */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(AccountRole.ADMIN)
-  @Post('models')
-  @ApiOperation({ summary: 'Tạo Model mới (cần ADMIN)' })
-  @ApiBody({ type: CreateModelDto })
-  @ApiCreatedResponse({ description: 'Model được tạo thành công' })
-  createModel(@Body() dto: CreateModelDto) {
-    return this.service.createModel(dto);
-  }
-
-  /**
-   * Tạo mới 1 Trim dưới 1 Model cụ thể (nested).
-   * modelId lấy từ path param, name lấy từ body.
-   *
-   * Example:
-   * POST /car-catalog/models/10/trims
-   * Body: { "name": "Long Range" }
-   */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(AccountRole.ADMIN)
-  @Post('models/:modelId/trims')
-  @ApiOperation({ summary: 'Tạo Trim mới theo Model (cần ADMIN)' })
-  @ApiBody({ type: CreateTrimDto })
-  @ApiCreatedResponse({ description: 'Trim được tạo thành công' })
-  createTrimUnderModel(
-    @Param('modelId', new ParseIntPipe({ errorHttpStatusCode: 400 })) modelId: number,
-    @Body() dto: CreateTrimDto,
-  ) {
-    return this.service.createTrim({ ...dto, modelId });
-  }
-
-  /**
-   * Tạo mới 1 Trim (dạng body, không cần nested).
-   * modelId được truyền trong body.
-   *
-   * Example:
-   * POST /car-catalog/trims
-   * Body: { "name": "RWD", "modelId": 10 }
-   */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(AccountRole.ADMIN)
-  @Post('trims')
-  @ApiOperation({ summary: 'Tạo Trim mới (cần ADMIN)' })
-  @ApiBody({ type: CreateTrimDto })
-  @ApiCreatedResponse({ description: 'Trim được tạo thành công' })
-  createTrim(@Body() dto: CreateTrimDto) {
-    return this.service.createTrim(dto);
-  }
-
   // ======================================================
   // ============== DELETE (DELETE) ENDPOINTS =============
   // ======================================================
@@ -256,22 +149,5 @@ export class CarCatalogController {
   @ApiNoContentResponse({ description: 'Xoá thành công' })
   deleteModel(@Param('modelId', new ParseIntPipe({ errorHttpStatusCode: 400 })) modelId: number) {
     return this.service.deleteModel(modelId);
-  }
-
-  /**
-   * Xoá 1 Trim theo id.
-   * Nếu trimId không tồn tại -> 404.
-   *
-   * Example:
-   * DELETE /car-catalog/trims/5
-   */
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(AccountRole.ADMIN)
-  @Delete('trims/:trimId')
-  @HttpCode(204)
-  @ApiOperation({ summary: 'Xoá Trim (cần ADMIN)' })
-  @ApiNoContentResponse({ description: 'Xoá thành công' })
-  deleteTrim(@Param('trimId', new ParseIntPipe({ errorHttpStatusCode: 400 })) trimId: number) {
-    return this.service.deleteTrim(trimId);
   }
 }
