@@ -154,6 +154,8 @@ export function SearchBar({ className }: SearchBarProps) {
             />
           </div>
 
+
+
           {/* Location Dropdown - New Approach */}
           <div className="border-l border-emerald-600 flex-shrink-0">
             <select
