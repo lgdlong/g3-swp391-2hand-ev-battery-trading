@@ -3,23 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { sampleBatteryPosts, formatVnd } from '../sample-battery';
 import { Card, CardContent } from '@/components/ui/card';
-// Badge component inline to avoid import issues
-const Badge = ({
-  className,
-  children,
-  ...props
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => (
-  <div
-    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${className || ''}`}
-    {...props}
-  >
-    {children}
-  </div>
-);
 import { Calendar, MapPin, User, Battery, Zap, Activity, TrendingUp } from 'lucide-react';
+import { Badge } from '@/app/(public)/posts/_components/Badge';
 
 type Props = {
   params: Promise<{ id: string }>;
