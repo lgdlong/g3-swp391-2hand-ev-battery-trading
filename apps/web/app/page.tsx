@@ -2,6 +2,7 @@
 
 import { Header } from '@/components/header';
 import { SearchBar } from '@/components/search-bar';
+import GeoForm from '@/components/GeoForm';
 
 export default function Home() {
   return (
@@ -9,7 +10,7 @@ export default function Home() {
       {/* Header */}
       <Header />
 
-      {/* Search bar */}
+      {/* Search Bar */}
       <SearchBar />
 
       {/* Main content */}
@@ -19,11 +20,20 @@ export default function Home() {
             Welcome to 2Hand EV Battery Trading
           </h1>
           <p className="mt-6 text-lg leading-8 text-muted-foreground max-w-2xl mx-auto">
-            Your trusted platform for buying and selling high-quality second-hand electric vehicle
-            batteries. Find the perfect battery for your EV or sell your used battery to get the
-            best value.
+            Your trusted platform for buying and selling high-quality second-hand electric vehicle batteries.
+            Find the perfect battery for your EV or sell your used battery to get the best value.
           </p>
         </div>
+
+        {/* Extra section */}
+        <section className="mt-12 text-left">
+
+
+          {/* Form component */}
+          <div className="mt-6">
+            <GeoForm />
+          </div>
+        </section>
       </main>
     </div>
   );

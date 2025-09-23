@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import { useProvinces, useDistricts, useWards } from '@/hooks/useGeo';
 
 export default function GeoForm() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [provinceCode, setProvinceCode] = useState<string>('');
   const [districtCode, setDistrictCode] = useState<string>('');
   const [wardCode, setWardCode] = useState<string>('');

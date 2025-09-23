@@ -22,6 +22,49 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
+// Add custom CSS animations
+const style = `
+  @keyframes slideInFromLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInFromTop {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = style;
+  document.head.appendChild(styleSheet);
+}
+
 // ===== SIDEBAR MENU COMPONENT =====
 interface SidebarMenuProps {
   className?: string;
@@ -50,7 +93,7 @@ function SidebarMenu({ className, onToggle }: SidebarMenuProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 group"
+        className="text-gray-600 hover:text-gray-900 hover:bg-[#7EF2DD] transition-colors duration-200 group rounded-xl"
         onMouseEnter={() => handleToggle(true)}
         onMouseLeave={() => handleToggle(false)}
       >
@@ -71,86 +114,118 @@ interface UserSidebarProps {
 function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebarProps) {
   if (!isOpen) return null;
 
+  const menuItems = [
+    { label: 'Profile Settings', href: '#', icon: User, color: 'bg-blue-500' },
+    { label: 'My Bookmarks', href: '#', icon: Bookmark, color: 'bg-green-500' },
+    { label: 'Notifications', href: '#', icon: Bell, color: 'bg-orange-500' },
+    { label: 'Settings', href: '#', icon: Settings, color: 'bg-purple-500' },
+  ];
+
+  if (userRole === 'admin') {
+    menuItems.push({ label: 'Admin Dashboard', href: '#', icon: Settings, color: 'bg-red-500' });
+  }
+
   return (
-    <div className="fixed inset-0 z-[99999] bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-md animate-in fade-in duration-300"
+      onClick={onClose}
+    >
       <div
-        className="absolute top-16 right-4 w-80 bg-slate-800 border border-white/20 rounded-lg shadow-2xl"
+        className="absolute top-16 right-4 w-96 bg-white/95 backdrop-blur-2xl border border-gray-200/40 rounded-3xl shadow-2xl animate-in slide-in-from-top-2 duration-300 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-              <User className="h-6 w-6 text-white" />
+        <div className="px-6 py-6 bg-gradient-to-r from-blue-500/5 via-green-500/5 to-purple-500/5 border-b border-gray-200/40">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <User className="h-8 w-8 text-white" />
+              </div>
+              {/* Online indicator */}
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white shadow-lg">
+                <div className="w-full h-full bg-emerald-400 rounded-full animate-pulse"></div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">User Profile</h3>
-              <p className="text-sm text-white/70 capitalize">{userRole || 'User'}</p>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
+                User Profile
+              </h3>
+              <p className="text-sm text-gray-600 font-medium capitalize">{userRole || 'User'}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-gray-500">Online</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Menu Items */}
-        <div className="p-2">
-          <Link
-            href="#"
-            className="flex items-center gap-3 px-3 py-2 text-sm text-white hover:bg-white/10 rounded-md transition-colors"
-            onClick={onClose}
-          >
-            <User className="h-4 w-4" />
-            <span>Profile Settings</span>
-          </Link>
-
-          <Link
-            href="#"
-            className="flex items-center gap-3 px-3 py-2 text-sm text-white hover:bg-white/10 rounded-md transition-colors"
-            onClick={onClose}
-          >
-            <Bookmark className="h-4 w-4" />
-            <span>My Bookmarks</span>
-          </Link>
-
-          <Link
-            href="#"
-            className="flex items-center gap-3 px-3 py-2 text-sm text-white hover:bg-white/10 rounded-md transition-colors"
-            onClick={onClose}
-          >
-            <Bell className="h-4 w-4" />
-            <span>Notifications</span>
-          </Link>
-
-          <Link
-            href="#"
-            className="flex items-center gap-3 px-3 py-2 text-sm text-white hover:bg-white/10 rounded-md transition-colors"
-            onClick={onClose}
-          >
-            <Settings className="h-4 w-4" />
-            <span>Settings</span>
-          </Link>
-
-          {userRole === 'admin' && (
+        <div className="p-4 space-y-2">
+          {menuItems.map((item, index) => (
             <Link
-              href="#"
-              className="flex items-center gap-3 px-3 py-2 text-sm text-white hover:bg-white/10 rounded-md transition-colors"
+              key={item.label}
+              href={item.href}
+              className="flex items-center gap-4 px-4 py-4 text-sm text-gray-700 rounded-2xl transition-all duration-300 group relative overflow-hidden"
               onClick={onClose}
+              style={{
+                animationDelay: `${index * 100}ms`,
+                animation: 'slideInFromRight 0.3s ease-out forwards',
+              }}
             >
-              <Settings className="h-4 w-4" />
-              <span>Admin Dashboard</span>
+              {/* Background effect removed */}
+
+              {/* Icon container */}
+              <div className="relative p-3 rounded-xl bg-emerald-600 text-white shadow-sm group-hover:scale-110 transition-all duration-200">
+                <item.icon className="h-5 w-5" />
+              </div>
+
+              {/* Content */}
+              <div className="flex flex-col items-start flex-1 relative z-10">
+                <span className="font-semibold text-gray-900">{item.label}</span>
+                <span className="text-xs text-gray-500">
+                  {item.label === 'Admin Dashboard'
+                    ? 'Quản trị hệ thống'
+                    : `Truy cập ${item.label.toLowerCase()}`}
+                </span>
+              </div>
+
+              {/* Arrow indicator */}
+              <div className="w-2 h-2 bg-emerald-600 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-0 group-hover:scale-100"></div>
             </Link>
-          )}
+          ))}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-white/10">
+        <div className="px-6 py-4 bg-gradient-to-r from-gray-50/50 to-gray-100/50 border-t border-gray-200/40">
           <button
-            className="flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-md transition-colors w-full"
+            className="flex items-center gap-4 px-4 py-4 text-sm text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 rounded-2xl transition-all duration-300 w-full group relative overflow-hidden"
             onClick={() => {
               onLogout?.();
               onClose();
             }}
           >
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
+            {/* Background effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            {/* Icon container */}
+            <div className="relative p-3 rounded-xl bg-red-500 text-white shadow-sm group-hover:scale-110 transition-all duration-200">
+              <LogOut className="h-5 w-5" />
+              {/* Glow effect */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
+
+            {/* Content */}
+            <div className="flex flex-col items-start flex-1 relative z-10">
+              <span className="font-semibold group-hover:text-red-700 transition-colors duration-300">
+                Logout
+              </span>
+              <span className="text-xs text-red-500 group-hover:text-red-600 transition-colors duration-300">
+                Đăng xuất khỏi tài khoản
+              </span>
+            </div>
+
+            {/* Arrow indicator */}
+            <div className="w-2 h-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-0 group-hover:scale-100"></div>
           </button>
         </div>
       </div>
@@ -208,13 +283,13 @@ function UserModeToggle({ className }: UserModeToggleProps) {
   }, [isOpen]);
 
   return (
-    <div className={cn('relative', className)} ref={dropdownRef}>
+    <div className={cn('relative z-[99999]', className)} ref={dropdownRef}>
       {/* Mode Selector Button */}
       <Button
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
-        className="text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 group flex items-center gap-2"
+        className="text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors duration-200 group flex items-center gap-2 rounded-xl px-3 py-2"
       >
         {currentMode && <currentMode.icon className="h-4 w-4" />}
         <span className="text-sm hidden sm:inline">{currentMode?.label}</span>
@@ -225,27 +300,58 @@ function UserModeToggle({ className }: UserModeToggleProps) {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-64 bg-slate-800 border border-white/20 rounded-lg shadow-2xl z-[9999]">
-          <div className="p-2">
-            {modes.map((mode) => (
+        <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-emerald-600 rounded-xl shadow-lg z-[99999] overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-3 bg-emerald-100 border-b border-emerald-600">
+            <h3 className="text-sm font-bold text-gray-800">Chọn chế độ</h3>
+            <p className="text-xs text-gray-600">Chọn vai trò của bạn trên nền tảng</p>
+          </div>
+
+          <div className="p-4">
+            {modes.map((mode, index) => (
               <button
                 key={mode.value}
                 onClick={() => handleModeSelect(mode.value as 'buyer' | 'seller')}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-3 text-sm text-white hover:bg-white/10 rounded-md transition-colors group',
-                  selectedMode === mode.value && 'bg-white/5',
+                  'w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-emerald-50 rounded-lg transition-colors duration-200 group mb-2',
+                  selectedMode === mode.value && 'bg-emerald-100 ring-2 ring-emerald-600',
                 )}
               >
-                <mode.icon className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                <div className="flex flex-col items-start">
-                  <span className="font-medium">{mode.label}</span>
-                  <span className="text-xs text-white/60">{mode.description}</span>
+                {/* Icon container */}
+                <div
+                  className={cn(
+                    'p-2 rounded-lg transition-colors duration-200',
+                    selectedMode === mode.value
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-gray-100 group-hover:bg-emerald-600 group-hover:text-white',
+                  )}
+                >
+                  <mode.icon className="h-5 w-5" />
                 </div>
+
+                {/* Content */}
+                <div className="flex flex-col items-start flex-1">
+                  <span className="font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors duration-200">
+                    {mode.label}
+                  </span>
+                  <span className="text-xs text-gray-600 group-hover:text-gray-700 transition-colors duration-200">
+                    {mode.description}
+                  </span>
+                </div>
+
+                {/* Selection indicator */}
                 {selectedMode === mode.value && (
-                  <div className="ml-auto w-2 h-2 bg-green-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-[#048C73] rounded-full"></div>
                 )}
               </button>
             ))}
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-3 bg-gray-50 border-t border-[#3DC9D9]">
+            <div className="flex items-center justify-center text-xs text-gray-600">
+              <span>Chế độ đã được lưu tự động</span>
+            </div>
           </div>
         </div>
       )}
@@ -271,7 +377,8 @@ function Logo({ className, size = 'md' }: LogoProps) {
       {/* Battery Icon */}
       <div
         className={cn(
-          'bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center text-white font-bold',
+          'bg-[#048C73] rounded-xl flex items-center justify-center text-white font-bold shadow-sm',
+          'hover:shadow-md transition-all duration-200 hover:scale-105',
           sizeClasses[size],
         )}
       >
@@ -282,8 +389,10 @@ function Logo({ className, size = 'md' }: LogoProps) {
 
       {/* Text */}
       <div className="flex flex-col">
-        <span className="font-bold text-lg leading-tight">2Hand</span>
-        <span className="text-xs text-muted-foreground leading-tight">EV Battery</span>
+        <span className="font-bold text-xl leading-tight bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          2Hand
+        </span>
+        <span className="text-xs text-gray-500 leading-tight font-medium">EV Battery</span>
       </div>
     </div>
   );
@@ -295,9 +404,9 @@ interface NavigationProps {
 }
 
 const navigationItems = [
-  { label: 'EV', href: '/posts/ev' },
-  { label: 'Battery', href: '/posts/battery' },
-  { label: 'Service', href: '/service' },
+  { label: 'Brands', href: '#' },
+  { label: 'Battery', href: '#' },
+  { label: 'Service', href: '#' },
 ];
 
 function Navigation({ className }: NavigationProps) {
@@ -307,11 +416,11 @@ function Navigation({ className }: NavigationProps) {
         <Link
           key={item.href}
           href={item.href}
-          className="relative text-sm font-medium text-white/90 hover:text-white transition-all duration-300 group px-3 py-2"
+          className="relative text-sm font-semibold text-gray-600 hover:text-gray-900 transition-all duration-300 group px-4 py-3 rounded-xl"
         >
           <span className="relative z-10">{item.label}</span>
-          <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-green-400 to-blue-400 group-hover:w-full transition-all duration-300"></div>
+          <div className="absolute inset-0 bg-[#7EF2DD] rounded-xl opacity-0 group-hover:opacity-100 transition-colors duration-200"></div>
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-0 h-0.5 bg-[#048C73] group-hover:w-3/4 transition-all duration-200 rounded-full"></div>
         </Link>
       ))}
     </nav>
@@ -339,14 +448,14 @@ function UserActions({
         <Button
           asChild
           size="sm"
-          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm hover:shadow-md transition-colors duration-200 group rounded-xl px-4 py-2"
         >
           <Link
-            href="/posts/create"
+            href="#"
             className="flex items-center gap-2 group-hover:scale-105 transition-transform duration-300"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Đăng tin</span>
+            <span className="hidden sm:inline font-semibold">Đăng tin</span>
           </Link>
         </Button>
 
@@ -355,13 +464,12 @@ function UserActions({
           asChild
           variant="ghost"
           size="sm"
-          className="text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 group relative"
+          className="text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors duration-200 group relative rounded-xl p-2"
         >
-          <Link href="#" className="flex items-center gap-2">
-            <Bookmark className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-            <span className="hidden sm:inline">Bookmarks</span>
+          <Link href="#" className="flex items-center">
+            <Bookmark className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
             {/* Notification badge */}
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
               <span className="text-xs text-white font-bold">3</span>
             </div>
           </Link>
@@ -372,13 +480,12 @@ function UserActions({
           asChild
           variant="ghost"
           size="sm"
-          className="text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 group relative"
+          className="text-gray-600 hover:text-gray-900 hover:bg-[#7EF2DD] transition-colors duration-200 group relative rounded-xl p-2"
         >
-          <Link href="#" className="flex items-center gap-2">
-            <Bell className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-            <span className="hidden sm:inline">Notifications</span>
+          <Link href="#" className="flex items-center">
+            <Bell className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
             {/* Notification badge */}
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
               <span className="text-xs text-white font-bold">5</span>
             </div>
           </Link>
@@ -388,13 +495,13 @@ function UserActions({
         <Button
           variant="ghost"
           size="sm"
-          className="flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 group"
+          className="flex items-center gap-2 text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors duration-200 group rounded-xl px-3 py-2"
           onClick={onUserMenuToggle}
         >
-          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200">
             <User className="h-4 w-4 text-white" />
           </div>
-          <span className="hidden sm:inline">User</span>
+          <span className="hidden sm:inline font-medium">User</span>
           <ChevronDown className="h-3 w-3 group-hover:rotate-180 transition-transform duration-300" />
         </Button>
       </div>
@@ -408,11 +515,11 @@ function UserActions({
         asChild
         variant="ghost"
         size="sm"
-        className="text-white/90 hover:text-white hover:bg-white/10 transition-all duration-300 group"
+        className="text-gray-600 hover:text-gray-900 hover:bg-[#7EF2DD] transition-colors duration-200 group rounded-xl px-4 py-2"
       >
         <Link href="/login" className="flex items-center gap-2">
           <LogIn className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-          <span className="hidden sm:inline">Login</span>
+          <span className="hidden sm:inline font-medium">Login</span>
         </Link>
       </Button>
 
@@ -420,14 +527,14 @@ function UserActions({
       <Button
         asChild
         size="sm"
-        className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 group"
+        className="bg-[#048C73] hover:bg-[#52D967] text-white border-0 shadow-sm hover:shadow-md transition-colors duration-200 group rounded-xl px-4 py-2"
       >
         <Link
           href="/sign-up"
           className="flex items-center gap-2 group-hover:scale-105 transition-transform duration-300"
         >
           <UserPlus className="h-4 w-4" />
-          <span className="hidden sm:inline">Sign Up</span>
+          <span className="hidden sm:inline font-semibold">Sign Up</span>
         </Link>
       </Button>
     </div>
@@ -443,7 +550,6 @@ export function Header({ className }: HeaderProps) {
   const { isLoggedIn, userRole, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState<string>('');
 
   const menuItems = [
     { label: 'Dashboard Overview', href: '#', icon: '📊' },
@@ -453,33 +559,18 @@ export function Header({ className }: HeaderProps) {
     { label: 'System Settings', href: '#', icon: '⚙️' },
   ];
 
-  useEffect(() => {
-    setCurrentTime(new Date().toLocaleTimeString());
-  }, []);
-
   return (
     <>
       <header
         className={cn(
-          'sticky top-0 z-50 w-full border-b border-border/40',
-          'bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95',
-          'backdrop-blur-md supports-[backdrop-filter]:bg-slate-900/80',
-          'shadow-lg shadow-slate-900/20',
-          'before:absolute before:inset-0 before:bg-gradient-to-r before:from-green-500/10 before:via-transparent before:to-blue-500/10 before:opacity-50',
-          'after:absolute after:inset-0 after:bg-gradient-to-r after:from-transparent after:via-white/5 after:to-transparent after:opacity-30',
-          'relative',
+          'sticky top-0 z-50 w-full',
+          'bg-white',
+          'shadow-lg',
+          'relative overflow-visible',
           className,
         )}
       >
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-4 -left-4 w-24 h-24 bg-green-500/20 rounded-full blur-xl animate-pulse"></div>
-          <div className="absolute -top-2 -right-4 w-32 h-32 bg-blue-500/20 rounded-full blur-xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-purple-500/20 rounded-full blur-lg animate-pulse delay-500"></div>
-          <div className="absolute top-1/3 right-1/3 w-20 h-20 bg-cyan-500/20 rounded-full blur-lg animate-pulse delay-700"></div>
-        </div>
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex h-16 items-center justify-between">
             {/* Left: Sidebar Menu + Logo + User Mode Toggle */}
             <div className="flex items-center gap-4">
@@ -509,7 +600,7 @@ export function Header({ className }: HeaderProps) {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="md:hidden border-t border-white/10 pt-4 pb-4">
+          <div className="md:hidden border-t border-gray-200 pt-4 pb-4">
             <Navigation className="flex-col space-y-4 space-x-0" />
           </div>
         </div>
@@ -518,48 +609,55 @@ export function Header({ className }: HeaderProps) {
       {/* Sliding Sidebar */}
       <div
         className={cn(
-          'w-full bg-slate-800 border-b border-white/20 shadow-lg transition-all duration-500 ease-in-out',
+          'w-full bg-gradient-to-br from-gray-50 via-white to-gray-50 border-b border-gray-200/60 shadow-xl transition-all duration-500 ease-in-out',
           isSidebarOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden',
         )}
         onMouseEnter={() => setIsSidebarOpen(true)}
         onMouseLeave={() => setIsSidebarOpen(false)}
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-white mb-2">Quick Access</h3>
-            <p className="text-sm text-white/70">Navigate to different sections of the platform</p>
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+              Quick Access
+            </h3>
+            <p className="text-sm text-gray-600 font-medium">
+              Navigate to different sections of the platform
+            </p>
           </div>
 
           {/* Menu Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {menuItems.map((item, index) => (
               <Link
                 key={index}
                 href={item.href}
-                className="flex items-center gap-4 p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-all duration-300 group"
+                className="flex items-center gap-4 p-6 bg-white/80 hover:bg-white rounded-2xl transition-all duration-300 group border border-gray-200/60 shadow-lg hover:shadow-xl backdrop-blur-sm hover:scale-105"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform duration-300">
-                  {item.icon}
-                </span>
-                <div>
-                  <div className="font-medium text-white group-hover:text-green-400 transition-colors duration-300">
+                <div className="p-3 bg-gradient-to-br from-blue-500/10 to-green-500/10 rounded-xl group-hover:from-blue-500/20 group-hover:to-green-500/20 transition-all duration-300">
+                  <span className="text-2xl group-hover:scale-110 transition-transform duration-300">
+                    {item.icon}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300 mb-1">
                     {item.label}
                   </div>
-                  <div className="text-xs text-white/60">Access {item.label.toLowerCase()}</div>
+                  <div className="text-xs text-gray-500 font-medium">
+                    Access {item.label.toLowerCase()}
+                  </div>
                 </div>
+                <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-green-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </Link>
             ))}
           </div>
 
           {/* Footer */}
-          <div className="mt-6 pt-4 border-t border-white/10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-white/60">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span>System Online</span>
+          <div className="mt-8 pt-6 border-t border-gray-200/60">
+            <div className="flex items-center justify-center">
+              <div className="text-xs text-gray-400 font-medium">
+                Last updated: {new Date().toLocaleTimeString()}
               </div>
-              <div className="text-xs text-white/40">Last updated: {currentTime || '--:--:--'}</div>
             </div>
           </div>
         </div>
