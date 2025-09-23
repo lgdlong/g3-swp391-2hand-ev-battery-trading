@@ -1,6 +1,7 @@
 'use client';
 
 import { Header } from '@/components/header';
+import { SearchBar } from '@/components/search-bar';
 import GeoForm from '@/components/GeoForm';
 
 export default function Home() {
@@ -8,6 +9,9 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <Header />
+
+      {/* Search Bar */}
+      <SearchBar />
 
       {/* Main content */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
