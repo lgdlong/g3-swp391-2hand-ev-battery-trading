@@ -14,6 +14,8 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
+import { Roles } from '../../core/decorators/roles.decorator';
+import { AccountRole } from '../../shared/enums/account-role.enum';
 import { SafeAccountDto } from './dto/safe-account.dto';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 import {
@@ -27,12 +29,33 @@ import {
   ApiBadRequestResponse,
   ApiNoContentResponse,
 } from '@nestjs/swagger';
+import { CurrentUser, ReqUser } from 'src/core/decorators/current-user.decorator';
 
-@ApiTags('Accounts')
 @ApiBearerAuth()
+@ApiTags('Accounts')
 @Controller('accounts')
 export class AccountsController {
   constructor(private readonly accountsService: AccountsService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiOperation({ summary: 'Lấy thông tin tài hiện tại (cần auth)' })
+  @ApiOkResponse({ type: SafeAccountDto })
+  async me(@CurrentUser() user: ReqUser): Promise<SafeAccountDto> {
+    return this.accountsService.findMe(user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('me')
+  @ApiOperation({ summary: 'Cập nhật tài khoản hiện tại (cần auth)' })
+  @ApiBody({ type: UpdateAccountDto })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Cập nhật thành công' })
+  async updateMe(
+    @CurrentUser() user: ReqUser,
+    @Body() dto: UpdateAccountDto,
+  ): Promise<SafeAccountDto> {
+    return this.accountsService.updateMe(user.sub, dto);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Tạo tài khoản mới (public)' })
@@ -73,6 +96,7 @@ export class AccountsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN, AccountRole.USER) // Users can update their own accounts
   @Patch(':id')
   @ApiOperation({ summary: 'Cập nhật account theo id (cần auth)' })
   @ApiBody({ type: UpdateAccountDto })
@@ -85,6 +109,7 @@ export class AccountsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN) // Only admins can delete accounts
   @Delete(':id')
   @ApiOperation({ summary: 'Xoá account theo id (cần auth)' })
   @ApiNoContentResponse({ description: 'Xoá thành công' })

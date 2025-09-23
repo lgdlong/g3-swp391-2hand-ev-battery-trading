@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable } from '@nestjs/comm
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Account } from './entities/account.entity';
 import { ConfigService } from '@nestjs/config';
 import { DEFAULT_SALT_ROUNDS } from '../../shared/constants';
@@ -105,6 +105,33 @@ export class AccountsService {
 
   async findOneByEmailOrPhone(value: string): Promise<Account | null> {
     return this.repo.findOne({ where: normalizeEmailOrPhone(value) });
+  }
+
+  async findMe(userId: number): Promise<SafeAccountDto> {
+    if (!userId || userId <= 0) throw new NotFoundException(`Invalid account id: ${userId}`);
+    const acc = await this.repo.findOne({ where: { id: userId } });
+    if (!acc) throw new NotFoundException('Account not found');
+    return AccountMapper.toSafeDto(acc);
+  }
+
+  async updateMe(userId: number, dto: UpdateAccountDto): Promise<SafeAccountDto>{
+    if (dto.phone) {
+      const existingAccount = await this.repo.findOne({
+        where: { phone: dto.phone, id: Not(userId) },
+      });
+      if (existingAccount) {
+        throw new ConflictException('Phone number already in use.');
+      }
+    }
+
+    const result = await this.repo.update({ id: userId }, dto);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Account with id ${userId} not found`);
+    }
+
+    const updated = await this.repo.findOne ({ where: { id: userId}});
+    if(!updated) throw new NotFoundException('Account not found after update');
+    return AccountMapper.toSafeDto(updated);
   }
 
   findByEmail(email: string) {

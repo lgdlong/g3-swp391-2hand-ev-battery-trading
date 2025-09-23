@@ -1,4 +1,3 @@
-// apps/api/src/modules/accounts/entities/account.entity.ts
 import { AccountStatus } from '../../../shared/enums/account-status.enum';
 import { AccountRole } from '../../../shared/enums/account-role.enum';
 import {
@@ -8,7 +7,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   Check,
+  OneToMany,
 } from 'typeorm';
+import type { Post } from '../../posts/entities/post.entity';
 
 @Check(`("email" IS NOT NULL OR "phone" IS NOT NULL)`)
 @Entity({ name: 'accounts' })
@@ -17,10 +18,10 @@ export class Account {
   id!: number;
 
   @Column({ type: 'varchar', length: 120, unique: true, nullable: true })
-  email!: string | null;
+  email: string | null = null;
 
   @Column({ type: 'varchar', length: 15, unique: true, nullable: true })
-  phone!: string | null;
+  phone: string | null = null;
 
   @Column({ name: 'password_hashed', type: 'varchar', length: 255 })
   passwordHashed!: string;
@@ -29,7 +30,7 @@ export class Account {
   fullName!: string;
 
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
-  avatarUrl!: string | null;
+  avatarUrl: string | null = null;
 
   @Column({
     type: 'enum',
@@ -50,4 +51,7 @@ export class Account {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
+
+  @OneToMany(() => require('./../../posts/entities/post.entity').Post, (post: Post) => post.seller)
+  posts!: Post[];
 }
