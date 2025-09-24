@@ -9,8 +9,8 @@ interface NavigationProps {
 }
 
 const navigationItems = [
-  { label: 'Brands', href: '#' },
-  { label: 'Battery', href: '#' },
+  { label: 'EV', href: '/posts/ev' },
+  { label: 'Battery', href: '/posts/battery' },
   { label: 'Service', href: '#' },
 ];
 
