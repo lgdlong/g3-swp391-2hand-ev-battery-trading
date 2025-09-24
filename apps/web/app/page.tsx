@@ -1,14 +1,14 @@
 'use client';
 
-import { Header } from '@/components/header';
-import { SearchBar } from '@/components/search-bar';
+import { Navbar } from '@/components/navbar';
+import { SearchBar } from '@/components/searchbar';
 import GeoForm from '@/components/GeoForm';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <Header />
+      <Navbar />
 
       {/* Search Bar */}
       <SearchBar />
