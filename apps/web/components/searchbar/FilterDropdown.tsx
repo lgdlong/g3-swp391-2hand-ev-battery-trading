@@ -6,13 +6,19 @@ import { Filter } from 'lucide-react';
 import { BrandFilter } from './BrandFilter';
 import { PriceFilter } from './PriceFilter';
 
+interface PriceRange {
+  label: string;
+  min: string;
+  max: string;
+}
+
 interface FilterDropdownProps {
   isOpen: boolean;
   onToggle: () => void;
   onClose: () => void;
   selectedBrand: string;
   onBrandChange: (brand: string) => void;
-  onPriceRangeSelect: (priceTag: any) => void;
+  onPriceRangeSelect: (priceTag: PriceRange) => void;
   onClearFilters: () => void;
   className?: string;
 }
