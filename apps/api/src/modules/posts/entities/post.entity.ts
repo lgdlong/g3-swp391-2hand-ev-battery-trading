@@ -7,10 +7,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import type { Account } from '../../accounts/entities/account.entity';
-import { PostStatus } from '../../../shared/enums/post-status.enum';
-import { PostType } from '../../../shared/enums/post-type.enum';
+import { PostStatus, PostType } from '../../../shared/enums/post.enum';
+import type { PostEvCarDetails } from '../../post-details/entities/post-ev-car-details.entity';
+import type { PostEvBikeDetails } from '../../post-details/entities/post-ev-bike-details.entity';
+import type { PostBatteryDetails } from '../../post-details/entities/post-battery-details.entity';
 
 @Entity({ name: 'posts' })
 @Index(['wardCode'])
@@ -82,4 +85,29 @@ export class Post {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt!: Date;
+
+  // ---------------------------
+  // One-to-one relations
+  // ---------------------------
+
+  @OneToOne(
+    () => require('../../post-details/entities/post-ev-car-details.entity').PostEvCarDetails,
+    (detail: PostEvCarDetails) => detail.post,
+    { cascade: true },
+  )
+  carDetails?: PostEvCarDetails;
+
+  @OneToOne(
+    () => require('../../post-details/entities/post-ev-bike-details.entity').PostEvBikeDetails,
+    (detail: PostEvBikeDetails) => detail.post,
+    { cascade: true },
+  )
+  bikeDetails?: PostEvBikeDetails;
+
+  @OneToOne(
+    () => require('../../post-details/entities/post-battery-details.entity').PostBatteryDetails,
+    (detail: PostBatteryDetails) => detail.post,
+    { cascade: true },
+  )
+  batteryDetails?: PostBatteryDetails;
 }

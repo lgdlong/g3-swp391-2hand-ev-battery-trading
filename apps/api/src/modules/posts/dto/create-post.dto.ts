@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PostType } from '../../../shared/enums/post-type.enum';
+import { PostType } from '../../../shared/enums/post.enum';
 
 export class CreatePostDto {
   @IsEnum(PostType)

@@ -4,8 +4,8 @@ import { Repository } from 'typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Post } from './entities/post.entity';
-import { PostStatus } from '../../shared/enums/post-status.enum';
 import { AuthUser } from '../../core/guards/roles.guard';
+import { PostStatus } from '../../shared/enums/post.enum';
 
 @Injectable()
 export class PostsService {
