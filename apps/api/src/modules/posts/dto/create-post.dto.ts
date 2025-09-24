@@ -1,58 +1,77 @@
 import {
   IsEnum,
-  IsNotEmpty,
   IsOptional,
-  IsString,
   IsBoolean,
-  IsNumber,
+  IsNumberString,
+  IsString,
+  IsArray,
+  ValidateNested,
+  IsInt,
   MaxLength,
-  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PostType } from '../../../shared/enums/post.enum';
+import { CreateCarDetailsDto } from './create-car-details.dto';
+import { CreateMediaDto } from './create-media.dto';
 
 export class CreatePostDto {
+  // nếu lấy từ auth, bỏ field này đi
+  @IsInt()
+  sellerId!: number;
+
   @IsEnum(PostType)
-  postType!: PostType;
+  postType: PostType = PostType.EV_CAR; // cố định EV_CAR cho API này nếu không gán kiểu khác vào
 
   @IsString()
-  @IsNotEmpty()
   @MaxLength(120)
   title!: string;
 
   @IsString()
-  @IsNotEmpty()
   description!: string;
 
+  // ---------------------------
+  // Address fields
+  // lưu mã hành chính thay vì tên để tránh việc địa danh thay đổi tên
+  // và dễ dàng cho việc lọc, tìm kiếm theo vùng miền
+  // ---------------------------
   @IsString()
   @MaxLength(10)
   wardCode!: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(120)
   provinceNameCached?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(120)
   districtNameCached?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(120)
   wardNameCached?: string;
 
   @IsOptional()
   @IsString()
   addressTextCached?: string;
+  //---------------------------
 
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  priceVnd!: number;
+  // Giá tiền ở VND
+  // dùng numeric(14,0) nên gửi dạng string để không mất chính xác
+  @IsNumberString()
+  priceVnd!: string;
 
+  // Có thể thương lượng hay không (Liên hệ)
   @IsOptional()
   @IsBoolean()
-  isNegotiable?: boolean;
+  isNegotiable?: boolean = false;
+
+  @ValidateNested()
+  @Type(() => CreateCarDetailsDto)
+  details!: CreateCarDetailsDto;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMediaDto)
+  media?: CreateMediaDto[];
 }
