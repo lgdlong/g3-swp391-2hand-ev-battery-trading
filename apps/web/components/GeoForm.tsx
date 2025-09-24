@@ -11,6 +11,17 @@ export default function GeoForm() {
   const [specificAddress, setSpecificAddress] = useState('');
 
   const provincesQ = useProvinces();
+
+  const handleSubmit = () => {
+    console.log('Address submitted:', {
+      provinceCode,
+      districtCode,
+      wardCode,
+      specificAddress
+    });
+    // TODO: Implement address submission logic
+    setIsOpen(false);
+  };
   const districtsQ = useDistricts(provinceCode || undefined);
   const wardsQ = useWards(districtCode || undefined);
 
@@ -154,7 +165,10 @@ export default function GeoForm() {
           </div>
 
           {/* Submit Button */}
-          <button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200">
+          <button
+            onClick={handleSubmit}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200"
+          >
             XONG
           </button>
         </div>
