@@ -29,7 +29,10 @@ export class PostsController {
   @Post('car')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.USER)
-  async createCarPost(@Body() dto: CreateCarPostDto, @User() user: AuthUser) {
+  async createCarPost(
+    @Body() dto: CreateCarPostDto,
+    @User() user: AuthUser,
+  ): Promise<BasePostResponseDto | null> {
     // force EV_CAR cho endpoint này
     dto.postType = PostType.EV_CAR;
 
@@ -41,7 +44,10 @@ export class PostsController {
   @Post('bike')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.USER)
-  async createBikePost(@Body() dto: CreateBikePostDto, @User() user: AuthUser) {
+  async createBikePost(
+    @Body() dto: CreateBikePostDto,
+    @User() user: AuthUser,
+  ): Promise<BasePostResponseDto | null> {
     // force EV_CAR cho endpoint này
     dto.postType = PostType.EV_BIKE;
 

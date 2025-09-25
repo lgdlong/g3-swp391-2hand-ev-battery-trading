@@ -105,7 +105,10 @@ export class PostsService {
     return PostMapper.toBasePostResponseDtoArray(rows);
   }
 
-  async createBikePost(dto: CreateBikePostDto, sellerId: number): Promise<Post | null> {
+  async createBikePost(
+    dto: CreateBikePostDto,
+    sellerId: number,
+  ): Promise<BasePostResponseDto | null> {
     if (dto.postType !== PostType.EV_BIKE) {
       throw new Error('Invalid postType for this endpoint');
     }
@@ -113,7 +116,6 @@ export class PostsService {
     return this.postsRepo.manager.transaction(async (trx) => {
       // 1) tạo Post
       const post = trx.create(Post, {
-        // nếu bạn map seller bằng ManyToOne đối tượng:
         seller: { id: sellerId } as Account,
         postType: dto.postType,
         title: dto.title,
@@ -147,15 +149,16 @@ export class PostsService {
         await trx.save(PostMedia, rows);
       }
 
-      // 4) (tuỳ chọn) tự chuyển sang PENDING_REVIEW + log
-      // await trx.update(Post, { id: savedPost.id }, { status: PostStatus.PENDING_REVIEW, submittedAt: new Date() });
-      // await trx.save(PostReviewLog, trx.create(PostReviewLog, { post: savedPost, action: ReviewActionEnum.SUBMITTED, actor: {id: dto.sellerId} as any, oldStatus: PostStatus.DRAFT, newStatus: PostStatus.PENDING_REVIEW }));
+      // 4) (optional) cập nhật status/log như createCarPost nếu cần
+      // ...
 
-      // 5) trả về Post + relations
-      return trx.findOne(Post, {
+      // 5) trả về Post + relations, rồi map DTO giống createCarPost
+      const createdPost = await trx.findOne(Post, {
         where: { id: savedPost.id },
-        relations: ['carDetails', 'bikeDetails', 'batteryDetails'],
+        relations: ['bikeDetails', 'seller'],
       });
+
+      return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
     });
   }
 }
