@@ -367,7 +367,7 @@ apps/
       │  │
       │  ├─ posts/                    # Bounded context: listing (metadata + search)
       │  │  ├─ dto/
-      │  │  │  ├─ create-post.dto.ts
+      │  │  │  ├─ base-create-post.dto.ts
       │  │  │  ├─ update-post.dto.ts
       │  │  │  ├─ post-query.dto.ts         # filter/search (brand_id, price, ward_code, ...)
       │  │  │  └─ post-response.dto.ts      # Safe/summary/detail
