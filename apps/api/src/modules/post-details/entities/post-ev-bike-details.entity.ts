@@ -21,9 +21,6 @@ export class PostEvBikeDetails {
   @Column({ type: 'int', nullable: true })
   model_id: number | null = null;
 
-  @Column({ type: 'int', nullable: true })
-  trim_id: number | null = null;
-
   @Column({ type: 'smallint', nullable: true })
   manufacture_year: number | null = null;
 
