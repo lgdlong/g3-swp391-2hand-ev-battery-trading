@@ -31,7 +31,7 @@ export class PostEvBikeDetails {
   origin: Origin | null = null;
 
   @Column({ type: 'enum', enum: VehicleColor, nullable: true })
-  color_id: VehicleColor | null = null;
+  color: VehicleColor | null = null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   license_plate: string | null = null;

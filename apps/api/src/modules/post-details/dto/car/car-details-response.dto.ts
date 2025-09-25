@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BikeStyle, Origin, VehicleColor } from '../../../../shared/enums/vehicle.enum';
+import { BodyStyle, Origin, VehicleColor } from '../../../../shared/enums/vehicle.enum';
 
-export class BikeDetailsResponseDto {
+export class CarDetailsResponseDto {
   @ApiProperty({ nullable: true })
   brand_id!: number | null;
 
@@ -9,19 +9,19 @@ export class BikeDetailsResponseDto {
   model_id!: number | null;
 
   @ApiProperty({ nullable: true })
-  trim_id!: number | null;
-
-  @ApiProperty({ nullable: true })
   manufacture_year!: number | null;
 
-  @ApiProperty({ enum: BikeStyle, nullable: true })
-  bike_style!: BikeStyle | null;
+  @ApiProperty({ enum: BodyStyle, nullable: true })
+  body_style!: BodyStyle | null;
 
   @ApiProperty({ enum: Origin, nullable: true })
   origin!: Origin | null;
 
   @ApiProperty({ enum: VehicleColor, nullable: true })
-  color_id!: VehicleColor | null;
+  color!: VehicleColor | null;
+
+  @ApiProperty({ nullable: true })
+  seats!: number | null;
 
   @ApiProperty({ nullable: true })
   license_plate!: string | null;
@@ -39,10 +39,10 @@ export class BikeDetailsResponseDto {
   range_km!: number | null;
 
   @ApiProperty({ nullable: true })
-  motor_power_kw!: number | null;
+  charge_ac_kw!: number | null;
 
   @ApiProperty({ nullable: true })
-  charge_ac_kw!: number | null;
+  charge_dc_kw!: number | null;
 
   @ApiProperty({ nullable: true })
   battery_health_pct!: number | null;

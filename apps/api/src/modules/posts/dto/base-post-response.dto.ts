@@ -3,8 +3,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { PostStatus, PostType } from '../../../shared/enums/post.enum';
 import { SafeAccountDto } from '../../accounts/dto/safe-account.dto';
-import { CarDetailsResponseDto } from './car/car-details-response.dto';
-import { BikeDetailsResponseDto } from './bike/bike-details-response.dto';
+import { CarDetailsResponseDto } from '../../post-details/dto/car/car-details-response.dto';
+import { BikeDetailsResponseDto } from '../../post-details/dto/bike/bike-details-response.dto';
 
 export class BasePostResponseDto {
   @ApiProperty()

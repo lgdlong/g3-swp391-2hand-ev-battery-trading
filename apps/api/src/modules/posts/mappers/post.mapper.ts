@@ -1,7 +1,7 @@
 import { Post } from '../entities/post.entity';
 import { BasePostResponseDto } from '../dto/base-post-response.dto';
-import { CarDetailsResponseDto } from '../dto/car/car-details-response.dto';
-import { BikeDetailsResponseDto } from '../dto/bike/bike-details-response.dto';
+import { CarDetailsResponseDto } from '../../post-details/dto/car/car-details-response.dto';
+import { BikeDetailsResponseDto } from '../../post-details/dto/bike/bike-details-response.dto';
 import { PostEvCarDetails } from 'src/modules/post-details/entities/post-ev-car-details.entity';
 import { PostEvBikeDetails } from 'src/modules/post-details/entities/post-ev-bike-details.entity';
 import { AccountMapper } from '../../accounts/mappers';
@@ -62,7 +62,7 @@ export class PostMapper {
     dto.manufacture_year = carDetails.manufacture_year;
     dto.body_style = carDetails.body_style;
     dto.origin = carDetails.origin;
-    dto.color_id = carDetails.color_id;
+    dto.color = carDetails.color;
     dto.seats = carDetails.seats;
     dto.license_plate = carDetails.license_plate;
     dto.owners_count = carDetails.owners_count;
@@ -82,7 +82,7 @@ export class PostMapper {
     dto.manufacture_year = bikeDetails.manufacture_year;
     dto.bike_style = bikeDetails.bike_style;
     dto.origin = bikeDetails.origin;
-    dto.color_id = bikeDetails.color_id;
+    dto.color = bikeDetails.color;
     dto.license_plate = bikeDetails.license_plate;
     dto.owners_count = bikeDetails.owners_count;
     dto.odo_km = bikeDetails.odo_km;

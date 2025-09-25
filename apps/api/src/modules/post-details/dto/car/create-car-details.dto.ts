@@ -1,5 +1,7 @@
-import { IsEnum, IsInt, IsOptional, MaxLength } from 'class-validator';
-import { BodyStyle, Origin, VehicleColor } from '../../../shared/enums/vehicle.enum';
+import { IsEnum, IsIn, IsInt, IsOptional, MaxLength } from 'class-validator';
+import { BodyStyle, Origin, VehicleColor } from '../../../../shared/enums/vehicle.enum';
+import { Transform } from 'class-transformer';
+import { SEAT_OPTIONS } from '../../../../shared/constants';
 
 export class CreateCarDetailsDto {
   @IsOptional()
@@ -9,10 +11,6 @@ export class CreateCarDetailsDto {
   @IsOptional()
   @IsInt()
   model_id?: number;
-
-  @IsOptional()
-  @IsInt()
-  trim_id?: number;
 
   @IsOptional()
   @IsInt()
@@ -28,10 +26,14 @@ export class CreateCarDetailsDto {
 
   @IsOptional()
   @IsEnum(VehicleColor)
-  color_id?: VehicleColor;
+  color?: VehicleColor;
 
   @IsOptional()
+  @Transform(({ value }) =>
+    value === '' || value === null || value === undefined ? null : Number(value),
+  )
   @IsInt()
+  @IsIn(SEAT_OPTIONS as unknown as number[])
   seats?: number;
 
   @IsOptional()

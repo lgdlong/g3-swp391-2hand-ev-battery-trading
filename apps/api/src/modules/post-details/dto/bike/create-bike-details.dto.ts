@@ -1,5 +1,5 @@
 import { IsEnum, IsInt, IsOptional, MaxLength } from 'class-validator';
-import { BikeStyle, Origin, VehicleColor } from '../../../shared/enums/vehicle.enum';
+import { BikeStyle, Origin, VehicleColor } from '../../../../shared/enums/vehicle.enum';
 
 export class CreateBikeDetailsDto {
   @IsOptional()
@@ -9,10 +9,6 @@ export class CreateBikeDetailsDto {
   @IsOptional()
   @IsInt()
   model_id?: number;
-
-  @IsOptional()
-  @IsInt()
-  trim_id?: number;
 
   @IsOptional()
   @IsInt()
@@ -28,7 +24,7 @@ export class CreateBikeDetailsDto {
 
   @IsOptional()
   @IsEnum(VehicleColor)
-  color_id?: VehicleColor;
+  color?: VehicleColor;
 
   @IsOptional()
   @MaxLength(20)

@@ -8,3 +8,5 @@ export const DEFAULT_AVATAR_URL = 'https://avatar.iran.liara.run/public';
 export const DEFAULT_AUTHOR_NAME = 'Unknown';
 export const DEFAULT_JWT_EXPIRATION_TIME = '15M';
 export const DEFAULT_JWT_REFRESH_EXPIRATION_TIME = '30d';
+
+export * from './vehicle';

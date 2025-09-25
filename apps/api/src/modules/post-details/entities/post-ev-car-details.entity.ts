@@ -1,6 +1,7 @@
 import { Entity, PrimaryColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 import type { Post } from '../../posts/entities/post.entity';
 import { BodyStyle, Origin, VehicleColor } from '../../../shared/enums/vehicle.enum';
+import { SeatOption } from '../../../shared/constants';
 
 @Entity('post_ev_car_details')
 export class PostEvCarDetails {
@@ -31,10 +32,11 @@ export class PostEvCarDetails {
   origin: Origin | null = null;
 
   @Column({ type: 'enum', enum: VehicleColor, nullable: true })
-  color_id: VehicleColor | null = null;
+  color: VehicleColor | null = null;
 
+  // 2 4 5 6 7 8 9 10 12 14 16
   @Column({ type: 'smallint', nullable: true })
-  seats: number | null = null;
+  seats: SeatOption | null = null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   license_plate: string | null = null;
