@@ -2,8 +2,10 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth-context';
+import { toast } from 'sonner';
 import {
   LayoutDashboard,
   Users,
@@ -14,7 +16,8 @@ import {
   Bell,
   Settings,
   Menu,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -74,7 +77,15 @@ const navigationItems = [
 
 export function AdminSidebar({ className }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { logout, user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Đăng xuất thành công!');
+    router.push('/login');
+  };
 
   return (
     <>
@@ -153,16 +164,37 @@ export function AdminSidebar({ className }: SidebarProps) {
           </nav>
 
           {/* Footer */}
-          <div className="px-4 py-4 border-t border-gray-700">
+          <div className="px-4 py-4 border-t border-gray-700 space-y-3">
+            {/* User Info */}
             <div className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-gray-800">
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-white">A</span>
+                <span className="text-sm font-bold text-white">
+                  {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+                </span>
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-white">Admin User</p>
-                <p className="text-xs text-gray-400">admin@admin.com</p>
+                <p className="text-sm font-medium text-white">
+                  {user?.fullName || 'Admin User'}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {user?.email || 'admin@admin.com'}
+                </p>
               </div>
             </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 w-full text-left group"
+            >
+              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center group-hover:bg-red-400 transition-colors">
+                <LogOut className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-white">Logout</p>
+                <p className="text-xs text-red-200">Thoát khỏi admin panel</p>
+              </div>
+            </button>
           </div>
         </div>
       </div>
