@@ -7,24 +7,21 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Search,
-  Users,
+  Filter,
+  MoreHorizontal,
+  Edit,
+  Trash2,
   UserCheck,
   UserX,
-  Shield,
-  FileText,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight,
-  MoreHorizontal,
-  Eye,
-  Trash2,
-  UserPlus
+  ChevronsRight
 } from 'lucide-react';
 import { Account } from '@/types/account';
-import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
+import { AccountRole as RoleEnum, AccountStatus as StatusEnum, AccountRole, AccountStatus } from '@/types/enums/account-enum';
 
-// Mock data
+// Mock data - sẽ thay thế bằng API call thực tế
 const mockAccounts: Account[] = [
   {
     id: 1,
@@ -59,7 +56,7 @@ const mockAccounts: Account[] = [
     createdAt: '2024-01-03T00:00:00Z',
     updatedAt: '2024-01-03T00:00:00Z'
   },
-  // Thêm nhiều dữ liệu mock hơn
+  // Thêm nhiều dữ liệu mock hơn để test phân trang
   ...Array.from({ length: 47 }, (_, i) => ({
     id: i + 4,
     email: `user${i + 4}@example.com`,
@@ -73,22 +70,16 @@ const mockAccounts: Account[] = [
   }))
 ];
 
-// Thêm thông tin bổ sung cho mỗi account
-const accountsWithStats = mockAccounts.map(account => ({
-  ...account,
-  postCount: Math.floor(Math.random() * 20) // Random post count
-}));
-
 const ITEMS_PER_PAGE = 10;
 
-export default function AdminDashboard() {
-  const [accounts, setAccounts] = useState(accountsWithStats);
-  const [filteredAccounts, setFilteredAccounts] = useState(accountsWithStats);
+export default function AccountsManagement() {
+  const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
+  const [filteredAccounts, setFilteredAccounts] = useState<Account[]>(mockAccounts);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusEnum | 'all'>('all');
-  const [roleFilter, setRoleFilter] = useState<RoleEnum | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<AccountStatus | 'all'>('all');
+  const [roleFilter, setRoleFilter] = useState<AccountRole | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
   // Filter và search
   useEffect(() => {
@@ -114,20 +105,8 @@ export default function AdminDashboard() {
     }
 
     setFilteredAccounts(filtered);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset về trang đầu khi filter
   }, [accounts, searchTerm, statusFilter, roleFilter]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setSelectedAccount(null);
-    };
-
-    if (selectedAccount) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [selectedAccount]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAccounts.length / ITEMS_PER_PAGE);
@@ -157,109 +136,103 @@ export default function AdminDashboard() {
     }
   };
 
-  const handlePromoteToAdmin = (accountId: number) => {
-    if (confirm('Bạn có chắc chắn muốn thăng cấp người dùng này thành admin?')) {
-      setAccounts(prev => prev.map(account =>
-        account.id === accountId
-          ? {
-              ...account,
-              role: RoleEnum.ADMIN,
-              updatedAt: new Date().toISOString()
-            }
-          : account
-      ));
-    }
-  };
-
-  const handleViewDetails = (accountId: number) => {
-    const account = accounts.find(acc => acc.id === accountId);
-    if (account) {
-      alert(`Chi tiết tài khoản:\n\nTên: ${account.fullName}\nEmail: ${account.email}\nSĐT: ${account.phone}\nVai trò: ${account.role}\nTrạng thái: ${account.status}\nNgày tạo: ${new Date(account.createdAt).toLocaleDateString('vi-VN')}\nSố bài đăng: ${account.postCount}`);
-    }
-  };
-
-  const getStatusBadge = (status: StatusEnum) => {
+  const getStatusBadge = (status: AccountStatus) => {
     return status === StatusEnum.ACTIVE
       ? <Badge className="bg-emerald-100 text-emerald-800">Hoạt động</Badge>
       : <Badge className="bg-red-100 text-red-800">Bị cấm</Badge>;
   };
 
-  const getRoleBadge = (role: RoleEnum) => {
+  const getRoleBadge = (role: AccountRole) => {
     return role === RoleEnum.ADMIN
       ? <Badge className="bg-emerald-100 text-emerald-800">Admin</Badge>
       : <Badge className="bg-blue-100 text-blue-800">User</Badge>;
   };
 
-
   // Calculate statistics
   const totalUsers = accounts.length;
-  const adminCount = accounts.filter(acc => acc.role === RoleEnum.ADMIN).length;
-  const userCount = accounts.filter(acc => acc.role === RoleEnum.USER).length;
-  const blockedCount = accounts.filter(acc => acc.status === StatusEnum.BANNED).length;
-  const newPostsThisWeek = Math.floor(Math.random() * 50) + 20; // Mock data
+  const totalAdmins = accounts.filter(account => account.role === RoleEnum.ADMIN).length;
+  const totalRegularUsers = accounts.filter(account => account.role === RoleEnum.USER).length;
+  const blockedUsers = accounts.filter(account => account.status === StatusEnum.BANNED).length;
+  const newPostsThisWeek = 38; // Mock data - sẽ thay thế bằng API call thực tế
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
+          <p className="text-gray-600">Quản trị hệ thống</p>
+        </div>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-800">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-900">{totalUsers}</div>
-            <p className="text-xs text-emerald-600">Tổng người dùng</p>
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">Tổng người dùng</p>
+                <p className="text-2xl font-bold text-green-900">{totalUsers}</p>
+              </div>
+              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-600 text-sm font-bold">U</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Admins</CardTitle>
-            <Shield className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-900">{adminCount}</div>
-            <p className="text-xs text-blue-600">Quản trị viên</p>
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">Quản trị viên</p>
+                <p className="text-2xl font-bold text-blue-900">{totalAdmins}</p>
+              </div>
+              <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-sm font-bold">A</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800">Users</CardTitle>
-            <UserCheck className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-900">{userCount}</div>
-            <p className="text-xs text-purple-600">Người dùng</p>
+        <Card className="bg-purple-50 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600">Người dùng</p>
+                <p className="text-2xl font-bold text-purple-900">{totalRegularUsers}</p>
+              </div>
+              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <span className="text-purple-600 text-sm font-bold">U</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-
-        <Card className="border-red-200 bg-gradient-to-br from-red-50 to-pink-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-800">Blocked</CardTitle>
-            <UserX className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-900">{blockedCount}</div>
-            <p className="text-xs text-red-600">Bị chặn</p>
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600">Bị chặn</p>
+                <p className="text-2xl font-bold text-red-900">{blockedUsers}</p>
+              </div>
+              <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-sm font-bold">B</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-800">New Posts</CardTitle>
-            <FileText className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-900">{newPostsThisWeek}</div>
-            <p className="text-xs text-orange-600">Tuần này</p>
+        <Card className="bg-orange-50 border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600">Tuần này</p>
+                <p className="text-2xl font-bold text-orange-900">{newPostsThisWeek}</p>
+              </div>
+              <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-orange-600 text-sm font-bold">P</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -288,8 +261,8 @@ export default function AdminDashboard() {
               <label className="text-sm font-medium text-gray-700">Trạng thái</label>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusEnum | 'all')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                onChange={(e) => setStatusFilter(e.target.value as AccountStatus | 'all')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">Tất cả</option>
                 <option value={StatusEnum.ACTIVE}>Hoạt động</option>
@@ -301,8 +274,8 @@ export default function AdminDashboard() {
               <label className="text-sm font-medium text-gray-700">Vai trò</label>
               <select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value as RoleEnum | 'all')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                onChange={(e) => setRoleFilter(e.target.value as AccountRole | 'all')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">Tất cả</option>
                 <option value={RoleEnum.USER}>User</option>
@@ -320,6 +293,7 @@ export default function AdminDashboard() {
                 variant="outline"
                 className="w-full"
               >
+                <Filter className="mr-2 h-4 w-4" />
                 Xóa bộ lọc
               </Button>
             </div>
@@ -352,80 +326,44 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {currentAccounts.map((account) => (
-                  <tr key={account.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-emerald-800">
-                            {account.fullName.charAt(0).toUpperCase()}
-                          </span>
+                {currentAccounts.map((account) => {
+                  // Mock số bài đăng - sẽ thay thế bằng API call thực tế
+                  const postCount = Math.floor(Math.random() * 20) + 1;
+                  
+                  return (
+                    <tr key={account.id} className="border-b hover:bg-gray-50">
+                      <td className="p-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-600">
+                              {account.fullName.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <span className="font-medium">{account.fullName}</span>
                         </div>
-                        <span className="font-medium">{account.fullName}</span>
-                      </div>
-                    </td>
-                    <td className="p-3 text-gray-600">{account.email}</td>
-                    <td className="p-3">{getRoleBadge(account.role)}</td>
-                    <td className="p-3">{getStatusBadge(account.status)}</td>
-                    <td className="p-3 text-gray-600">
-                      {new Date(account.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="p-3 text-gray-600">{account.postCount}</td>
-                    <td className="p-3">
-                      <div className="relative">
+                      </td>
+                      <td className="p-3 text-gray-600">{account.email}</td>
+                      <td className="p-3">{getRoleBadge(account.role)}</td>
+                      <td className="p-3">{getStatusBadge(account.status)}</td>
+                      <td className="p-3 text-gray-600">
+                        {new Date(account.createdAt).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="p-3 text-gray-600">{postCount}</td>
+                      <td className="p-3">
                         <Button
                           size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedAccount(selectedAccount === account.id ? null : account.id)}
-                          className="p-2"
+                          variant="ghost"
+                          onClick={() => {
+                            // TODO: Implement dropdown menu
+                            console.log('Actions for account:', account.id);
+                          }}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
-
-                        {selectedAccount === account.id && (
-                          <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                            <div className="py-1">
-                              <button
-                                onClick={() => {
-                                  handleViewDetails(account.id);
-                                  setSelectedAccount(null);
-                                }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Xem chi tiết
-                              </button>
-
-                              {account.role === RoleEnum.USER && (
-                                <button
-                                  onClick={() => {
-                                    handlePromoteToAdmin(account.id);
-                                    setSelectedAccount(null);
-                                  }}
-                                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  Thăng cấp Admin
-                                </button>
-                              )}
-
-                              <button
-                                onClick={() => {
-                                  handleDeleteAccount(account.id);
-                                  setSelectedAccount(null);
-                                }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Xóa tài khoản
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

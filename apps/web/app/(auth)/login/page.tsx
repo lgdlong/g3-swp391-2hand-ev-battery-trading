@@ -73,6 +73,32 @@ export default function LoginPage() {
   });
 
   const onSubmit = (values: LoginForm) => {
+    // Check for admin account first
+    if (values.identifier === 'admin@admin.com' && values.password === '123456') {
+      // Mock admin data
+      const mockAdminData = {
+        id: 1,
+        email: 'admin@admin.com',
+        phone: '0123456789',
+        fullName: 'Admin User',
+        avatarUrl: null,
+        status: 'active',
+        role: 'admin',
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z'
+      };
+
+      const mockToken = 'mock-admin-token-' + Date.now();
+
+      // Login with mock data
+      login(mockToken, mockAdminData);
+
+      toast.success('Đăng nhập admin thành công!');
+      router.replace('/admin');
+      return;
+    }
+
+    // Normal API login for other accounts
     mutation.mutate(values);
   };
 
@@ -169,6 +195,13 @@ export default function LoginPage() {
                     >
                       Login with Google
                     </Button>
+                  </div>
+
+                  {/* Admin Info */}
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-sm text-blue-800 font-medium mb-1">Admin Test Account:</p>
+                    <p className="text-xs text-blue-600">Email: admin@admin.com</p>
+                    <p className="text-xs text-blue-600">Password: 123456</p>
                   </div>
 
                   {/* Footer */}
