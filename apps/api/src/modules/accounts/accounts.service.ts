@@ -5,9 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { Account } from './entities/account.entity';
 import { ConfigService } from '@nestjs/config';
-import { DEFAULT_SALT_ROUNDS } from '../../shared/constants';
-import * as bcrypt from 'bcrypt';
-import { normalizeEmailOrPhone } from '../../shared/helpers/account.helper';
+import { normalizeEmailOrPhone, hashPasswordWithConfig } from '../../shared/helpers/account.helper';
 import { SummaryAccountDto } from './dto/summary-account.dto';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 import { SafeAccountDto } from './dto/safe-account.dto';
@@ -42,13 +40,10 @@ export class AccountsService {
     }
 
     // 2) Hash password
-    let saltRounds = parseInt(
-      this.configService.get('HASH_SALT_ROUNDS', DEFAULT_SALT_ROUNDS.toString()),
-      10,
+    const passwordHashed = await hashPasswordWithConfig(
+      dto.password,
+      this.configService.get('HASH_SALT_ROUNDS'),
     );
-    if (isNaN(saltRounds) || saltRounds < 10) saltRounds = DEFAULT_SALT_ROUNDS;
-    const salt = await bcrypt.genSalt(saltRounds);
-    const passwordHashed = await bcrypt.hash(dto.password, salt);
 
     // 3) Tạo & lưu
     const account = this.repo.create({
@@ -174,6 +169,36 @@ export class AccountsService {
     }
 
     return AccountMapper.toSafeDto(updated);
+  }
+
+  async upsertByEmail(input: {
+    email: string;
+    fullName?: string | null;
+    avatarUrl?: string | null;
+    rawPasswordIfNew?: string; // chỉ dùng khi tạo mới
+  }): Promise<SafeAccountDto> {
+    // Lưu ý: upsert của TypeORM sẽ cập nhật các cột có mặt trong entity.
+    // Để tránh đè mật khẩu khi đã tồn tại, KHÔNG đưa passwordHashed vào nếu không phải tạo mới.
+    const toInsert = this.repo.create({
+      email: input.email,
+      fullName: input.fullName ?? '',
+      avatarUrl: input.avatarUrl ?? null,
+      passwordHashed: input.rawPasswordIfNew
+        ? await hashPasswordWithConfig(
+            input.rawPasswordIfNew,
+            this.configService.get('HASH_SALT_ROUNDS'),
+          )
+        : (undefined as any), // undefined => không cập nhật cột này khi conflict
+    });
+
+    await this.repo.upsert(toInsert, {
+      conflictPaths: ['email'],
+      skipUpdateIfNoValuesChanged: true,
+    });
+
+    const acc = await this.repo.findOne({ where: { email: input.email } });
+    if (!acc) throw new Error('Upsert failed: account not found after upsert');
+    return AccountMapper.toSafeDto(acc);
   }
 
   remove(id: number) {

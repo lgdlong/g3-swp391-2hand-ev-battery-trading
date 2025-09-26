@@ -95,7 +95,7 @@ export class AuthController {
       const login: LoginResponse = await this.authService.handleGoogleLogin(googleProfile);
       const frontendUrl = this.config.get<string>('FRONTEND_URL') || DEFAULT_FRONTEND_URL;
 
-      const url = new URL(frontendUrl.replace(/\/$/, '') + '/oauth/google');
+      const url = new URL(frontendUrl.replace(/\/$/, '') + '/google-callback');
       // Chỉ kèm access_token
       url.hash = new URLSearchParams({
         access_token: login.accessToken,

@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AccountsService } from '../accounts/accounts.service';
-import * as bcrypt from 'bcrypt';
+import { comparePassword } from '../../shared/helpers/account.helper';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { Account } from '../accounts/entities/account.entity';
@@ -56,8 +56,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials!');
     }
 
-    // So sánh mật khẩu đã hash bằng bcrypt với mật khẩu người dùng nhập vào
-    const isMatch = await bcrypt.compare(pass, account.passwordHashed);
+    // So sánh mật khẩu đã hash với mật khẩu người dùng nhập vào
+    const isMatch = await comparePassword(pass, account.passwordHashed);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials!');
     }
@@ -115,8 +115,12 @@ export class AuthService {
     // 2) Chuẩn hoá email để tránh duplicate do khác hoa/thường hoặc khoảng trắng
     const normalizedEmail = googleProfile.email.trim().toLowerCase();
 
-    // 3) Tìm theo email
-    let account: SafeAccountDto | null = await this.accountsService.findByEmail(normalizedEmail);
+    const account = await this.accountsService.upsertByEmail({
+      email: normalizedEmail,
+      fullName: googleProfile.name,
+      avatarUrl: googleProfile.avatar,
+      rawPasswordIfNew: getRandomPassword(), // chỉ dùng khi tạo mới
+    });
 
     // 4) Nếu chưa có acc trong db thì tạo mới
     if (!account) {
