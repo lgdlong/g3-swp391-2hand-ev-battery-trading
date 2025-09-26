@@ -147,8 +147,33 @@ export class AccountsService {
     return AccountMapper.toSafeDto(account);
   }
 
-  update(id: number, updateAccountDto: UpdateAccountDto) {
-    return `This action updates a #${id} account`;
+  async update(accountId: number, updateAccountDto: UpdateAccountDto): Promise<SafeAccountDto> {
+    if (!accountId || accountId <= 0) {
+      throw new NotFoundException(`Invalid account id: ${accountId}`);
+    }
+
+    // Check if phone is being updated and ensure it's not already taken by another user
+    const updateAccountPhone = updateAccountDto.phone;
+    if (updateAccountPhone) {
+      const existingAccount = await this.repo.findOne({
+        where: { phone: updateAccountPhone, id: Not(accountId) },
+      });
+      if (existingAccount) {
+        throw new ConflictException('Phone number already in use.');
+      }
+    }
+
+    const result = await this.repo.update({ id: accountId }, updateAccountDto);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Account with id ${accountId} not found`);
+    }
+
+    const updated = await this.repo.findOne({ where: { id: accountId } });
+    if (!updated) {
+      throw new NotFoundException('Account not found after update');
+    }
+
+    return AccountMapper.toSafeDto(updated);
   }
 
   remove(id: number) {
