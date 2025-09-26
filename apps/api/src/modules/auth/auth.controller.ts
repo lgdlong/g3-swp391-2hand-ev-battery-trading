@@ -1,5 +1,5 @@
-import { Controller, Post, Body, Res, HttpCode } from '@nestjs/common';
-import { Response, Request } from 'express';
+import { Controller, Post, Get, Body, Res, HttpCode, Request, UseGuards } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginResponse } from './dto/login-response.dto';
 import { LoginRequestDto } from './dto/login-request.dto';
@@ -12,6 +12,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { GoogleOAuthGuard } from 'src/core/guards/google-oauth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -63,4 +64,14 @@ export class AuthController {
 
     return { accessToken: loginRes.accessToken, account: loginRes.account };
   }
+
+  @Get()
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuth(@Request() req) {}
+
+  // @Get('google-redirect')
+  // @UseGuards(GoogleOAuthGuard)
+  // googleAuthRedirect(@Request() req) {
+  //   return this.authService.googleLogin(req);
+  // }
 }

@@ -114,7 +114,7 @@ export class AccountsService {
     return AccountMapper.toSafeDto(acc);
   }
 
-  async updateMe(userId: number, dto: UpdateAccountDto): Promise<SafeAccountDto>{
+  async updateMe(userId: number, dto: UpdateAccountDto): Promise<SafeAccountDto> {
     if (dto.phone) {
       const existingAccount = await this.repo.findOne({
         where: { phone: dto.phone, id: Not(userId) },
@@ -129,13 +129,22 @@ export class AccountsService {
       throw new NotFoundException(`Account with id ${userId} not found`);
     }
 
-    const updated = await this.repo.findOne ({ where: { id: userId}});
-    if(!updated) throw new NotFoundException('Account not found after update');
+    const updated = await this.repo.findOne({ where: { id: userId } });
+    if (!updated) throw new NotFoundException('Account not found after update');
     return AccountMapper.toSafeDto(updated);
   }
 
-  findByEmail(email: string) {
-    return `This action returns a account with email ${email}`;
+  async findByEmail(email: string): Promise<SafeAccountDto> {
+    if (!email) {
+      throw new NotFoundException(`Invalid account id: ${email}`);
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const account: Account | null = await this.repo.findOne({ where: { email: normalizedEmail } });
+    if (!account) {
+      throw new NotFoundException(`Account with id ${email} not found`);
+    }
+    return AccountMapper.toSafeDto(account);
   }
 
   update(id: number, updateAccountDto: UpdateAccountDto) {

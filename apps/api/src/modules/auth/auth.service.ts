@@ -12,6 +12,9 @@ import {
 import { Tokens } from './interfaces/tokens.interface';
 import { LoginResponse } from './dto/login-response.dto';
 import { SummaryAccountDto } from '../accounts/dto/summary-account.dto';
+import { SafeAccountDto } from '../accounts/dto/safe-account.dto';
+import { CreateAccountDto } from '../accounts/dto/create-account.dto';
+import { CreateAccountResponseDto } from '../accounts/dto/create-account-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -83,4 +86,62 @@ export class AuthService {
       } as SummaryAccountDto,
     } as LoginResponse;
   }
+
+  // Handle Google login: create user if not exists, then generate JWT
+  // async handleGoogleLogin(googleProfile: {
+  //   googleId: string;
+  //   email: string;
+  //   name: string;
+  //   avatar?: string;
+  //   provider: string;
+  //   emailVerified?: boolean;
+  // }): Promise<LoginResponse> {
+  //   // 1. Check if user exists by email
+  //   let account: SafeAccountDto = await this.accountsService.findByEmail(googleProfile.email);
+  //
+  //   // 2. If user doesn't exist, create a new one
+  //   if (!account) {
+  //     // Create a new account for Google user
+  //     // Generate a random password for Google users (they won't use it)
+  //     const randomPassword =
+  //       Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+  //
+  //     const resCreateAccount: CreateAccountResponseDto = await this.accountsService.create({
+  //       email: googleProfile.email,
+  //       password: randomPassword, // Google users won't use this password
+  //       fullName: googleProfile.name,
+  //       // role: AccountRole.USER, // Default role for Google users
+  //     });
+  //
+  //     const a: SummaryAccountDto = resCreateAccount.account;
+  //
+  //     // Update avatar if provided
+  //     if (googleProfile.avatar && account.id) {
+  //       // TODO: implement update method in accounts service
+  //       await this.accountsService.update(account.id, {
+  //         avatarUrl: googleProfile.avatar,
+  //       });
+  //       account.avatar_url = googleProfile.avatar;
+  //     }
+  //   }
+  //
+  //   // 3. Generate JWT token with the database user ID
+  //   const payload: JwtPayload = {
+  //     sub: account.id, // Use database user ID, not googleId
+  //     email: account.email,
+  //     role: account.role,
+  //     provider: googleProfile.provider,
+  //   };
+  //
+  //   return {
+  //     access_token: this.jwtService.sign(payload),
+  //     account: {
+  //       id: account.id,
+  //       email: account.email,
+  //       role: account.role,
+  //       name: account.name,
+  //       avatar_url: account.avatar_url,
+  //     },
+  //   };
+  // }
 }
