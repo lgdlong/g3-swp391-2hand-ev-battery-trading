@@ -39,16 +39,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         provider: profile.provider,
       };
 
-      // Save user to DB and generate JWT
-      // const result = this.authService.handleGoogleLogin({
-      //   googleId: googleProfile.googleId,
-      //   email: googleProfile.email,
-      //   name: googleProfile.name,
-      //   avatar: googleProfile.avatar,
-      //   provider: googleProfile.provider,
-      //   emailVerified: googleProfile.emailVerified,
-      // });
-
       // Return the result which includes access_token and account info
       done(null, googleProfile);
     } catch (error) {

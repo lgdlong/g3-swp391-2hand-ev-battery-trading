@@ -5,7 +5,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { Account } from './entities/account.entity';
 import { ConfigService } from '@nestjs/config';
-import { normalizeEmailOrPhone, hashPasswordWithConfig } from '../../shared/helpers/account.helper';
+import {
+  normalizeEmailOrPhone,
+  hashPasswordWithConfig,
+  getRandomPassword,
+} from '../../shared/helpers/account.helper';
 import { SummaryAccountDto } from './dto/summary-account.dto';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 import { SafeAccountDto } from './dto/safe-account.dto';
@@ -175,29 +179,40 @@ export class AccountsService {
     email: string;
     fullName?: string | null;
     avatarUrl?: string | null;
-    rawPasswordIfNew?: string; // chỉ dùng khi tạo mới
+    rawPasswordIfNew?: string;
   }): Promise<SafeAccountDto> {
-    // Lưu ý: upsert của TypeORM sẽ cập nhật các cột có mặt trong entity.
-    // Để tránh đè mật khẩu khi đã tồn tại, KHÔNG đưa passwordHashed vào nếu không phải tạo mới.
-    const toInsert = this.repo.create({
-      email: input.email,
-      fullName: input.fullName ?? '',
-      avatarUrl: input.avatarUrl ?? null,
-      passwordHashed: input.rawPasswordIfNew
-        ? await hashPasswordWithConfig(
-            input.rawPasswordIfNew,
-            this.configService.get('HASH_SALT_ROUNDS'),
-          )
-        : (undefined as any), // undefined => không cập nhật cột này khi conflict
-    });
+    // 1) INSERT ... ON CONFLICT/ DUPLICATE KEY DO NOTHING
+    await this.repo
+      .createQueryBuilder()
+      .insert()
+      .into(Account)
+      .values({
+        email: input.email,
+        fullName: input.fullName ?? '',
+        avatarUrl: input.avatarUrl ?? null,
+        passwordHashed: await hashPasswordWithConfig(
+          input.rawPasswordIfNew ?? getRandomPassword(),
+          this.configService.get('HASH_SALT_ROUNDS'),
+        ),
+        // googleId, provider, emailVerified... nếu có cột
+      })
+      .orIgnore() // PG: DO NOTHING, MySQL: ON DUPLICATE KEY UPDATE IGNORE
+      .execute();
 
-    await this.repo.upsert(toInsert, {
-      conflictPaths: ['email'],
-      skipUpdateIfNoValuesChanged: true,
-    });
+    // 2) Load lại
+    let acc = await this.repo.findOne({ where: { email: input.email } });
+    if (!acc) throw new Error('Upsert failed: account not found');
 
-    const acc = await this.repo.findOne({ where: { email: input.email } });
-    if (!acc) throw new Error('Upsert failed: account not found after upsert');
+    // 3) Patch mềm: chỉ cập nhật khi đang trống
+    const patch: Partial<Account> = {};
+    if (!acc.fullName && input.fullName) patch.fullName = input.fullName;
+    if (!acc.avatarUrl && input.avatarUrl) patch.avatarUrl = input.avatarUrl;
+
+    if (Object.keys(patch).length) {
+      await this.repo.update(acc.id, patch);
+      acc = await this.repo.findOneOrFail({ where: { email: input.email } });
+    }
+
     return AccountMapper.toSafeDto(acc);
   }
 

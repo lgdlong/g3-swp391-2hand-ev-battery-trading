@@ -94,6 +94,13 @@ export class AuthService {
     } as LoginResponse;
   }
 
+  /**
+   * Xử lý đăng nhập bằng Google OAuth.
+   * - Kiểm tra tính hợp lệ của profile từ Google
+   * - Upsert account trong DB (tạo mới nếu chưa có, không ghi đè mật khẩu user cũ)
+   * - Patch mềm thông tin còn thiếu (name/avatar)
+   * - Ký JWT access/refresh token và trả về LoginResponse
+   */
   async handleGoogleLogin(googleProfile: {
     googleId: string;
     email: string;
@@ -102,96 +109,65 @@ export class AuthService {
     provider: string;
     emailVerified?: boolean;
   }): Promise<LoginResponse> {
-    // 1) Validate tối thiểu
-    // - Bảo vệ chống account takeover: yêu cầu email từ Google phải được verify
+    // 1) Validate đầu vào từ Google -------------------------
     if (!googleProfile?.email) {
+      // Nếu không có email thì không thể map tới account → từ chối
       throw new UnauthorizedException('Google profile missing email');
     }
     if (googleProfile.emailVerified === false) {
-      // tuỳ policy: có thể gửi 403/401 kèm hướng dẫn
+      // Ngăn account takeover: chỉ chấp nhận email đã verify từ Google
       throw new UnauthorizedException('Google email is not verified');
     }
 
-    // 2) Chuẩn hoá email để tránh duplicate do khác hoa/thường hoặc khoảng trắng
+    // 2) Chuẩn hoá email để tránh duplicate (viết hoa/thường, khoảng trắng)
     const normalizedEmail = googleProfile.email.trim().toLowerCase();
 
-    const account = await this.accountsService.upsertByEmail({
+    // 3) Upsert account trong DB ----------------------------
+    // - Nếu email chưa tồn tại: tạo mới với password random (không dùng tới)
+    // - Nếu đã tồn tại: KHÔNG ghi đè password cũ
+    // - Không ghi đè name/avatar đã có (sẽ xử lý patch mềm ở bước 4)
+    let account = await this.accountsService.upsertByEmail({
       email: normalizedEmail,
       fullName: googleProfile.name,
       avatarUrl: googleProfile.avatar,
-      rawPasswordIfNew: getRandomPassword(), // chỉ dùng khi tạo mới
+      rawPasswordIfNew: getRandomPassword(),
     });
 
-    // 4) Nếu chưa có acc trong db thì tạo mới
-    if (!account) {
-      // Sinh mật khẩu ngẫu nhiên (user Google sẽ không dùng)
-      const randomPassword = getRandomPassword();
-
-      // Lưu ý: ở tầng repository nên có unique constraint cho email
-      // Nếu có race condition, create có thể ném unique violation; khi đó có thể retry findByEmail.
-      await this.accountsService.create({
-        email: normalizedEmail,
-        password: randomPassword,
-        fullName: googleProfile.name,
-        // TODO: nếu hệ thống có cột `googleId`, `provider`:
-        // googleId: googleProfile.googleId,
-        // provider: googleProfile.provider,
-        // emailVerified: true, // nếu bạn có cột này trong schema
-      });
-
-      // Lấy lại tài khoản an toàn để trả về
-      const createdAccount = await this.accountsService.findByEmail(normalizedEmail);
-      if (!createdAccount) {
-        // Trường hợp cực hiếm khi create thành công nhưng find lại thất bại
-        throw new UnauthorizedException('Could not create Google user');
-      }
-      account = createdAccount;
-
-      // 5) Cập nhật avatar nếu có
-      if (googleProfile.avatar) {
-        // `update` trả về SafeAccountDto (như bạn đã dùng ở AccountsService)
-        account = await this.accountsService.update(account.id, {
-          avatarUrl: googleProfile.avatar,
-        });
-      }
-    } else {
-      // (Tuỳ chọn) Nếu đã có account mà chưa có avatar, có thể cập nhật mềm ở đây
-      // if (!account.avatarUrl && googleProfile.avatar) {
-      //   account = await this.accountsService.update(account.id, { avatarUrl: googleProfile.avatar });
-      // }
-      // (Tuỳ chọn) Nếu bạn lưu `googleId`/`provider`, có thể sync khi thiếu
-      // if (!account.googleId) { ... }
+    // 4) Patch mềm các field còn thiếu ----------------------
+    // Chỉ cập nhật name/avatar nếu hiện tại chưa có (tránh overwrite data user cũ)
+    const patch: Partial<SafeAccountDto> = {};
+    if (!account.fullName && googleProfile.name) patch.fullName = googleProfile.name;
+    if (!account.avatarUrl && googleProfile.avatar) patch.avatarUrl = googleProfile.avatar;
+    if (Object.keys(patch).length) {
+      account = await this.accountsService.update(account.id, patch);
     }
 
-    // 6) Ký JWT
-    // Payload chỉ chứa claims cần thiết. Nếu không cần `provider`, có thể bỏ.
+    // 5) Ký JWT token ---------------------------------------
+    // Payload chỉ chứa claims cần thiết (sub, email, phone, role).
+    // Không đưa thông tin thừa từ Google vào JWT để tránh rò dữ liệu.
     const payload: JwtPayload = {
       sub: account.id,
-      email: account.email, // giữ cho resource server dễ authorize theo email nếu cần
-      phone: account.phone ?? null, // có thể bỏ nếu không cần cho FE/BE
+      email: account.email,
+      phone: account.phone ?? null,
       role: account.role,
-      provider: googleProfile.provider, // tuỳ nhu cầu
     };
-
     const tokens: Tokens = await this.signTokens(payload);
 
-    // (Khuyến nghị) Hash & lưu refresh token vào DB để có thể revoke/rotate sau này
-    // await this.accountsService.setHashedRefreshToken(account.id, hash(tokens.refreshToken));
-
-    // 7) Chuẩn hoá dữ liệu trả về (nhất quán DTO)
+    // 6) Trả về LoginResponse chuẩn hoá ---------------------
+    // FE sẽ nhận được accessToken, refreshToken và thông tin account summary.
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
       account: {
         id: account.id,
         email: account.email,
-        phone: account.phone ?? null, // nếu SummaryAccountDto có field này
+        phone: account.phone ?? null,
         fullName: account.fullName ?? googleProfile.name,
         role: account.role,
-        status: account.status, // giả định có
+        status: account.status,
         createdAt: account.createdAt
           ? new Date(account.createdAt).toISOString()
-          : new Date().toISOString(),
+          : new Date().toISOString(), // fallback nếu DB không có createdAt
       } as SummaryAccountDto,
     };
   }
