@@ -4,7 +4,7 @@ import React from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { Navbar } from '@/components/navbar';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, userRole, loading } = useAuth();
@@ -36,10 +36,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6">
-        {children}
-      </div>
-    </main>
+    <div className="min-h-screen bg-gray-50 flex">
+      <AdminSidebar />
+      <main className="flex-1 lg:ml-64">
+        <div className="p-6">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }
