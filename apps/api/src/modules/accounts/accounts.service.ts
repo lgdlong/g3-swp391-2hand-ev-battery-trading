@@ -13,6 +13,7 @@ import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 import { SafeAccountDto } from './dto/safe-account.dto';
 import { AccountMapper } from './mappers';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
+import { AccountStatus } from 'src/shared/enums/account-status.enum';
 
 @Injectable()
 export class AccountsService {
@@ -132,6 +133,13 @@ export class AccountsService {
     const updated = await this.repo.findOne ({ where: { id: userId}});
     if(!updated) throw new NotFoundException('Account not found after update');
     return AccountMapper.toSafeDto(updated);
+  }
+
+  async updateStatus(id: number, status: AccountStatus): Promise<SafeAccountDto> {
+    const account = await this.repo.findOneByOrFail({ id });
+    account.status = status;
+    await this.repo.save(account);
+    return AccountMapper.toSafeDto(account);
   }
 
   findByEmail(email: string) {

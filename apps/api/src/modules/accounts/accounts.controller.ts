@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -28,14 +29,18 @@ import {
   ApiTags,
   ApiBadRequestResponse,
   ApiNoContentResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
-import { CurrentUser, ReqUser } from 'src/core/decorators/current-user.decorator';
+import { CurrentUser } from 'src/core/decorators/current-user.decorator';
+import type { ReqUser } from 'src/core/decorators/current-user.decorator';
+import { AccountStatus } from 'src/shared/enums/account-status.enum';
+
 
 @ApiBearerAuth()
 @ApiTags('Accounts')
 @Controller('accounts')
 export class AccountsController {
-  constructor(private readonly accountsService: AccountsService) {}
+  constructor(private readonly accountsService: AccountsService) { }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -116,4 +121,25 @@ export class AccountsController {
   remove(@Param('id') id: string) {
     return this.accountsService.remove(+id);
   }
+
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN) // Chỉ admin mới ban được
+  @Patch(':id/ban')
+  @ApiOperation({ summary: 'Ban account theo id (cần quyền admin)' })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Account đã bị ban' })
+  @ApiForbiddenResponse({ description: 'Không thể tự ban chính mình' })
+  async banAccount(
+    @Param('id') id: string,
+    @CurrentUser() actor: ReqUser,
+  ): Promise<SafeAccountDto> {
+    const targetId = +id;
+    if (actor.sub === targetId) {
+      throw new ForbiddenException('Bạn không thể tự ban chính mình');
+    }
+    return this.accountsService.updateStatus(targetId, AccountStatus.BANNED);
+  }
+
+
+
 }
