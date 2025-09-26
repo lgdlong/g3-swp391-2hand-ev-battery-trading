@@ -5,9 +5,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { Account } from './entities/account.entity';
 import { ConfigService } from '@nestjs/config';
-import { DEFAULT_SALT_ROUNDS } from '../../shared/constants';
-import * as bcrypt from 'bcrypt';
-import { normalizeEmailOrPhone } from '../../shared/helpers/account.helper';
+import {
+  normalizeEmailOrPhone,
+  hashPasswordWithConfig,
+  getRandomPassword,
+} from '../../shared/helpers/account.helper';
 import { SummaryAccountDto } from './dto/summary-account.dto';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 import { SafeAccountDto } from './dto/safe-account.dto';
@@ -42,13 +44,10 @@ export class AccountsService {
     }
 
     // 2) Hash password
-    let saltRounds = parseInt(
-      this.configService.get('HASH_SALT_ROUNDS', DEFAULT_SALT_ROUNDS.toString()),
-      10,
+    const passwordHashed = await hashPasswordWithConfig(
+      dto.password,
+      this.configService.get('HASH_SALT_ROUNDS'),
     );
-    if (isNaN(saltRounds) || saltRounds < 10) saltRounds = DEFAULT_SALT_ROUNDS;
-    const salt = await bcrypt.genSalt(saltRounds);
-    const passwordHashed = await bcrypt.hash(dto.password, salt);
 
     // 3) Tạo & lưu
     const account = this.repo.create({
@@ -114,7 +113,7 @@ export class AccountsService {
     return AccountMapper.toSafeDto(acc);
   }
 
-  async updateMe(userId: number, dto: UpdateAccountDto): Promise<SafeAccountDto>{
+  async updateMe(userId: number, dto: UpdateAccountDto): Promise<SafeAccountDto> {
     if (dto.phone) {
       const existingAccount = await this.repo.findOne({
         where: { phone: dto.phone, id: Not(userId) },
@@ -129,17 +128,92 @@ export class AccountsService {
       throw new NotFoundException(`Account with id ${userId} not found`);
     }
 
-    const updated = await this.repo.findOne ({ where: { id: userId}});
-    if(!updated) throw new NotFoundException('Account not found after update');
+    const updated = await this.repo.findOne({ where: { id: userId } });
+    if (!updated) throw new NotFoundException('Account not found after update');
     return AccountMapper.toSafeDto(updated);
   }
 
-  findByEmail(email: string) {
-    return `This action returns a account with email ${email}`;
+  async findByEmail(email: string): Promise<SafeAccountDto> {
+    if (!email) {
+      throw new NotFoundException(`Invalid account id: ${email}`);
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const account: Account | null = await this.repo.findOne({ where: { email: normalizedEmail } });
+    if (!account) {
+      throw new NotFoundException(`Account with email ${email} not found`);
+    }
+    return AccountMapper.toSafeDto(account);
   }
 
-  update(id: number, updateAccountDto: UpdateAccountDto) {
-    return `This action updates a #${id} account`;
+  async update(accountId: number, updateAccountDto: UpdateAccountDto): Promise<SafeAccountDto> {
+    if (!accountId || accountId <= 0) {
+      throw new NotFoundException(`Invalid account id: ${accountId}`);
+    }
+
+    // Check if phone is being updated and ensure it's not already taken by another user
+    const updateAccountPhone = updateAccountDto.phone;
+    if (updateAccountPhone) {
+      const existingAccount = await this.repo.findOne({
+        where: { phone: updateAccountPhone, id: Not(accountId) },
+      });
+      if (existingAccount) {
+        throw new ConflictException('Phone number already in use.');
+      }
+    }
+
+    const result = await this.repo.update({ id: accountId }, updateAccountDto);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Account with id ${accountId} not found`);
+    }
+
+    const updated = await this.repo.findOne({ where: { id: accountId } });
+    if (!updated) {
+      throw new NotFoundException('Account not found after update');
+    }
+
+    return AccountMapper.toSafeDto(updated);
+  }
+
+  async upsertByEmail(input: {
+    email: string;
+    fullName?: string | null;
+    avatarUrl?: string | null;
+    rawPasswordIfNew?: string;
+  }): Promise<SafeAccountDto> {
+    // 1) INSERT ... ON CONFLICT/ DUPLICATE KEY DO NOTHING
+    await this.repo
+      .createQueryBuilder()
+      .insert()
+      .into(Account)
+      .values({
+        email: input.email,
+        fullName: input.fullName ?? '',
+        avatarUrl: input.avatarUrl ?? null,
+        passwordHashed: await hashPasswordWithConfig(
+          input.rawPasswordIfNew ?? getRandomPassword(),
+          this.configService.get('HASH_SALT_ROUNDS'),
+        ),
+        // googleId, provider, emailVerified... nếu có cột
+      })
+      .orIgnore() // PG: DO NOTHING, MySQL: ON DUPLICATE KEY UPDATE IGNORE
+      .execute();
+
+    // 2) Load lại
+    let acc = await this.repo.findOne({ where: { email: input.email } });
+    if (!acc) throw new Error('Upsert failed: account not found');
+
+    // 3) Patch mềm: chỉ cập nhật khi đang trống
+    const patch: Partial<Account> = {};
+    if (!acc.fullName && input.fullName) patch.fullName = input.fullName;
+    if (!acc.avatarUrl && input.avatarUrl) patch.avatarUrl = input.avatarUrl;
+
+    if (Object.keys(patch).length) {
+      await this.repo.update(acc.id, patch);
+      acc = await this.repo.findOneOrFail({ where: { email: input.email } });
+    }
+
+    return AccountMapper.toSafeDto(acc);
   }
 
   remove(id: number) {
