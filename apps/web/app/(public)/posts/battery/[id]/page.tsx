@@ -3,7 +3,19 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { sampleBatteryPosts, formatVnd } from '../sample-battery';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, MapPin, User, Battery, Zap, Activity, TrendingUp } from 'lucide-react';
+import {
+  Calendar,
+  MapPin,
+  User,
+  Battery,
+  Zap,
+  Activity,
+  TrendingUp,
+  Star,
+  MessageCircle,
+  Clock,
+  ChevronRight,
+} from 'lucide-react';
 import { Badge } from '@/app/(public)/posts/_components/Badge';
 
 type Props = {
@@ -30,8 +42,9 @@ export default async function BatteryDetailPage({ params }: Props) {
 
   const getHealthColor = (health: number) => {
     if (health >= 90) return 'bg-green-100 text-green-800 border-green-200';
-    if (health >= 80) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    if (health >= 70) return 'bg-orange-100 text-orange-800 border-orange-200';
+    if (health >= 80) return 'bg-green-50 text-green-700 border-green-200';
+    if (health >= 70) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (health >= 50) return 'bg-orange-100 text-orange-800 border-orange-200';
     return 'bg-red-100 text-red-800 border-red-200';
   };
 
@@ -40,7 +53,7 @@ export default async function BatteryDetailPage({ params }: Props) {
       <div className="mb-6">
         <Link
           href="/posts/battery"
-          className="inline-flex items-center text-sm text-blue-600 hover:underline"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 hover:underline"
         >
           ← Quay lại danh sách
         </Link>
@@ -48,10 +61,10 @@ export default async function BatteryDetailPage({ params }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Image Section */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
           <Card className="overflow-hidden shadow-lg">
             <CardContent className="p-0">
-              <div className="relative h-80 w-full bg-gradient-to-br from-slate-50 to-slate-100">
+              <div className="relative h-80 w-full bg-gray-50">
                 <Image
                   src={post.thumbnail || '/file-text.svg'}
                   alt={post.title}
@@ -60,9 +73,7 @@ export default async function BatteryDetailPage({ params }: Props) {
                   className="object-contain p-8"
                 />
                 <div className="absolute top-4 left-4">
-                  <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0">
-                    BATTERY
-                  </Badge>
+                  <Badge className="bg-gray-900 text-white border-0">BATTERY</Badge>
                 </div>
                 <div className="absolute top-4 right-4">
                   <Badge className={`border ${getStatusColor(post.status)}`}>
@@ -83,6 +94,62 @@ export default async function BatteryDetailPage({ params }: Props) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Seller Info Section */}
+          <Card className="shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Image
+                    src="/file-text.svg"
+                    alt="Avatar"
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Ô TÔ LÂM THÀNH</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-lg font-bold text-yellow-500">4</span>
+                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <span className="text-sm text-gray-600">(3 Đánh giá)</span>
+                    </div>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-sm text-gray-600">162 đã bán</span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-sm text-gray-600">15 đang bán</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      <span>Hoạt động 10 giờ trước</span>
+                    </div>
+                    <span>Phản hồi: --</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Chat Section */}
+              <div className="border-t border-gray-100 pt-4">
+                <h4 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  Chat nhanh:
+                </h4>
+                <div className="space-y-2">
+                  <button className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between group">
+                    <span className="text-sm text-gray-700">Xe này còn không a?</span>
+                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+                  </button>
+                  <button className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between group">
+                    <span className="text-sm text-gray-700">Giá xe có thể thương lượng</span>
+                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600" />
+                  </button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Details Section */}
@@ -93,12 +160,12 @@ export default async function BatteryDetailPage({ params }: Props) {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
-                  <div className="text-3xl font-bold text-green-600 mb-2">
+                  <div className="text-3xl font-bold text-gray-900 mb-2">
                     {formatVnd(post.priceVnd)}
                   </div>
                 </div>
                 {post.brand && (
-                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">{post.brand}</Badge>
+                  <Badge className="bg-gray-100 text-gray-800 border-gray-200">{post.brand}</Badge>
                 )}
               </div>
 

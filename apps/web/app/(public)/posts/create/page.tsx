@@ -179,11 +179,11 @@ export default function CreatePostPage() {
               <div className="space-y-4">
                 <button
                   onClick={() => handlePostTypeSelect('ev')}
-                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all group"
+                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
-                      <Car className="h-8 w-8 text-green-600" />
+                    <div className="p-2 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                      <Car className="h-8 w-8 text-gray-600" />
                     </div>
                     <div className="text-left flex-1">
                       <div className="font-semibold text-gray-900">Xe điện (EV)</div>
@@ -194,11 +194,11 @@ export default function CreatePostPage() {
 
                 <button
                   onClick={() => handlePostTypeSelect('battery')}
-                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
-                      <Battery className="h-8 w-8 text-blue-600" />
+                    <div className="p-2 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+                      <Battery className="h-8 w-8 text-gray-600" />
                     </div>
                     <div className="text-left flex-1">
                       <div className="font-semibold text-gray-900">Pin EV</div>
@@ -218,7 +218,7 @@ export default function CreatePostPage() {
             <div className="mb-8">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-green-500 to-blue-500 bg-clip-text text-transparent mb-2">
+                  <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">
                     Đăng tin bán {postType === 'ev' ? 'Xe điện' : 'Pin EV'}
                   </h1>
                   <p className="text-muted-foreground">
@@ -228,7 +228,7 @@ export default function CreatePostPage() {
                 <Button
                   variant="outline"
                   onClick={handleChangePostType}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   {postType === 'ev' ? (
                     <Car className="h-4 w-4" />
@@ -643,7 +643,11 @@ export default function CreatePostPage() {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                     <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-600 mb-2">Kéo thả hình ảnh vào đây hoặc</p>
-                    <Button type="button" variant="outline">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    >
                       Chọn hình ảnh
                     </Button>
                     <p className="text-sm text-gray-500 mt-2">
@@ -655,13 +659,15 @@ export default function CreatePostPage() {
 
               {/* Submit Buttons */}
               <div className="flex gap-4 justify-end">
-                <Button type="button" variant="outline" onClick={resetForm}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
                   Đặt lại
                 </Button>
-                <Button
-                  type="submit"
-                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
-                >
+                <Button type="submit" className="bg-gray-900 hover:bg-gray-800 text-white">
                   Đăng tin
                 </Button>
               </div>

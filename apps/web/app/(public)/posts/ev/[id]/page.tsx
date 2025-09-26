@@ -44,7 +44,7 @@ export default async function EvDetailPage({ params }: Props) {
       <div className="mb-6">
         <Link
           href="/posts/ev"
-          className="inline-flex items-center text-sm text-blue-600 hover:underline"
+          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 hover:underline"
         >
           ← Quay lại danh sách
         </Link>
@@ -55,7 +55,7 @@ export default async function EvDetailPage({ params }: Props) {
         <div className="lg:col-span-1">
           <Card className="overflow-hidden shadow-lg">
             <CardContent className="p-0">
-              <div className="relative h-80 w-full bg-gradient-to-br from-slate-50 to-slate-100">
+              <div className="relative h-80 w-full bg-gray-50">
                 <Image
                   src={post.thumbnail || '/file-text.svg'}
                   alt={post.title}
@@ -64,9 +64,7 @@ export default async function EvDetailPage({ params }: Props) {
                   className="object-contain p-8"
                 />
                 <div className="absolute top-4 left-4">
-                  <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white border-0">
-                    EV
-                  </Badge>
+                  <Badge className="bg-gray-900 text-white border-0">EV</Badge>
                 </div>
                 <div className="absolute top-4 right-4">
                   <Badge className={`border ${getStatusColor(post.status)}`}>

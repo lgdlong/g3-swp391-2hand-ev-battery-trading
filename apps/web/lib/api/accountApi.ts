@@ -1,8 +1,31 @@
 import type { Account, CreateAccountDto } from '@/types/account';
 import { api } from '@/lib/axios';
+import { getAuthHeaders } from '@/lib/auth';
 
 export async function createAccount(payload: CreateAccountDto): Promise<Account> {
   const { data } = await api.post<Account>('/accounts', payload);
+  return data;
+}
+
+// Get current user profile
+export async function getCurrentUser(): Promise<Account> {
+  const { data } = await api.get<Account>('/accounts/me', {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+// Update current user profile
+export interface UpdateProfileDto {
+  fullName?: string;
+  phone?: string;
+  avatarUrl?: string;
+}
+
+export async function updateCurrentUser(payload: UpdateProfileDto): Promise<Account> {
+  const { data } = await api.patch<Account>('/accounts/me', payload, {
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 

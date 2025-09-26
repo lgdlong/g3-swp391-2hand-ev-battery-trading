@@ -15,7 +15,7 @@ export function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebar
   if (!isOpen) return null;
 
   const menuItems = [
-    { label: 'Profile Settings', href: '#', icon: User, color: 'bg-blue-500' },
+    { label: 'Profile Settings', href: '/profile', icon: User, color: 'bg-blue-500' },
     { label: 'My Bookmarks', href: '#', icon: Bookmark, color: 'bg-green-500' },
     { label: 'Notifications', href: '#', icon: Bell, color: 'bg-orange-500' },
     { label: 'Settings', href: '#', icon: Settings, color: 'bg-purple-500' },
@@ -26,7 +26,10 @@ export function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebar
   }
 
   return (
-    <div className="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-md animate-in fade-in duration-300"
+      onClick={onClose}
+    >
       <div
         className="absolute top-16 right-4 w-96 bg-white/95 backdrop-blur-2xl border border-gray-200/40 rounded-3xl shadow-2xl animate-in slide-in-from-top-2 duration-300 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -66,7 +69,7 @@ export function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebar
               onClick={onClose}
               style={{
                 animationDelay: `${index * 100}ms`,
-                animation: 'slideInFromRight 0.3s ease-out forwards'
+                animation: 'slideInFromRight 0.3s ease-out forwards',
               }}
             >
               {/* Icon container */}
@@ -76,11 +79,11 @@ export function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebar
 
               {/* Content */}
               <div className="flex flex-col items-start flex-1 relative z-10">
-                <span className="font-semibold text-gray-900">
-                  {item.label}
-                </span>
+                <span className="font-semibold text-gray-900">{item.label}</span>
                 <span className="text-xs text-gray-500">
-                  {item.label === 'Admin Dashboard' ? 'Quản trị hệ thống' : `Truy cập ${item.label.toLowerCase()}`}
+                  {item.label === 'Admin Dashboard'
+                    ? 'Quản trị hệ thống'
+                    : `Truy cập ${item.label.toLowerCase()}`}
                 </span>
               </div>
 
