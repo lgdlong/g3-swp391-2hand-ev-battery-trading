@@ -141,7 +141,7 @@ export class AccountsService {
     const normalizedEmail = email.toLowerCase().trim();
     const account: Account | null = await this.repo.findOne({ where: { email: normalizedEmail } });
     if (!account) {
-      throw new NotFoundException(`Account with id ${email} not found`);
+      throw new NotFoundException(`Account with email ${email} not found`);
     }
     return AccountMapper.toSafeDto(account);
   }

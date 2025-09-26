@@ -2,6 +2,6 @@ USER ACCOUNTS:
 aaa@gmail.com | 123456
 long@gmail.com | Abcd1234@
 
-AMDIN ACCOUNTS:
+ADMIN ACCOUNTS:
 admin@admin.com | 123456
 
