@@ -8,3 +8,7 @@ export function normalizeEmailOrPhone(value: string): { email?: string; phone?: 
   }
   return { phone: value.replace(NON_DIGIT_REGEX, '') };
 }
+
+export function getRandomPassword(): string {
+  return Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+}

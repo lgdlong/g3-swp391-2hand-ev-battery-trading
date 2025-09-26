@@ -4,18 +4,24 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleProfile } from './interfaces/google-profile.interface';
 import { RawGoogleProfile } from './interfaces/raw-google-profile.interface';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly authService: AuthService,
+  ) {
     super({
       clientID: configService.get<string>('GOOGLE_CLIENT_ID'),
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
-      callbackURL: 'http://localhost:3000/auth/google-redirect',
+      callbackURL:
+        configService.get<string>('GOOGLE_CALLBACK_URL') ||
+        'http://localhost:8000/auth/google-redirect',
       scope: ['email', 'profile'],
     });
   }
-  async validate(
+  validate(
     accessToken: string,
     refreshToken: string,
     profile: RawGoogleProfile,
@@ -34,7 +40,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       };
 
       // Save user to DB and generate JWT
-      const result = await this.authService.handleGoogleLogin({
+      const result = this.authService.handleGoogleLogin({
         googleId: googleProfile.googleId,
         email: googleProfile.email,
         name: googleProfile.name,
