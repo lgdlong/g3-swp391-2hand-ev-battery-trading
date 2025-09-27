@@ -7,79 +7,57 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Search,
-  Filter,
-  MoreHorizontal,
-  Edit,
-  Trash2,
+  Users,
   UserCheck,
   UserX,
+  Shield,
+  FileText,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  MoreHorizontal,
+  Eye,
+  Trash2,
+  UserPlus,
+  Ban,
+  CheckCircle,
 } from 'lucide-react';
 import { Account } from '@/types/account';
-import { AccountRole as RoleEnum, AccountStatus as StatusEnum, AccountRole, AccountStatus } from '@/types/enums/account-enum';
-
-// Mock data - sẽ thay thế bằng API call thực tế
-const mockAccounts: Account[] = [
-  {
-    id: 1,
-    email: 'admin@admin.com',
-    phone: '0123456789',
-    fullName: 'Admin User',
-    avatarUrl: null,
-    status: StatusEnum.ACTIVE,
-    role: RoleEnum.ADMIN,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 2,
-    email: 'user1@example.com',
-    phone: '0987654321',
-    fullName: 'Nguyễn Văn A',
-    avatarUrl: null,
-    status: StatusEnum.ACTIVE,
-    role: RoleEnum.USER,
-    createdAt: '2024-01-02T00:00:00Z',
-    updatedAt: '2024-01-02T00:00:00Z'
-  },
-  {
-    id: 3,
-    email: 'user2@example.com',
-    phone: '0912345678',
-    fullName: 'Trần Thị B',
-    avatarUrl: null,
-    status: StatusEnum.BANNED,
-    role: RoleEnum.USER,
-    createdAt: '2024-01-03T00:00:00Z',
-    updatedAt: '2024-01-03T00:00:00Z'
-  },
-  // Thêm nhiều dữ liệu mock hơn để test phân trang
-  ...Array.from({ length: 47 }, (_, i) => ({
-    id: i + 4,
-    email: `user${i + 4}@example.com`,
-    phone: `09${String(i + 4).padStart(8, '0')}`,
-    fullName: `User ${i + 4}`,
-    avatarUrl: null,
-    status: i % 3 === 0 ? StatusEnum.BANNED : StatusEnum.ACTIVE,
-    role: RoleEnum.USER,
-    createdAt: `2024-01-${String(i + 4).padStart(2, '0')}T00:00:00Z`,
-    updatedAt: `2024-01-${String(i + 4).padStart(2, '0')}T00:00:00Z`
-  }))
-];
+import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
+import { getAccounts, updateAccount, deleteAccount } from '@/lib/api/accountApi';
 
 const ITEMS_PER_PAGE = 10;
 
-export default function AccountsManagement() {
-  const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
-  const [filteredAccounts, setFilteredAccounts] = useState<Account[]>(mockAccounts);
+export default function AdminDashboard() {
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<AccountStatus | 'all'>('all');
-  const [roleFilter, setRoleFilter] = useState<AccountRole | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusEnum | 'all'>('all');
+  const [roleFilter, setRoleFilter] = useState<RoleEnum | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch accounts data
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getAccounts();
+        setAccounts(data);
+      } catch (err) {
+        setError('Không thể tải danh sách tài khoản');
+        console.error('Error fetching accounts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccounts();
+  }, []);
 
   // Filter và search
   useEffect(() => {
@@ -87,26 +65,39 @@ export default function AccountsManagement() {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(account =>
-        account.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.phone?.includes(searchTerm)
+      filtered = filtered.filter(
+        (account) =>
+          account.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          account.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          account.phone?.includes(searchTerm),
       );
     }
 
     // Status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(account => account.status === statusFilter);
+      filtered = filtered.filter((account) => account.status === statusFilter);
     }
 
     // Role filter
     if (roleFilter !== 'all') {
-      filtered = filtered.filter(account => account.role === roleFilter);
+      filtered = filtered.filter((account) => account.role === roleFilter);
     }
 
     setFilteredAccounts(filtered);
-    setCurrentPage(1); // Reset về trang đầu khi filter
+    setCurrentPage(1);
   }, [accounts, searchTerm, statusFilter, roleFilter]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setSelectedAccount(null);
+    };
+
+    if (selectedAccount) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [selectedAccount]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAccounts.length / ITEMS_PER_PAGE);
@@ -118,121 +109,164 @@ export default function AccountsManagement() {
     setCurrentPage(page);
   };
 
-  const handleStatusToggle = (accountId: number) => {
-    setAccounts(prev => prev.map(account =>
-      account.id === accountId
-        ? {
-            ...account,
-            status: account.status === StatusEnum.ACTIVE ? StatusEnum.BANNED : StatusEnum.ACTIVE,
-            updatedAt: new Date().toISOString()
-          }
-        : account
-    ));
-  };
+  const handleStatusToggle = async (accountId: number) => {
+    try {
+      const account = accounts.find((acc) => acc.id === accountId);
+      if (!account) return;
 
-  const handleDeleteAccount = (accountId: number) => {
-    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-      setAccounts(prev => prev.filter(account => account.id !== accountId));
+      const newStatus =
+        account.status === StatusEnum.ACTIVE ? StatusEnum.BANNED : StatusEnum.ACTIVE;
+      const updatedAccount = await updateAccount(accountId, { status: newStatus });
+
+      setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? updatedAccount : acc)));
+    } catch (err) {
+      console.error('Error updating account status:', err);
+      alert('Không thể cập nhật trạng thái tài khoản');
     }
   };
 
-  const getStatusBadge = (status: AccountStatus) => {
-    return status === StatusEnum.ACTIVE
-      ? <Badge className="bg-emerald-100 text-emerald-800">Hoạt động</Badge>
-      : <Badge className="bg-red-100 text-red-800">Bị cấm</Badge>;
+  const handleDeleteAccount = async (accountId: number) => {
+    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
+      try {
+        await deleteAccount(accountId);
+        setAccounts((prev) => prev.filter((account) => account.id !== accountId));
+        alert('Tài khoản đã được xóa thành công');
+      } catch (err) {
+        console.error('Error deleting account:', err);
+        alert('Không thể xóa tài khoản');
+      }
+    }
   };
 
-  const getRoleBadge = (role: AccountRole) => {
-    return role === RoleEnum.ADMIN
-      ? <Badge className="bg-emerald-100 text-emerald-800">Admin</Badge>
-      : <Badge className="bg-blue-100 text-blue-800">User</Badge>;
+  const handlePromoteToAdmin = async (accountId: number) => {
+    if (confirm('Bạn có chắc chắn muốn thăng cấp người dùng này thành admin?')) {
+      try {
+        const updatedAccount = await updateAccount(accountId, { role: RoleEnum.ADMIN });
+        setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? updatedAccount : acc)));
+        alert('Đã thăng cấp thành admin thành công');
+      } catch (err) {
+        console.error('Error promoting to admin:', err);
+        alert('Không thể thăng cấp người dùng');
+      }
+    }
+  };
+
+  const handleViewDetails = (accountId: number) => {
+    const account = accounts.find((acc) => acc.id === accountId);
+    if (account) {
+      alert(
+        `Chi tiết tài khoản:\n\nTên: ${account.fullName}\nEmail: ${account.email}\nSĐT: ${account.phone}\nVai trò: ${account.role}\nTrạng thái: ${account.status}\nNgày tạo: ${new Date(account.createdAt).toLocaleDateString('vi-VN')}`,
+      );
+    }
+  };
+
+  const getStatusBadge = (status: StatusEnum) => {
+    return status === StatusEnum.ACTIVE ? (
+      <Badge className="bg-emerald-100 text-emerald-800">Hoạt động</Badge>
+    ) : (
+      <Badge className="bg-red-100 text-red-800">Bị cấm</Badge>
+    );
+  };
+
+  const getRoleBadge = (role: RoleEnum) => {
+    return role === RoleEnum.ADMIN ? (
+      <Badge className="bg-emerald-100 text-emerald-800">Admin</Badge>
+    ) : (
+      <Badge className="bg-blue-100 text-blue-800">User</Badge>
+    );
   };
 
   // Calculate statistics
   const totalUsers = accounts.length;
-  const totalAdmins = accounts.filter(account => account.role === RoleEnum.ADMIN).length;
-  const totalRegularUsers = accounts.filter(account => account.role === RoleEnum.USER).length;
-  const blockedUsers = accounts.filter(account => account.status === StatusEnum.BANNED).length;
-  const newPostsThisWeek = 38; // Mock data - sẽ thay thế bằng API call thực tế
+  const adminCount = accounts.filter((acc) => acc.role === RoleEnum.ADMIN).length;
+  const userCount = accounts.filter((acc) => acc.role === RoleEnum.USER).length;
+  const blockedCount = accounts.filter((acc) => acc.status === StatusEnum.BANNED).length;
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="text-red-600 mb-2">❌</div>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Thử lại</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
-          <p className="text-gray-600">Quản trị hệ thống</p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-600">Tổng người dùng</p>
-                <p className="text-2xl font-bold text-green-900">{totalUsers}</p>
-              </div>
-              <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-600 text-sm font-bold">U</span>
-              </div>
-            </div>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-emerald-800">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-emerald-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-900">{totalUsers}</div>
+            <p className="text-xs text-emerald-600">Tổng người dùng</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-blue-600">Quản trị viên</p>
-                <p className="text-2xl font-bold text-blue-900">{totalAdmins}</p>
-              </div>
-              <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 text-sm font-bold">A</span>
-              </div>
-            </div>
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-800">Admins</CardTitle>
+            <Shield className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-900">{adminCount}</div>
+            <p className="text-xs text-blue-600">Quản trị viên</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-50 border-purple-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-purple-600">Người dùng</p>
-                <p className="text-2xl font-bold text-purple-900">{totalRegularUsers}</p>
-              </div>
-              <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-purple-600 text-sm font-bold">U</span>
-              </div>
-            </div>
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-purple-800">Users</CardTitle>
+            <UserCheck className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-900">{userCount}</div>
+            <p className="text-xs text-purple-600">Người dùng</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-red-50 border-red-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-red-600">Bị chặn</p>
-                <p className="text-2xl font-bold text-red-900">{blockedUsers}</p>
-              </div>
-              <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="text-red-600 text-sm font-bold">B</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-orange-50 border-orange-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-orange-600">Tuần này</p>
-                <p className="text-2xl font-bold text-orange-900">{newPostsThisWeek}</p>
-              </div>
-              <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
-                <span className="text-orange-600 text-sm font-bold">P</span>
-              </div>
-            </div>
+        <Card className="border-red-200 bg-gradient-to-br from-red-50 to-pink-50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-red-800">Blocked</CardTitle>
+            <UserX className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-900">{blockedCount}</div>
+            <p className="text-xs text-red-600">Bị chặn</p>
           </CardContent>
         </Card>
       </div>
@@ -261,8 +295,8 @@ export default function AccountsManagement() {
               <label className="text-sm font-medium text-gray-700">Trạng thái</label>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as AccountStatus | 'all')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => setStatusFilter(e.target.value as StatusEnum | 'all')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               >
                 <option value="all">Tất cả</option>
                 <option value={StatusEnum.ACTIVE}>Hoạt động</option>
@@ -274,8 +308,8 @@ export default function AccountsManagement() {
               <label className="text-sm font-medium text-gray-700">Vai trò</label>
               <select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value as AccountRole | 'all')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => setRoleFilter(e.target.value as RoleEnum | 'all')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               >
                 <option value="all">Tất cả</option>
                 <option value={RoleEnum.USER}>User</option>
@@ -293,7 +327,6 @@ export default function AccountsManagement() {
                 variant="outline"
                 className="w-full"
               >
-                <Filter className="mr-2 h-4 w-4" />
                 Xóa bộ lọc
               </Button>
             </div>
@@ -304,9 +337,7 @@ export default function AccountsManagement() {
       {/* Accounts Table */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Danh sách tài khoản ({filteredAccounts.length} tài khoản)
-          </CardTitle>
+          <CardTitle>Danh sách tài khoản ({filteredAccounts.length} tài khoản)</CardTitle>
           <CardDescription>
             Trang {currentPage} / {totalPages}
           </CardDescription>
@@ -318,52 +349,114 @@ export default function AccountsManagement() {
                 <tr className="border-b">
                   <th className="text-left p-3 font-medium">Tên</th>
                   <th className="text-left p-3 font-medium">Email</th>
+                  <th className="text-left p-3 font-medium">SĐT</th>
                   <th className="text-left p-3 font-medium">Vai trò</th>
                   <th className="text-left p-3 font-medium">Trạng thái</th>
                   <th className="text-left p-3 font-medium">Ngày tham gia</th>
-                  <th className="text-left p-3 font-medium">Số bài đăng</th>
                   <th className="text-left p-3 font-medium">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
-                {currentAccounts.map((account) => {
-                  // Mock số bài đăng - sẽ thay thế bằng API call thực tế
-                  const postCount = Math.floor(Math.random() * 20) + 1;
-                  
-                  return (
-                    <tr key={account.id} className="border-b hover:bg-gray-50">
-                      <td className="p-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-600">
-                              {account.fullName.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <span className="font-medium">{account.fullName}</span>
+                {currentAccounts.map((account) => (
+                  <tr key={account.id} className="border-b hover:bg-gray-50">
+                    <td className="p-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-medium text-emerald-800">
+                            {account.fullName.charAt(0).toUpperCase()}
+                          </span>
                         </div>
-                      </td>
-                      <td className="p-3 text-gray-600">{account.email}</td>
-                      <td className="p-3">{getRoleBadge(account.role)}</td>
-                      <td className="p-3">{getStatusBadge(account.status)}</td>
-                      <td className="p-3 text-gray-600">
-                        {new Date(account.createdAt).toLocaleDateString('vi-VN')}
-                      </td>
-                      <td className="p-3 text-gray-600">{postCount}</td>
-                      <td className="p-3">
+                        <span className="font-medium">{account.fullName}</span>
+                      </div>
+                    </td>
+                    <td className="p-3 text-gray-600">{account.email}</td>
+                    <td className="p-3 text-gray-600">{account.phone}</td>
+                    <td className="p-3">{getRoleBadge(account.role)}</td>
+                    <td className="p-3">{getStatusBadge(account.status)}</td>
+                    <td className="p-3 text-gray-600">
+                      {new Date(account.createdAt).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="p-3">
+                      <div className="relative">
                         <Button
                           size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            // TODO: Implement dropdown menu
-                            console.log('Actions for account:', account.id);
-                          }}
+                          variant="outline"
+                          onClick={() =>
+                            setSelectedAccount(selectedAccount === account.id ? null : account.id)
+                          }
+                          className="p-2"
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+
+                        {selectedAccount === account.id && (
+                          <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                            <div className="py-1">
+                              <button
+                                onClick={() => {
+                                  handleViewDetails(account.id);
+                                  setSelectedAccount(null);
+                                }}
+                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                Xem chi tiết
+                              </button>
+
+                              {account.role === RoleEnum.USER && (
+                                <button
+                                  onClick={() => {
+                                    handlePromoteToAdmin(account.id);
+                                    setSelectedAccount(null);
+                                  }}
+                                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                >
+                                  <UserPlus className="h-4 w-4 mr-2" />
+                                  Thăng cấp Admin
+                                </button>
+                              )}
+
+                              <button
+                                onClick={() => {
+                                  handleStatusToggle(account.id);
+                                  setSelectedAccount(null);
+                                }}
+                                className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 ${
+                                  account.status === StatusEnum.ACTIVE
+                                    ? 'text-red-600 hover:bg-red-50'
+                                    : 'text-green-600 hover:bg-green-50'
+                                }`}
+                              >
+                                {account.status === StatusEnum.ACTIVE ? (
+                                  <>
+                                    <Ban className="h-4 w-4 mr-2" />
+                                    Cấm tài khoản
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Kích hoạt tài khoản
+                                  </>
+                                )}
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  handleDeleteAccount(account.id);
+                                  setSelectedAccount(null);
+                                }}
+                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Xóa tài khoản
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -372,7 +465,8 @@ export default function AccountsManagement() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
               <div className="text-sm text-gray-700">
-                Hiển thị {startIndex + 1} đến {Math.min(endIndex, filteredAccounts.length)} trong tổng số {filteredAccounts.length} tài khoản
+                Hiển thị {startIndex + 1} đến {Math.min(endIndex, filteredAccounts.length)} trong
+                tổng số {filteredAccounts.length} tài khoản
               </div>
 
               <div className="flex items-center space-x-2">
@@ -409,7 +503,7 @@ export default function AccountsManagement() {
                     return (
                       <Button
                         key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
+                        variant={currentPage === pageNum ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => handlePageChange(pageNum)}
                       >
