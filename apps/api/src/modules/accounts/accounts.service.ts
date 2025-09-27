@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -135,7 +140,6 @@ export class AccountsService {
     return AccountMapper.toSafeDto(updated);
   }
 
-
   async updateStatus(id: number, status: AccountStatus): Promise<SafeAccountDto> {
     const account = await this.repo.findOneByOrFail({ id });
     account.status = status;
@@ -228,6 +232,15 @@ export class AccountsService {
 
   async updateRole(id: number, roleUpdate: AccountRole): Promise<SafeAccountDto> {
     const account = await this.repo.findOneByOrFail({ id });
+
+    // Chống không cho hạ cấp admin cuối cùng (cần tối thiểu 1 admin trong db)
+    if (account.role === AccountRole.ADMIN && roleUpdate === AccountRole.USER) {
+      const adminCount = await this.repo.count({ where: { role: AccountRole.ADMIN } });
+      if (adminCount <= 1) {
+        throw new ForbiddenException('Cannot demote the last admin.');
+      }
+    }
+
     account.role = roleUpdate;
     await this.repo.save(account);
     return AccountMapper.toSafeDto(account);
