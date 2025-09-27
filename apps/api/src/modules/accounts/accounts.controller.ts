@@ -140,6 +140,18 @@ export class AccountsController {
     return this.accountsService.updateStatus(targetId, AccountStatus.BANNED);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN) // Chỉ admin mới ban được
+  @Patch(':id/unban')
+  @ApiOperation({ summary: 'Ban account theo id (cần quyền admin)' })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Account đã bị ban' })
+  @ApiForbiddenResponse({ description: 'Không thể tự ban chính mình' })
+  async unbanAccount(
+    @Param('id') id: string,
+  ): Promise<SafeAccountDto> {
+    const targetId = +id;
+    return this.accountsService.updateStatus(targetId, AccountStatus.ACTIVE);
+  }
 
 
 }
