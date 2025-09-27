@@ -1,536 +1,175 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Search,
-  Users,
-  UserCheck,
-  UserX,
-  Shield,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  MoreHorizontal,
-  Eye,
-  Trash2,
-  UserPlus,
-  Ban,
-  CheckCircle
-} from 'lucide-react';
-import { Account } from '@/types/account';
-import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
-import { getAccounts, updateAccount, deleteAccount } from '@/lib/api/accountApi';
-
-const ITEMS_PER_PAGE = 10;
+import { Users, FileText, Activity, TrendingUp, Database, Shield } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusEnum | 'all'>('all');
-  const [roleFilter, setRoleFilter] = useState<RoleEnum | 'all'>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Fetch accounts data
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getAccounts();
-        setAccounts(data);
-      } catch (err) {
-        setError('Không thể tải danh sách tài khoản');
-        console.error('Error fetching accounts:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAccounts();
-  }, []);
-
-  // Filter và search
-  useEffect(() => {
-    let filtered = accounts;
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(account =>
-        account.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.phone?.includes(searchTerm)
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(account => account.status === statusFilter);
-    }
-
-    // Role filter
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(account => account.role === roleFilter);
-    }
-
-    setFilteredAccounts(filtered);
-    setCurrentPage(1);
-  }, [accounts, searchTerm, statusFilter, roleFilter]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setSelectedAccount(null);
-    };
-
-    if (selectedAccount) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [selectedAccount]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredAccounts.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentAccounts = filteredAccounts.slice(startIndex, endIndex);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  // Mock data - replace with real data from your database
+  const stats = {
+    totalUsers: 1247,
+    totalPosts: 3892,
+    activeUsers: 342,
+    newUsersToday: 23,
+    postsToday: 156,
+    systemHealth: 99.8,
   };
-
-  const handleStatusToggle = async (accountId: number) => {
-    try {
-      const account = accounts.find(acc => acc.id === accountId);
-      if (!account) return;
-
-      const newStatus = account.status === StatusEnum.ACTIVE ? StatusEnum.BANNED : StatusEnum.ACTIVE;
-      const updatedAccount = await updateAccount(accountId, { status: newStatus });
-      
-      setAccounts(prev => prev.map(acc =>
-        acc.id === accountId ? updatedAccount : acc
-      ));
-    } catch (err) {
-      console.error('Error updating account status:', err);
-      alert('Không thể cập nhật trạng thái tài khoản');
-    }
-  };
-
-  const handleDeleteAccount = async (accountId: number) => {
-    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-      try {
-        await deleteAccount(accountId);
-        setAccounts(prev => prev.filter(account => account.id !== accountId));
-        alert('Tài khoản đã được xóa thành công');
-      } catch (err) {
-        console.error('Error deleting account:', err);
-        alert('Không thể xóa tài khoản');
-      }
-    }
-  };
-
-  const handlePromoteToAdmin = async (accountId: number) => {
-    if (confirm('Bạn có chắc chắn muốn thăng cấp người dùng này thành admin?')) {
-      try {
-        const updatedAccount = await updateAccount(accountId, { role: RoleEnum.ADMIN });
-        setAccounts(prev => prev.map(acc =>
-          acc.id === accountId ? updatedAccount : acc
-        ));
-        alert('Đã thăng cấp thành admin thành công');
-      } catch (err) {
-        console.error('Error promoting to admin:', err);
-        alert('Không thể thăng cấp người dùng');
-      }
-    }
-  };
-
-  const handleViewDetails = (accountId: number) => {
-    const account = accounts.find(acc => acc.id === accountId);
-    if (account) {
-      alert(`Chi tiết tài khoản:\n\nTên: ${account.fullName}\nEmail: ${account.email}\nSĐT: ${account.phone}\nVai trò: ${account.role}\nTrạng thái: ${account.status}\nNgày tạo: ${new Date(account.createdAt).toLocaleDateString('vi-VN')}`);
-    }
-  };
-
-  const getStatusBadge = (status: StatusEnum) => {
-    return status === StatusEnum.ACTIVE
-      ? <Badge className="bg-emerald-100 text-emerald-800">Hoạt động</Badge>
-      : <Badge className="bg-red-100 text-red-800">Bị cấm</Badge>;
-  };
-
-  const getRoleBadge = (role: RoleEnum) => {
-    return role === RoleEnum.ADMIN
-      ? <Badge className="bg-emerald-100 text-emerald-800">Admin</Badge>
-      : <Badge className="bg-blue-100 text-blue-800">User</Badge>;
-  };
-
-
-  // Calculate statistics
-  const totalUsers = accounts.length;
-  const adminCount = accounts.filter(acc => acc.role === RoleEnum.ADMIN).length;
-  const userCount = accounts.filter(acc => acc.role === RoleEnum.USER).length;
-  const blockedCount = accounts.filter(acc => acc.status === StatusEnum.BANNED).length;
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">Đang tải dữ liệu...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="text-red-600 mb-2">❌</div>
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button onClick={() => window.location.reload()}>Thử lại</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-800">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-emerald-900">{totalUsers}</div>
-            <p className="text-xs text-emerald-600">Tổng người dùng</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Admins</CardTitle>
-            <Shield className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-900">{adminCount}</div>
-            <p className="text-xs text-blue-600">Quản trị viên</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800">Users</CardTitle>
-            <UserCheck className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-900">{userCount}</div>
-            <p className="text-xs text-purple-600">Người dùng</p>
-          </CardContent>
-        </Card>
-
-
-        <Card className="border-red-200 bg-gradient-to-br from-red-50 to-pink-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-800">Blocked</CardTitle>
-            <UserX className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-900">{blockedCount}</div>
-            <p className="text-xs text-red-600">Bị chặn</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Bộ lọc</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Tìm kiếm</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Tìm theo tên, email, SĐT..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+    <>
+      <main className="flex-1 p-6 space-y-6">
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Users
+              </CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {stats.totalUsers.toLocaleString()}
               </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">Trạng thái</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusEnum | 'all')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              >
-                <option value="all">Tất cả</option>
-                <option value={StatusEnum.ACTIVE}>Hoạt động</option>
-                <option value={StatusEnum.BANNED}>Bị cấm</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700">Vai trò</label>
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value as RoleEnum | 'all')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              >
-                <option value="all">Tất cả</option>
-                <option value={RoleEnum.USER}>User</option>
-                <option value={RoleEnum.ADMIN}>Admin</option>
-              </select>
-            </div>
-
-            <div className="flex items-end">
-              <Button
-                onClick={() => {
-                  setSearchTerm('');
-                  setStatusFilter('all');
-                  setRoleFilter('all');
-                }}
-                variant="outline"
-                className="w-full"
-              >
-                Xóa bộ lọc
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Accounts Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Danh sách tài khoản ({filteredAccounts.length} tài khoản)
-          </CardTitle>
-          <CardDescription>
-            Trang {currentPage} / {totalPages}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3 font-medium">Tên</th>
-                  <th className="text-left p-3 font-medium">Email</th>
-                  <th className="text-left p-3 font-medium">SĐT</th>
-                  <th className="text-left p-3 font-medium">Vai trò</th>
-                  <th className="text-left p-3 font-medium">Trạng thái</th>
-                  <th className="text-left p-3 font-medium">Ngày tham gia</th>
-                  <th className="text-left p-3 font-medium">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentAccounts.map((account) => (
-                  <tr key={account.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-emerald-200 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-emerald-800">
-                            {account.fullName.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="font-medium">{account.fullName}</span>
-                      </div>
-                    </td>
-                    <td className="p-3 text-gray-600">{account.email}</td>
-                    <td className="p-3 text-gray-600">{account.phone}</td>
-                    <td className="p-3">{getRoleBadge(account.role)}</td>
-                    <td className="p-3">{getStatusBadge(account.status)}</td>
-                    <td className="p-3 text-gray-600">
-                      {new Date(account.createdAt).toLocaleDateString('vi-VN')}
-                    </td>
-                    <td className="p-3">
-                      <div className="relative">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedAccount(selectedAccount === account.id ? null : account.id)}
-                          className="p-2"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-
-                        {selectedAccount === account.id && (
-                          <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                            <div className="py-1">
-                              <button
-                                onClick={() => {
-                                  handleViewDetails(account.id);
-                                  setSelectedAccount(null);
-                                }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Xem chi tiết
-                              </button>
-
-                              {account.role === RoleEnum.USER && (
-                                <button
-                                  onClick={() => {
-                                    handlePromoteToAdmin(account.id);
-                                    setSelectedAccount(null);
-                                  }}
-                                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                  <UserPlus className="h-4 w-4 mr-2" />
-                                  Thăng cấp Admin
-                                </button>
-                              )}
-
-                              <button
-                                onClick={() => {
-                                  handleStatusToggle(account.id);
-                                  setSelectedAccount(null);
-                                }}
-                                className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 ${
-                                  account.status === StatusEnum.ACTIVE 
-                                    ? 'text-red-600 hover:bg-red-50' 
-                                    : 'text-green-600 hover:bg-green-50'
-                                }`}
-                              >
-                                {account.status === StatusEnum.ACTIVE ? (
-                                  <>
-                                    <Ban className="h-4 w-4 mr-2" />
-                                    Cấm tài khoản
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Kích hoạt tài khoản
-                                  </>
-                                )}
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  handleDeleteAccount(account.id);
-                                  setSelectedAccount(null);
-                                }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Xóa tài khoản
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-gray-700">
-                Hiển thị {startIndex + 1} đến {Math.min(endIndex, filteredAccounts.length)} trong tổng số {filteredAccounts.length} tài khoản
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="secondary" className="text-xs">
+                  +{stats.newUsersToday} today
+                </Badge>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Posts
+              </CardTitle>
+              <FileText className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {stats.totalPosts.toLocaleString()}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="secondary" className="text-xs">
+                  +{stats.postsToday} today
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
 
-                <div className="flex space-x-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Active Users
+              </CardTitle>
+              <Activity className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{stats.activeUsers}</div>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline" className="text-xs text-green-400 border-green-400">
+                  Online now
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
+        {/* System Status Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <Database className="h-5 w-5 text-primary" />
+                Database Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Connection</span>
+                <Badge className="bg-green-500/10 text-green-400 border-green-500/20">
+                  Connected
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Response Time</span>
+                <span className="text-sm font-medium text-foreground">12ms</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Storage Used</span>
+                <span className="text-sm font-medium text-foreground">2.4GB / 10GB</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-foreground">
+                <Shield className="h-5 w-5 text-primary" />
+                System Health
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Uptime</span>
+                <span className="text-sm font-medium text-green-400">{stats.systemHealth}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">API Status</span>
+                <Badge className="bg-green-500/10 text-green-400 border-green-500/20">
+                  Operational
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Last Backup</span>
+                <span className="text-sm font-medium text-foreground">2 hours ago</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activity */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="w-2 h-2 rounded-full bg-green-400"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">New user registered</p>
+                  <p className="text-xs text-muted-foreground">
+                    john.doe@example.com • 5 minutes ago
+                  </p>
                 </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">New post published</p>
+                  <p className="text-xs text-muted-foreground">
+                    "Getting Started with Next.js" • 12 minutes ago
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">
+                    System maintenance completed
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Database optimization • 1 hour ago
+                  </p>
+                </div>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </main>
+    </>
   );
 }
