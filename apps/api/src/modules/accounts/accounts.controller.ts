@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -28,8 +29,11 @@ import {
   ApiTags,
   ApiBadRequestResponse,
   ApiNoContentResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
-import { CurrentUser, ReqUser } from 'src/core/decorators/current-user.decorator';
+import { CurrentUser } from 'src/core/decorators/current-user.decorator';
+import type { ReqUser } from 'src/core/decorators/current-user.decorator';
+import { AccountStatus } from 'src/shared/enums/account-status.enum';
 
 @ApiBearerAuth()
 @ApiTags('Accounts')
@@ -115,5 +119,76 @@ export class AccountsController {
   @ApiNoContentResponse({ description: 'Xoá thành công' })
   remove(@Param('id') id: string) {
     return this.accountsService.remove(+id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN) // Chỉ admin mới ban được
+  @Patch(':id/ban')
+  @ApiOperation({ summary: 'Ban account theo id (cần quyền admin)' })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Account đã bị ban' })
+  @ApiForbiddenResponse({ description: 'Không thể tự ban chính mình' })
+  async banAccount(
+    @Param('id') id: string,
+    @CurrentUser() actor: ReqUser,
+  ): Promise<SafeAccountDto> {
+    const targetId = +id;
+    if (actor.sub === targetId) {
+      throw new ForbiddenException('Bạn không thể tự ban chính mình');
+    }
+    return this.accountsService.updateStatus(targetId, AccountStatus.BANNED);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN) // Chỉ admin mới ban được
+  @Patch(':id/unban')
+  @ApiOperation({ summary: 'Unban account theo id (cần quyền admin)' })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Account đã được unban' })
+  async unbanAccount(@Param('id') id: string): Promise<SafeAccountDto> {
+    const targetId = +id;
+    return this.accountsService.updateStatus(targetId, AccountStatus.ACTIVE);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Patch(':id/promote')
+  @ApiOperation({ summary: 'Cập nhật vai trò của account thành Admin (chỉ admin)' })
+  @ApiOkResponse({
+    type: SafeAccountDto,
+    description: 'Vai trò của account đã được cập nhật thành Admin',
+  })
+  @ApiForbiddenResponse({
+    description: 'Không thể tự thay đổi vai trò của chính mình',
+  })
+  async promoteToAdmin(
+    @Param('id') id: string,
+    @CurrentUser() actor: ReqUser,
+  ): Promise<SafeAccountDto> {
+    const targetId = +id;
+    if (actor.sub === targetId) {
+      throw new ForbiddenException('Bạn không thể tự thay đổi vai trò của chính mình');
+    }
+    return this.accountsService.updateRole(targetId, AccountRole.ADMIN);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Patch(':id/demote')
+  @ApiOperation({ summary: 'Cập nhật vai trò của account thành Member (chỉ admin)' })
+  @ApiOkResponse({
+    type: SafeAccountDto,
+    description: 'Vai trò của account đã được cập nhật thành Member',
+  })
+  @ApiForbiddenResponse({
+    description: 'Không thể tự thay đổi vai trò của chính mình',
+  })
+  async demoteToMember(
+    @Param('id') id: string,
+    @CurrentUser() actor: ReqUser,
+  ): Promise<SafeAccountDto> {
+    const targetId = +id;
+    if (actor.sub === targetId) {
+      throw new ForbiddenException('Bạn không thể tự thay đổi vai trò của chính mình');
+    }
+    return this.accountsService.updateRole(targetId, AccountRole.USER);
   }
 }
