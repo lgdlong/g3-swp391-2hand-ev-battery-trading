@@ -154,19 +154,35 @@ export class AccountsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
-  @Patch(':id/role')
+  @Patch(':id/promote')
   @ApiOperation({ summary: 'Cập nhật vai trò của account (cần quyền admin)' })
   @ApiOkResponse({ type: SafeAccountDto, description: 'Vai trò của account đã được cập nhật' })
   @ApiForbiddenResponse({ description: 'Không thể tự thay đổi vai trò của chính mình' })
-  async updateRole(
+  async promoteToAdmin(
     @Param('id') id: string,
-    @Body('role') role: AccountRole,
     @CurrentUser() actor: ReqUser,
   ): Promise<SafeAccountDto> {
     const targetId = +id;
     if (actor.sub === targetId) {
       throw new ForbiddenException('Bạn không thể tự thay đổi vai trò của chính mình');
     }
-    return this.accountsService.updateRole(targetId, role);
+    return this.accountsService.updateRole(targetId, AccountRole.ADMIN);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Patch(':id/demote')
+  @ApiOperation({ summary: 'Cập nhật vai trò của account (cần quyền admin)' })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Vai trò của account đã được cập nhật' })
+  @ApiForbiddenResponse({ description: 'Không thể tự thay đổi vai trò của chính mình' })
+  async demoteToMember(
+    @Param('id') id: string,
+    @CurrentUser() actor: ReqUser,
+  ): Promise<SafeAccountDto> {
+    const targetId = +id;
+    if (actor.sub === targetId) {
+      throw new ForbiddenException('Bạn không thể tự thay đổi vai trò của chính mình');
+    }
+    return this.accountsService.updateRole(targetId, AccountRole.USER);
   }
 }
