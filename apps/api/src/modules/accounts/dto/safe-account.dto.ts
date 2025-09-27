@@ -1,3 +1,4 @@
+// apps/api/src/modules/accounts/dto/safe-account.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { AccountRole } from '../../../shared/enums/account-role.enum';
 import { AccountStatus } from '../../../shared/enums/account-status.enum';

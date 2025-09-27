@@ -213,7 +213,7 @@ trim_id          int [ref: > car_trims.id]
 manufacture_year smallint
 body_style       body_style_enum
 origin           origin_enum
-color_id         int [ref: > vehicle_colors.id]
+color         int [ref: > vehicle_colors.id]
 
 seats            smallint
 license_plate    varchar(20)
@@ -241,7 +241,7 @@ trim_id          int [ref: > bike_trims.id]
 manufacture_year smallint
 bike_style       bike_style_enum
 origin           origin_enum
-color_id         int [ref: > vehicle_colors.id]
+color         int [ref: > vehicle_colors.id]
 
 license_plate    varchar(20)        // có thể null (tùy loại)
 owners_count     smallint
@@ -367,7 +367,7 @@ apps/
       │  │
       │  ├─ posts/                    # Bounded context: listing (metadata + search)
       │  │  ├─ dto/
-      │  │  │  ├─ create-post.dto.ts
+      │  │  │  ├─ base-create-post.dto.ts
       │  │  │  ├─ update-post.dto.ts
       │  │  │  ├─ post-query.dto.ts         # filter/search (brand_id, price, ward_code, ...)
       │  │  │  └─ post-response.dto.ts      # Safe/summary/detail
