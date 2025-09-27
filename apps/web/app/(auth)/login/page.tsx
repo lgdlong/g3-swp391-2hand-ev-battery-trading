@@ -43,7 +43,7 @@ export default function LoginPage() {
     },
   });
 
-  const mutation = useMutation<
+  const loginMutation = useMutation<
     LoginResponse,
     AxiosError<any>,
     // AxiosError<ApiError>,
@@ -73,33 +73,8 @@ export default function LoginPage() {
   });
 
   const onSubmit = (values: LoginForm) => {
-    // Check for admin account first
-    if (values.identifier === 'admin@admin.com' && values.password === '123456') {
-      // Mock admin data
-      const mockAdminData = {
-        id: 1,
-        email: 'admin@admin.com',
-        phone: '0123456789',
-        fullName: 'Admin User',
-        avatarUrl: null,
-        status: 'active',
-        role: 'admin',
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-      };
-
-      const mockToken = 'mock-admin-token-' + Date.now();
-
-      // Login with mock data
-      login(mockToken, mockAdminData);
-
-      toast.success('Đăng nhập admin thành công!');
-      router.replace('/admin');
-      return;
-    }
-
-    // Normal API login for other accounts
-    mutation.mutate(values);
+    // Process the login mutation
+    loginMutation.mutate(values);
   };
 
   const handleGoogleLogin = () => {
@@ -130,7 +105,7 @@ export default function LoginPage() {
                             placeholder="m@example.com or 09xxxxxxxx"
                             type="text"
                             autoComplete="username"
-                            disabled={mutation.isPending}
+                            disabled={loginMutation.isPending}
                             {...field}
                           />
                         </FormControl>
@@ -159,7 +134,7 @@ export default function LoginPage() {
                             <Input
                               type={showPassword ? 'text' : 'password'}
                               autoComplete="current-password"
-                              disabled={mutation.isPending}
+                              disabled={loginMutation.isPending}
                               {...field}
                             />
                             <Button
@@ -188,14 +163,14 @@ export default function LoginPage() {
 
                   {/* Login buttons */}
                   <div className="flex flex-col gap-3">
-                    <Button type="submit" className="w-full" disabled={mutation.isPending}>
-                      {mutation.isPending ? 'Logging in…' : 'Login'}
+                    <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                      {loginMutation.isPending ? 'Logging in…' : 'Login'}
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       className="w-full"
-                      disabled={mutation.isPending}
+                      disabled={loginMutation.isPending}
                       onClick={handleGoogleLogin}
                     >
                       <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
