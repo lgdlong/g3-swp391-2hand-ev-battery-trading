@@ -195,13 +195,6 @@ export default function LoginPage() {
                     </Button>
                   </div>
 
-                  {/* Admin Info */}
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <p className="text-sm text-blue-800 font-medium mb-1">Admin Test Account:</p>
-                    <p className="text-xs text-blue-600">Email: admin@admin.com</p>
-                    <p className="text-xs text-blue-600">Password: 123456</p>
-                  </div>
-
                   {/* Footer */}
                   <div className="mt-2 text-center text-sm">
                     Don&apos;t have an account?{' '}
