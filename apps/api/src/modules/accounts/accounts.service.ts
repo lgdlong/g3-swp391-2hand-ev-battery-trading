@@ -15,6 +15,7 @@ import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 import { SafeAccountDto } from './dto/safe-account.dto';
 import { AccountMapper } from './mappers';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
+import { AccountStatus } from 'src/shared/enums/account-status.enum';
 
 @Injectable()
 export class AccountsService {
@@ -133,6 +134,7 @@ export class AccountsService {
     return AccountMapper.toSafeDto(updated);
   }
 
+
   async findByEmail(email: string): Promise<SafeAccountDto> {
     if (!email) {
       throw new NotFoundException(`Invalid account id: ${email}`);
@@ -145,6 +147,15 @@ export class AccountsService {
     }
     return AccountMapper.toSafeDto(account);
   }
+  
+  async updateStatus(id: number, status: AccountStatus): Promise<SafeAccountDto> {
+    const account = await this.repo.findOneByOrFail({ id });
+    account.status = status;
+    await this.repo.save(account);
+    return AccountMapper.toSafeDto(account);
+  }
+
+
 
   async update(accountId: number, updateAccountDto: UpdateAccountDto): Promise<SafeAccountDto> {
     if (!accountId || accountId <= 0) {
