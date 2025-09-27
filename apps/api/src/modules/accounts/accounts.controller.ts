@@ -35,12 +35,11 @@ import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 import type { ReqUser } from 'src/core/decorators/current-user.decorator';
 import { AccountStatus } from 'src/shared/enums/account-status.enum';
 
-
 @ApiBearerAuth()
 @ApiTags('Accounts')
 @Controller('accounts')
 export class AccountsController {
-  constructor(private readonly accountsService: AccountsService) { }
+  constructor(private readonly accountsService: AccountsService) {}
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
@@ -122,7 +121,6 @@ export class AccountsController {
     return this.accountsService.remove(+id);
   }
 
-
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN) // Chỉ admin mới ban được
   @Patch(':id/ban')
@@ -145,9 +143,7 @@ export class AccountsController {
   @Patch(':id/unban')
   @ApiOperation({ summary: 'Unban account theo id (cần quyền admin)' })
   @ApiOkResponse({ type: SafeAccountDto, description: 'Account đã được unban' })
-  async unbanAccount(
-    @Param('id') id: string,
-  ): Promise<SafeAccountDto> {
+  async unbanAccount(@Param('id') id: string): Promise<SafeAccountDto> {
     const targetId = +id;
     return this.accountsService.updateStatus(targetId, AccountStatus.ACTIVE);
   }
@@ -155,9 +151,14 @@ export class AccountsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Patch(':id/promote')
-  @ApiOperation({ summary: 'Cập nhật vai trò của account (cần quyền admin)' })
-  @ApiOkResponse({ type: SafeAccountDto, description: 'Vai trò của account đã được cập nhật' })
-  @ApiForbiddenResponse({ description: 'Không thể tự thay đổi vai trò của chính mình' })
+  @ApiOperation({ summary: 'Cập nhật vai trò của account thành Admin (chỉ admin)' })
+  @ApiOkResponse({
+    type: SafeAccountDto,
+    description: 'Vai trò của account đã được cập nhật thành Admin',
+  })
+  @ApiForbiddenResponse({
+    description: 'Không thể tự thay đổi vai trò của chính mình',
+  })
   async promoteToAdmin(
     @Param('id') id: string,
     @CurrentUser() actor: ReqUser,
@@ -172,9 +173,14 @@ export class AccountsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Patch(':id/demote')
-  @ApiOperation({ summary: 'Cập nhật vai trò của account (cần quyền admin)' })
-  @ApiOkResponse({ type: SafeAccountDto, description: 'Vai trò của account đã được cập nhật' })
-  @ApiForbiddenResponse({ description: 'Không thể tự thay đổi vai trò của chính mình' })
+  @ApiOperation({ summary: 'Cập nhật vai trò của account thành Member (chỉ admin)' })
+  @ApiOkResponse({
+    type: SafeAccountDto,
+    description: 'Vai trò của account đã được cập nhật thành Member',
+  })
+  @ApiForbiddenResponse({
+    description: 'Không thể tự thay đổi vai trò của chính mình',
+  })
   async demoteToMember(
     @Param('id') id: string,
     @CurrentUser() actor: ReqUser,

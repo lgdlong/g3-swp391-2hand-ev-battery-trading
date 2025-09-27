@@ -226,9 +226,9 @@ export class AccountsService {
     return AccountMapper.toSafeDto(acc);
   }
 
-  async updateRole(id: number, role: AccountRole): Promise<SafeAccountDto> {
+  async updateRole(id: number, roleUpdate: AccountRole): Promise<SafeAccountDto> {
     const account = await this.repo.findOneByOrFail({ id });
-    account.role = role;
+    account.role = roleUpdate;
     await this.repo.save(account);
     return AccountMapper.toSafeDto(account);
   }
