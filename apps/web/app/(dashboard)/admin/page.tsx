@@ -19,76 +19,45 @@ import {
   MoreHorizontal,
   Eye,
   Trash2,
-  UserPlus
+  UserPlus,
+  Ban,
+  CheckCircle
 } from 'lucide-react';
 import { Account } from '@/types/account';
 import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
-
-// Mock data
-const mockAccounts: Account[] = [
-  {
-    id: 1,
-    email: 'admin@admin.com',
-    phone: '0123456789',
-    fullName: 'Admin User',
-    avatarUrl: null,
-    status: StatusEnum.ACTIVE,
-    role: RoleEnum.ADMIN,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 2,
-    email: 'user1@example.com',
-    phone: '0987654321',
-    fullName: 'Nguyễn Văn A',
-    avatarUrl: null,
-    status: StatusEnum.ACTIVE,
-    role: RoleEnum.USER,
-    createdAt: '2024-01-02T00:00:00Z',
-    updatedAt: '2024-01-02T00:00:00Z'
-  },
-  {
-    id: 3,
-    email: 'user2@example.com',
-    phone: '0912345678',
-    fullName: 'Trần Thị B',
-    avatarUrl: null,
-    status: StatusEnum.BANNED,
-    role: RoleEnum.USER,
-    createdAt: '2024-01-03T00:00:00Z',
-    updatedAt: '2024-01-03T00:00:00Z'
-  },
-  // Thêm nhiều dữ liệu mock hơn
-  ...Array.from({ length: 47 }, (_, i) => ({
-    id: i + 4,
-    email: `user${i + 4}@example.com`,
-    phone: `09${String(i + 4).padStart(8, '0')}`,
-    fullName: `User ${i + 4}`,
-    avatarUrl: null,
-    status: i % 3 === 0 ? StatusEnum.BANNED : StatusEnum.ACTIVE,
-    role: RoleEnum.USER,
-    createdAt: `2024-01-${String(i + 4).padStart(2, '0')}T00:00:00Z`,
-    updatedAt: `2024-01-${String(i + 4).padStart(2, '0')}T00:00:00Z`
-  }))
-];
-
-// Thêm thông tin bổ sung cho mỗi account
-const accountsWithStats = mockAccounts.map(account => ({
-  ...account,
-  postCount: Math.floor(Math.random() * 20) // Random post count
-}));
+import { getAccounts, updateAccount, deleteAccount } from '@/lib/api/accountApi';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function AdminDashboard() {
-  const [accounts, setAccounts] = useState(accountsWithStats);
-  const [filteredAccounts, setFilteredAccounts] = useState(accountsWithStats);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusEnum | 'all'>('all');
   const [roleFilter, setRoleFilter] = useState<RoleEnum | 'all'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch accounts data
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getAccounts();
+        setAccounts(data);
+      } catch (err) {
+        setError('Không thể tải danh sách tài khoản');
+        console.error('Error fetching accounts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccounts();
+  }, []);
 
   // Filter và search
   useEffect(() => {
@@ -139,42 +108,55 @@ export default function AdminDashboard() {
     setCurrentPage(page);
   };
 
-  const handleStatusToggle = (accountId: number) => {
-    setAccounts(prev => prev.map(account =>
-      account.id === accountId
-        ? {
-            ...account,
-            status: account.status === StatusEnum.ACTIVE ? StatusEnum.BANNED : StatusEnum.ACTIVE,
-            updatedAt: new Date().toISOString()
-          }
-        : account
-    ));
-  };
+  const handleStatusToggle = async (accountId: number) => {
+    try {
+      const account = accounts.find(acc => acc.id === accountId);
+      if (!account) return;
 
-  const handleDeleteAccount = (accountId: number) => {
-    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-      setAccounts(prev => prev.filter(account => account.id !== accountId));
+      const newStatus = account.status === StatusEnum.ACTIVE ? StatusEnum.BANNED : StatusEnum.ACTIVE;
+      const updatedAccount = await updateAccount(accountId, { status: newStatus });
+      
+      setAccounts(prev => prev.map(acc =>
+        acc.id === accountId ? updatedAccount : acc
+      ));
+    } catch (err) {
+      console.error('Error updating account status:', err);
+      alert('Không thể cập nhật trạng thái tài khoản');
     }
   };
 
-  const handlePromoteToAdmin = (accountId: number) => {
+  const handleDeleteAccount = async (accountId: number) => {
+    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
+      try {
+        await deleteAccount(accountId);
+        setAccounts(prev => prev.filter(account => account.id !== accountId));
+        alert('Tài khoản đã được xóa thành công');
+      } catch (err) {
+        console.error('Error deleting account:', err);
+        alert('Không thể xóa tài khoản');
+      }
+    }
+  };
+
+  const handlePromoteToAdmin = async (accountId: number) => {
     if (confirm('Bạn có chắc chắn muốn thăng cấp người dùng này thành admin?')) {
-      setAccounts(prev => prev.map(account =>
-        account.id === accountId
-          ? {
-              ...account,
-              role: RoleEnum.ADMIN,
-              updatedAt: new Date().toISOString()
-            }
-          : account
-      ));
+      try {
+        const updatedAccount = await updateAccount(accountId, { role: RoleEnum.ADMIN });
+        setAccounts(prev => prev.map(acc =>
+          acc.id === accountId ? updatedAccount : acc
+        ));
+        alert('Đã thăng cấp thành admin thành công');
+      } catch (err) {
+        console.error('Error promoting to admin:', err);
+        alert('Không thể thăng cấp người dùng');
+      }
     }
   };
 
   const handleViewDetails = (accountId: number) => {
     const account = accounts.find(acc => acc.id === accountId);
     if (account) {
-      alert(`Chi tiết tài khoản:\n\nTên: ${account.fullName}\nEmail: ${account.email}\nSĐT: ${account.phone}\nVai trò: ${account.role}\nTrạng thái: ${account.status}\nNgày tạo: ${new Date(account.createdAt).toLocaleDateString('vi-VN')}\nSố bài đăng: ${account.postCount}`);
+      alert(`Chi tiết tài khoản:\n\nTên: ${account.fullName}\nEmail: ${account.email}\nSĐT: ${account.phone}\nVai trò: ${account.role}\nTrạng thái: ${account.status}\nNgày tạo: ${new Date(account.createdAt).toLocaleDateString('vi-VN')}`);
     }
   };
 
@@ -196,7 +178,41 @@ export default function AdminDashboard() {
   const adminCount = accounts.filter(acc => acc.role === RoleEnum.ADMIN).length;
   const userCount = accounts.filter(acc => acc.role === RoleEnum.USER).length;
   const blockedCount = accounts.filter(acc => acc.status === StatusEnum.BANNED).length;
-  const newPostsThisWeek = Math.floor(Math.random() * 50) + 20; // Mock data
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="text-red-600 mb-2">❌</div>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Thử lại</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -206,7 +222,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-emerald-800">Total Users</CardTitle>
@@ -249,17 +265,6 @@ export default function AdminDashboard() {
           <CardContent>
             <div className="text-2xl font-bold text-red-900">{blockedCount}</div>
             <p className="text-xs text-red-600">Bị chặn</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-800">New Posts</CardTitle>
-            <FileText className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-900">{newPostsThisWeek}</div>
-            <p className="text-xs text-orange-600">Tuần này</p>
           </CardContent>
         </Card>
       </div>
@@ -344,10 +349,10 @@ export default function AdminDashboard() {
                 <tr className="border-b">
                   <th className="text-left p-3 font-medium">Tên</th>
                   <th className="text-left p-3 font-medium">Email</th>
+                  <th className="text-left p-3 font-medium">SĐT</th>
                   <th className="text-left p-3 font-medium">Vai trò</th>
                   <th className="text-left p-3 font-medium">Trạng thái</th>
                   <th className="text-left p-3 font-medium">Ngày tham gia</th>
-                  <th className="text-left p-3 font-medium">Số bài đăng</th>
                   <th className="text-left p-3 font-medium">Thao tác</th>
                 </tr>
               </thead>
@@ -365,12 +370,12 @@ export default function AdminDashboard() {
                       </div>
                     </td>
                     <td className="p-3 text-gray-600">{account.email}</td>
+                    <td className="p-3 text-gray-600">{account.phone}</td>
                     <td className="p-3">{getRoleBadge(account.role)}</td>
                     <td className="p-3">{getStatusBadge(account.status)}</td>
                     <td className="p-3 text-gray-600">
                       {new Date(account.createdAt).toLocaleDateString('vi-VN')}
                     </td>
-                    <td className="p-3 text-gray-600">{account.postCount}</td>
                     <td className="p-3">
                       <div className="relative">
                         <Button
@@ -408,6 +413,30 @@ export default function AdminDashboard() {
                                   Thăng cấp Admin
                                 </button>
                               )}
+
+                              <button
+                                onClick={() => {
+                                  handleStatusToggle(account.id);
+                                  setSelectedAccount(null);
+                                }}
+                                className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 ${
+                                  account.status === StatusEnum.ACTIVE 
+                                    ? 'text-red-600 hover:bg-red-50' 
+                                    : 'text-green-600 hover:bg-green-50'
+                                }`}
+                              >
+                                {account.status === StatusEnum.ACTIVE ? (
+                                  <>
+                                    <Ban className="h-4 w-4 mr-2" />
+                                    Cấm tài khoản
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Kích hoạt tài khoản
+                                  </>
+                                )}
+                              </button>
 
                               <button
                                 onClick={() => {
