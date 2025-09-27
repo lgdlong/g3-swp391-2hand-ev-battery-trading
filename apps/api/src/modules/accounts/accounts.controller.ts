@@ -152,4 +152,21 @@ export class AccountsController {
     return this.accountsService.updateStatus(targetId, AccountStatus.ACTIVE);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Patch(':id/role')
+  @ApiOperation({ summary: 'Cập nhật vai trò của account (cần quyền admin)' })
+  @ApiOkResponse({ type: SafeAccountDto, description: 'Vai trò của account đã được cập nhật' })
+  @ApiForbiddenResponse({ description: 'Không thể tự thay đổi vai trò của chính mình' })
+  async updateRole(
+    @Param('id') id: string,
+    @Body('role') role: AccountRole,
+    @CurrentUser() actor: ReqUser,
+  ): Promise<SafeAccountDto> {
+    const targetId = +id;
+    if (actor.sub === targetId) {
+      throw new ForbiddenException('Bạn không thể tự thay đổi vai trò của chính mình');
+    }
+    return this.accountsService.updateRole(targetId, role);
+  }
 }

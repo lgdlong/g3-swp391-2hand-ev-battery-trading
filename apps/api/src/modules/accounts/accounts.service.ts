@@ -16,6 +16,7 @@ import { SafeAccountDto } from './dto/safe-account.dto';
 import { AccountMapper } from './mappers';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 import { AccountStatus } from 'src/shared/enums/account-status.enum';
+import { AccountRole } from 'src/shared/enums/account-role.enum';
 
 @Injectable()
 export class AccountsService {
@@ -223,6 +224,13 @@ export class AccountsService {
     }
 
     return AccountMapper.toSafeDto(acc);
+  }
+
+  async updateRole(id: number, role: AccountRole): Promise<SafeAccountDto> {
+    const account = await this.repo.findOneByOrFail({ id });
+    account.role = role;
+    await this.repo.save(account);
+    return AccountMapper.toSafeDto(account);
   }
 
   remove(id: number) {
