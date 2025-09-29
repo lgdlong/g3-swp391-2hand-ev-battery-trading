@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { PostType } from '../../shared/enums/post.enum';
-import { PostMedia } from './entities/post-media.entity';
 import { CarDetailsService } from '../post-details/services/car-details.service';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
 import { Account } from '../accounts/entities/account.entity';
@@ -12,16 +11,22 @@ import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { PostMapper } from './mappers/post.mapper';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
+import { PostImage } from './entities/post-image.entity';
+import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
+import { CreatePostImageDto } from './dto/create-post-image.dto';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectRepository(Post)
     private readonly postsRepo: Repository<Post>,
-    // @InjectRepository(PostMedia)
-    // private readonly mediaRepo: Repository<PostMedia>,
+    @InjectRepository(PostImage)
+    private readonly imagesRepo: Repository<PostImage>,
     private readonly carDetailsService: CarDetailsService,
     private readonly bikeDetailsService: BikeDetailsService,
+    private readonly cloudinary: CloudinaryService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async getCarPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
@@ -62,23 +67,23 @@ export class PostsService {
       const savedPost = await trx.save(Post, post);
 
       // 2) tạo Car Details
-      await this.carDetailsService.createWithTrx(trx, {
-        post_id: savedPost.id,
-        ...dto.carDetails,
-      });
+      // await this.carDetailsService.createWithTrx(trx, {
+      //   post_id: savedPost.id,
+      //   ...dto.carDetails,
+      // });
 
-      // 3) tạo Media (nếu có)
-      if (dto.media?.length) {
-        const rows = dto.media.map((m) =>
-          trx.create(PostMedia, {
-            kind: m.kind,
-            url: m.url,
-            position: m.position ?? 0,
-            post: savedPost,
-          }),
-        );
-        await trx.save(PostMedia, rows);
-      }
+      // // 3) tạo Media (nếu có)
+      // if (dto.media?.length) {
+      //   const rows = dto.media.map((m) =>
+      //     trx.create(PostMedia, {
+      //       kind: m.kind,
+      //       url: m.url,
+      //       position: m.position ?? 0,
+      //       post: savedPost,
+      //     }),
+      //   );
+      //   await trx.save(PostMedia, rows);
+      // }
 
       // 4) (tuỳ chọn) tự chuyển sang PENDING_REVIEW + log
       // await trx.update(Post, { id: savedPost.id }, { status: PostStatus.PENDING_REVIEW, submittedAt: new Date() });
@@ -160,5 +165,60 @@ export class PostsService {
 
       return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
     });
+  }
+
+  async addImages(postId: string, images: CreatePostImageDto[]) {
+    if (!images?.length) return [];
+
+    // đảm bảo post tồn tại (đơn giản, không transaction)
+    const exists = await this.postsRepo.exists({ where: { id: postId } });
+    if (!exists) throw new NotFoundException('Post not found');
+
+    // lấy vị trí hiện tại để append (đơn giản)
+    const last = await this.imagesRepo
+      .createQueryBuilder('pi')
+      .select('COALESCE(MAX(pi.position), 0)', 'max')
+      .where('pi.post_id = :postId', { postId })
+      .getRawOne<{ max: string }>();
+    const basePos = Number(last?.max) || 0;
+
+    const entities = images.map((img, idx) =>
+      this.imagesRepo.create({
+        post_id: postId,
+        public_id: img.public_id,
+        url: img.url,
+        width: img.width,
+        height: img.height,
+        bytes: img.bytes,
+        format: img.format ?? null,
+        position: basePos + idx + 1,
+      }),
+    );
+
+    try {
+      // save mảng entity -> đơn giản, dễ đọc
+      return await this.imagesRepo.save(entities);
+    } catch (e: any) {
+      if (e.code === '23505') {
+        throw new BadRequestException(`public_id is already exists`);
+      }
+      throw e;
+    }
+  }
+
+  async listImages(postId: string) {
+    return this.imagesRepo.find({
+      where: { post_id: postId },
+      order: { position: 'ASC', id: 'ASC' },
+    });
+  }
+
+  async removeImage(imageId: string) {
+    const img = await this.imagesRepo.findOne({ where: { id: imageId } });
+    if (!img) throw new NotFoundException('Image not found');
+
+    await this.cloudinary.delete(img.public_id).catch(() => null);
+    await this.imagesRepo.delete({ id: imageId });
+    return { ok: true };
   }
 }
