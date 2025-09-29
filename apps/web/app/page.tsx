@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { sampleEvPosts } from './(public)/posts/ev/sample-ev';
 import { sampleBatteryPosts } from './(public)/posts/battery/sample-battery';
+import { SearchBar } from '@/components/searchbar';
 
 export default function Home() {
   const categories = [
@@ -71,9 +72,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header />
-
+      <SearchBar />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden">
         {/* Background Elements */}
