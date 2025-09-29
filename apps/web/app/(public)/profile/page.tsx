@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
 import { getCurrentUser, updateCurrentUser, UpdateProfileDto } from '@/lib/api/accountApi';
 import { Account } from '@/types/account';
-import { User, Mail, Phone, Calendar, Shield, Edit3, Save, X, ArrowLeft } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Shield, Edit3, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { UserSidebar } from '@/components/navbar/UserSidebar';
 
 export default function ProfilePage() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,7 @@ export default function ProfilePage() {
   const [validatingImage, setValidatingImage] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -169,11 +171,11 @@ export default function ProfilePage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const validateImageUrl = (url: string): Promise<boolean> => {
@@ -217,14 +219,17 @@ export default function ProfilePage() {
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-xl">
           <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="h-8 w-8 text-gray-400" />
+            <div className="w-16 h-16 bg-[#048C73] rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="h-8 w-8 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Truy cập bị từ chối</h2>
             <p className="text-gray-600 mb-6">Vui lòng đăng nhập để xem thông tin cá nhân.</p>
-            <Button onClick={() => router.push('/login')} className="w-full">
+            <Button
+              onClick={() => router.push('/login')}
+              className="w-full bg-[#048C73] hover:bg-[#037A66]"
+            >
               Đăng nhập
             </Button>
           </CardContent>
@@ -237,7 +242,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-8 h-8 border-2 border-[#048C73] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Đang tải thông tin...</p>
         </div>
       </div>
@@ -247,7 +252,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full bg-white/90 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-xl">
           <CardContent className="p-8 text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <X className="h-8 w-8 text-red-500" />
@@ -264,31 +269,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
-        <Card className="mb-8 bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-xl">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                  Thông tin cá nhân
-                </h1>
-                <p className="text-gray-600">
-                  Quản lý thông tin tài khoản và cài đặt cá nhân của bạn.
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.back()}
-                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Quay lại
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center justify-between gap-4"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Card */}
@@ -297,7 +278,7 @@ export default function ProfilePage() {
               <CardContent className="p-6 text-center">
                 {/* Avatar */}
                 <div className="relative mb-6">
-                  <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto bg-gradient-to-br from-blue-600 to-emerald-600 shadow-lg">
+                  <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto bg-[#048C73] shadow-lg">
                     {profile.avatarUrl ? (
                       <Image
                         src={profile.avatarUrl}
@@ -398,7 +379,7 @@ export default function ProfilePage() {
                       id="fullName"
                       value={formData.fullName}
                       onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      className="h-11 border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                      className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20"
                       placeholder="Nhập họ và tên của bạn"
                     />
                   ) : (
@@ -432,7 +413,7 @@ export default function ProfilePage() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className="h-11 border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
+                      className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20"
                       placeholder="Nhập số điện thoại"
                     />
                   ) : (
@@ -485,7 +466,7 @@ export default function ProfilePage() {
                           type="text"
                           value={formData.avatarUrl}
                           onChange={(e) => handleInputChange('avatarUrl', e.target.value)}
-                          className={`h-11 border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 ${
+                          className={`h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 ${
                             avatarError
                               ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
                               : avatarPreview
@@ -568,23 +549,13 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Account ID */}
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Mã tài khoản
-                  </Label>
-                  <div className="flex items-center h-11 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
-                    <span className="text-gray-900 font-mono text-sm">{profile.id.toString()}</span>
-                  </div>
-                </div>
-
                 {/* Save Button */}
                 {editing && (
                   <div className="pt-4 border-t border-gray-100">
                     <Button
                       onClick={handleSave}
                       disabled={saving || validatingImage}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white flex items-center justify-center gap-2"
+                      className="w-full bg-[#048C73] hover:bg-[#037A66] disabled:bg-[#048C73]/60 text-white flex items-center justify-center gap-2"
                     >
                       {validatingImage ? (
                         <>
@@ -617,6 +588,14 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* UserSidebar */}
+      <UserSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        userRole={user?.role}
+        onLogout={logout}
+      />
     </div>
   );
 }

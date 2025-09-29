@@ -161,7 +161,7 @@ export default function CreatePostPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Modal for Post Type Selection */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-md">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -179,11 +179,11 @@ export default function CreatePostPage() {
               <div className="space-y-4">
                 <button
                   onClick={() => handlePostTypeSelect('ev')}
-                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-all group"
+                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-[#048C73] hover:bg-[#048C73]/5 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                      <Car className="h-8 w-8 text-gray-600" />
+                    <div className="p-2 rounded-full bg-gray-100 group-hover:bg-[#048C73]/10 transition-colors">
+                      <Car className="h-8 w-8 text-gray-600 group-hover:text-[#048C73]" />
                     </div>
                     <div className="text-left flex-1">
                       <div className="font-semibold text-gray-900">Xe điện (EV)</div>
@@ -194,11 +194,11 @@ export default function CreatePostPage() {
 
                 <button
                   onClick={() => handlePostTypeSelect('battery')}
-                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-all group"
+                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-[#048C73] hover:bg-[#048C73]/5 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
-                      <Battery className="h-8 w-8 text-gray-600" />
+                    <div className="p-2 rounded-full bg-gray-100 group-hover:bg-[#048C73]/10 transition-colors">
+                      <Battery className="h-8 w-8 text-gray-600 group-hover:text-[#048C73]" />
                     </div>
                     <div className="text-left flex-1">
                       <div className="font-semibold text-gray-900">Pin EV</div>
@@ -228,7 +228,7 @@ export default function CreatePostPage() {
                 <Button
                   variant="outline"
                   onClick={handleChangePostType}
-                  className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-[#048C73]/5 hover:border-[#048C73] hover:text-[#048C73]"
                 >
                   {postType === 'ev' ? (
                     <Car className="h-4 w-4" />
@@ -663,11 +663,11 @@ export default function CreatePostPage() {
                   type="button"
                   variant="outline"
                   onClick={resetForm}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="border-gray-300 text-gray-700 hover:bg-[#048C73]/5 hover:border-[#048C73] hover:text-[#048C73]"
                 >
                   Đặt lại
                 </Button>
-                <Button type="submit" className="bg-gray-900 hover:bg-gray-800 text-white">
+                <Button type="submit" className="bg-[#048C73] hover:bg-[#037A66] text-white">
                   Đăng tin
                 </Button>
               </div>

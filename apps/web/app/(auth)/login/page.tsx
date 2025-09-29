@@ -83,7 +83,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       {/* Subtle background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div
@@ -100,10 +100,10 @@ export default function LoginPage() {
           <div className="text-center space-y-4">
             <div className="flex justify-center items-center gap-3">
               <div className="relative">
-                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-[#048C73] rounded-xl flex items-center justify-center">
                   <Battery className="h-6 w-6 text-white" />
                 </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#048C73] rounded-full flex items-center justify-center">
                   <Car className="h-3 w-3 text-white" />
                 </div>
               </div>
@@ -138,7 +138,7 @@ export default function LoginPage() {
                             type="text"
                             autoComplete="username"
                             disabled={loginMutation.isPending}
-                            className="h-11 border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all duration-200"
+                            className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 transition-all duration-200"
                             {...field}
                           />
                         </FormControl>
@@ -157,7 +157,7 @@ export default function LoginPage() {
                           <FormLabel>Password</FormLabel>
                           <a
                             href="/forgot-password"
-                            className="ml-auto inline-block text-sm text-blue-600 hover:text-blue-700 underline-offset-4 hover:underline"
+                            className="ml-auto inline-block text-sm text-[#048C73] hover:text-[#037A66] underline-offset-4 hover:underline"
                           >
                             Forgot your password?
                           </a>
@@ -168,7 +168,7 @@ export default function LoginPage() {
                               type={showPassword ? 'text' : 'password'}
                               placeholder="Enter your password"
                               autoComplete="current-password"
-                              className="h-11 border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all duration-200 pr-10"
+                              className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 transition-all duration-200 pr-10"
                               disabled={loginMutation.isPending}
                               {...field}
                             />
@@ -200,7 +200,7 @@ export default function LoginPage() {
                   <div className="flex flex-col gap-4">
                     <Button
                       type="submit"
-                      className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200"
+                      className="w-full h-11 bg-[#048C73] hover:bg-[#037A66] text-white font-medium transition-all duration-200"
                       disabled={loginMutation.isPending}
                     >
                       {loginMutation.isPending ? (
@@ -260,7 +260,7 @@ export default function LoginPage() {
                       Don&apos;t have an account?{' '}
                       <Link
                         href="/sign-up"
-                        className="text-blue-600 hover:text-blue-700 font-medium underline-offset-4 hover:underline"
+                        className="text-[#048C73] hover:text-[#037A66] font-medium underline-offset-4 hover:underline"
                       >
                         Create account
                       </Link>
