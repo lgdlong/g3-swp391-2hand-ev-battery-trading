@@ -1,6 +1,7 @@
 import type { Account, CreateAccountDto } from '@/types/account';
 import { api } from '@/lib/axios';
 import { getAuthHeaders } from '../auth';
+import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
 
 export async function createAccount(payload: CreateAccountDto): Promise<Account> {
   const { data } = await api.post<Account>('/accounts', payload);
@@ -17,41 +18,95 @@ export async function getAccounts(limit?: number, offset?: number): Promise<Acco
   return data;
 }
 
-// Get account by ID
+// Get account by ID (public)
 export async function getAccountById(id: number): Promise<Account> {
   const { data } = await api.get<Account>(`/accounts/${id}`);
   return data;
 }
 
-// Get account by email
+// Get account by email (public)
 export async function getAccountByEmail(email: string): Promise<Account> {
   const { data } = await api.get<Account>(`/accounts/email/${email}`);
   return data;
 }
 
-// Update account
+// Update account (auth)
 export async function updateAccount(id: number, payload: Partial<Account>): Promise<Account> {
-  const { data } = await api.patch<Account>(`/accounts/${id}`, payload);
+  const { data } = await api.patch<Account>(`/accounts/${id}`, payload,{
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
 // Delete account (Admin only)
 export async function deleteAccount(id: number): Promise<void> {
-  await api.delete(`/accounts/${id}`);
+  await api.delete(`/accounts/${id}`,{
+    headers: getAuthHeaders(),
+  });
 }
 
-// Get current user account
+// Get current user account (auth)
 export async function getCurrentAccount(): Promise<Account> {
-  const { data } = await api.get<Account>('/accounts/me');
+  const { data } = await api.get<Account>('/accounts/me', {
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
-// Update current user account
+// Update current user account (auth)
 export async function updateCurrentAccount(payload: Partial<Account>): Promise<Account> {
-  const { data } = await api.patch<Account>('/accounts/me', payload);
+  const { data } = await api.patch<Account>('/accounts/me', payload,{
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
+//  promote (admin auth)
+export async function promoteAccount(id: number): Promise<Account> {
+  const { data } = await api.patch<Account>(`/accounts/${id}/promote`, {},{
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+// demote (admin auth)
+export async function demoteAccount(id: number): Promise<Account> {
+  const { data } = await api.patch<Account>(`/accounts/${id}/demote`, {},{
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+// ban (admin auth)
+export async function banAccount(id: number): Promise<Account> {
+  const { data } = await api.patch<Account>(`/accounts/${id}/ban`, {},{
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+// unban (admin auth)
+export async function unbanAccount(id: number): Promise<Account> {
+  const { data } = await api.patch<Account>(`/accounts/${id}/unban`, {},{
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+// ===== Helpers tiện dùng trong UI ====
+export async function toggleBan(id: number, current: StatusEnum): Promise<Account> {
+  return current === StatusEnum.BANNED ? unbanAccount(id) : banAccount(id);
+}
+
+export async function setRole(id: number, role: RoleEnum): Promise<Account> {
+  if (role === RoleEnum.ADMIN) return promoteAccount(id);
+  if (role === RoleEnum.USER)  return demoteAccount(id);
+  // Throw an error for unhandled roles to avoid unexpected behavior
+  throw new Error(`Role change to "${role}" is not supported.`);
+}
+
+
+/////////////////////////////////////////////////////////////
 /**
  * Get current user profile information
  * Requires authentication token in headers
