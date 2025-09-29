@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { getAccessToken } from './auth';
 import { ACCESS_TOKEN_KEY } from '@/config/constants';
 
@@ -55,13 +55,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = (token: string, userData: any) => {
+  const login = useCallback((token: string, userData: any) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, token);
     localStorage.setItem('user_data', JSON.stringify(userData));
     setIsLoggedIn(true);
     setUserRole(userData.role || 'user');
     setUser(userData);
-  };
+  }, []);
 
   const logout = () => {
     localStorage.removeItem(ACCESS_TOKEN_KEY);

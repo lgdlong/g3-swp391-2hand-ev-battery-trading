@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginForm, loginSchema } from '@/validations/login-schema';
 import { LoginResponse } from '@/types/login';
-import { loginApi } from '@/lib/api/authApi';
+import { loginApi, initiateGoogleLogin } from '@/lib/api/authApi';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
@@ -43,7 +44,7 @@ export default function LoginPage() {
     },
   });
 
-  const mutation = useMutation<
+  const loginMutation = useMutation<
     LoginResponse,
     AxiosError<any>,
     // AxiosError<ApiError>,
@@ -73,7 +74,12 @@ export default function LoginPage() {
   });
 
   const onSubmit = (values: LoginForm) => {
-    mutation.mutate(values);
+    // Process the login mutation
+    loginMutation.mutate(values);
+  };
+
+  const handleGoogleLogin = () => {
+    initiateGoogleLogin();
   };
 
   return (
@@ -162,8 +168,8 @@ export default function LoginPage() {
                               type={showPassword ? 'text' : 'password'}
                               placeholder="Enter your password"
                               autoComplete="current-password"
-                              disabled={mutation.isPending}
                               className="h-11 border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all duration-200 pr-10"
+                              disabled={loginMutation.isPending}
                               {...field}
                             />
                             <Button
@@ -205,7 +211,7 @@ export default function LoginPage() {
                       ) : (
                         <div className="flex items-center gap-2">
                           <Zap className="h-4 w-4" />
-                          Sign In
+                          Login
                         </div>
                       )}
                     </Button>
@@ -222,8 +228,10 @@ export default function LoginPage() {
                     <Button
                       type="button"
                       variant="outline"
+                      className="w-full"
+                      disabled={loginMutation.isPending}
+                      onClick={handleGoogleLogin}
                       className="w-full h-11 border-gray-300 hover:bg-gray-50 transition-all duration-200"
-                      disabled={mutation.isPending}
                     >
                       <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                         <path

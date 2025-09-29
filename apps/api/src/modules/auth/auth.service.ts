@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AccountsService } from '../accounts/accounts.service';
-import * as bcrypt from 'bcrypt';
+import { comparePassword } from '../../shared/helpers/account.helper';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { Account } from '../accounts/entities/account.entity';
@@ -12,6 +12,8 @@ import {
 import { Tokens } from './interfaces/tokens.interface';
 import { LoginResponse } from './dto/login-response.dto';
 import { SummaryAccountDto } from '../accounts/dto/summary-account.dto';
+import { SafeAccountDto } from '../accounts/dto/safe-account.dto';
+import { getRandomPassword } from 'src/shared/helpers/account.helper';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,14 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
+
+  /** seconds */
+  // getAccessTokenTtlSeconds(): number {
+  //   const s = this.configService.get('JWT_EXPIRATION_TIME') || DEFAULT_JWT_EXPIRATION_TIME; // e.g. "15m" or "900s"
+  //   // Nếu bạn đang dùng dạng số giây trong env thì parseInt trả sẵn, nếu dùng "15m" thì nên chuẩn hoá.
+  //   // Ở đây giả định bạn dùng số giây:
+  //   return Number(s) || 900;
+  // }
 
   private async signTokens(payload: JwtPayload) {
     const [at, rt] = await Promise.all([
@@ -46,8 +56,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials!');
     }
 
-    // So sánh mật khẩu đã hash bằng bcrypt với mật khẩu người dùng nhập vào
-    const isMatch = await bcrypt.compare(pass, account.passwordHashed);
+    // So sánh mật khẩu đã hash với mật khẩu người dùng nhập vào
+    const isMatch = await comparePassword(pass, account.passwordHashed);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials!');
     }
@@ -82,5 +92,83 @@ export class AuthService {
         createdAt: account.createdAt.toISOString(),
       } as SummaryAccountDto,
     } as LoginResponse;
+  }
+
+  /**
+   * Xử lý đăng nhập bằng Google OAuth.
+   * - Kiểm tra tính hợp lệ của profile từ Google
+   * - Upsert account trong DB (tạo mới nếu chưa có, không ghi đè mật khẩu user cũ)
+   * - Patch mềm thông tin còn thiếu (name/avatar)
+   * - Ký JWT access/refresh token và trả về LoginResponse
+   */
+  async handleGoogleLogin(googleProfile: {
+    googleId: string;
+    email: string;
+    name: string;
+    avatar?: string;
+    provider: string;
+    emailVerified?: boolean;
+  }): Promise<LoginResponse> {
+    // 1) Validate đầu vào từ Google -------------------------
+    if (!googleProfile?.email) {
+      // Nếu không có email thì không thể map tới account → từ chối
+      throw new UnauthorizedException('Google profile missing email');
+    }
+    if (googleProfile.emailVerified === false) {
+      // Ngăn account takeover: chỉ chấp nhận email đã verify từ Google
+      throw new UnauthorizedException('Google email is not verified');
+    }
+
+    // 2) Chuẩn hoá email để tránh duplicate (viết hoa/thường, khoảng trắng)
+    const normalizedEmail = googleProfile.email.trim().toLowerCase();
+
+    // 3) Upsert account trong DB ----------------------------
+    // - Nếu email chưa tồn tại: tạo mới với password random (không dùng tới)
+    // - Nếu đã tồn tại: KHÔNG ghi đè password cũ
+    // - Không ghi đè name/avatar đã có (sẽ xử lý patch mềm ở bước 4)
+    let account = await this.accountsService.upsertByEmail({
+      email: normalizedEmail,
+      fullName: googleProfile.name,
+      avatarUrl: googleProfile.avatar,
+      rawPasswordIfNew: getRandomPassword(),
+    });
+
+    // 4) Patch mềm các field còn thiếu ----------------------
+    // Chỉ cập nhật name/avatar nếu hiện tại chưa có (tránh overwrite data user cũ)
+    const patch: Partial<SafeAccountDto> = {};
+    if (!account.fullName && googleProfile.name) patch.fullName = googleProfile.name;
+    if (!account.avatarUrl && googleProfile.avatar) patch.avatarUrl = googleProfile.avatar;
+    if (Object.keys(patch).length) {
+      account = await this.accountsService.update(account.id, patch);
+    }
+
+    // 5) Ký JWT token ---------------------------------------
+    // Payload chỉ chứa claims cần thiết (sub, email, phone, role).
+    // Không đưa thông tin thừa từ Google vào JWT để tránh rò dữ liệu.
+    const payload: JwtPayload = {
+      sub: account.id,
+      email: account.email,
+      phone: account.phone ?? null,
+      role: account.role,
+    };
+    const tokens: Tokens = await this.signTokens(payload);
+
+    // 6) Trả về LoginResponse chuẩn hoá ---------------------
+    // FE sẽ nhận được accessToken, refreshToken và thông tin account summary.
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      account: {
+        id: account.id,
+        email: account.email,
+        phone: account.phone ?? null,
+        fullName: account.fullName ?? googleProfile.name,
+        role: account.role,
+        status: account.status,
+        createdAt: account.createdAt
+          ? new Date(account.createdAt).toISOString()
+          : new Date().toISOString(), // fallback nếu DB không có createdAt
+      } as SummaryAccountDto,
+    };
   }
 }
