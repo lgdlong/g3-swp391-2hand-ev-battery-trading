@@ -102,8 +102,8 @@ export async function toggleBan(id: number, current: StatusEnum): Promise<Accoun
 export async function setRole(id: number, role: RoleEnum): Promise<Account> {
   if (role === RoleEnum.ADMIN) return promoteAccount(id);
   if (role === RoleEnum.USER)  return demoteAccount(id);
-  // fallback: dùng /accounts/:id PATCH thường
-  return updateAccount(id, { role });
+  // Throw an error for unhandled roles to avoid unexpected behavior
+  throw new Error(`Role change to "${role}" is not supported.`);
 }
 
 
