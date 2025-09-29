@@ -224,7 +224,7 @@ export default function ProfilePage() {
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Truy cập bị từ chối</h2>
             <p className="text-gray-600 mb-6">Vui lòng đăng nhập để xem thông tin cá nhân.</p>
-            <Button onClick={() => (window.location.href = '/login')} className="w-full">
+            <Button onClick={() => router.push('/login')} className="w-full">
               Đăng nhập
             </Button>
           </CardContent>
