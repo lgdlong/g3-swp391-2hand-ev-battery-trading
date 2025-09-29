@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -8,7 +9,9 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { CreateAccountDto } from './dto/create-account.dto';
@@ -30,10 +33,12 @@ import {
   ApiBadRequestResponse,
   ApiNoContentResponse,
   ApiForbiddenResponse,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 import type { ReqUser } from 'src/core/decorators/current-user.decorator';
 import { AccountStatus } from 'src/shared/enums/account-status.enum';
+import { SingleImageUploadInterceptor } from '../../core/interceptors/image-upload.interceptor';
 
 @ApiBearerAuth()
 @ApiTags('Accounts')
@@ -59,6 +64,36 @@ export class AccountsController {
     @Body() dto: UpdateAccountDto,
   ): Promise<SafeAccountDto> {
     return this.accountsService.updateMe(user.sub, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me/avatar')
+  @UseInterceptors(SingleImageUploadInterceptor)
+  @ApiOperation({ summary: 'Cập nhật avatar của tài khoản hiện tại (cần auth)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Avatar image file',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiOkResponse({
+    type: SafeAccountDto,
+    description: 'Avatar cập nhật thành công',
+  })
+  @ApiBadRequestResponse({ description: 'File không hợp lệ hoặc thiếu file' })
+  async updateMyAvatar(
+    @CurrentUser() user: ReqUser,
+    @UploadedFile() file?: Express.Multer.File,
+  ): Promise<SafeAccountDto> {
+    if (!file) throw new BadRequestException('Missing avatar file');
+    return this.accountsService.updateAvatar(user.sub, file);
   }
 
   @Post()

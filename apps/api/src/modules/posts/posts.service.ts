@@ -211,13 +211,4 @@ export class PostsService {
     });
     return PostImageMapper.toResponseDtoArray(images);
   }
-
-  async removeImage(imageId: string) {
-    const img = await this.imagesRepo.findOne({ where: { id: imageId } });
-    if (!img) throw new NotFoundException('Image not found');
-
-    await this.cloudinary.delete(img.public_id).catch(() => null);
-    await this.imagesRepo.delete({ id: imageId });
-    return { ok: true };
-  }
 }

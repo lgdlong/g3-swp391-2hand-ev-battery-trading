@@ -1,5 +1,18 @@
-import { Controller, Post, Body, UseGuards, Get, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { PostsService } from './posts.service';
+import { UploadService } from '../upload/upload.service';
+import { MultipleImageUploadInterceptor } from '../../core/interceptors/image-upload.interceptor';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { Roles } from '../../core/decorators/roles.decorator';
 import { AccountRole } from 'src/shared/enums/account-role.enum';
@@ -32,7 +45,10 @@ import {
 @ApiExtraModels(BasePostResponseDto, CarDetailsResponseDto, BikeDetailsResponseDto)
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly uploadService: UploadService,
+  ) {}
 
   @Get('car')
   @ApiOperation({ summary: 'Danh sách bài đăng xe ô tô điện (EV_CAR)' })
@@ -117,5 +133,47 @@ export class PostsController {
 
     const sellerId = user.sub;
     return this.postsService.createBikePost(dto, sellerId);
+  }
+
+  @Post(':postId/images')
+  @ApiOperation({ summary: 'Upload images for a post' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @UseInterceptors(MultipleImageUploadInterceptor(10))
+  async uploadPostImages(
+    @Param('postId') postId: string,
+    @User() user: AuthUser,
+    @UploadedFiles() files?: Express.Multer.File[],
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No files provided');
+    }
+
+    if (!postId || isNaN(+postId)) {
+      throw new BadRequestException('Invalid postId');
+    }
+
+    // Upload to Cloudinary
+    const uploaded = await Promise.all(
+      files.map(async (file) => {
+        const res = await this.uploadService.uploadImage(file, {
+          folder: `posts/${postId}`,
+        });
+        return {
+          public_id: res.public_id,
+          url: res.secure_url,
+          width: res.width,
+          height: res.height,
+          bytes: res.bytes,
+          format: res.format ?? null,
+        };
+      }),
+    );
+
+    // Save to database
+    await this.postsService.addImages(postId, uploaded);
+
+    return { images: uploaded };
   }
 }

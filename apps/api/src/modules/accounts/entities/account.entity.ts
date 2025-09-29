@@ -32,6 +32,9 @@ export class Account {
   @Column({ name: 'avatar_url', type: 'text', nullable: true })
   avatarUrl: string | null = null;
 
+  @Column({ name: 'avatar_public_id', type: 'varchar', length: 255, nullable: true })
+  avatarPublicId: string | null = null;
+
   @Column({
     type: 'enum',
     enum: AccountStatus,

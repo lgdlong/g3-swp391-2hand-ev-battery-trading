@@ -1,12 +1,13 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryProvider } from 'src/config/cloudinary.config';
 import { UploadController } from './upload.controller';
 import { UploadService } from './upload.service';
-import { PostsModule } from '../posts/posts.module';
+import { PostImage } from '../posts/entities/post-image.entity';
 
 @Module({
-  imports: [forwardRef(() => PostsModule)],
+  imports: [TypeOrmModule.forFeature([PostImage])],
   providers: [CloudinaryProvider, CloudinaryService, UploadService],
   exports: [CloudinaryProvider, CloudinaryService, UploadService],
   controllers: [UploadController],

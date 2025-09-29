@@ -22,6 +22,7 @@ import { AccountMapper } from './mappers';
 import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception';
 import { AccountStatus } from 'src/shared/enums/account-status.enum';
 import { AccountRole } from 'src/shared/enums/account-role.enum';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class AccountsService {
@@ -29,6 +30,7 @@ export class AccountsService {
     @InjectRepository(Account)
     private readonly repo: Repository<Account>,
     private readonly configService: ConfigService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async create(dto: CreateAccountDto): Promise<CreateAccountResponseDto> {
@@ -248,5 +250,23 @@ export class AccountsService {
 
   remove(id: number) {
     return `This action removes a #${id} account`;
+  }
+
+  async updateAvatar(accountId: number, file: Express.Multer.File): Promise<SafeAccountDto> {
+    const account = await this.repo.findOne({ where: { id: accountId } });
+    if (!account) throw new NotFoundException('Account not found');
+
+    // Nếu có avatar cũ thì xoá
+    if (account.avatarPublicId) {
+      await this.uploadService.deleteImage(account.avatarPublicId).catch(() => null);
+    }
+
+    const res = await this.uploadService.uploadImage(file, { folder: `avatars/${accountId}` });
+
+    account.avatarUrl = res.secure_url;
+    account.avatarPublicId = res.public_id;
+    const updatedAccount = await this.repo.save(account);
+
+    return AccountMapper.toSafeDto(updatedAccount);
   }
 }
