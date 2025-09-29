@@ -1,6 +1,8 @@
 import type { Account, CreateAccountDto } from '@/types/account';
 import { api } from '@/lib/axios';
 import { getAuthHeaders } from '../auth';
+import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from 'types/enums/account-enum'
+
 
 export async function createAccount(payload: CreateAccountDto): Promise<Account> {
   const { data } = await api.post<Account>('/accounts', payload);
@@ -52,6 +54,44 @@ export async function updateCurrentAccount(payload: Partial<Account>): Promise<A
   return data;
 }
 
+//  promote 
+export async function promoteAccount(id: number): Promise<Account> {
+  const { data } = await api.patch(`/accounts/${id}/promote`);
+  return data;
+}
+
+// demote
+export async function demoteAccount(id: number): Promise<Account> {
+  const { data } = await api.patch(`/accounts/${id}/demote`);
+  return data;
+}
+
+// ban
+export async function banAccount(id: number): Promise<Account> {
+  const { data } = await api.patch(`/accounts/${id}/ban`);
+  return data;
+}
+
+// unban
+export async function unbanAccount(id: number): Promise<Account> {
+  const { data } = await api.patch(`/accounts/${id}/unban`);
+  return data;
+}
+
+// ===== Helpers tiện dùng trong UI =====
+export async function toggleBan(id: number, current: StatusEnum): Promise<Account> {
+  return current === StatusEnum.BANNED ? unbanAccount(id) : banAccount(id);
+}
+
+export async function setRole(id: number, role: RoleEnum): Promise<Account> {
+  if (role === RoleEnum.ADMIN) return promoteAccount(id);
+  if (role === RoleEnum.USER)  return demoteAccount(id);
+  // fallback: dùng /accounts/:id PATCH thường
+  return updateAccount(id, { role });
+}
+
+
+/////////////////////////////////////////////////////////////
 /**
  * Get current user profile information
  * Requires authentication token in headers
