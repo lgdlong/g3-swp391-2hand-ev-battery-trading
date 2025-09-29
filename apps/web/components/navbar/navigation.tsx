@@ -9,9 +9,9 @@ interface NavigationProps {
 }
 
 const navigationItems = [
-  { label: 'EV', href: '/posts/ev' },
-  { label: 'Battery', href: '/posts/battery' },
-  { label: 'Service', href: '#' },
+  { label: 'Trang chủ', href: '/' },
+  { label: 'Xe điện', href: '/posts/ev' },
+  { label: 'Pin', href: '/posts/battery' },
 ];
 
 export function Navigation({ className }: NavigationProps) {
