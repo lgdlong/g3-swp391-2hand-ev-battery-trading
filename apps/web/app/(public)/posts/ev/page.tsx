@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useMemo, useState, useEffect, Suspense } from 'react';
+import { useMemo, useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { sampleEvPosts, formatVnd } from './sample-ev';
+import { FilterButtons } from '@/components/breadcrumb-filter';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
@@ -16,6 +17,10 @@ function EvPostsContent() {
   const [brand, setBrand] = useState('');
   const [min, setMin] = useState<number | null>(null);
   const [max, setMax] = useState<number | null>(null);
+
+  // Breadcrumb function reference
+  const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
+
 
   useEffect(() => {
     setQuery(searchParams.get('q') || '');
@@ -74,8 +79,17 @@ function EvPostsContent() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
+    <>
+      <FilterButtons
+        type="ev"
+        initialCategory="Xe điện"
+        onSubcategoryChange={(setSubcategory: (subcategory: string) => void) => {
+          setSubcategoryRef.current = setSubcategory;
+        }}
+      />
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-green-500 to-blue-500 bg-clip-text text-transparent mb-2">
@@ -127,7 +141,7 @@ function EvPostsContent() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filtered.map((item) => (
-            <Link key={item.id} href={`/posts/ev/${item.id}`} className="group">
+            <Link key={item.id} href={`/posts/ev/${item.id}?model=${encodeURIComponent(item.modelName)}`} className="group">
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group-hover:-translate-y-1 bg-white">
                 <CardContent className="p-0">
                   <div className="relative h-48 w-full bg-gradient-to-br from-slate-50 to-slate-100">
@@ -161,7 +175,16 @@ function EvPostsContent() {
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-green-600 transition-colors">
+                        <h3
+                          className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-green-600 transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            // Set subcategory to model name
+                            if (setSubcategoryRef.current) {
+                              setSubcategoryRef.current(item.modelName);
+                            }
+                          }}
+                        >
                           {item.title}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -232,7 +255,8 @@ function EvPostsContent() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

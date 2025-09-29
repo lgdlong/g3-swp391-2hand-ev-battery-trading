@@ -5,13 +5,16 @@ import { sampleEvPosts, formatVnd } from '../sample-ev';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, User, Car, Battery, Gauge, Palette, Hash } from 'lucide-react';
 import { Badge } from '@/app/(public)/posts/_components/Badge';
+import { FilterButtons } from '@/components/breadcrumb-filter';
 
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ model?: string }>;
 };
 
-export default async function EvDetailPage({ params }: Props) {
+export default async function EvDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { model } = await searchParams;
   const post = sampleEvPosts.find((p) => p.id === id);
   if (!post) return notFound();
 
@@ -40,15 +43,13 @@ export default async function EvDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <Link
-          href="/posts/ev"
-          className="inline-flex items-center text-sm text-blue-600 hover:underline"
-        >
-          ← Quay lại danh sách
-        </Link>
-      </div>
+    <>
+      <FilterButtons
+        type="ev"
+        initialCategory="Xe điện"
+        initialSubcategory={model || post.modelName}
+      />
+      <div className="container mx-auto px-4 py-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Image Section */}
@@ -179,7 +180,8 @@ export default async function EvDetailPage({ params }: Props) {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -5,13 +5,16 @@ import { sampleBatteryPosts, formatVnd } from '../sample-battery';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, User, Battery, Zap, Activity, TrendingUp } from 'lucide-react';
 import { Badge } from '@/app/(public)/posts/_components/Badge';
+import { FilterButtons } from '@/components/breadcrumb-filter';
 
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ brand?: string }>;
 };
 
-export default async function BatteryDetailPage({ params }: Props) {
+export default async function BatteryDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { brand } = await searchParams;
   const post = sampleBatteryPosts.find((p) => p.id === id);
   if (!post) return notFound();
 
@@ -36,7 +39,13 @@ export default async function BatteryDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <>
+      <FilterButtons
+        type="battery"
+        initialCategory="Pin EV"
+        initialSubcategory={brand || post.brand || post.title}
+      />
+      <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <Link
           href="/posts/battery"
@@ -180,6 +189,7 @@ export default async function BatteryDetailPage({ params }: Props) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
