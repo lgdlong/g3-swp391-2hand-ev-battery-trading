@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { PostType } from '../../shared/enums/post.enum';
-import { CarDetailsService } from '../post-details/services/car-details.service';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
 import { Account } from '../accounts/entities/account.entity';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
@@ -14,7 +13,8 @@ import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PostImage } from './entities/post-image.entity';
 import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
-import { DataSource } from 'typeorm';
+import { PostImageResponseDto } from './dto/post-image-response.dto';
+import { PostImageMapper } from './mappers/post-image.mapper';
 
 @Injectable()
 export class PostsService {
@@ -23,16 +23,14 @@ export class PostsService {
     private readonly postsRepo: Repository<Post>,
     @InjectRepository(PostImage)
     private readonly imagesRepo: Repository<PostImage>,
-    private readonly carDetailsService: CarDetailsService,
     private readonly bikeDetailsService: BikeDetailsService,
     private readonly cloudinary: CloudinaryService,
-    private readonly dataSource: DataSource,
   ) {}
 
   async getCarPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
     const rows = await this.postsRepo.find({
       where: { postType: PostType.EV_CAR },
-      relations: ['carDetails', 'seller'],
+      relations: ['carDetails', 'seller', 'images'],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -102,7 +100,7 @@ export class PostsService {
   async getBikePosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
     const rows = await this.postsRepo.find({
       where: { postType: PostType.EV_BIKE },
-      relations: ['bikeDetails', 'seller'],
+      relations: ['bikeDetails', 'seller', 'images'],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -206,11 +204,12 @@ export class PostsService {
     }
   }
 
-  async listImages(postId: string) {
-    return this.imagesRepo.find({
+  async listImages(postId: string): Promise<PostImageResponseDto[]> {
+    const images = await this.imagesRepo.find({
       where: { post_id: postId },
       order: { position: 'ASC', id: 'ASC' },
     });
+    return PostImageMapper.toResponseDtoArray(images);
   }
 
   async removeImage(imageId: string) {

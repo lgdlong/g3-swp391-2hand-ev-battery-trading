@@ -5,6 +5,7 @@ import { PostStatus, PostType } from '../../../shared/enums/post.enum';
 import { SafeAccountDto } from '../../accounts/dto/safe-account.dto';
 import { CarDetailsResponseDto } from '../../post-details/dto/car/car-details-response.dto';
 import { BikeDetailsResponseDto } from '../../post-details/dto/bike/bike-details-response.dto';
+import { PostImageResponseDto } from './post-image-response.dto';
 
 export class BasePostResponseDto {
   @ApiProperty()
@@ -64,6 +65,10 @@ export class BasePostResponseDto {
   // @ApiProperty({ type: () => BatteryDetailsResponseDto, required: false })
   // @Type(() => BatteryDetailsResponseDto)
   // batteryDetails?: BatteryDetailsResponseDto;
+
+  @ApiProperty({ type: () => [PostImageResponseDto], required: false })
+  @Type(() => PostImageResponseDto)
+  images?: PostImageResponseDto[];
 
   @ApiProperty()
   createdAt!: Date;
