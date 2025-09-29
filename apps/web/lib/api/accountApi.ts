@@ -1,8 +1,7 @@
 import type { Account, CreateAccountDto } from '@/types/account';
 import { api } from '@/lib/axios';
 import { getAuthHeaders } from '../auth';
-import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from 'types/enums/account-enum'
-
+import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
 
 export async function createAccount(payload: CreateAccountDto): Promise<Account> {
   const { data } = await api.post<Account>('/accounts', payload);
