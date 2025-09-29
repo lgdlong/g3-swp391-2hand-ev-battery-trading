@@ -79,7 +79,6 @@ export function UserActions({
           <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200">
             <User className="h-4 w-4 text-white" />
           </div>
-          <span className="hidden sm:inline font-medium">User</span>
           <ChevronDown className="h-3 w-3 group-hover:rotate-180 transition-transform duration-300" />
         </Button>
       </div>
