@@ -462,8 +462,7 @@ export default function AdminDashboard() {
                                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
-                                Xóa tài khoản
-                              </button>
+                                Xóa tài khoản342
                               */}
                             </div>
                           </div>
@@ -504,7 +503,7 @@ export default function AdminDashboard() {
 
                 <div className="flex space-x-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
+                    let pageNum : number;
                     if (totalPages <= 5) {
                       pageNum = i + 1;
                     } else if (currentPage <= 3) {

@@ -19,66 +19,82 @@ export async function getAccounts(limit?: number, offset?: number): Promise<Acco
   return data;
 }
 
-// Get account by ID
+// Get account by ID (public)
 export async function getAccountById(id: number): Promise<Account> {
   const { data } = await api.get<Account>(`/accounts/${id}`);
   return data;
 }
 
-// Get account by email
+// Get account by email (public)
 export async function getAccountByEmail(email: string): Promise<Account> {
   const { data } = await api.get<Account>(`/accounts/email/${email}`);
   return data;
 }
 
-// Update account
+// Update account (auth)
 export async function updateAccount(id: number, payload: Partial<Account>): Promise<Account> {
-  const { data } = await api.patch<Account>(`/accounts/${id}`, payload);
+  const { data } = await api.patch<Account>(`/accounts/${id}`, payload,{
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
 // Delete account (Admin only)
 export async function deleteAccount(id: number): Promise<void> {
-  await api.delete(`/accounts/${id}`);
+  await api.delete(`/accounts/${id}`,{
+    headers: getAuthHeaders(),
+  });
 }
 
-// Get current user account
+// Get current user account (auth)
 export async function getCurrentAccount(): Promise<Account> {
-  const { data } = await api.get<Account>('/accounts/me');
+  const { data } = await api.get<Account>('/accounts/me', {
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
-// Update current user account
+// Update current user account (auth)
 export async function updateCurrentAccount(payload: Partial<Account>): Promise<Account> {
-  const { data } = await api.patch<Account>('/accounts/me', payload);
+  const { data } = await api.patch<Account>('/accounts/me', payload,{
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
-//  promote 
+//  promote (admin auth)
 export async function promoteAccount(id: number): Promise<Account> {
-  const { data } = await api.patch(`/accounts/${id}/promote`);
+  const { data } = await api.patch(`/accounts/${id}/promote`, {},{
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
-// demote
+// demote (admin auth)
 export async function demoteAccount(id: number): Promise<Account> {
-  const { data } = await api.patch(`/accounts/${id}/demote`);
+  const { data } = await api.patch(`/accounts/${id}/demote`, {},{
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
-// ban
+// ban (admin auth)
 export async function banAccount(id: number): Promise<Account> {
-  const { data } = await api.patch(`/accounts/${id}/ban`);
+  const { data } = await api.patch(`/accounts/${id}/ban`, {},{
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
-// unban
+// unban (admin auth)
 export async function unbanAccount(id: number): Promise<Account> {
-  const { data } = await api.patch(`/accounts/${id}/unban`);
+  const { data } = await api.patch(`/accounts/${id}/unban`, {},{
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
-// ===== Helpers tiện dùng trong UI =====
+// ===== Helpers tiện dùng trong UI ====
 export async function toggleBan(id: number, current: StatusEnum): Promise<Account> {
   return current === StatusEnum.BANNED ? unbanAccount(id) : banAccount(id);
 }
