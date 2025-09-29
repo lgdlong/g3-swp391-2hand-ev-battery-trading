@@ -137,7 +137,7 @@ export default function LoginPage() {
                             placeholder="Enter your email or phone number"
                             type="text"
                             autoComplete="username"
-                            disabled={mutation.isPending}
+                            disabled={loginMutation.isPending}
                             className="h-11 border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 transition-all duration-200"
                             {...field}
                           />
@@ -201,9 +201,9 @@ export default function LoginPage() {
                     <Button
                       type="submit"
                       className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all duration-200"
-                      disabled={mutation.isPending}
+                      disabled={loginMutation.isPending}
                     >
-                      {mutation.isPending ? (
+                      {loginMutation.isPending ? (
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           Signing in...
@@ -228,7 +228,6 @@ export default function LoginPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full"
                       disabled={loginMutation.isPending}
                       onClick={handleGoogleLogin}
                       className="w-full h-11 border-gray-300 hover:bg-gray-50 transition-all duration-200"
