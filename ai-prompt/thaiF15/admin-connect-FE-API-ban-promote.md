@@ -139,3 +139,27 @@ let pageNum: number | undefined;
 * Admin API yêu cầu token có role = ADMIN.
 * Axios phải phân biệt đúng tham số để header không bị lạc.
 * Luôn gõ type rõ ràng để tránh implicit `any`.
+
+
+
+# giải thích tại sao xài generic
+
+** Ngắn gọn nhé: **
+```
+Generics (<Account>) làm gì?
+Nó nói cho TypeScript biết kiểu dữ liệu trong data mà API trả về. Nhờ vậy:
+
+Có IntelliSense đúng (autocomplete thuộc tính).
+
+Bắt lỗi compile-time nếu bạn dùng sai field.
+
+Không bị rơi về any (mất an toàn kiểu).
+```
+** Không thêm có ổn không? **
+```
+Có thể chạy, nhưng kém an toàn:
+
+data thường sẽ là any, TypeScript không bắt lỗi khi bạn truy cập field sai.
+
+Ghi kiểu ở Promise<Account> ở chữ ký hàm không đủ nếu bên trong bạn lấy any rồi return (TS khó kiểm tra đúng-sai cấu trúc). Bạn sẽ phải as Account (unsafe cast).
+```
