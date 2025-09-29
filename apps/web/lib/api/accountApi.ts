@@ -63,7 +63,7 @@ export async function updateCurrentAccount(payload: Partial<Account>): Promise<A
 
 //  promote (admin auth)
 export async function promoteAccount(id: number): Promise<Account> {
-  const { data } = await api.patch(`/accounts/${id}/promote`, {},{
+  const { data } = await api.patch<Account>(`/accounts/${id}/promote`, {},{
     headers: getAuthHeaders(),
   });
   return data;
@@ -71,7 +71,7 @@ export async function promoteAccount(id: number): Promise<Account> {
 
 // demote (admin auth)
 export async function demoteAccount(id: number): Promise<Account> {
-  const { data } = await api.patch(`/accounts/${id}/demote`, {},{
+  const { data } = await api.patch<Account>(`/accounts/${id}/demote`, {},{
     headers: getAuthHeaders(),
   });
   return data;
@@ -79,7 +79,7 @@ export async function demoteAccount(id: number): Promise<Account> {
 
 // ban (admin auth)
 export async function banAccount(id: number): Promise<Account> {
-  const { data } = await api.patch(`/accounts/${id}/ban`, {},{
+  const { data } = await api.patch<Account>(`/accounts/${id}/ban`, {},{
     headers: getAuthHeaders(),
   });
   return data;
@@ -87,7 +87,7 @@ export async function banAccount(id: number): Promise<Account> {
 
 // unban (admin auth)
 export async function unbanAccount(id: number): Promise<Account> {
-  const { data } = await api.patch(`/accounts/${id}/unban`, {},{
+  const { data } = await api.patch<Account>(`/accounts/${id}/unban`, {},{
     headers: getAuthHeaders(),
   });
   return data;
