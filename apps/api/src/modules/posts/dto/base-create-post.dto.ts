@@ -102,7 +102,7 @@ export class BaseCreatePostDto {
   })
   @IsOptional()
   @IsBoolean()
-  isNegotiable?: boolean = false;
+  isNegotiable?: boolean;
 
   @ApiPropertyOptional({
     description: 'Danh sách hình ảnh của bài đăng',
