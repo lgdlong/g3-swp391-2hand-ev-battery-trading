@@ -256,16 +256,18 @@ export class AccountsService {
     const account = await this.repo.findOne({ where: { id: accountId } });
     if (!account) throw new NotFoundException('Account not found');
 
-    // Nếu có avatar cũ thì xoá
-    if (account.avatarPublicId) {
-      await this.uploadService.deleteImage(account.avatarPublicId).catch(() => null);
-    }
+    const oldPublicId = account.avatarPublicId;
 
     const res = await this.uploadService.uploadImage(file, { folder: `avatars/${accountId}` });
 
     account.avatarUrl = res.secure_url;
     account.avatarPublicId = res.public_id;
     const updatedAccount = await this.repo.save(account);
+
+    // Nếu có avatar cũ thì xoá sau khi đã cập nhật thành công
+    if (oldPublicId) {
+      await this.uploadService.deleteImage(oldPublicId).catch(() => null);
+    }
 
     return AccountMapper.toSafeDto(updatedAccount);
   }
