@@ -64,25 +64,6 @@ export class PostsService {
       });
       const savedPost = await trx.save(Post, post);
 
-      // 2) tạo Car Details
-      // await this.carDetailsService.createWithTrx(trx, {
-      //   post_id: savedPost.id,
-      //   ...dto.carDetails,
-      // });
-
-      // // 3) tạo Media (nếu có)
-      // if (dto.media?.length) {
-      //   const rows = dto.media.map((m) =>
-      //     trx.create(PostMedia, {
-      //       kind: m.kind,
-      //       url: m.url,
-      //       position: m.position ?? 0,
-      //       post: savedPost,
-      //     }),
-      //   );
-      //   await trx.save(PostMedia, rows);
-      // }
-
       // 4) (tuỳ chọn) tự chuyển sang PENDING_REVIEW + log
       // await trx.update(Post, { id: savedPost.id }, { status: PostStatus.PENDING_REVIEW, submittedAt: new Date() });
       // await trx.save(PostReviewLog, trx.create(PostReviewLog, { post: savedPost, action: ReviewActionEnum.SUBMITTED, actor: {id: dto.sellerId} as any, oldStatus: PostStatus.DRAFT, newStatus: PostStatus.PENDING_REVIEW }));
