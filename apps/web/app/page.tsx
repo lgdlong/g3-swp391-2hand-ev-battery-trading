@@ -15,9 +15,9 @@ import {
   ArrowRight,
   CheckCircle,
 } from 'lucide-react';
-import { sampleEvPosts } from './(public)/posts/ev/sample-ev';
-import { sampleBatteryPosts } from './(public)/posts/battery/sample-battery';
-import { SearchBar } from '@/components/searchbar';
+import { getCarPostsWithQuery, getBikePostsWithQuery } from '@/lib/api/postApi';
+import { useQuery } from '@tanstack/react-query';
+// import { SearchBar } from '@/components/searchbar'; // Currently unused
 
 export default function Home() {
   const categories = [
@@ -57,25 +57,58 @@ export default function Home() {
     },
   ];
 
-  // Get featured posts from sample data
-  const featuredEvPosts = sampleEvPosts.slice(0, 3);
-  const featuredBatteryPosts = sampleBatteryPosts.slice(0, 3);
-  const allFeaturedPosts = [...featuredEvPosts, ...featuredBatteryPosts];
+  // Fetch featured car posts
+  const { data: carPosts = [] } = useQuery({
+    queryKey: ['featuredCarPosts'],
+    queryFn: () =>
+      getCarPostsWithQuery({
+        limit: 3,
+        offset: 0,
+        status: 'APPROVED',
+        order: 'DESC',
+        sort: 'createdAt',
+      }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  const formatVnd = (amount: number) => {
+  // Fetch featured bike posts
+  const { data: bikePosts = [] } = useQuery({
+    queryKey: ['featuredBikePosts'],
+    queryFn: () =>
+      getBikePostsWithQuery({
+        limit: 3,
+        offset: 0,
+        status: 'APPROVED',
+        order: 'DESC',
+        sort: 'createdAt',
+      }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Combine all featured posts
+  const allFeaturedPosts = [...carPosts, ...bikePosts];
+
+  const formatVnd = (amount: number | string) => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(numAmount);
+  };
+
+  // Helper function to safely display flexible field values
+  const displayValue = (value: string | number | object | null | undefined): string => {
+    if (value === null || value === undefined) return 'N/A';
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+    if (typeof value === 'object') return JSON.stringify(value);
+    return 'N/A';
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
       <Header />
-      {/* Search Bar */}
-      <SearchBar />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden">
         {/* Background Elements */}
@@ -195,59 +228,119 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allFeaturedPosts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/posts/${post.id.startsWith('ev') ? 'ev' : 'battery'}/${post.id}`}
-              >
-                <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-sm">
-                  <CardContent className="p-0">
-                    <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
-                      <Image
-                        src={post.thumbnail || '/file-text.svg'}
-                        alt={post.title}
-                        fill
-                        className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-gray-900 text-white px-2 py-1 rounded text-xs font-medium">
-                          {post.id.startsWith('ev') ? 'XE ĐIỆN' : 'PIN EV'}
-                        </span>
+            {allFeaturedPosts.map((post) => {
+              const isCarPost = !!post.carDetails;
+              const location =
+                [
+                  displayValue(post.provinceNameCached),
+                  displayValue(post.districtNameCached),
+                  displayValue(post.wardNameCached),
+                ]
+                  .filter((val) => val !== 'N/A')
+                  .join(', ') ||
+                displayValue(post.addressTextCached) ||
+                'Không rõ';
+
+              const getStatusText = (status: string) => {
+                switch (status) {
+                  case 'APPROVED':
+                    return 'Đã duyệt';
+                  case 'PENDING':
+                    return 'Chờ duyệt';
+                  case 'DRAFT':
+                    return 'Nháp';
+                  case 'REJECTED':
+                    return 'Từ chối';
+                  default:
+                    return status;
+                }
+              };
+
+              const getStatusColor = (status: string) => {
+                switch (status) {
+                  case 'APPROVED':
+                    return 'bg-green-100 text-green-800';
+                  case 'PENDING':
+                    return 'bg-yellow-100 text-yellow-800';
+                  case 'DRAFT':
+                    return 'bg-gray-100 text-gray-800';
+                  case 'REJECTED':
+                    return 'bg-red-100 text-red-800';
+                  default:
+                    return 'bg-gray-100 text-gray-800';
+                }
+              };
+
+              return (
+                <Link key={post.id} href={`/posts/ev/${post.id}`}>
+                  <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-0 shadow-sm">
+                    <CardContent className="p-0">
+                      <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
+                        <Image
+                          src={
+                            (typeof post.images?.[0] === 'string' ? post.images[0] : null) ||
+                            '/asset/phu-tung-o-to-27.png'
+                          }
+                          alt={post.title}
+                          fill
+                          className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute top-3 left-3">
+                          <span className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+                            {isCarPost ? 'Ô TÔ ĐIỆN' : 'XE MÁY ĐIỆN'}
+                          </span>
+                        </div>
+                        <div className="absolute top-3 right-3">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(post.status)}`}
+                          >
+                            {getStatusText(post.status)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="absolute top-3 right-3">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            post.status === 'available'
-                              ? 'bg-green-100 text-green-800'
-                              : post.status === 'reserved'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {post.status === 'available'
-                            ? 'Còn hàng'
-                            : post.status === 'reserved'
-                              ? 'Đã đặt'
-                              : 'Đã bán'}
-                        </span>
+                      <div className="p-6">
+                        <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-[#048C73] transition-colors line-clamp-2">
+                          {post.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-3">{location}</p>
+
+                        {/* Vehicle specs */}
+                        <div className="flex flex-wrap gap-2 mb-3 text-xs text-gray-500">
+                          {(post.carDetails || post.bikeDetails) && (
+                            <>
+                              <span className="bg-gray-100 px-2 py-1 rounded">
+                                {displayValue(
+                                  post.carDetails?.manufacture_year ||
+                                    post.bikeDetails?.manufacture_year,
+                                )}
+                              </span>
+                              <span className="bg-gray-100 px-2 py-1 rounded">
+                                {displayValue(post.carDetails?.odo_km || post.bikeDetails?.odo_km)}{' '}
+                                km
+                              </span>
+                              <span className="bg-gray-100 px-2 py-1 rounded">
+                                {displayValue(
+                                  post.carDetails?.battery_capacity_kwh ||
+                                    post.bikeDetails?.battery_capacity_kwh,
+                                )}{' '}
+                                kWh
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-xl font-bold text-[#048C73]">
+                            {formatVnd(post.priceVnd)}
+                          </span>
+                          <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-[#048C73] transition-colors" />
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-6">
-                      <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-gray-700 transition-colors line-clamp-2">
-                        {post.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-3">{post.location}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xl font-bold text-gray-900">
-                          {formatVnd(post.priceVnd)}
-                        </span>
-                        <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
 
           {/* View All Button */}

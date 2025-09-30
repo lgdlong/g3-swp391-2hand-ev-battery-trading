@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
-import { getCurrentUser, updateCurrentUser, UpdateProfileDto } from '@/lib/api/accountApi';
+import { getCurrentUser, updateCurrentAccount, UpdateProfileDto } from '@/lib/api/accountApi';
 import { Account } from '@/types/account';
 import { User, Mail, Phone, Calendar, Shield, Edit3, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -145,7 +145,7 @@ export default function ProfilePage() {
         }
       });
 
-      const updatedProfile = await updateCurrentUser(updateData);
+      const updatedProfile = await updateCurrentAccount(updateData);
       setProfile(updatedProfile);
       setEditing(false);
       toast.success('Cập nhật thông tin thành công');

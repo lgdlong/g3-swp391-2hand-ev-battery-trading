@@ -3,6 +3,13 @@ import { api } from '@/lib/axios';
 import { getAuthHeaders } from '../auth';
 import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
 
+// Update current user profile
+export interface UpdateProfileDto {
+  fullName?: string;
+  phone?: string;
+  avatarUrl?: string;
+}
+
 export async function createAccount(payload: CreateAccountDto): Promise<Account> {
   const { data } = await api.post<Account>('/accounts', payload);
   return data;
@@ -13,7 +20,7 @@ export async function getAccounts(limit?: number, offset?: number): Promise<Acco
   const params = new URLSearchParams();
   if (limit) params.append('limit', limit.toString());
   if (offset) params.append('offset', offset.toString());
-  
+
   const { data } = await api.get<Account[]>(`/accounts?${params.toString()}`);
   return data;
 }
@@ -32,7 +39,7 @@ export async function getAccountByEmail(email: string): Promise<Account> {
 
 // Update account (auth)
 export async function updateAccount(id: number, payload: Partial<Account>): Promise<Account> {
-  const { data } = await api.patch<Account>(`/accounts/${id}`, payload,{
+  const { data } = await api.patch<Account>(`/accounts/${id}`, payload, {
     headers: getAuthHeaders(),
   });
   return data;
@@ -40,7 +47,7 @@ export async function updateAccount(id: number, payload: Partial<Account>): Prom
 
 // Delete account (Admin only)
 export async function deleteAccount(id: number): Promise<void> {
-  await api.delete(`/accounts/${id}`,{
+  await api.delete(`/accounts/${id}`, {
     headers: getAuthHeaders(),
   });
 }
@@ -55,7 +62,7 @@ export async function getCurrentAccount(): Promise<Account> {
 
 // Update current user account (auth)
 export async function updateCurrentAccount(payload: Partial<Account>): Promise<Account> {
-  const { data } = await api.patch<Account>('/accounts/me', payload,{
+  const { data } = await api.patch<Account>('/accounts/me', payload, {
     headers: getAuthHeaders(),
   });
   return data;
@@ -63,33 +70,49 @@ export async function updateCurrentAccount(payload: Partial<Account>): Promise<A
 
 //  promote (admin auth)
 export async function promoteAccount(id: number): Promise<Account> {
-  const { data } = await api.patch<Account>(`/accounts/${id}/promote`, {},{
-    headers: getAuthHeaders(),
-  });
+  const { data } = await api.patch<Account>(
+    `/accounts/${id}/promote`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
   return data;
 }
 
 // demote (admin auth)
 export async function demoteAccount(id: number): Promise<Account> {
-  const { data } = await api.patch<Account>(`/accounts/${id}/demote`, {},{
-    headers: getAuthHeaders(),
-  });
+  const { data } = await api.patch<Account>(
+    `/accounts/${id}/demote`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
   return data;
 }
 
 // ban (admin auth)
 export async function banAccount(id: number): Promise<Account> {
-  const { data } = await api.patch<Account>(`/accounts/${id}/ban`, {},{
-    headers: getAuthHeaders(),
-  });
+  const { data } = await api.patch<Account>(
+    `/accounts/${id}/ban`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
   return data;
 }
 
 // unban (admin auth)
 export async function unbanAccount(id: number): Promise<Account> {
-  const { data } = await api.patch<Account>(`/accounts/${id}/unban`, {},{
-    headers: getAuthHeaders(),
-  });
+  const { data } = await api.patch<Account>(
+    `/accounts/${id}/unban`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
   return data;
 }
 
@@ -100,11 +123,10 @@ export async function toggleBan(id: number, current: StatusEnum): Promise<Accoun
 
 export async function setRole(id: number, role: RoleEnum): Promise<Account> {
   if (role === RoleEnum.ADMIN) return promoteAccount(id);
-  if (role === RoleEnum.USER)  return demoteAccount(id);
+  if (role === RoleEnum.USER) return demoteAccount(id);
   // Throw an error for unhandled roles to avoid unexpected behavior
   throw new Error(`Role change to "${role}" is not supported.`);
 }
-
 
 /////////////////////////////////////////////////////////////
 /**
@@ -117,11 +139,3 @@ export async function getCurrentUser(): Promise<Account> {
   });
   return data;
 }
-
-// // Ví dụ cho api cần token
-// export async function createCategory(body: CategoryCreate): Promise<Category> {
-//   const { data } = await api.post<Category>('/categories', body, {
-//     headers: getAuthHeaders(), // 👈 dùng lib/auth.ts ở đây
-//   });
-//   return data;
-// }
