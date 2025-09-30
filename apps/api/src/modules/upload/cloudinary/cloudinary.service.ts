@@ -1,13 +1,17 @@
+import { ConfigService } from '@nestjs/config';
 import { Inject, Injectable } from '@nestjs/common';
 import { v2 as Cloudinary, UploadApiOptions, UploadApiResponse } from 'cloudinary';
 import { CLOUDINARY } from 'src/config/cloudinary.config';
 
 @Injectable()
 export class CloudinaryService {
-  constructor(@Inject(CLOUDINARY) private c: typeof Cloudinary) {}
+  constructor(
+    @Inject(CLOUDINARY) private c: typeof Cloudinary,
+    private readonly configService: ConfigService,
+  ) {}
 
   uploadBuffer(buffer: Buffer, opts: UploadApiOptions = {}) {
-    const upload_preset = process.env.CLOUDINARY_UPLOAD_PRESET!;
+    const upload_preset = this.configService.get<string>('CLOUDINARY_UPLOAD_PRESET')!;
 
     // If folder is specified in opts, completely bypass upload_preset
     const uploadOptions: UploadApiOptions = opts.folder
