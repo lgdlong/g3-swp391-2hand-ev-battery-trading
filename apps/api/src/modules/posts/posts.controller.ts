@@ -54,6 +54,10 @@ export class PostsController {
     private readonly uploadService: UploadService,
   ) {}
 
+  //-----------------------------------------
+  //------------ GET ENDPOINTS --------------
+  //-----------------------------------------
+
   @Get('car')
   @ApiOperation({ summary: 'Danh sách bài đăng xe ô tô điện (EV_CAR)' })
   @ApiOkResponse({
@@ -106,6 +110,10 @@ export class PostsController {
   async getPostById(@Param('id') id: string): Promise<BasePostResponseDto> {
     return this.postsService.getPostById(id);
   }
+
+  //-----------------------------------------
+  //------------ POST ENDPOINTS -------------
+  //-----------------------------------------
 
   @Post('car')
   @ApiOperation({ summary: 'Tạo bài đăng ô tô điện' })
