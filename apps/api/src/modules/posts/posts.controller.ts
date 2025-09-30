@@ -26,15 +26,18 @@ import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { BikeDetailsResponseDto } from '../post-details/dto/bike/bike-details-response.dto';
 import { CarDetailsResponseDto } from '../post-details/dto/car/car-details-response.dto';
+
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiExtraModels,
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -60,10 +63,10 @@ export class PostsController {
     },
   })
   @ApiBadRequestResponse({ description: 'Query không hợp lệ' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'q', required: false, type: String })
-  @ApiQuery({ name: 'sort', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'q', required: false, type: String, example: 'vinfast' })
+  @ApiQuery({ name: 'sort', required: false, type: String, example: '-createdAt' })
   async getCarPosts(@Query() query: ListQueryDto): Promise<BasePostResponseDto[]> {
     return this.postsService.getCarPosts(query);
   }
@@ -78,17 +81,17 @@ export class PostsController {
     },
   })
   @ApiBadRequestResponse({ description: 'Query không hợp lệ' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'q', required: false, type: String })
-  @ApiQuery({ name: 'sort', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'q', required: false, type: String, example: 'yamaha' })
+  @ApiQuery({ name: 'sort', required: false, type: String, example: 'price' })
   async getBikePosts(@Query() query: ListQueryDto): Promise<BasePostResponseDto[]> {
     return this.postsService.getBikePosts(query);
   }
 
   @Post('car')
   @ApiOperation({ summary: 'Tạo bài đăng ô tô điện' })
-  @ApiBearerAuth()
+  @ApiBearerAuth() // khớp với .addBearerAuth trong main.ts
   @ApiCreatedResponse({
     description: 'Tạo bài đăng thành công',
     schema: { $ref: getSchemaPath(BasePostResponseDto) },
@@ -103,10 +106,7 @@ export class PostsController {
     @Body() dto: CreateCarPostDto,
     @User() user: AuthUser,
   ): Promise<BasePostResponseDto | null> {
-    // force EV_CAR cho endpoint này
     dto.postType = PostType.EV_CAR;
-
-    // fix: use correct variable name 'user' instead of 'u'
     const sellerId = user.sub;
     return this.postsService.createCarPost(dto, sellerId);
   }
@@ -128,18 +128,57 @@ export class PostsController {
     @Body() dto: CreateBikePostDto,
     @User() user: AuthUser,
   ): Promise<BasePostResponseDto | null> {
-    // force EV_CAR cho endpoint này
     dto.postType = PostType.EV_BIKE;
-
     const sellerId = user.sub;
     return this.postsService.createBikePost(dto, sellerId);
   }
 
-  @Post(':postId/images')
-  @ApiOperation({ summary: 'Upload images for a post' })
-  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.USER)
+  @Post(':postId/images')
+  @ApiOperation({ summary: 'Upload images cho bài đăng' })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'postId', type: String, example: '123' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Tối đa 10 ảnh, field name: files',
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+      required: ['files'],
+    },
+  })
+  @ApiOkResponse({
+    description: 'Danh sách ảnh đã upload',
+    schema: {
+      type: 'object',
+      properties: {
+        images: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              public_id: { type: 'string', example: 'posts/123/abc_xyz' },
+              url: {
+                type: 'string',
+                example: 'https://res.cloudinary.com/.../image/upload/v123/abc.jpg',
+              },
+              width: { type: 'number', example: 1280 },
+              height: { type: 'number', example: 720 },
+              bytes: { type: 'number', example: 102400 },
+              format: { type: 'string', nullable: true, example: 'jpg' },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'No files provided / Invalid postId' })
   @UseInterceptors(MultipleImageUploadInterceptor(10))
   async uploadPostImages(
     @Param('postId') postId: string,
@@ -154,7 +193,6 @@ export class PostsController {
       throw new BadRequestException('Invalid postId');
     }
 
-    // Upload to Cloudinary
     const uploaded = await Promise.all(
       files.map(async (file) => {
         const res = await this.uploadService.uploadImage(file, {
@@ -171,7 +209,6 @@ export class PostsController {
       }),
     );
 
-    // Save to database
     await this.postsService.addImages(postId, uploaded);
 
     return { images: uploaded };
