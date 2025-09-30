@@ -104,13 +104,13 @@ export class BaseCreatePostDto {
   @IsBoolean()
   isNegotiable?: boolean;
 
-  @ApiPropertyOptional({
-    description: 'Danh sách hình ảnh của bài đăng',
-    type: [CreatePostImageDto],
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CreatePostImageDto)
-  images?: CreatePostImageDto[];
+  // @ApiPropertyOptional({
+  //   description: 'Danh sách hình ảnh của bài đăng',
+  //   type: [CreatePostImageDto],
+  // })
+  // @IsOptional()
+  // @IsArray()
+  // @ValidateNested({ each: true })
+  // @Type(() => CreatePostImageDto)
+  // images?: CreatePostImageDto[];
 }
