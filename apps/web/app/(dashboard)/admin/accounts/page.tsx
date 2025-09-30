@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { Account } from '@/types/account';
 import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
-import { getAccounts, updateAccount, deleteAccount } from '@/lib/api/accountApi';
+import { getAccounts, updateAccount, deleteAccount, toggleBan, demoteAccount, promoteAccount } from '@/lib/api/accountApi';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -109,47 +109,61 @@ export default function AdminDashboard() {
     setCurrentPage(page);
   };
 
-  const handleStatusToggle = async (accountId: number) => {
-    try {
-      const account = accounts.find((acc) => acc.id === accountId);
-      if (!account) return;
 
-      const newStatus =
-        account.status === StatusEnum.ACTIVE ? StatusEnum.BANNED : StatusEnum.ACTIVE;
-      const updatedAccount = await updateAccount(accountId, { status: newStatus });
 
-      setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? updatedAccount : acc)));
-    } catch (err) {
-      console.error('Error updating account status:', err);
-      alert('Không thể cập nhật trạng thái tài khoản');
-    }
-  };
+  // const handleDeleteAccount = async (accountId: number) => {
+  //   if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
+  //     try {
+  //       await deleteAccount(accountId);
+  //       setAccounts((prev) => prev.filter((account) => account.id !== accountId));
+  //       alert('Tài khoản đã được xóa thành công');
+  //     } catch (err) {
+  //       console.error('Error deleting account:', err);
+  //       alert('Không thể xóa tài khoản');
+  //     }
+  //   }
+  // };
 
-  const handleDeleteAccount = async (accountId: number) => {
-    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-      try {
-        await deleteAccount(accountId);
-        setAccounts((prev) => prev.filter((account) => account.id !== accountId));
-        alert('Tài khoản đã được xóa thành công');
-      } catch (err) {
-        console.error('Error deleting account:', err);
-        alert('Không thể xóa tài khoản');
-      }
-    }
-  };
-
+  // Promote
   const handlePromoteToAdmin = async (accountId: number) => {
-    if (confirm('Bạn có chắc chắn muốn thăng cấp người dùng này thành admin?')) {
-      try {
-        const updatedAccount = await updateAccount(accountId, { role: RoleEnum.ADMIN });
-        setAccounts((prev) => prev.map((acc) => (acc.id === accountId ? updatedAccount : acc)));
-        alert('Đã thăng cấp thành admin thành công');
-      } catch (err) {
-        console.error('Error promoting to admin:', err);
-        alert('Không thể thăng cấp người dùng');
-      }
+    if (!confirm('Bạn có chắc muốn thăng cấp thành admin?')) return;
+    try {
+      const updated = await promoteAccount(accountId);
+      setAccounts(prev => prev.map(a => (a.id === accountId ? updated : a)));
+      alert('Đã thăng cấp thành admin');
+    } catch (e) {
+      console.error('Promote failed:', e);
+      alert((e as Error).message || 'Không thể thăng cấp');
     }
   };
+
+  // Demote
+  const handleDemoteToMember = async (accountId: number) => {
+    if (!confirm('Hạ quyền về Member?')) return;
+    try {
+      const updated = await demoteAccount(accountId);
+      setAccounts(prev => prev.map(a => (a.id === accountId ? updated : a)));
+      alert('Đã hạ quyền về Member');
+    } catch (e) {
+      console.error('Demote failed:', e);
+      alert((e as Error).message || 'Không thể hạ quyền');
+    }
+  };
+
+  // Ban / Unban
+ const handleBanAccount = async (accountId: number) => {
+  try {
+    const acc = accounts.find(a => a.id === accountId);
+    if (!acc) return;
+    const updated = await toggleBan(accountId, acc.status);
+    setAccounts(prev => prev.map(a => (a.id === accountId ? updated : a)));
+  } catch (e) {
+    console.error('Toggle ban failed:', e);
+    alert((e as Error).message || 'Không thể cập nhật trạng thái');
+  }
+};
+
+  
 
   const handleViewDetails = (accountId: number) => {
     const account = accounts.find((acc) => acc.id === accountId);
@@ -400,7 +414,7 @@ export default function AdminDashboard() {
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               >
                                 <Eye className="h-4 w-4 mr-2" />
-                                Xem chi tiết
+                                see details
                               </button>
 
                               {account.role === RoleEnum.USER && (
@@ -412,34 +426,34 @@ export default function AdminDashboard() {
                                   className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                 >
                                   <UserPlus className="h-4 w-4 mr-2" />
-                                  Thăng cấp Admin
+                                  Promote Admin
                                 </button>
                               )}
 
                               <button
                                 onClick={() => {
-                                  handleStatusToggle(account.id);
+                                  handleBanAccount(account.id);
                                   setSelectedAccount(null);
                                 }}
-                                className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 ${
-                                  account.status === StatusEnum.ACTIVE
+                                className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 ${account.status === StatusEnum.ACTIVE
                                     ? 'text-red-600 hover:bg-red-50'
                                     : 'text-green-600 hover:bg-green-50'
-                                }`}
+                                  }`}
                               >
                                 {account.status === StatusEnum.ACTIVE ? (
                                   <>
                                     <Ban className="h-4 w-4 mr-2" />
-                                    Cấm tài khoản
+                                    Ban account
                                   </>
                                 ) : (
                                   <>
                                     <CheckCircle className="h-4 w-4 mr-2" />
-                                    Kích hoạt tài khoản
+                                    Unban account
                                   </>
                                 )}
                               </button>
 
+                              {/* KHONG XOA 
                               <button
                                 onClick={() => {
                                   handleDeleteAccount(account.id);
@@ -448,8 +462,8 @@ export default function AdminDashboard() {
                                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
-                                Xóa tài khoản
-                              </button>
+                                Xóa tài khoản342
+                              */}
                             </div>
                           </div>
                         )}
@@ -489,7 +503,7 @@ export default function AdminDashboard() {
 
                 <div className="flex space-x-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
+                    let pageNum : number;
                     if (totalPages <= 5) {
                       pageNum = i + 1;
                     } else if (currentPage <= 3) {

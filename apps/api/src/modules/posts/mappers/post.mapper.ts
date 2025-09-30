@@ -5,6 +5,7 @@ import { BikeDetailsResponseDto } from '../../post-details/dto/bike/bike-details
 import { PostEvCarDetails } from 'src/modules/post-details/entities/post-ev-car-details.entity';
 import { PostEvBikeDetails } from 'src/modules/post-details/entities/post-ev-bike-details.entity';
 import { AccountMapper } from '../../accounts/mappers';
+import { PostImageMapper } from './post-image.mapper';
 
 export class PostMapper {
   static toBasePostResponseDto(post: Post): BasePostResponseDto {
@@ -47,6 +48,11 @@ export class PostMapper {
     // if (post.batteryDetails) {
     //   dto.batteryDetails = PostMapper.toBatteryDetailsResponseDto(post.batteryDetails);
     // }
+
+    // Map images if available
+    if (post.images) {
+      dto.images = PostImageMapper.toResponseDtoArray(post.images);
+    }
 
     return dto;
   }

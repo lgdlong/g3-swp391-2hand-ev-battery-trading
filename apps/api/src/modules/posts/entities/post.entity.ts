@@ -8,12 +8,14 @@ import {
   UpdateDateColumn,
   JoinColumn,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 import type { Account } from '../../accounts/entities/account.entity';
 import { PostStatus, PostType } from '../../../shared/enums/post.enum';
 import type { PostEvCarDetails } from '../../post-details/entities/post-ev-car-details.entity';
 import type { PostEvBikeDetails } from '../../post-details/entities/post-ev-bike-details.entity';
 import type { PostBatteryDetails } from '../../post-details/entities/post-battery-details.entity';
+import { PostImage } from './post-image.entity';
 
 @Entity({ name: 'posts' })
 @Index(['wardCode'])
@@ -110,4 +112,11 @@ export class Post {
     { cascade: true },
   )
   batteryDetails?: PostBatteryDetails;
+
+  // ---------------------------
+  // One-to-many relations
+  // ---------------------------
+
+  @OneToMany(() => require('./post-image.entity').PostImage, (image: PostImage) => image.post)
+  images!: PostImage[];
 }

@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PostType } from '../../../shared/enums/post.enum';
-import { CreateMediaDto } from './create-media.dto';
+import { CreatePostImageDto } from './create-post-image.dto';
 
 export class BaseCreatePostDto {
   @IsEnum(PostType)
@@ -62,6 +62,6 @@ export class BaseCreatePostDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CreateMediaDto)
-  media?: CreateMediaDto[];
+  @Type(() => CreatePostImageDto)
+  images?: CreatePostImageDto[];
 }
