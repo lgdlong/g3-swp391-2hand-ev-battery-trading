@@ -192,4 +192,17 @@ export class PostsService {
     });
     return PostImageMapper.toResponseDtoArray(images);
   }
+
+  async getPostById(id: string): Promise<BasePostResponseDto> {
+    const post = await this.postsRepo.findOne({
+      where: { id },
+      relations: ['seller', 'images', 'carDetails', 'bikeDetails'],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    return PostMapper.toBasePostResponseDto(post);
+  }
 }

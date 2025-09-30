@@ -35,6 +35,7 @@ import {
   ApiCreatedResponse,
   ApiExtraModels,
   ApiForbiddenResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -87,6 +88,23 @@ export class PostsController {
   @ApiQuery({ name: 'sort', required: false, type: String, example: 'price' })
   async getBikePosts(@Query() query: ListQueryDto): Promise<BasePostResponseDto[]> {
     return this.postsService.getBikePosts(query);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Lấy thông tin chi tiết bài đăng theo ID' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID của bài đăng',
+    example: '1',
+  })
+  @ApiOkResponse({
+    description: 'Thông tin chi tiết bài đăng',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiBadRequestResponse({ description: 'ID không hợp lệ' })
+  @ApiNotFoundResponse({ description: 'Không tìm thấy bài đăng' })
+  async getPostById(@Param('id') id: string): Promise<BasePostResponseDto> {
+    return this.postsService.getPostById(id);
   }
 
   @Post('car')
