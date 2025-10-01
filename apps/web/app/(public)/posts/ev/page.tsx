@@ -359,7 +359,10 @@ function EvPostsContent() {
                                 item.carDetails?.manufacture_year ||
                                   item.bikeDetails?.manufacture_year,
                               )}
-                              <div>{location}</div>
+                            </p>
+                            <p className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
+                              <MapPin className="h-3 w-3" />
+                              {!location ? 'Không rõ' : location}
                             </p>
                           </div>
                         </div>
