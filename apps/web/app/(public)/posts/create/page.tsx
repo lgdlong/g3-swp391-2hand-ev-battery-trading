@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,8 @@ import { Car, Battery, Upload, FileText, X } from 'lucide-react';
 import { getCarBrands, getBikeBrands, getCarModels, getBikeModels } from '@/lib/api/catalogApi';
 import { Brand, Model } from '@/types/catalog';
 import { useRouter } from 'next/navigation';
+import { createCarPost, createBikePost, uploadPostImages } from '@/lib/api/postApi';
+import { toast } from 'sonner';
 
 type PostType = 'ev' | 'battery';
 
@@ -19,29 +22,41 @@ export default function CreatePostPage() {
   const [loadingBrands, setLoadingBrands] = useState(false);
   const [models, setModels] = useState<Model[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [createdPostId, setCreatedPostId] = useState<string | null>(null);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [formData, setFormData] = useState({
     // Common fields
     title: '',
     description: '',
     priceVnd: '',
     addressText: '',
+    wardCode: '',
+    isNegotiable: false,
 
     // EV specific
     vehicleType: 'xe_hoi' as 'xe_hoi' | 'xe_may',
-    brandName: '',
-    modelName: '',
-    trimName: '',
+    brandId: '',
+    modelId: '',
     manufactureYear: '',
-    bodyStyle: '',
-    origin: 'noi_dia' as 'noi_dia' | 'nhap_khau',
-    colorName: '',
+    bodyStyle: 'SEDAN' as 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE',
+    bikeStyle: 'SCOOTER' as 'SCOOTER' | 'SPORT' | 'CRUISER',
+    origin: 'NOI_DIA' as 'NOI_DIA' | 'NHAP_KHAU',
+    color: 'BLACK' as 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER',
     seats: '',
-    condition: 'used' as 'new' | 'used',
     licensePlate: '',
+    ownersCount: '',
     odoKm: '',
-    batteryCapacityKWh: '',
+    batteryCapacityKwh: '',
+    rangeKm: '',
+    chargeAcKw: '',
+    chargeDcKw: '',
+    motorPowerKw: '',
+    batteryHealthPct: '',
 
-    // Battery specific
+    // Battery specific (keep as is)
     brand: '',
     year: '',
     cyclesUsed: '',
@@ -55,11 +70,165 @@ export default function CreatePostPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', { postType, formData });
-    // TODO: Implement API call
-    alert('Tin đăng đã được gửi! (Demo)');
+
+    if (!postType) {
+      toast.error('Vui lòng chọn loại tin đăng');
+      return;
+    }
+
+    if (postType === 'battery') {
+      // Keep battery logic as is (demo)
+      console.log('Battery form submitted:', { postType, formData });
+      toast.success('Tin đăng pin đã được gửi! (Demo)');
+      return;
+    }
+
+    // EV post logic with real API
+    setIsSubmitting(true);
+
+    try {
+      // Step 1: Create post (car or bike)
+      let createdPost;
+
+      if (formData.vehicleType === 'xe_hoi') {
+        // Create car post
+        const carPostData = {
+          postType: 'EV_CAR' as const,
+          title: formData.title,
+          description: formData.description,
+          wardCode: formData.wardCode || '00001', // Default ward code
+          priceVnd: formData.priceVnd,
+          isNegotiable: formData.isNegotiable,
+          carDetails: {
+            brand_id: parseInt(formData.brandId) || 1,
+            model_id: parseInt(formData.modelId) || 1,
+            manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
+            body_style: formData.bodyStyle,
+            origin: formData.origin,
+            color: formData.color,
+            seats: parseInt(formData.seats) || 5,
+            license_plate: formData.licensePlate,
+            owners_count: parseInt(formData.ownersCount) || 1,
+            odo_km: parseInt(formData.odoKm) || 0,
+            battery_capacity_kwh: parseFloat(formData.batteryCapacityKwh) || 0,
+            range_km: parseInt(formData.rangeKm) || 0,
+            charge_ac_kw: parseFloat(formData.chargeAcKw) || 0,
+            charge_dc_kw: parseFloat(formData.chargeDcKw) || 0,
+            battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
+          },
+        };
+
+        createdPost = await createCarPost(carPostData);
+      } else {
+        // Create bike post
+        const bikePostData = {
+          postType: 'EV_BIKE' as const,
+          title: formData.title,
+          description: formData.description,
+          wardCode: formData.wardCode || '00001', // Default ward code
+          priceVnd: formData.priceVnd,
+          isNegotiable: formData.isNegotiable,
+          bikeDetails: {
+            brand_id: parseInt(formData.brandId) || 1,
+            model_id: parseInt(formData.modelId) || 1,
+            manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
+            bike_style: formData.bikeStyle,
+            origin: formData.origin,
+            color: formData.color,
+            license_plate: formData.licensePlate,
+            owners_count: parseInt(formData.ownersCount) || 1,
+            odo_km: parseInt(formData.odoKm) || 0,
+            battery_capacity_kwh: parseFloat(formData.batteryCapacityKwh) || 0,
+            range_km: parseInt(formData.rangeKm) || 0,
+            motor_power_kw: parseFloat(formData.motorPowerKw) || 0,
+            charge_ac_kw: parseFloat(formData.chargeAcKw) || 0,
+            battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
+          },
+        };
+
+        createdPost = await createBikePost(bikePostData);
+      }
+
+      toast.success('Tạo bài đăng thành công!');
+
+      // Save the created post ID for image upload step
+      setCreatedPostId(createdPost.id);
+    } catch (error: any) {
+      console.error('Failed to create post:', error);
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'Tạo bài đăng thất bại';
+      toast.error(`Tạo bài đăng thất bại: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!createdPostId || selectedFiles.length === 0) {
+      toast.error('Vui lòng chọn ít nhất 1 hình ảnh');
+      return;
+    }
+
+    setIsUploadingImages(true);
+
+    try {
+      await uploadPostImages(createdPostId, selectedFiles);
+      toast.success('Upload ảnh thành công!');
+
+      // Redirect to the created post
+      router.push(`/posts/ev/${createdPostId}`);
+    } catch (error: any) {
+      console.error('Failed to upload images:', error);
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'Upload ảnh thất bại';
+
+      // If it's a 404/500 (endpoint not implemented), show warning but continue
+      if (error?.response?.status === 404 || error?.response?.status === 500) {
+        toast.warning('API upload chưa sẵn sàng. Đang chuyển đến trang post...');
+        setTimeout(() => {
+          router.push(`/posts/ev/${createdPostId}`);
+        }, 2000);
+      } else {
+        toast.error(`Upload ảnh thất bại: ${errorMessage}`);
+      }
+    } finally {
+      setIsUploadingImages(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 10) {
+      toast.error('Chỉ được chọn tối đa 10 ảnh');
+      return;
+    }
+
+    setSelectedFiles(files);
+
+    // Create preview URLs
+    const urls = files.map((file) => URL.createObjectURL(file));
+    setPreviewUrls(urls);
+  };
+
+  const removeImage = (index: number) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index);
+    const newUrls = previewUrls.filter((_, i) => i !== index);
+
+    // Revoke the URL to free memory
+    if (previewUrls[index]) {
+      URL.revokeObjectURL(previewUrls[index]);
+    }
+
+    setSelectedFiles(newFiles);
+    setPreviewUrls(newUrls);
+  };
+
+  const skipImageUpload = () => {
+    if (createdPostId) {
+      router.push(`/posts/ev/${createdPostId}`);
+    }
   };
 
   const resetForm = () => {
@@ -68,24 +237,34 @@ export default function CreatePostPage() {
       description: '',
       priceVnd: '',
       addressText: '',
+      wardCode: '',
+      isNegotiable: false,
       vehicleType: 'xe_hoi',
-      brandName: '',
-      modelName: '',
-      trimName: '',
+      brandId: '',
+      modelId: '',
       manufactureYear: '',
-      bodyStyle: '',
-      origin: 'noi_dia',
-      colorName: '',
+      bodyStyle: 'SEDAN',
+      bikeStyle: 'SCOOTER',
+      origin: 'NOI_DIA',
+      color: 'BLACK',
       seats: '',
-      condition: 'used',
       licensePlate: '',
+      ownersCount: '',
       odoKm: '',
-      batteryCapacityKWh: '',
+      batteryCapacityKwh: '',
+      rangeKm: '',
+      chargeAcKw: '',
+      chargeDcKw: '',
+      motorPowerKw: '',
+      batteryHealthPct: '',
       brand: '',
       year: '',
       cyclesUsed: '',
       healthPercent: '',
     });
+    setSelectedFiles([]);
+    setPreviewUrls([]);
+    setCreatedPostId(null);
   };
 
   const handlePostTypeSelect = (type: PostType) => {
@@ -102,8 +281,8 @@ export default function CreatePostPage() {
   // Load brands when vehicle type changes
   useEffect(() => {
     if (postType === 'ev' && formData.vehicleType) {
-      // Reset brand name when vehicle type changes
-      setFormData((prev) => ({ ...prev, brandName: '' }));
+      // Reset brand ID when vehicle type changes
+      setFormData((prev) => ({ ...prev, brandId: '', modelId: '' }));
 
       setLoadingBrands(true);
       const loadBrands = async () => {
@@ -128,12 +307,12 @@ export default function CreatePostPage() {
 
   // Load models when brand changes
   useEffect(() => {
-    if (postType === 'ev' && formData.brandName && brands.length > 0) {
-      // Find the selected brand to get its ID
-      const selectedBrand = brands.find((brand) => brand.name === formData.brandName);
+    if (postType === 'ev' && formData.brandId && brands.length > 0) {
+      // Find the selected brand to get its info
+      const selectedBrand = brands.find((brand) => brand.id.toString() === formData.brandId);
       if (selectedBrand) {
-        // Reset model name when brand changes
-        setFormData((prev) => ({ ...prev, modelName: '' }));
+        // Reset model ID when brand changes
+        setFormData((prev) => ({ ...prev, modelId: '' }));
 
         setLoadingModels(true);
         const loadModels = async () => {
@@ -155,13 +334,13 @@ export default function CreatePostPage() {
         loadModels();
       }
     }
-  }, [postType, formData.brandName, formData.vehicleType, brands]);
+  }, [postType, formData.brandId, formData.vehicleType, brands]);
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Modal for Post Type Selection */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-md">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -179,11 +358,11 @@ export default function CreatePostPage() {
               <div className="space-y-4">
                 <button
                   onClick={() => handlePostTypeSelect('ev')}
-                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all group"
+                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-[#048C73] hover:bg-[#048C73]/5 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
-                      <Car className="h-8 w-8 text-green-600" />
+                    <div className="p-2 rounded-full bg-gray-100 group-hover:bg-[#048C73]/10 transition-colors">
+                      <Car className="h-8 w-8 text-gray-600 group-hover:text-[#048C73]" />
                     </div>
                     <div className="text-left flex-1">
                       <div className="font-semibold text-gray-900">Xe điện (EV)</div>
@@ -194,11 +373,11 @@ export default function CreatePostPage() {
 
                 <button
                   onClick={() => handlePostTypeSelect('battery')}
-                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all group"
+                  className="w-full p-4 rounded-lg border-2 border-gray-200 hover:border-[#048C73] hover:bg-[#048C73]/5 transition-all group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
-                      <Battery className="h-8 w-8 text-blue-600" />
+                    <div className="p-2 rounded-full bg-gray-100 group-hover:bg-[#048C73]/10 transition-colors">
+                      <Battery className="h-8 w-8 text-gray-600 group-hover:text-[#048C73]" />
                     </div>
                     <div className="text-left flex-1">
                       <div className="font-semibold text-gray-900">Pin EV</div>
@@ -213,12 +392,13 @@ export default function CreatePostPage() {
       )}
 
       <div className="max-w-4xl mx-auto">
-        {postType && (
+        {/* Step 1: Create Post Form */}
+        {postType && !createdPostId && (
           <>
             <div className="mb-8">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-green-500 to-blue-500 bg-clip-text text-transparent mb-2">
+                  <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">
                     Đăng tin bán {postType === 'ev' ? 'Xe điện' : 'Pin EV'}
                   </h1>
                   <p className="text-muted-foreground">
@@ -228,7 +408,7 @@ export default function CreatePostPage() {
                 <Button
                   variant="outline"
                   onClick={handleChangePostType}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-[#048C73]/5 hover:border-[#048C73] hover:text-[#048C73]"
                 >
                   {postType === 'ev' ? (
                     <Car className="h-4 w-4" />
@@ -341,52 +521,50 @@ export default function CreatePostPage() {
                       </div>
 
                       <div>
-                        <Label htmlFor="brandName">
+                        <Label htmlFor="brandId">
                           Hãng xe <span className="text-red-500">*</span>
                         </Label>
                         <select
-                          id="brandName"
-                          value={formData.brandName}
-                          onChange={(e) => handleInputChange('brandName', e.target.value)}
+                          id="brandId"
+                          value={formData.brandId}
+                          onChange={(e) => handleInputChange('brandId', e.target.value)}
                           className="w-full px-3 py-2 border border-input rounded-md text-base"
                           required
                           disabled={loadingBrands}
                         >
                           <option value="">{loadingBrands ? 'Đang tải...' : 'Chọn hãng xe'}</option>
                           {brands.map((brand) => (
-                            <option key={brand.id} value={brand.name}>
+                            <option key={brand.id} value={brand.id.toString()}>
                               {brand.name}
                             </option>
                           ))}
-                          <option value="Khác">Khác</option>
                         </select>
                       </div>
 
                       <div>
-                        <Label htmlFor="modelName">
+                        <Label htmlFor="modelId">
                           Model <span className="text-red-500">*</span>
                         </Label>
                         <select
-                          id="modelName"
-                          value={formData.modelName}
-                          onChange={(e) => handleInputChange('modelName', e.target.value)}
+                          id="modelId"
+                          value={formData.modelId}
+                          onChange={(e) => handleInputChange('modelId', e.target.value)}
                           className="w-full px-3 py-2 border border-input rounded-md text-base"
                           required
-                          disabled={loadingModels || !formData.brandName}
+                          disabled={loadingModels || !formData.brandId}
                         >
                           <option value="">
                             {loadingModels
                               ? 'Đang tải...'
-                              : !formData.brandName
+                              : !formData.brandId
                                 ? 'Chọn hãng xe trước'
                                 : 'Chọn model'}
                           </option>
                           {models.map((model) => (
-                            <option key={model.id} value={model.name}>
+                            <option key={model.id} value={model.id.toString()}>
                               {model.name}
                             </option>
                           ))}
-                          <option value="Khác">Khác</option>
                         </select>
                       </div>
 
@@ -394,8 +572,8 @@ export default function CreatePostPage() {
                         <Label htmlFor="trimName">Phiên bản</Label>
                         <Input
                           id="trimName"
-                          value={formData.trimName}
-                          onChange={(e) => handleInputChange('trimName', e.target.value)}
+                          value={formData.licensePlate}
+                          onChange={(e) => handleInputChange('licensePlate', e.target.value)}
                           placeholder="Standard"
                           className="text-base"
                         />
@@ -443,8 +621,8 @@ export default function CreatePostPage() {
                         <Input
                           id="batteryCapacity"
                           type="number"
-                          value={formData.batteryCapacityKWh}
-                          onChange={(e) => handleInputChange('batteryCapacityKWh', e.target.value)}
+                          value={formData.batteryCapacityKwh}
+                          onChange={(e) => handleInputChange('batteryCapacityKwh', e.target.value)}
                           placeholder="42"
                           className="text-base"
                           required
@@ -455,24 +633,24 @@ export default function CreatePostPage() {
                         <Label htmlFor="colorName">Màu sắc</Label>
                         <select
                           id="colorName"
-                          value={formData.colorName}
-                          onChange={(e) => handleInputChange('colorName', e.target.value)}
+                          value={formData.color}
+                          onChange={(e) => handleInputChange('color', e.target.value)}
                           className="w-full px-3 py-2 border border-input rounded-md text-base"
                         >
                           <option value="">Chọn màu sắc</option>
-                          <option value="Trắng">Trắng</option>
-                          <option value="Đen">Đen</option>
-                          <option value="Xám">Xám</option>
-                          <option value="Bạc">Bạc</option>
-                          <option value="Đỏ">Đỏ</option>
-                          <option value="Xanh dương">Xanh dương</option>
-                          <option value="Xanh lá">Xanh lá</option>
-                          <option value="Vàng">Vàng</option>
-                          <option value="Cam">Cam</option>
-                          <option value="Tím">Tím</option>
-                          <option value="Nâu">Nâu</option>
-                          <option value="Hồng">Hồng</option>
-                          <option value="Khác">Khác</option>
+                          <option value="WHITE">Trắng</option>
+                          <option value="BLACK">Đen</option>
+                          <option value="GRAY">Xám</option>
+                          <option value="SILVER">Bạc</option>
+                          <option value="RED">Đỏ</option>
+                          <option value="BLUE">Xanh dương</option>
+                          <option value="GREEN">Xanh lá</option>
+                          <option value="YELLOW">Vàng</option>
+                          <option value="ORANGE">Cam</option>
+                          <option value="PURPLE">Tím</option>
+                          <option value="BROWN">Nâu</option>
+                          <option value="PINK">Hồng</option>
+                          <option value="OTHER">Khác</option>
                         </select>
                       </div>
 
@@ -518,8 +696,8 @@ export default function CreatePostPage() {
                         </Label>
                         <select
                           id="condition"
-                          value={formData.condition}
-                          onChange={(e) => handleInputChange('condition', e.target.value)}
+                          value={formData.ownersCount}
+                          onChange={(e) => handleInputChange('ownersCount', e.target.value)}
                           className="w-full px-3 py-2 border border-input rounded-md text-base"
                           required
                         >
@@ -536,8 +714,8 @@ export default function CreatePostPage() {
                           onChange={(e) => handleInputChange('origin', e.target.value)}
                           className="w-full px-3 py-2 border border-input rounded-md text-base"
                         >
-                          <option value="noi_dia">Nội địa</option>
-                          <option value="nhap_khau">Nhập khẩu</option>
+                          <option value="NOI_DIA">Nội địa</option>
+                          <option value="NHAP_KHAU">Nhập khẩu</option>
                         </select>
                       </div>
                     </div>
@@ -595,8 +773,8 @@ export default function CreatePostPage() {
                         <Input
                           id="batteryCapacityBattery"
                           type="number"
-                          value={formData.batteryCapacityKWh}
-                          onChange={(e) => handleInputChange('batteryCapacityKWh', e.target.value)}
+                          value={formData.batteryCapacityKwh}
+                          onChange={(e) => handleInputChange('batteryCapacityKwh', e.target.value)}
                           placeholder="60"
                           className="text-base"
                           required
@@ -633,40 +811,127 @@ export default function CreatePostPage() {
                 </Card>
               )}
 
-              {/* Image Upload */}
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                    <Upload className="h-5 w-5" />
-                    Hình ảnh
-                  </h2>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-600 mb-2">Kéo thả hình ảnh vào đây hoặc</p>
-                    <Button type="button" variant="outline">
-                      Chọn hình ảnh
-                    </Button>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Hỗ trợ: JPG, PNG, GIF (tối đa 10MB)
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Submit Buttons */}
               <div className="flex gap-4 justify-end">
-                <Button type="button" variant="outline" onClick={resetForm}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  className="border-gray-300 text-gray-700 hover:bg-[#048C73]/5 hover:border-[#048C73] hover:text-[#048C73]"
+                >
                   Đặt lại
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600"
+                  className="bg-[#048C73] hover:bg-[#037A66] text-white"
+                  disabled={isSubmitting}
                 >
-                  Đăng tin
+                  {isSubmitting ? 'Đang đăng tin...' : 'Đăng tin'}
                 </Button>
               </div>
             </form>
           </>
+        )}
+
+        {/* Step 2: Upload Images Section */}
+        {createdPostId && (
+          <div className="mt-8">
+            <Card className="shadow-lg">
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Upload className="h-8 w-8 text-green-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Bước 2: Thêm hình ảnh</h2>
+                  <p className="text-gray-600">
+                    Bài đăng đã được tạo thành công! Bây giờ hãy thêm hình ảnh để thu hút người mua.
+                  </p>
+                </div>
+
+                {/* File Upload Area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
+                  <input
+                    type="file"
+                    id="image-upload"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="cursor-pointer flex flex-col items-center"
+                  >
+                    <Upload className="h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-lg font-medium text-gray-700 mb-2">
+                      Kéo thả hình ảnh vào đây hoặc
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white"
+                    >
+                      Chọn hình ảnh
+                    </Button>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Hỗ trợ: JPG, PNG, GIF (tối đa 10MB mỗi ảnh, tối đa 10 ảnh)
+                    </p>
+                  </label>
+                </div>
+
+                {/* Image Previews */}
+                {previewUrls.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-3">Xem trước hình ảnh:</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {previewUrls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <Image
+                            src={url}
+                            alt={`Preview ${index + 1}`}
+                            width={200}
+                            height={128}
+                            className="w-full h-32 object-cover rounded-lg border"
+                          />
+                          <button
+                            onClick={() => removeImage(index)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    onClick={skipImageUpload}
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Bỏ qua (Hoàn thành sau)
+                  </Button>
+                  <Button
+                    onClick={handleImageUpload}
+                    disabled={selectedFiles.length === 0 || isUploadingImages}
+                    className="bg-[#048C73] hover:bg-[#037A66] text-white"
+                  >
+                    {isUploadingImages ? (
+                      <>
+                        <Upload className="h-4 w-4 mr-2 animate-spin" />
+                        Đang upload...
+                      </>
+                    ) : (
+                      `Upload ${selectedFiles.length} ảnh`
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>

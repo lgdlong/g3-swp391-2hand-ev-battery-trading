@@ -41,11 +41,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser({ role: 'user' });
         }
       } else {
-        // Fallback if no user data found
-        setIsLoggedIn(true);
-        setUserRole('user');
-        setUser({ role: 'user' });
+        // No user data found, set logged out state
+        setIsLoggedIn(false);
+        setUserRole(null);
+        setUser(null);
       }
+    } else {
+      // No token, ensure logged out state
+      setIsLoggedIn(false);
+      setUserRole(null);
+      setUser(null);
     }
     setLoading(false);
   }, []);

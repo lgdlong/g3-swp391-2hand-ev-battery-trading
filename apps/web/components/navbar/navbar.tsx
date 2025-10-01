@@ -59,7 +59,7 @@ interface HeaderProps {
   className?: string;
 }
 
-export function Header({ className }: HeaderProps) {
+export function Navbar({ className }: HeaderProps) {
   const { isLoggedIn, userRole, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -87,13 +87,15 @@ export function Header({ className }: HeaderProps) {
 
   return (
     <>
-      <header className={cn(
-        'sticky top-0 z-50 w-full',
-        'bg-white',
-        'shadow-lg',
-        'relative overflow-visible',
-        className
-      )}>
+      <header
+        className={cn(
+          'sticky top-0 z-50 w-full',
+          'bg-white',
+          'shadow-lg',
+          'relative overflow-visible',
+          className,
+        )}
+      >
         <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex h-16 items-center justify-between">
             {/* Left: Sidebar Menu + Logo + User Mode Toggle */}
@@ -129,7 +131,7 @@ export function Header({ className }: HeaderProps) {
       <div
         className={cn(
           'w-full bg-gradient-to-br from-gray-50 via-white to-gray-50 border-b border-gray-200/60 shadow-xl transition-all duration-500 ease-in-out',
-          isSidebarOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+          isSidebarOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden',
         )}
         onMouseEnter={() => setIsSidebarOpen(true)}
         onMouseLeave={() => setIsSidebarOpen(false)}
@@ -137,8 +139,12 @@ export function Header({ className }: HeaderProps) {
         <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">Quick Access</h3>
-            <p className="text-sm text-gray-600 font-medium">Navigate to different sections of the platform</p>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+              Quick Access
+            </h3>
+            <p className="text-sm text-gray-600 font-medium">
+              Navigate to different sections of the platform
+            </p>
           </div>
 
           {/* Menu Grid */}
@@ -150,7 +156,9 @@ export function Header({ className }: HeaderProps) {
                 className="flex items-center gap-4 p-6 bg-white/80 hover:bg-white rounded-2xl transition-all duration-300 group border border-gray-200/60 shadow-lg hover:shadow-xl backdrop-blur-sm hover:scale-105"
               >
                 <div className="p-3 bg-gradient-to-br from-blue-500/10 to-green-500/10 rounded-xl group-hover:from-blue-500/20 group-hover:to-green-500/20 transition-all duration-300">
-                  <span className="text-2xl group-hover:scale-110 transition-transform duration-300">{item.icon}</span>
+                  <span className="text-2xl group-hover:scale-110 transition-transform duration-300">
+                    {item.icon}
+                  </span>
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300 mb-1">
@@ -168,9 +176,8 @@ export function Header({ className }: HeaderProps) {
           {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200/60">
             <div className="flex items-center justify-center">
-              <div className="text-xs text-gray-400 font-medium">
-                Last updated: {currentTime}
-              </div>
+              <div className="text-xs text-gray-400 font-medium">EV Trading Platform</div>
+              <div className="text-xs text-gray-400 font-medium">Last updated: {currentTime}</div>
             </div>
           </div>
         </div>

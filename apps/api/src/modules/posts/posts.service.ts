@@ -121,17 +121,17 @@ export class PostsService {
       });
 
       // 3) tạo Media (nếu có)
-      if (dto.media?.length) {
-        const rows = dto.media.map((m) =>
-          trx.create(PostMedia, {
-            kind: m.kind,
-            url: m.url,
-            position: m.position ?? 0,
-            post: savedPost,
-          }),
-        );
-        await trx.save(PostMedia, rows);
-      }
+      // if (dto.media?.length) {
+      //   const rows = dto.media.map((m) =>
+      //     trx.create(PostMedia, {
+      //       kind: m.kind,
+      //       url: m.url,
+      //       position: m.position ?? 0,
+      //       post: savedPost,
+      //     }),
+      //   );
+      //   await trx.save(PostMedia, rows);
+      // }
 
       // 4) (optional) cập nhật status/log như createCarPost nếu cần
       // ...

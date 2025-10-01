@@ -1,6 +1,20 @@
 // types/account.ts
 import { AccountRole, AccountStatus } from '@/types/enums/account-enum';
 
+/** UI-focused account interface for display components */
+export interface AccountUI {
+  id: number;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  avatarUrl?: string;
+  status: AccountStatus;
+  role: AccountRole;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Legacy Account interface (kept for existing code) */
 export interface Account {
   id: number;
   email: string | null;

@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       // comment bellow to using the default font of shadcn ui, tailwind: font-sans
       // className={`${geist.variable} ${geistMono.variable} ${montserrat.variable} ${roboto.variable}`}
     >
-      <body className="font-sans">
+      <body className="font-sans" suppressHydrationWarning={true}>
         <Providers>{children}</Providers>
         <Toaster />
       </body>

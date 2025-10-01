@@ -59,11 +59,11 @@ function BatteryPostsContent() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'available':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       case 'reserved':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-gray-200 text-gray-700 border-gray-300';
       case 'sold':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-gray-300 text-gray-600 border-gray-400';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -72,8 +72,9 @@ function BatteryPostsContent() {
   const getHealthColor = (health?: number) => {
     if (!health) return 'bg-gray-100 text-gray-800 border-gray-200';
     if (health >= 90) return 'bg-green-100 text-green-800 border-green-200';
-    if (health >= 80) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    if (health >= 70) return 'bg-orange-100 text-orange-800 border-orange-200';
+    if (health >= 80) return 'bg-green-50 text-green-700 border-green-200';
+    if (health >= 70) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (health >= 50) return 'bg-orange-100 text-orange-800 border-orange-200';
     return 'bg-red-100 text-red-800 border-red-200';
   };
 
@@ -98,7 +99,7 @@ function BatteryPostsContent() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-2">
               Pin EV (Battery)
             </h1>
             <p className="text-muted-foreground">Tìm kiếm pin EV chất lượng cao</p>
@@ -106,7 +107,7 @@ function BatteryPostsContent() {
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">Sắp xếp:</span>
             <select
-              className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              className="border border-gray-300 rounded-lg px-4 py-2 bg-white shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all"
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
             >
@@ -159,9 +160,7 @@ function BatteryPostsContent() {
                       className="object-contain p-6 group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute left-4 top-4">
-                      <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white border-0 shadow-lg">
-                        BATTERY
-                      </Badge>
+                      <Badge className="bg-gray-900 text-white border-0 shadow-lg">BATTERY</Badge>
                     </div>
                     <div className="absolute right-4 top-4">
                       <Badge className={`border shadow-sm ${getStatusColor(item.status)}`}>
@@ -247,7 +246,7 @@ function BatteryPostsContent() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-2xl font-bold text-gray-900">
                         {formatVnd(item.priceVnd)}
                       </div>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">

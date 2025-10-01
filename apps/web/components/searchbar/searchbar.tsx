@@ -52,7 +52,7 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
                 placeholder="Tìm kiếm pin EV, thương hiệu, model..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-transparent border-0 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-0 text-base h-full rounded-xl"
+                className="w-full pl-12 pr-4 py-4 bg-transparent border-0 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-0 text-base h-full rounded-xl shadow-none"
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
