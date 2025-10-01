@@ -9,9 +9,10 @@ import { FilterDropdown } from './FilterDropdown';
 
 interface SearchBarProps {
   className?: string;
+  showFilters?: boolean;
 }
 
-export function SearchBar({ className }: SearchBarProps) {
+export function SearchBar({ className, showFilters = true }: SearchBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
@@ -41,17 +42,17 @@ export function SearchBar({ className }: SearchBarProps) {
 
       {/* Content */}
       <div className="relative z-10">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center bg-white border border-emerald-600 rounded-xl shadow-sm h-12 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center bg-white border border-emerald-600 rounded-2xl shadow-sm h-16 relative z-10 px-4 gap-3">
             {/* Search Input */}
             <div className="flex-1 relative min-w-0">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-emerald-600" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emerald-600" />
               <Input
                 type="text"
                 placeholder="Tìm kiếm pin EV, thương hiệu, model..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-transparent border-0 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-0 text-sm h-full"
+                className="w-full pl-12 pr-4 py-4 bg-transparent border-0 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-0 text-base h-full rounded-xl"
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
@@ -62,21 +63,23 @@ export function SearchBar({ className }: SearchBarProps) {
               onLocationChange={setSelectedLocation}
             />
 
-            {/* Filter Dropdown */}
-            <FilterDropdown
-              isOpen={isFilterOpen}
-              onToggle={() => setIsFilterOpen(!isFilterOpen)}
-              onClose={() => setIsFilterOpen(false)}
-              selectedBrand={selectedBrand}
-              onBrandChange={setSelectedBrand}
-              onPriceRangeSelect={handlePriceRange}
-              onClearFilters={handleClearFilters}
-            />
+            {/* Filter Dropdown - chỉ hiển thị khi showFilters = true */}
+            {showFilters && (
+              <FilterDropdown
+                isOpen={isFilterOpen}
+                onToggle={() => setIsFilterOpen(!isFilterOpen)}
+                onClose={() => setIsFilterOpen(false)}
+                selectedBrand={selectedBrand}
+                onBrandChange={setSelectedBrand}
+                onPriceRangeSelect={handlePriceRange}
+                onClearFilters={handleClearFilters}
+              />
+            )}
 
             {/* Search Button */}
             <Button
               onClick={handleSearch}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm hover:shadow-md transition-colors duration-200 px-6 py-3 rounded-none rounded-r-xl text-sm font-semibold h-full flex-shrink-0"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm hover:shadow-md transition-colors duration-200 px-8 py-3 rounded-full text-sm font-semibold h-10 flex-shrink-0"
             >
               Tìm kiếm
             </Button>

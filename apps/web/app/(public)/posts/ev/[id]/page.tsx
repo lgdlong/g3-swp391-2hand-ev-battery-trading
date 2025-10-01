@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { sampleEvPosts, formatVnd } from '../sample-ev';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Calendar,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/app/(public)/posts/_components/Badge';
 import type { Account } from '@/types/account';
+import { FilterButtons } from '@/components/breadcrumb-filter';
 
 interface Post {
   id: string;
@@ -60,6 +62,7 @@ interface Post {
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ model?: string }>;
 }
 
 export default function EvDetailPage({ params }: Props) {
@@ -97,12 +100,14 @@ export default function EvDetailPage({ params }: Props) {
       }
     };
 
-    fetchPost();
-  }, [id]);
+    fetchSeller();
+  }, [post?.seller]);
 
-  // Fetch seller data when post is loaded
-  useEffect(() => {
-    if (!post?.seller?.id) return;
+export default async function EvDetailPage({ params, searchParams }: Props) {
+  const { id } = await params;
+  const { model } = await searchParams;
+  const post = sampleEvPosts.find((p) => p.id === id);
+  if (!post) return notFound();
 
     const fetchSeller = async () => {
       setSellerLoading(true);
@@ -122,8 +127,6 @@ export default function EvDetailPage({ params }: Props) {
       }
     };
 
-    fetchSeller();
-  }, [post?.seller]);
 
   // Helper functions
   const formatVnd = (amount: string): string => {
@@ -245,16 +248,13 @@ export default function EvDetailPage({ params }: Props) {
   const imageUrl = post.images?.[0] || '/asset/phu-tung-o-to-27.png';
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Back button */}
-      <div className="mb-6">
-        <Link
-          href="/posts/ev"
-          className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 hover:underline"
-        >
-          ← Quay lại danh sách
-        </Link>
-      </div>
+<>
+  <FilterButtons
+    type="ev"
+    initialCategory="Xe điện"
+    initialSubcategory={model || post.modelName}
+  />
+  <div className="container mx-auto px-4 py-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Image Section */}
@@ -529,6 +529,10 @@ export default function EvDetailPage({ params }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
+}
+
+export async function generateStaticParams() {
+  return sampleEvPosts.map((p) => ({ id: p.id }));
 }

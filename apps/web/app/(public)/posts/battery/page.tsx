@@ -1,10 +1,11 @@
 'use client';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useMemo, useState, useEffect, Suspense } from 'react';
+import { useMemo, useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { sampleBatteryPosts, formatVnd } from './sample-battery';
+import { FilterButtons } from '@/components/breadcrumb-filter';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
@@ -16,6 +17,9 @@ function BatteryPostsContent() {
   const [brand, setBrand] = useState('');
   const [min, setMin] = useState<number | null>(null);
   const [max, setMax] = useState<number | null>(null);
+
+  // Breadcrumb function reference
+  const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
 
   useEffect(() => {
     setQuery(searchParams.get('q') || '');
@@ -83,7 +87,15 @@ function BatteryPostsContent() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      <FilterButtons
+        type="battery"
+        initialCategory="Pin EV"
+        onSubcategoryChange={(setSubcategory: (subcategory: string) => void) => {
+          setSubcategoryRef.current = setSubcategory;
+        }}
+      />
+      <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -136,7 +148,7 @@ function BatteryPostsContent() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filtered.map((item) => (
-            <Link key={item.id} href={`/posts/battery/${item.id}`} className="group">
+            <Link key={item.id} href={`/posts/battery/${item.id}?brand=${encodeURIComponent(item.brand || item.title)}`} className="group">
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group-hover:-translate-y-1 bg-white">
                 <CardContent className="p-0">
                   <div className="relative h-48 w-full bg-gradient-to-br from-slate-50 to-slate-100">
@@ -177,7 +189,16 @@ function BatteryPostsContent() {
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-gray-700 transition-colors">
+                        <h3
+                          className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            // Set subcategory to brand name
+                            if (setSubcategoryRef.current) {
+                              setSubcategoryRef.current(item.brand || item.title);
+                            }
+                          }}
+                        >
                           {item.title}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">
@@ -252,6 +273,7 @@ function BatteryPostsContent() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

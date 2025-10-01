@@ -50,11 +50,11 @@ export function FilterDropdown({
   }, [onClose]);
 
   return (
-    <div ref={filterRef} className={`relative border-l border-emerald-600 flex-shrink-0 z-10 ${className}`}>
+    <div ref={filterRef} className={`relative flex-shrink-0 z-10 ${className}`}>
       <Button
         variant="outline"
         onClick={onToggle}
-        className="border-0 bg-transparent text-gray-700 hover:bg-[#7EF2DD] transition-colors duration-200 px-4 py-3 rounded-none h-full flex items-center gap-2"
+        className="border border-emerald-600 bg-white text-gray-700 hover:bg-[#7EF2DD]/10 transition-colors duration-200 px-4 py-2 rounded-full h-10 flex items-center gap-2 shadow-sm"
       >
         <Filter className="h-4 w-4 text-emerald-600" />
         <span className="text-sm font-medium">Bộ lọc</span>

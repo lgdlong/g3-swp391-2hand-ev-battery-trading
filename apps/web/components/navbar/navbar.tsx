@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -63,6 +63,7 @@ export function Header({ className }: HeaderProps) {
   const { isLoggedIn, userRole, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState('');
 
   const menuItems = [
     { label: 'Dashboard Overview', href: '#', icon: '📊' },
@@ -71,6 +72,18 @@ export function Header({ className }: HeaderProps) {
     { label: 'Transaction History', href: '#', icon: '📈' },
     { label: 'System Settings', href: '#', icon: '⚙️' },
   ];
+
+  // Update time on mount and every second
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    };
+
+    updateTime(); // Set initial time
+    const interval = setInterval(updateTime, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -164,6 +177,9 @@ export function Header({ className }: HeaderProps) {
           <div className="mt-8 pt-6 border-t border-gray-200/60">
             <div className="flex items-center justify-center">
               <div className="text-xs text-gray-400 font-medium">EV Trading Platform</div>
+              <div className="text-xs text-gray-400 font-medium">
+                Last updated: {currentTime}
+              </div>
             </div>
           </div>
         </div>
