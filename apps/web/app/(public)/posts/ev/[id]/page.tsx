@@ -132,11 +132,12 @@ export default function EvDetailPage({ params, searchParams }: Props) {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
-                    <div className="text-3xl font-bold text-[#048C73] mb-2">
-                      {formatVnd(post.priceVnd)}
-                      {post.isNegotiable && (
-                        <span className="text-sm text-gray-500 ml-2">(Có thể thương lượng)</span>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-5">{post.title}</h1>
+                    <div className="text-2xl font-bold text-red-600 mb-2">
+                      {post.isNegotiable ? (
+                        <span>Liên hệ người bán</span>
+                      ) : (
+                        formatVnd(post.priceVnd)
                       )}
                     </div>
                   </div>
@@ -148,10 +149,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    <span>Đăng bởi {post.seller.fullName}</span>
-                  </div>
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
                     <span>{getLocation(post)}</span>

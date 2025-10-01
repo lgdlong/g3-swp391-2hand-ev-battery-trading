@@ -8,6 +8,7 @@ import { getCarPostsWithQuery, getBikePostsWithQuery } from '@/lib/api/postApi';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FilterButtons } from '@/components/breadcrumb-filter';
+import { MapPin } from 'lucide-react';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
@@ -284,11 +285,11 @@ function EvPostsContent() {
             <p className="text-gray-500">Thử thay đổi bộ lọc tìm kiếm của bạn</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
             {filtered.map((item) => {
               const location =
                 [
-                  displayValue(item.provinceNameCached),
+                  // displayValue(item.provinceNameCached),
                   displayValue(item.districtNameCached),
                   displayValue(item.wardNameCached),
                 ]
@@ -303,7 +304,8 @@ function EvPostsContent() {
                   href={`/posts/ev/${item.id}?model=${encodeURIComponent(item.title)}`}
                   className="group"
                 >
-                  <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 group-hover:-translate-y-1 bg-white">
+                  <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white">
+                    {/* Image */}
                     <CardContent className="p-0">
                       <div className="relative h-48 w-full bg-gradient-to-br from-slate-50 to-slate-100">
                         <Image
@@ -335,6 +337,8 @@ function EvPostsContent() {
                           </div>
                         )}
                       </div>
+
+                      {/* Details */}
                       <div className="p-6">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">
@@ -354,8 +358,8 @@ function EvPostsContent() {
                               {displayValue(
                                 item.carDetails?.manufacture_year ||
                                   item.bikeDetails?.manufacture_year,
-                              )}{' '}
-                              • {location}
+                              )}
+                              <div>{location}</div>
                             </p>
                           </div>
                         </div>
@@ -397,18 +401,16 @@ function EvPostsContent() {
                             </svg>
                             {(
                               item.carDetails?.odo_km || item.bikeDetails?.odo_km
-                            )?.toLocaleString() || 'N/A'}{' '}
+                            )?.toLocaleString() || '~'}{' '}
                             km
                           </div>
                         </div>
 
+                        {/* Price */}
                         <div className="flex items-center justify-between">
-                          <div className="text-2xl font-bold text-[#048C73]">
-                            {formatVnd(item.priceVnd)}
+                          <div className="text-lg font-bold text-red-600">
+                            {item.isNegotiable ? <span>Liên hệ</span> : formatVnd(item.priceVnd)}
                           </div>
-                          {item.isNegotiable && (
-                            <div className="text-xs text-gray-500">Có thể thương lượng</div>
-                          )}
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                             <svg
                               className="h-5 w-5 text-[#048C73]"
