@@ -25,8 +25,8 @@ export async function getAccounts(limit?: number, offset?: number): Promise<Acco
   return data;
 }
 
-// Get account by ID (public)
-export async function getAccountById(id: number): Promise<Account> {
+// Get account by ID (public) - accepts string or number
+export async function getAccountById(id: string | number): Promise<Account> {
   const { data } = await api.get<Account>(`/accounts/${id}`);
   return data;
 }
