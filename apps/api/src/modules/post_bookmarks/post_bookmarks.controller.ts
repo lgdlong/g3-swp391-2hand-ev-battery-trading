@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { PostBookmarksService } from './post_bookmarks.service';
 import { CreatePostBookmarkDto } from './dto/create-post_bookmark.dto';
-import { UpdatePostBookmarkDto } from './dto/update-post_bookmark.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { SafeAccountDto } from '../accounts/dto/safe-account.dto';
@@ -22,18 +21,13 @@ export class PostBookmarksController {
   }
 
   @Get()
-  findAll() {
-    return this.postBookmarksService.findAll();
+  async getAll() {
+    return this.postBookmarksService.getAll();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.postBookmarksService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostBookmarkDto: UpdatePostBookmarkDto) {
-    return this.postBookmarksService.update(+id, updatePostBookmarkDto);
   }
 
   @Delete(':id')
