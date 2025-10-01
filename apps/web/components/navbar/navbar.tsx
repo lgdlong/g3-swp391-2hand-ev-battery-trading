@@ -59,7 +59,7 @@ interface HeaderProps {
   className?: string;
 }
 
-export function Header({ className }: HeaderProps) {
+export function Navbar({ className }: HeaderProps) {
   const { isLoggedIn, userRole, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -177,9 +177,7 @@ export function Header({ className }: HeaderProps) {
           <div className="mt-8 pt-6 border-t border-gray-200/60">
             <div className="flex items-center justify-center">
               <div className="text-xs text-gray-400 font-medium">EV Trading Platform</div>
-              <div className="text-xs text-gray-400 font-medium">
-                Last updated: {currentTime}
-              </div>
+              <div className="text-xs text-gray-400 font-medium">Last updated: {currentTime}</div>
             </div>
           </div>
         </div>

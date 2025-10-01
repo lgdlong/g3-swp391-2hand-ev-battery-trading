@@ -1,6 +1,6 @@
 'use client';
 
-import { Header } from '@/components/navbar/navbar';
+import { Navbar } from '@/components/navbar/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
@@ -108,7 +108,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
-      <Header />
+      <Navbar />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-hidden">
         {/* Background Elements */}

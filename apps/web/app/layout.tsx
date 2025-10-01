@@ -1,7 +1,6 @@
 import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { Providers } from '@/app/providers';
-import { Header } from '@/components/navbar/navbar';
 // import { Geist, Geist_Mono, Montserrat, Roboto } from "next/font/google"
 
 // const geist = Geist({
