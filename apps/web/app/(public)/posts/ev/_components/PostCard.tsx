@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin } from 'lucide-react';
 import { displayValue, formatVnd, getStatusColor, getStatusText } from './utils';
 import type { Post } from './types';
-import HeartToggle from '@/components/HeartToggle';
+import HeartToggle from './HeartToggle';
 
 interface PostCardProps {
   item: Post;
@@ -14,7 +14,10 @@ interface PostCardProps {
 
 export function PostCard({ item, onTitleClick }: PostCardProps) {
   const location =
-    [displayValue(item.wardNameCached), displayValue(item.districtNameCached)]
+    [
+      // displayValue(item.wardNameCached),
+      displayValue(item.districtNameCached),
+    ]
       .filter((val) => val !== 'N/A')
       .join(', ') ||
     displayValue(item.addressTextCached) ||

@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { sampleBatteryPosts, formatVnd } from './sample-battery';
 import { FilterButtons } from '@/components/breadcrumb-filter';
-import HeartToggle from '@/components/HeartToggle';
+import HeartToggle from '@/app/(public)/posts/ev/_components/HeartToggle';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
