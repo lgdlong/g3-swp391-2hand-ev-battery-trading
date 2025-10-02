@@ -27,6 +27,12 @@ export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFil
     onClose();
   };
 
+  const handleClear = () => {
+    setPriceRange({ min: 0, max: 150000000000 });
+    onApply({ min: 0, max: 150000000000 });
+    onClose();
+  };
+
   return (
     <div className="w-80 bg-white border border-emerald-600 rounded-xl shadow-lg overflow-hidden">
       <div className="p-4">
@@ -43,7 +49,7 @@ export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFil
               <input
                 type="range"
                 min="0"
-                max="15000000000"
+                max="1500000000"
                 step="10000000"
                 value={priceRange.min}
                 onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) }))}
@@ -52,7 +58,7 @@ export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFil
               <input
                 type="range"
                 min="0"
-                max="150000000000"
+                max="15000000000"
                 step="10000000"
                 value={priceRange.max}
                 onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
@@ -62,6 +68,12 @@ export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFil
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t">
+            <button
+              onClick={handleClear}
+              className="px-3 py-1 text-xs text-red-600 hover:text-red-800 transition-colors"
+            >
+              Xóa bộ lọc
+            </button>
             <button
               onClick={onClose}
               className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 transition-colors"
