@@ -26,7 +26,10 @@ export function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebar
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/20" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[99999] bg-black/40 backdrop-blur-md animate-in fade-in duration-300"
+      onClick={onClose}
+    >
       <div
         className="absolute top-16 right-4 w-72 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden animate-in slide-in-from-top-2 duration-200"
         onClick={(e) => e.stopPropagation()}

@@ -1,4 +1,4 @@
-export { Header as Navbar } from './navbar';
+export { Navbar as Navbar } from './navbar';
 export { Logo } from './Logo';
 export { Navigation } from './navigation';
 export { UserActions } from './UserActions';

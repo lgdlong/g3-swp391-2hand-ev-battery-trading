@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Navbar } from '@/components/navbar';
 import { SearchBar } from '@/components/searchbar';
 
 export default function PostsLayout({ children }: { children: React.ReactNode }) {
@@ -13,7 +12,6 @@ export default function PostsLayout({ children }: { children: React.ReactNode })
 
   return (
     <>
-      <Navbar />
       <SearchBar showFilters={shouldShowFilters} />
       <main className="container mx-auto px-4 py-6">{children}</main>
     </>

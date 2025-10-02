@@ -93,9 +93,8 @@ export function FilterButtons({
 
   // Use internal breadcrumb if no external breadcrumbItems provided
   const displayBreadcrumbItems = breadcrumbItems.length > 0 ? breadcrumbItems : breadcrumbState.items;
-
   return (
-    <div className={cn('w-full bg-white border-b border-gray-200', className)}>
+    <div className={cn('w-full bg-white rounded-xl border-gray-200', className)}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {displayBreadcrumbItems.length > 0 && (
           <div className="mb-4 px-2">

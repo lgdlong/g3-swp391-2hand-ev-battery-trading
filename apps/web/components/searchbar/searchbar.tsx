@@ -43,7 +43,7 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
       {/* Content */}
       <div className="relative z-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center bg-white border border-emerald-600 rounded-2xl shadow-sm h-16 relative z-10 px-4 gap-3">
+          <div className="flex items-center bg-white border border-emerald-600 rounded-2xl h-16 relative z-10 px-4 gap-3">
             {/* Search Input */}
             <div className="flex-1 relative min-w-0">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-emerald-600" />
@@ -52,7 +52,7 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
                 placeholder="Tìm kiếm pin EV, thương hiệu, model..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-transparent border-0 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-0 text-base h-full rounded-xl"
+                className="w-full pl-12 pr-4 py-4 bg-transparent border-0 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-0 text-base h-full rounded-xl shadow-none"
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
