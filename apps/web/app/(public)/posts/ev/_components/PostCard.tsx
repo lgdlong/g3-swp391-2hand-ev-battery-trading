@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin } from 'lucide-react';
 import { displayValue, formatVnd, getStatusColor, getStatusText } from './utils';
 import type { Post } from './types';
+import HeartToggle from '@/components/HeartToggle';
 
 interface PostCardProps {
   item: Post;
@@ -26,8 +27,8 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
       className="group"
     >
       <Card className="overflow-hidden border-0 hover:shadow-md transition-all duration-300 bg-white">
-        {/* Image */}
         <CardContent className="p-0">
+          {/* Image */}
           <div className="relative h-48 w-full bg-gradient-to-br from-slate-50 to-slate-100">
             <Image
               src={
@@ -135,6 +136,8 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
                 </svg>
               </div>
             </div>
+
+            <HeartToggle />
           </div>
         </CardContent>
       </Card>
