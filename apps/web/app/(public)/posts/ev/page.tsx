@@ -111,25 +111,24 @@ function EvPostsContent() {
           toStringValue(p.wardNameCached).toLowerCase().includes(location.toLowerCase()) ||
           toStringValue(p.addressTextCached).toLowerCase().includes(location.toLowerCase()),
       );
-      data = data.filter((p) => p.priceVnd <= appliedFilters.priceMax);
     }
 
     if (appliedFilters.range) {
       switch (appliedFilters.range) {
         case '<300':
-          data = data.filter((p) => p.batteryCapacityKWh < 30); // Approximate range based on capacity
+          data = data.filter((p) => (p as any).batteryCapacityKWh < 30); // Approximate range based on capacity
           break;
         case '300-600':
-          data = data.filter((p) => p.batteryCapacityKWh >= 30 && p.batteryCapacityKWh <= 60);
+          data = data.filter((p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 60);
           break;
         case '>600':
-          data = data.filter((p) => p.batteryCapacityKWh > 60);
+          data = data.filter((p) => (p as any).batteryCapacityKWh > 60);
           break;
       }
     }
 
     if (appliedFilters.brand) {
-      data = data.filter((p) => p.brandName.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
+      data = data.filter((p) => (p as any).brandName?.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
     }
 
     // Apply sorting
@@ -138,35 +137,18 @@ function EvPostsContent() {
     } else {
       switch (sort) {
         case 'price-asc':
-          data.sort((a, b) => a.priceVnd - b.priceVnd);
+          data.sort((a, b) => parseFloat((a as any).priceVnd || '0') - parseFloat((b as any).priceVnd || '0'));
           break;
         case 'price-desc':
-          data.sort((a, b) => b.priceVnd - a.priceVnd);
+          data.sort((a, b) => parseFloat((b as any).priceVnd || '0') - parseFloat((a as any).priceVnd || '0'));
           break;
         default:
-          data.sort((a, b) => b.manufactureYear - a.manufactureYear);
+          data.sort((a, b) => ((b as any).manufactureYear || 0) - ((a as any).manufactureYear || 0));
       }
     }
 
     return data;
-  }, [query, location, brand, min, max, sort, appliedFilters]);
-=======
-    }
-
-    if (brand) {
-      data = data.filter((p) => p.title.toLowerCase().includes(brand.toLowerCase()));
-    }
-
-    // Price filtering (client-side for more precise control)
-    if (min !== null) {
-      data = data.filter((p) => parseFloat(p.priceVnd) >= min);
-    }
-    if (max !== null) {
-      data = data.filter((p) => parseFloat(p.priceVnd) <= max);
-    }
-
-    return data;
-  }, [allEvPosts, location, brand, min, max, appliedFilters]);
+  }, [allEvPosts, location, brand, min, max, sort, appliedFilters]);
 
   // Loading state
   if (isLoading) {
