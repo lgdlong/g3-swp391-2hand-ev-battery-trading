@@ -58,9 +58,9 @@ export function originText(origin: string): string {
  */
 export function getLocation(post: PostUI): string {
   const locationParts = [
-    post.provinceNameCached,
-    post.districtNameCached,
     post.wardNameCached,
+    post.districtNameCached,
+    post.provinceNameCached,
   ].filter(Boolean);
 
   if (locationParts.length > 0) {

@@ -8,13 +8,9 @@ interface PostGridProps {
 
 export function PostGrid({ posts, onTitleClick }: PostGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       {posts.map((item) => (
-        <PostCard
-          key={item.id}
-          item={item}
-          onTitleClick={onTitleClick}
-        />
+        <PostCard key={item.id} item={item} onTitleClick={onTitleClick} />
       ))}
     </div>
   );

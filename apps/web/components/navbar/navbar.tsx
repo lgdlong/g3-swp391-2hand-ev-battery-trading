@@ -62,8 +62,6 @@ export function Navbar({ className }: HeaderProps) {
   const { isLoggedIn, userRole, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-
-
   return (
     <>
       <header
@@ -115,6 +113,3 @@ export function Navbar({ className }: HeaderProps) {
     </>
   );
 }
-
-// Export individual components for potential reuse
-export { Logo, Navigation, UserActions, UserSidebar, UserModeToggle };
