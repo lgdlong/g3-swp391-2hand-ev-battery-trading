@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 export interface FilterState {
@@ -74,13 +76,13 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
         cycles: setShowCyclesDropdown,
         health: setShowHealthDropdown,
         batteryBrand: setShowBatteryBrandDropdown,
-        range: setShowRangeDropdown
+        range: setShowRangeDropdown,
       };
 
       const currentDropdownSetter = dropdownStates[filterKey as keyof typeof dropdownStates];
       if (currentDropdownSetter) {
         setActiveFilter(filterKey);
-        currentDropdownSetter(prev => !prev);
+        currentDropdownSetter((prev) => !prev);
 
         // Close all other dropdowns
         Object.entries(dropdownStates).forEach(([key, setter]) => {
@@ -116,6 +118,6 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     handleCyclesApply,
     handleHealthApply,
     handleBatteryBrandApply,
-    handleFilterClick
+    handleFilterClick,
   };
 }
