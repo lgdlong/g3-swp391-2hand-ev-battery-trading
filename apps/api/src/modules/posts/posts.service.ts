@@ -15,6 +15,8 @@ import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { PostImageResponseDto } from './dto/post-image-response.dto';
 import { PostImageMapper } from './mappers/post-image.mapper';
+import { AddressService } from '../address/address.service';
+import { buildAddressText } from 'src/shared/helpers/address.helper';
 
 @Injectable()
 export class PostsService {
@@ -24,6 +26,7 @@ export class PostsService {
     @InjectRepository(PostImage)
     private readonly imagesRepo: Repository<PostImage>,
     private readonly bikeDetailsService: BikeDetailsService,
+    private readonly addressService: AddressService,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -45,6 +48,20 @@ export class PostsService {
     if (dto.postType !== PostType.EV_CAR) {
       throw new Error('Invalid postType for this endpoint');
     }
+
+    if (!dto.provinceNameCached && !dto.districtNameCached && !dto.wardNameCached) {
+      const fullAddress = await this.addressService.getFullAddressByWardCode(dto.wardCode);
+      dto.provinceNameCached = fullAddress.data.province.name;
+      dto.districtNameCached = fullAddress.data.district.name;
+      dto.wardNameCached = fullAddress.data.ward.name;
+    }
+
+    dto.addressTextCached =
+      buildAddressText(
+        dto.wardNameCached ?? undefined,
+        dto.districtNameCached ?? undefined,
+        dto.provinceNameCached ?? undefined,
+      ) || '';
 
     return this.postsRepo.manager.transaction(async (trx) => {
       // 1) tạo Post
