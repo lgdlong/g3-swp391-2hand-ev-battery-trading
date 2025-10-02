@@ -8,17 +8,21 @@ interface PriceFilterDropdownProps {
   currentRange?: { min: number; max: number };
 }
 
+const MAX_PRICE = '150000000000';
+const MIN_PRICE = '0';
+const PRICE_STEP = '10000000';
+
 export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFilterDropdownProps) {
   const [priceRange, setPriceRange] = useState({
     min: currentRange?.min || 0,
-    max: currentRange?.max || 150000000000
+    max: currentRange?.max || 150000000000,
   });
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(price);
   };
 
@@ -42,20 +46,24 @@ export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFil
             <div className="space-y-2">
               <input
                 type="range"
-                min="0"
-                max="15000000000"
-                step="10000000"
+                min={MIN_PRICE}
+                max={MAX_PRICE}
+                step={PRICE_STEP}
                 value={priceRange.min}
-                onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) }))}
+                onChange={(e) =>
+                  setPriceRange((prev) => ({ ...prev, min: parseInt(e.target.value) }))
+                }
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <input
                 type="range"
-                min="0"
-                max="150000000000"
-                step="10000000"
+                min={MIN_PRICE}
+                max={MAX_PRICE}
+                step={PRICE_STEP}
                 value={priceRange.max}
-                onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
+                onChange={(e) =>
+                  setPriceRange((prev) => ({ ...prev, max: parseInt(e.target.value) }))
+                }
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
             </div>
