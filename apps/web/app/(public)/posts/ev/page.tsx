@@ -17,6 +17,7 @@ function EvPostsContent() {
   const [brand, setBrand] = useState('');
   const [min, setMin] = useState<number | null>(null);
   const [max, setMax] = useState<number | null>(null);
+  const [appliedFilters, setAppliedFilters] = useState<any>({});
 
   // Breadcrumb function reference
   const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
@@ -44,18 +45,55 @@ function EvPostsContent() {
     if (brand) data = data.filter((p) => p.title.toLowerCase().includes(brand.toLowerCase()));
     if (min !== null) data = data.filter((p) => p.priceVnd >= min);
     if (max !== null) data = data.filter((p) => p.priceVnd <= max);
-    switch (sort) {
-      case 'price-asc':
-        data.sort((a, b) => a.priceVnd - b.priceVnd);
-        break;
-      case 'price-desc':
-        data.sort((a, b) => b.priceVnd - a.priceVnd);
-        break;
-      default:
-        data.sort((a, b) => b.manufactureYear - a.manufactureYear);
+
+    // Apply new filter system
+    if (appliedFilters.status) {
+      data = data.filter((p) => p.status === appliedFilters.status);
     }
+
+    if (appliedFilters.priceMin !== undefined) {
+      data = data.filter((p) => p.priceVnd >= appliedFilters.priceMin);
+    }
+    if (appliedFilters.priceMax !== undefined) {
+      data = data.filter((p) => p.priceVnd <= appliedFilters.priceMax);
+    }
+
+    if (appliedFilters.range) {
+      switch (appliedFilters.range) {
+        case '<300':
+          data = data.filter((p) => p.batteryCapacityKWh < 30); // Approximate range based on capacity
+          break;
+        case '300-600':
+          data = data.filter((p) => p.batteryCapacityKWh >= 30 && p.batteryCapacityKWh <= 60);
+          break;
+        case '>600':
+          data = data.filter((p) => p.batteryCapacityKWh > 60);
+          break;
+      }
+    }
+
+    if (appliedFilters.brand) {
+      data = data.filter((p) => p.brandName.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
+    }
+
+    // Apply sorting
+    if (appliedFilters.sortBy === 'newest') {
+      data.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+    } else {
+      switch (sort) {
+        case 'price-asc':
+          data.sort((a, b) => a.priceVnd - b.priceVnd);
+          break;
+        case 'price-desc':
+          data.sort((a, b) => b.priceVnd - a.priceVnd);
+          break;
+        default:
+          data.sort((a, b) => b.manufactureYear - a.manufactureYear);
+      }
+    }
+
     return data;
-  }, [query, location, brand, min, max, sort]);
+  }, [query, location, brand, min, max, sort, appliedFilters]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -86,6 +124,7 @@ function EvPostsContent() {
         onSubcategoryChange={(setSubcategory: (subcategory: string) => void) => {
           setSubcategoryRef.current = setSubcategory;
         }}
+        onFilterChange={setAppliedFilters}
       />
 
       <div className="container mx-auto px-4 py-8">

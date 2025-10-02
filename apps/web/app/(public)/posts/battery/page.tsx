@@ -17,6 +17,7 @@ function BatteryPostsContent() {
   const [brand, setBrand] = useState('');
   const [min, setMin] = useState<number | null>(null);
   const [max, setMax] = useState<number | null>(null);
+  const [appliedFilters, setAppliedFilters] = useState<any>({});
 
   // Breadcrumb function reference
   const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
@@ -43,18 +44,92 @@ function BatteryPostsContent() {
     if (brand) data = data.filter((p) => p.title.toLowerCase().includes(brand.toLowerCase()));
     if (min !== null) data = data.filter((p) => p.priceVnd >= min);
     if (max !== null) data = data.filter((p) => p.priceVnd <= max);
-    switch (sort) {
-      case 'price-asc':
-        data.sort((a, b) => a.priceVnd - b.priceVnd);
-        break;
-      case 'price-desc':
-        data.sort((a, b) => b.priceVnd - a.priceVnd);
-        break;
-      default:
-        data.sort((a, b) => b.year - a.year);
+
+    // Apply new filter system
+    if (appliedFilters.status) {
+      data = data.filter((p) => p.status === appliedFilters.status);
     }
+
+    if (appliedFilters.priceMin !== undefined) {
+      data = data.filter((p) => p.priceVnd >= appliedFilters.priceMin);
+    }
+    if (appliedFilters.priceMax !== undefined) {
+      data = data.filter((p) => p.priceVnd <= appliedFilters.priceMax);
+    }
+
+    if (appliedFilters.capacity) {
+      switch (appliedFilters.capacity) {
+        case '<30':
+          data = data.filter((p) => p.batteryCapacityKWh < 30);
+          break;
+        case '30-50':
+          data = data.filter((p) => p.batteryCapacityKWh >= 30 && p.batteryCapacityKWh <= 50);
+          break;
+        case '50-80':
+          data = data.filter((p) => p.batteryCapacityKWh >= 50 && p.batteryCapacityKWh <= 80);
+          break;
+        case '>80':
+          data = data.filter((p) => p.batteryCapacityKWh > 80);
+          break;
+      }
+    }
+
+    if (appliedFilters.health) {
+      switch (appliedFilters.health) {
+        case '>90':
+          data = data.filter((p) => (p.healthPercent || 0) > 90);
+          break;
+        case '80-90':
+          data = data.filter((p) => (p.healthPercent || 0) >= 80 && (p.healthPercent || 0) <= 90);
+          break;
+        case '70-80':
+          data = data.filter((p) => (p.healthPercent || 0) >= 70 && (p.healthPercent || 0) < 80);
+          break;
+        case '<70':
+          data = data.filter((p) => (p.healthPercent || 0) < 70);
+          break;
+      }
+    }
+
+    if (appliedFilters.cycles) {
+      switch (appliedFilters.cycles) {
+        case '<500':
+          data = data.filter((p) => (p.cyclesUsed || 0) < 500);
+          break;
+        case '500-1000':
+          data = data.filter((p) => (p.cyclesUsed || 0) >= 500 && (p.cyclesUsed || 0) <= 1000);
+          break;
+        case '1000-2000':
+          data = data.filter((p) => (p.cyclesUsed || 0) >= 1000 && (p.cyclesUsed || 0) <= 2000);
+          break;
+        case '>2000':
+          data = data.filter((p) => (p.cyclesUsed || 0) > 2000);
+          break;
+      }
+    }
+
+    if (appliedFilters.brand) {
+      data = data.filter((p) => p.brand?.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
+    }
+
+    // Apply sorting
+    if (appliedFilters.sortBy === 'newest') {
+      data.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+    } else {
+      switch (sort) {
+        case 'price-asc':
+          data.sort((a, b) => a.priceVnd - b.priceVnd);
+          break;
+        case 'price-desc':
+          data.sort((a, b) => b.priceVnd - a.priceVnd);
+          break;
+        default:
+          data.sort((a, b) => b.year - a.year);
+      }
+    }
+
     return data;
-  }, [query, location, brand, min, max, sort]);
+  }, [query, location, brand, min, max, sort, appliedFilters]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -93,6 +168,7 @@ function BatteryPostsContent() {
         onSubcategoryChange={(setSubcategory: (subcategory: string) => void) => {
           setSubcategoryRef.current = setSubcategory;
         }}
+        onFilterChange={setAppliedFilters}
       />
       <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
