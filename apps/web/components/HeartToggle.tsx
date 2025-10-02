@@ -25,8 +25,8 @@ export default function HeartToggle({ defaultLiked = false, onChange }: Props) {
       aria-label={liked ? 'Bỏ đánh dấu' : 'Đánh dấu yêu thích'}
       onClick={toggle}
       variant="ghost"
-      size="icon"
-      className="rounded-full p-2 transition-transform active:scale-95"
+      // size="icon"
+      className="text-lg p-2 transition-transform active:scale-95"
     >
       {liked ? (
         // Trạng thái fill: dùng fill-current & tắt stroke
@@ -35,6 +35,7 @@ export default function HeartToggle({ defaultLiked = false, onChange }: Props) {
         // Trạng thái outline mặc định
         <Heart className="h-6 w-6" />
       )}
+      <span className="text-base">Yêu thích</span>
     </Button>
   );
 }

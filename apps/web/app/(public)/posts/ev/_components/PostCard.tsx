@@ -26,7 +26,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
       href={`/posts/ev/${item.id}?model=${encodeURIComponent(item.title)}`}
       className="group"
     >
-      <Card className="overflow-hidden border-0 hover:shadow-md transition-all duration-300 bg-white">
+      <Card className="overflow-hidden border-0 hover:shadow-md transition-all duration-300 bg-white p-0">
         <CardContent className="p-0">
           {/* Image */}
           <div className="relative h-48 w-full bg-gradient-to-br from-slate-50 to-slate-100">
@@ -137,7 +137,10 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
               </div>
             </div>
 
-            <HeartToggle />
+            {/* Bookmark button */}
+            <div className="mt-4 flex justify-end" onClick={(e) => e.preventDefault()}>
+              <HeartToggle />
+            </div>
           </div>
         </CardContent>
       </Card>
