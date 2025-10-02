@@ -13,10 +13,7 @@ interface PostCardProps {
 
 export function PostCard({ item, onTitleClick }: PostCardProps) {
   const location =
-    [
-      displayValue(item.districtNameCached),
-      displayValue(item.wardNameCached),
-    ]
+    [displayValue(item.districtNameCached), displayValue(item.wardNameCached)]
       .filter((val) => val !== 'N/A')
       .join(', ') ||
     displayValue(item.addressTextCached) ||
@@ -52,12 +49,9 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
                 {getStatusText(item.status)}
               </Badge>
             </div>
-            {(item.carDetails?.origin === 'NOI_DIA' ||
-              item.bikeDetails?.origin === 'NOI_DIA') && (
+            {(item.carDetails?.origin === 'NOI_DIA' || item.bikeDetails?.origin === 'NOI_DIA') && (
               <div className="absolute right-4 bottom-4">
-                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                  Nội địa
-                </Badge>
+                <Badge className="bg-blue-100 text-blue-800 border-blue-200">Nội địa</Badge>
               </div>
             )}
           </div>
@@ -77,8 +71,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   {displayValue(
-                    item.carDetails?.manufacture_year ||
-                      item.bikeDetails?.manufacture_year,
+                    item.carDetails?.manufacture_year || item.bikeDetails?.manufacture_year,
                   )}
                 </p>
                 <p className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
@@ -90,12 +83,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
               <div className="flex items-center gap-1">
-                <svg
-                  className="h-3 w-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -104,18 +92,12 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
                   />
                 </svg>
                 {displayValue(
-                  item.carDetails?.battery_capacity_kwh ||
-                    item.bikeDetails?.battery_capacity_kwh,
+                  item.carDetails?.battery_capacity_kwh || item.bikeDetails?.battery_capacity_kwh,
                 )}{' '}
                 kWh
               </div>
               <div className="flex items-center gap-1">
-                <svg
-                  className="h-3 w-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -126,8 +108,8 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
                 {typeof (item.carDetails?.odo_km || item.bikeDetails?.odo_km) === 'number'
                   ? (item.carDetails?.odo_km || item.bikeDetails?.odo_km)?.toLocaleString()
                   : displayValue(item.carDetails?.odo_km || item.bikeDetails?.odo_km) === 'N/A'
-                  ? '~'
-                  : displayValue(item.carDetails?.odo_km || item.bikeDetails?.odo_km)}{' '}
+                    ? '~'
+                    : displayValue(item.carDetails?.odo_km || item.bikeDetails?.odo_km)}{' '}
                 km
               </div>
             </div>
