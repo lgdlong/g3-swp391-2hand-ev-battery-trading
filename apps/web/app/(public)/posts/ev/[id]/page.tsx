@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, User } from 'lucide-react';
-import { Badge } from '@/app/(public)/posts/_components/Badge';
+import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { formatVnd, originText, getLocation, statusChip } from '@/lib/utils/format';
