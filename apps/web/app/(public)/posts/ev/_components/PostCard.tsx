@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { MapPin } from 'lucide-react';
 import { displayValue, formatVnd, getStatusColor, getStatusText } from './utils';
 import type { Post } from './types';
+import HeartToggle from './HeartToggle';
 
 interface PostCardProps {
   item: Post;
@@ -13,7 +14,10 @@ interface PostCardProps {
 
 export function PostCard({ item, onTitleClick }: PostCardProps) {
   const location =
-    [displayValue(item.districtNameCached), displayValue(item.wardNameCached)]
+    [
+      // displayValue(item.wardNameCached),
+      displayValue(item.districtNameCached),
+    ]
       .filter((val) => val !== 'N/A')
       .join(', ') ||
     displayValue(item.addressTextCached) ||
@@ -25,9 +29,9 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
       href={`/posts/ev/${item.id}?model=${encodeURIComponent(item.title)}`}
       className="group"
     >
-      <Card className="overflow-hidden border-0 hover:shadow-md transition-all duration-300 bg-white">
-        {/* Image */}
+      <Card className="overflow-hidden border-0 hover:shadow-md transition-all duration-300 bg-white p-0">
         <CardContent className="p-0">
+          {/* Image */}
           <div className="relative h-48 w-full bg-gradient-to-br from-slate-50 to-slate-100">
             <Image
               src={
@@ -134,6 +138,11 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
                   />
                 </svg>
               </div>
+            </div>
+
+            {/* Bookmark button */}
+            <div className="mt-4 flex justify-end" onClick={(e) => e.preventDefault()}>
+              <HeartToggle />
             </div>
           </div>
         </CardContent>

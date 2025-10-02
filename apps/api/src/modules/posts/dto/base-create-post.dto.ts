@@ -4,14 +4,10 @@ import {
   IsBoolean,
   IsNumberString,
   IsString,
-  IsArray,
-  ValidateNested,
   MaxLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PostType } from '../../../shared/enums/post.enum';
-import { CreatePostImageDto } from './create-post-image.dto';
 
 export class BaseCreatePostDto {
   @ApiProperty({
