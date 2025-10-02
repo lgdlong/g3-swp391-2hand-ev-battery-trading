@@ -14,7 +14,7 @@ interface PostCardProps {
 
 export function PostCard({ item, onTitleClick }: PostCardProps) {
   const location =
-    [displayValue(item.districtNameCached), displayValue(item.wardNameCached)]
+    [displayValue(item.wardNameCached), displayValue(item.districtNameCached)]
       .filter((val) => val !== 'N/A')
       .join(', ') ||
     displayValue(item.addressTextCached) ||
