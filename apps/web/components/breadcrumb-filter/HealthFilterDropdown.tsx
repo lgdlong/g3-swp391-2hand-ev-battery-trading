@@ -53,7 +53,12 @@ export function HealthFilterDropdown({ onApply, onClose, currentHealth = '' }: H
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t">
-            
+            <button
+              onClick={handleClear}
+              className="px-3 py-1 text-xs text-red-600 hover:text-red-800 transition-colors"
+            >
+              Xóa bộ lọc
+            </button>
             <button
               onClick={onClose}
               className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 transition-colors"

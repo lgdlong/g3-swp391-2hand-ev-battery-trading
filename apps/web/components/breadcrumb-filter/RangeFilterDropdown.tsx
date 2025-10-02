@@ -16,6 +16,12 @@ export function RangeFilterDropdown({ onApply, onClose, currentRange }: RangeFil
     onClose();
   };
 
+  const handleClear = () => {
+    setSelectedRange('');
+    onApply('');
+    onClose();
+  };
+
   return (
     <div className="w-80 bg-white border border-emerald-600 rounded-xl shadow-lg overflow-hidden">
       <div className="p-4">
@@ -43,6 +49,12 @@ export function RangeFilterDropdown({ onApply, onClose, currentRange }: RangeFil
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-2 border-t">
+          <button
+            onClick={handleClear}
+            className="px-3 py-1 text-xs text-red-600 hover:text-red-800 transition-colors"
+          >
+            Xóa bộ lọc
+          </button>
           <button
             onClick={onClose}
             className="px-3 py-1 text-xs text-gray-600 hover:text-gray-800 transition-colors"

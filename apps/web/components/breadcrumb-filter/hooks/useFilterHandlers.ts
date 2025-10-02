@@ -58,6 +58,20 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     updateFilters({ batteryBrand: brand });
   };
 
+  const handleClearAllFilters = () => {
+    setAppliedFilters({});
+    setActiveFilter('all');
+    // Close all dropdowns
+    setShowPriceDropdown(false);
+    setShowRangeDropdown(false);
+    setShowBrandDropdown(false);
+    setShowCapacityDropdown(false);
+    setShowCyclesDropdown(false);
+    setShowHealthDropdown(false);
+    setShowBatteryBrandDropdown(false);
+    onFilterChange?.({});
+  };
+
   const handleFilterClick = (filterKey: string) => {
     if (filterKey === 'available') {
       setActiveFilter('available');
@@ -116,6 +130,7 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     handleCyclesApply,
     handleHealthApply,
     handleBatteryBrandApply,
+    handleClearAllFilters,
     handleFilterClick
   };
 }

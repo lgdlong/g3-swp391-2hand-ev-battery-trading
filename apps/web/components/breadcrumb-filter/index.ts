@@ -9,7 +9,4 @@ export { CapacityFilterDropdown } from './CapacityFilterDropdown';
 export { CyclesFilterDropdown } from './CyclesFilterDropdown';
 export { HealthFilterDropdown } from './HealthFilterDropdown';
 export { BatteryBrandFilterDropdown } from './BatteryBrandFilterDropdown';
-export { useFilterHandlers } from './hooks/useFilterHandlers';
-export { DropdownManager } from './components/DropdownManager';
-export { ButtonRenderer } from './components/ButtonRenderer';
 export * from './types';

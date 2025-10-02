@@ -113,6 +113,30 @@ function EvPostsContent() {
       );
     }
 
+    if (brand) {
+      data = data.filter((p) => p.title.toLowerCase().includes(brand.toLowerCase()));
+    }
+
+    // Price filtering (client-side for more precise control)
+    if (min !== null) {
+      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') >= min);
+    }
+    if (max !== null) {
+      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') <= max);
+    }
+
+    // Apply new filter system
+    if (appliedFilters.status) {
+      data = data.filter((p) => (p as any).status === appliedFilters.status);
+    }
+
+    if (appliedFilters.priceMin !== undefined) {
+      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') >= appliedFilters.priceMin);
+    }
+    if (appliedFilters.priceMax !== undefined) {
+      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') <= appliedFilters.priceMax);
+    }
+
     if (appliedFilters.range) {
       switch (appliedFilters.range) {
         case '<300':
@@ -128,7 +152,7 @@ function EvPostsContent() {
     }
 
     if (appliedFilters.brand) {
-      data = data.filter((p) => (p as any).brandName?.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
+      data = data.filter((p) => (p as any).title?.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
     }
 
     // Apply sorting
