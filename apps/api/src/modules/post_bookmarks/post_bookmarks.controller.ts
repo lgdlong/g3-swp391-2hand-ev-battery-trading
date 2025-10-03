@@ -142,7 +142,9 @@ export class PostBookmarksController {
   @ApiBadRequestResponse({ 
     description: 'Invalid bookmark ID format'
   })
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.postBookmarksService.remove(id);
+  async remove(@CurrentUser() user: ReqUser, @Param('id', ParseIntPipe) id: number) {
+    if (!user || !user.sub) {
+      throw new UnauthorizedException('User authentication failed');
+    }
+    return this.postBookmarksService.remove(id, user.sub);
   }
-}
