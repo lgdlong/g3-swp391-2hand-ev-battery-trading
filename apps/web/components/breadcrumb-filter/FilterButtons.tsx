@@ -29,7 +29,7 @@ export function FilterButtons({
   type = 'ev',
   initialCategory,
   initialSubcategory,
-  onSubcategoryChange
+  onSubcategoryChange,
 }: FilterButtonsProps) {
   const [activeFilter, setActiveFilter] = useState('all');
 
@@ -53,41 +53,66 @@ export function FilterButtons({
   }, [onSubcategoryChange, setSubcategory]);
 
   // Use internal breadcrumb if no external breadcrumbItems provided
-  const displayBreadcrumbItems = breadcrumbItems.length > 0 ? breadcrumbItems : breadcrumbState.items;
+  const displayBreadcrumbItems =
+    breadcrumbItems.length > 0 ? breadcrumbItems : breadcrumbState.items;
 
   // Get filter buttons based on type
   const filterButtons = type === 'battery' ? batteryFilterButtons : evFilterButtons;
 
   // Update button states with active filter
-  const buttonsWithState = filterButtons.map(button => ({
+  const buttonsWithState = filterButtons.map((button) => ({
     ...button,
-    isActive: button.label === 'Bộ lọc' ? activeFilter === 'all' :
-              button.label === 'Sẵn hàng' ? activeFilter === 'available' :
-              button.label === 'Hàng mới về' ? activeFilter === 'new-arrivals' :
-              button.label === 'Xem theo giá' ? activeFilter === 'price' :
-              button.label === 'Nhu cầu sử dụng' ? activeFilter === 'usage' :
-              button.label === 'Quãng đường di chuyển' ? activeFilter === 'range' :
-              button.label === 'Dung lượng pin' ? activeFilter === 'capacity' :
-              button.label === 'Tình trạng pin' ? activeFilter === 'health' :
-              button.label === 'Số chu kỳ' ? activeFilter === 'cycles' :
-              button.label === 'Thương hiệu' ? activeFilter === 'brand' : false,
+    isActive:
+      button.label === 'Bộ lọc'
+        ? activeFilter === 'all'
+        : button.label === 'Sẵn hàng'
+          ? activeFilter === 'available'
+          : button.label === 'Hàng mới về'
+            ? activeFilter === 'new-arrivals'
+            : button.label === 'Xem theo giá'
+              ? activeFilter === 'price'
+              : button.label === 'Nhu cầu sử dụng'
+                ? activeFilter === 'usage'
+                : button.label === 'Quãng đường di chuyển'
+                  ? activeFilter === 'range'
+                  : button.label === 'Dung lượng pin'
+                    ? activeFilter === 'capacity'
+                    : button.label === 'Tình trạng pin'
+                      ? activeFilter === 'health'
+                      : button.label === 'Số chu kỳ'
+                        ? activeFilter === 'cycles'
+                        : button.label === 'Thương hiệu'
+                          ? activeFilter === 'brand'
+                          : false,
     onClick: () => {
-      const filterKey = button.label === 'Bộ lọc' ? 'all' :
-                       button.label === 'Sẵn hàng' ? 'available' :
-                       button.label === 'Hàng mới về' ? 'new-arrivals' :
-                       button.label === 'Xem theo giá' ? 'price' :
-                       button.label === 'Nhu cầu sử dụng' ? 'usage' :
-                       button.label === 'Quãng đường di chuyển' ? 'range' :
-                       button.label === 'Dung lượng pin' ? 'capacity' :
-                       button.label === 'Tình trạng pin' ? 'health' :
-                       button.label === 'Số chu kỳ' ? 'cycles' :
-                       button.label === 'Thương hiệu' ? 'brand' : 'all';
+      const filterKey =
+        button.label === 'Bộ lọc'
+          ? 'all'
+          : button.label === 'Sẵn hàng'
+            ? 'available'
+            : button.label === 'Hàng mới về'
+              ? 'new-arrivals'
+              : button.label === 'Xem theo giá'
+                ? 'price'
+                : button.label === 'Nhu cầu sử dụng'
+                  ? 'usage'
+                  : button.label === 'Quãng đường di chuyển'
+                    ? 'range'
+                    : button.label === 'Dung lượng pin'
+                      ? 'capacity'
+                      : button.label === 'Tình trạng pin'
+                        ? 'health'
+                        : button.label === 'Số chu kỳ'
+                          ? 'cycles'
+                          : button.label === 'Thương hiệu'
+                            ? 'brand'
+                            : 'all';
       setActiveFilter(filterKey);
-    }
+    },
   }));
 
   return (
-    <div className={cn('w-full bg-white border-b border-gray-200', className)}>
+    <div className={cn('w-full bg-white rounded-xl border-gray-200', className)}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {displayBreadcrumbItems.length > 0 && (
           <div className="mb-4 px-2">

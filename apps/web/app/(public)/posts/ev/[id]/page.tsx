@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, User } from 'lucide-react';
-import { Badge } from '@/app/(public)/posts/_components/Badge';
+import { MapPin } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { formatVnd, originText, getLocation, statusChip } from '@/lib/utils/format';
 import { SellerInfo, Specifications } from './_components';
+import { BookMarkButton } from '../_components/BookMarkButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -19,6 +20,7 @@ interface Props {
 export default function EvDetailPage({ params, searchParams }: Props) {
   const [id, setId] = useState<string>('');
   const [model, setModel] = useState<string>('');
+  const [liked, setLiked] = useState(false);
 
   // Extract ID and model from params
   useEffect(() => {
@@ -79,11 +81,11 @@ export default function EvDetailPage({ params, searchParams }: Props) {
   return (
     <>
       <FilterButtons type="ev" initialCategory="Xe điện" initialSubcategory={model || 'all'} />
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Image Section */}
           <div className="lg:col-span-1 space-y-6">
-            <Card className="overflow-hidden shadow-lg">
+            <Card className="overflow-hidden border-none shadow-none">
               <CardContent className="p-0">
                 <div className="relative h-80 w-full bg-gray-50">
                   <Image
@@ -110,7 +112,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
             </Card>
 
             {/* Seller Info Box */}
-            <Card className="shadow-lg">
+            <Card className="border-none shadow-none">
               <CardContent className="p-6">
                 {sellerLoading ? (
                   <div className="animate-pulse space-y-3">
@@ -128,30 +130,28 @@ export default function EvDetailPage({ params, searchParams }: Props) {
           {/* Details Section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
-            <Card className="shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
-                    <div className="text-3xl font-bold text-[#048C73] mb-2">
-                      {formatVnd(post.priceVnd)}
-                      {post.isNegotiable && (
-                        <span className="text-sm text-gray-500 ml-2">(Có thể thương lượng)</span>
-                      )}
-                    </div>
+            <Card className="border-none shadow-none">
+              <CardContent className="py-2 px-6">
+                <div className="flex flex-col items-start justify-between mb-4 gap-4">
+                  {/* Title + Bookmark */}
+                  <div className="flex items-center justify-between w-full">
+                    <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
+                    <BookMarkButton liked={liked} onClick={() => setLiked((v) => !v)} />
                   </div>
-                  {details?.origin && (
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                      {originText(details.origin)}
-                    </Badge>
-                  )}
+
+                  {/* Price */}
+                  <div className="text-2xl font-bold text-red-600 mb-2">
+                    {post.isNegotiable ? <p>Liên hệ người bán</p> : formatVnd(post.priceVnd)}
+                  </div>
                 </div>
 
+                {/* The origin */}
+                <div className="mb-6">
+                  {details?.origin && <Badge>{originText(details.origin)}</Badge>}
+                </div>
+
+                {/* Address */}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    <span>Đăng bởi {post.seller.fullName}</span>
-                  </div>
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
                     <span>{getLocation(post)}</span>
@@ -165,7 +165,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
 
             {/* Description */}
             {post.description && (
-              <Card className="shadow-lg">
+              <Card className="border-none shadow-none">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">Mô tả chi tiết</h2>
                   <p className="text-gray-700 leading-relaxed">{post.description}</p>

@@ -17,7 +17,7 @@ export function Specifications({ post }: SpecificationsProps) {
   if (!details) return null;
 
   return (
-    <Card className="shadow-lg">
+    <Card className="border-none shadow-none">
       <CardContent className="p-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Car className="h-5 w-5" />

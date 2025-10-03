@@ -15,6 +15,9 @@ import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { PostImageResponseDto } from './dto/post-image-response.dto';
 import { PostImageMapper } from './mappers/post-image.mapper';
+import { AddressService } from '../address/address.service';
+import { buildAddressText } from 'src/shared/helpers/address.helper';
+import { CarDetailsService } from '../post-details/services/car-details.service';
 
 @Injectable()
 export class PostsService {
@@ -24,6 +27,8 @@ export class PostsService {
     @InjectRepository(PostImage)
     private readonly imagesRepo: Repository<PostImage>,
     private readonly bikeDetailsService: BikeDetailsService,
+    private readonly carDetailsService: CarDetailsService,
+    private readonly addressService: AddressService,
     private readonly cloudinary: CloudinaryService,
   ) {}
 
@@ -46,6 +51,20 @@ export class PostsService {
       throw new Error('Invalid postType for this endpoint');
     }
 
+    if (!dto.provinceNameCached && !dto.districtNameCached && !dto.wardNameCached) {
+      const fullAddress = await this.addressService.getFullAddressByWardCode(dto.wardCode);
+      dto.provinceNameCached = fullAddress.data.province.name;
+      dto.districtNameCached = fullAddress.data.district.name;
+      dto.wardNameCached = fullAddress.data.ward.name;
+    }
+
+    dto.addressTextCached =
+      buildAddressText(
+        dto.wardNameCached ?? undefined,
+        dto.districtNameCached ?? undefined,
+        dto.provinceNameCached ?? undefined,
+      ) || '';
+
     return this.postsRepo.manager.transaction(async (trx) => {
       // 1) tạo Post
       const post = trx.create(Post, {
@@ -64,7 +83,15 @@ export class PostsService {
       });
       const savedPost = await trx.save(Post, post);
 
-      // 4) (tuỳ chọn) tự chuyển sang PENDING_REVIEW + log
+      // 2) Create car details
+      if (dto.carDetails) {
+        await this.carDetailsService.createWithTrx(trx, {
+          post_id: savedPost.id,
+          ...dto.carDetails,
+        });
+      }
+
+      // 3) (tuỳ chọn) tự chuyển sang PENDING_REVIEW + log
       // await trx.update(Post, { id: savedPost.id }, { status: PostStatus.PENDING_REVIEW, submittedAt: new Date() });
       // await trx.save(PostReviewLog, trx.create(PostReviewLog, { post: savedPost, action: ReviewActionEnum.SUBMITTED, actor: {id: dto.sellerId} as any, oldStatus: PostStatus.DRAFT, newStatus: PostStatus.PENDING_REVIEW }));
 
@@ -115,10 +142,12 @@ export class PostsService {
       const savedPost = await trx.save(Post, post);
 
       // 2) tạo Bike Details
-      await this.bikeDetailsService.createWithTrx(trx, {
-        post_id: savedPost.id,
-        ...dto.bikeDetails,
-      });
+      if (dto.bikeDetails) {
+        await this.bikeDetailsService.createWithTrx(trx, {
+          post_id: savedPost.id,
+          ...dto.bikeDetails,
+        });
+      }
 
       // 3) tạo Media (nếu có)
       // if (dto.media?.length) {
