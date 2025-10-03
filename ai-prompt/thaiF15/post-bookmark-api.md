@@ -80,3 +80,128 @@ Thêm `@OneToMany` trong Account/Post nếu bạn muốn truy cập `account.boo
 ## Kết luận
 Bạn chỉ cần phương án (1): FK ở PostBookmark là đủ chuẩn và sạch.  
 Không cần bookmarks mảng trong Account/Post nếu bạn không dùng tới.
+=======================================================================
+# Tóm tắt về `post_bookmarks`
+
+## Yêu cầu từ bạn (prompt)
+
+* Muốn xây dựng hệ thống **bookmark** trong NestJS + PostgreSQL.
+* Bookmark chỉ là **cầu nối** giữa `accountId` và `postId`, không có note/tag gì thêm.
+* Thắc mắc về:
+
+  * Controller viết thế nào cho create.
+  * Service tối giản.
+  * Entity nên khai báo ra sao.
+  * Tại sao database lưu camelCase thay vì snake_case.
+  * Có cần quan hệ 2 chiều với `Account` và `Post` không.
+  * Có cần Update DTO không.
+* Muốn cuối cùng được một flow rõ ràng: Controller → Service → Entity (DB).
+
+---
+
+## Giải thích & Trả lời của mình
+
+### 1. Entity (DB Layer)
+
+* Định nghĩa bảng `post_bookmarks` với các field:
+
+  * `id SERIAL PRIMARY KEY`
+  * `account_id INT NOT NULL`
+  * `post_id INT NOT NULL`
+  * `created_at TIMESTAMPTZ DEFAULT now()`
+* Có unique constraint `(account_id, post_id)` để một user chỉ bookmark một post một lần.
+* Có thể thêm quan hệ ManyToOne tới `Account` và `Post` (chỉ cần 1 chiều).
+* Snake case cột:
+
+  * Cách 1: thêm `name: 'account_id'` vào `@Column`.
+  * Cách 2: dùng `SnakeNamingStrategy` toàn dự án.
+
+```ts
+@Entity('post_bookmarks')
+@Unique(['accountId', 'postId'])
+export class PostBookmark {
+  @PrimaryGeneratedColumn()
+  id!: number;
+
+  @Column({ name: 'account_id' })
+  accountId!: number;
+
+  @Column({ name: 'post_id' })
+  postId!: number;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt!: Date;
+
+  @ManyToOne(() => Account, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'account_id' })
+  account!: Account;
+
+  @ManyToOne(() => Post, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'post_id' })
+  post!: Post;
+}
+```
+
+### 2. Service (Business Layer)
+
+* Tối giản: chỉ tạo record mới.
+* Nếu trùng thì DB ném lỗi (23505) → có thể catch và trả về 409.
+
+```ts
+@Injectable()
+export class PostBookmarksService {
+  constructor(
+    @InjectRepository(PostBookmark)
+    private readonly repo: Repository<PostBookmark>,
+  ) {}
+
+  async create(accountId: number, postId: number) {
+    const bookmark = this.repo.create({ accountId, postId });
+    return this.repo.save(bookmark);
+  }
+}
+```
+
+### 3. Controller (API Layer)
+
+* Nhận `accountId` từ JWT (`@CurrentUser('id')`).
+* Nhận `postId` từ body.
+* Nên dùng DTO hoặc `ParseIntPipe`.
+
+```ts
+class CreatePostBookmarkDto {
+  @IsInt()
+  @Type(() => Number)
+  postId!: number;
+}
+
+@Controller('post-bookmarks')
+@UseGuards(JwtAuthGuard)
+export class PostBookmarksController {
+  constructor(private readonly service: PostBookmarksService) {}
+
+  @Post()
+  async create(
+    @CurrentUser('id') accountId: number,
+    @Body() dto: CreatePostBookmarkDto,
+  ) {
+    return this.service.create(accountId, dto.postId);
+  }
+}
+```
+
+### 4. Update DTO
+
+* Không cần thiết vì bookmark là cầu nối.
+* Chỉ cần `create` và `delete` (hoặc `toggle`).
+* File `update-post_bookmark.dto.ts` sinh ra từ Nest CLI có thể xoá.
+
+---
+
+## Kết luận
+
+* `post_bookmarks` chỉ cần **Entity + Service + Controller cho create**.
+* Snake_case có thể ép bằng `name` hoặc NamingStrategy.
+* Không cần giữ quan hệ ngược bên `Account`/`Post` nếu không dùng.
+* Không cần Update DTO.
+* API gọi: `POST /post-bookmarks` với body `{ "postId": 42 }`, kèm JWT → tạo bookmark (account lấy từ token).
