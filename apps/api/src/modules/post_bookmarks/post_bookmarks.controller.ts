@@ -11,7 +11,8 @@ import {
   ApiBearerAuth,
   ApiNotFoundResponse,
   ApiBadRequestResponse,
-  ApiConflictResponse
+  ApiConflictResponse,
+  ApiForbiddenResponse
 } from '@nestjs/swagger';
 import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 import { PostBookmarkDto } from './dto/post_bookmark_dto';
@@ -65,34 +66,11 @@ export class PostBookmarksController {
     return this.postBookmarksService.getAll(user.sub);
   }
 
-  // Get all bookmarks for a specific user by user ID
-  @Get('user/:userId')
-  @ApiOperation({ 
-    summary: 'Get bookmarks by user ID',
-    description: 'Retrieve all bookmarks for a specific user by their user ID'
-  })
-  @ApiParam({
-    name: 'userId',
-    type: Number,
-    description: 'The ID of the user whose bookmarks to retrieve',
-    example: 1
-  })
-  @ApiOkResponse({
-    type: [PostBookmarkDto],
-    description: 'List of user bookmarks retrieved successfully'
-  })
-  async getByUserId(@Param('userId', ParseIntPipe) userId: number, @CurrentUser() user: ReqUser) {
-    if (userId !== user.sub) {
-       throw new ForbiddenException('Cannot access other users\' bookmarks');
-     }
-    return this.postBookmarksService.getByUserId(userId);
-  }
-
-  // Get a specific bookmark by ID
+  // Get a specific bookmark by ID (only if user owns it)
   @Get(':id')
   @ApiOperation({ 
     summary: 'Get bookmark by ID',
-    description: 'Retrieve a specific bookmark by its ID'
+    description: 'Retrieve a specific bookmark by its ID (only your own bookmarks)'
   })
   @ApiParam({ 
     name: 'id', 
@@ -105,20 +83,35 @@ export class PostBookmarksController {
     description: 'Bookmark retrieved successfully'
   })
   @ApiNotFoundResponse({ 
-    description: 'Bookmark not found'
+    description: 'Bookmark not found or access denied'
   })
   @ApiBadRequestResponse({ 
     description: 'Invalid bookmark ID format'
   })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.postBookmarksService.findOne(id);
+  @ApiForbiddenResponse({ 
+    description: 'Cannot access other users\' bookmarks'
+  })
+  async findOne(@CurrentUser() user: ReqUser, @Param('id', ParseIntPipe) id: number) {
+    if (!user || !user.sub) {
+      throw new UnauthorizedException('User authentication failed');
+    }
+    
+    // First get the bookmark to check ownership
+    const bookmark = await this.postBookmarksService.findOne(id);
+    
+    // Check if the bookmark belongs to the current user
+    if (bookmark.accountId !== user.sub) {
+      throw new ForbiddenException('Cannot access other users\' bookmarks');
+    }
+    
+    return bookmark;
   }
 
-  // Delete a bookmark by ID
+  // Delete a bookmark by ID (only if user owns it)
   @Delete(':id')
   @ApiOperation({ 
     summary: 'Delete bookmark',
-    description: 'Remove a bookmark from user\'s bookmarks by ID'
+    description: 'Remove a bookmark from user\'s bookmarks by ID (only your own bookmarks)'
   })
   @ApiParam({ 
     name: 'id', 
@@ -140,15 +133,12 @@ export class PostBookmarksController {
     description: 'Bookmark deleted successfully'
   })
   @ApiNotFoundResponse({ 
-    description: 'Bookmark not found'
+    description: 'Bookmark not found or access denied'
   })
   @ApiBadRequestResponse({ 
     description: 'Invalid bookmark ID format'
   })
-  async remove(@CurrentUser() user: ReqUser, @Param('id', ParseIntPipe) id: number) {
-    if (!user || !user.sub) {
-      throw new UnauthorizedException('User authentication failed');
-    }
+  async remove(@Param('id', ParseIntPipe) id: number) {
     return this.postBookmarksService.remove(id);
   }
 }
