@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fetch } from 'undici';
 
-const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20241022';
+const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20250514';
 // Support both ANTHROPIC_API_KEY (for GitHub Actions) and ANTHROPIC_AUTH_TOKEN (for local testing)
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN;
 const BASE_URL = process.env.ANTHROPIC_BASE_URL || 'https://v98store.com';
@@ -96,8 +96,7 @@ async function callClaude(content) {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${API_KEY}`,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   });
