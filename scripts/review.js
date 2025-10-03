@@ -3,13 +3,24 @@ import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fetch } from 'undici';
 
-const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-5';
-const BASE_URL = 'https://v98store.com';
-const API_KEY = process.env.ANTHROPIC_API_KEY;
+const CLAUDE_SONNET_4_5 = 'claude-sonnet-4-5-20250929';
+const CLAUDE_SONNET_4 = 'claude-sonnet-4-20241022';
+const THIRD_PARTY_BASE_URL = 'https://v98store.com';
+
+// const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20241022';
+const MODEL = CLAUDE_SONNET_4_5 || CLAUDE_SONNET_4;
+// Support both ANTHROPIC_API_KEY (for GitHub Actions) and ANTHROPIC_AUTH_TOKEN (for local testing)
+const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN;
+const BASE_URL = process.env.ANTHROPIC_BASE_URL || THIRD_PARTY_BASE_URL;
+const API_ENDPOINT = `${BASE_URL}/v1/messages`;
+
 if (!API_KEY) {
-  console.error('Missing ANTHROPIC_API_KEY');
+  console.error('Missing ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN');
   process.exit(1);
 }
+
+console.log('Using API endpoint:', API_ENDPOINT);
+console.log('Using model:', MODEL);
 
 // Lấy diff giữa base và head của PR
 const BASE = process.env.PR_BASE_SHA || 'origin/dev';
@@ -88,20 +99,32 @@ async function callClaude(content) {
   };
 
   // const res = await fetch("https://api.anthropic.com/v1/messages", {
-  const res = await fetch(BASE_URL, {
+  const res = await fetch(API_ENDPOINT, {
     method: 'POST',
     headers: {
-      'x-api-key': API_KEY,
+      Authorization: `Bearer ${API_KEY}`,
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },
     body: JSON.stringify(body),
   });
 
+  const responseText = await res.text();
+
   if (!res.ok) {
-    throw new Error(`Claude API error: ${res.status} ${await res.text()}`);
+    console.error(`API Error Status: ${res.status}`);
+    console.error(`Response: ${responseText.slice(0, 500)}`);
+    throw new Error(`Claude API error: ${res.status}`);
   }
-  const json = await res.json();
+
+  let json;
+  try {
+    json = JSON.parse(responseText);
+  } catch (e) {
+    console.error('Failed to parse JSON response:', responseText.slice(0, 500));
+    throw new Error('Invalid JSON response from API');
+  }
+
   // Anthropic trả về mảng content blocks; lấy text của block đầu
   const text = (json.content && json.content[0] && json.content[0].text) || '';
   return text;
