@@ -97,7 +97,7 @@ export class PostBookmarksController {
     }
     
     // First get the bookmark to check ownership
-    const bookmark = await this.postBookmarksService.findOne(id);
+    const bookmark = await this.postBookmarksService.findOne(id, user.sub);
     
     // Check if the bookmark belongs to the current user
     if (bookmark.accountId !== user.sub) {
@@ -138,7 +138,15 @@ export class PostBookmarksController {
   @ApiBadRequestResponse({ 
     description: 'Invalid bookmark ID format'
   })
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.postBookmarksService.remove(id);
+  @ApiForbiddenResponse({ 
+    description: 'Cannot delete other users\' bookmarks'
+  })
+  async remove(@CurrentUser() user: ReqUser, @Param('id', ParseIntPipe) id: number) {
+    if (!user || !user.sub) {
+      throw new UnauthorizedException('User authentication failed');
+    }
+    
+    // Service will check ownership and return 404 if not owned
+    return this.postBookmarksService.remove(id, user.sub);
   }
 }

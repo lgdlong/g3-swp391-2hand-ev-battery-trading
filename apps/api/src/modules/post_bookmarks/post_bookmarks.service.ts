@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PostBookmark } from './entities/post_bookmark.entity';
@@ -40,11 +40,30 @@ export class PostBookmarksService {
     return this.bookmarkRepository.find({ where: { accountId } });
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, accountId?: number) {
     const bookmark = await this.bookmarkRepository.findOne({ where: { id } });
     if (!bookmark) {
       throw new NotFoundException(`Bookmark with ID ${id} not found`);
     }
+    
+    // If accountId is provided, check ownership
+    if (accountId !== undefined && bookmark.accountId !== accountId) {
+      throw new ForbiddenException('You can only access your own bookmarks');
+    }
+    
+    return bookmark;
+  }
+
+  // Method to find bookmark with strict ownership check
+  async findOneByOwner(id: number, accountId: number) {
+    const bookmark = await this.bookmarkRepository.findOne({ 
+      where: { id, accountId } 
+    });
+    
+    if (!bookmark) {
+      throw new NotFoundException(`Bookmark with ID ${id} not found or access denied`);
+    }
+    
     return bookmark;
   }
 
@@ -52,10 +71,15 @@ export class PostBookmarksService {
     return await this.bookmarkRepository.find({ where: { accountId: userId } });
   }
 
-  async remove(id: number) {
-    const bookmark = await this.bookmarkRepository.findOne({ where: { id } });
-    if (!bookmark) {
-      throw new NotFoundException(`Bookmark with ID ${id} not found`);
+  async remove(id: number, accountId?: number) {
+    // Use findOneByOwner for strict ownership check
+    if (accountId !== undefined) {
+      await this.findOneByOwner(id, accountId);
+    } else {
+      const bookmark = await this.bookmarkRepository.findOne({ where: { id } });
+      if (!bookmark) {
+        throw new NotFoundException(`Bookmark with ID ${id} not found`);
+      }
     }
     
     await this.bookmarkRepository.delete(id);

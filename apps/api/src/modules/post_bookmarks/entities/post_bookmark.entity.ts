@@ -1,10 +1,12 @@
 import { Account } from "src/modules/accounts/entities/account.entity";
 import { Post } from "src/modules/posts/entities/post.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Column, CreateDateColumn, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique } from "typeorm";
 
 
 @Entity('post_bookmarks')
 @Unique(['postId', 'accountId'])
+@Index(['accountId']) 
+@Index(['postId'])
 export class PostBookmark {
     @PrimaryGeneratedColumn({ name: 'id' })
   id!: number;
@@ -23,6 +25,6 @@ export class PostBookmark {
   @JoinColumn({ name: 'post_id' })     // FK column snake_case
   post!: Post;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }

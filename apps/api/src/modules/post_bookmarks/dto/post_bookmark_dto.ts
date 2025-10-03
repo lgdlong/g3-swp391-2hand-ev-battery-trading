@@ -23,5 +23,5 @@ export class PostBookmarkDto {
     description: 'Timestamp when the bookmark was created (ISO string)',
     example: '2025-10-02T10:30:00.000Z'
   })
-  createdAt!: string;
+  createdAt!: Date;
 }
