@@ -103,8 +103,7 @@ async function callClaude(content) {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${API_KEY}`,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   });

@@ -31,7 +31,7 @@ jobs:
       - name: Run Claude review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_MODEL: claude-sonnet-4-5
+          CLAUDE_MODEL: claude-sonnet-4-20250514
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
