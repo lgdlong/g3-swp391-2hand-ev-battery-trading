@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fetch } from 'undici';
 
-const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-5';
+const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20241022';
 const BASE_URL = 'https://v98store.com';
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 if (!API_KEY) {
