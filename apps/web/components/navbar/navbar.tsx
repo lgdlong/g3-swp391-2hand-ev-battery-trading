@@ -113,6 +113,3 @@ export function Navbar({ className }: HeaderProps) {
     </>
   );
 }
-
-// Export individual components for potential reuse
-export { Logo, Navigation, UserActions, UserSidebar, UserModeToggle };
