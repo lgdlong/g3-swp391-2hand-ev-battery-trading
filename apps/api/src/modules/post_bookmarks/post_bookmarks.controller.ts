@@ -65,6 +65,26 @@ export class PostBookmarksController {
     return this.postBookmarksService.getAll(user.sub);
   }
 
+  // Get all bookmarks for a specific user by user ID
+  @Get('user/:userId')
+  @ApiOperation({ 
+    summary: 'Get bookmarks by user ID',
+    description: 'Retrieve all bookmarks for a specific user by their user ID'
+  })
+  @ApiParam({
+    name: 'userId',
+    type: Number,
+    description: 'The ID of the user whose bookmarks to retrieve',
+    example: 1
+  })
+  @ApiOkResponse({
+    type: [PostBookmarkDto],
+    description: 'List of user bookmarks retrieved successfully'
+  })
+  async getByUserId(@Param('userId', ParseIntPipe) userId: number) {
+    return this.postBookmarksService.getByUserId(userId);
+  }
+
   // Get a specific bookmark by ID
   @Get(':id')
   @ApiOperation({ 

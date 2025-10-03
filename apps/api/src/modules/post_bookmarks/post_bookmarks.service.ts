@@ -51,6 +51,10 @@ export class PostBookmarksService {
     return bookmark;
   }
 
+  async getByUserId(userId: number) {
+    return await this.bookmarkRepository.find({ where: { accountId: userId } });
+  }
+
   async remove(id: number) {
     const bookmark = await this.bookmarkRepository.findOne({ where: { id } });
     if (!bookmark) {
