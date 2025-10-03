@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, User } from 'lucide-react';
-import { Badge } from '@/app/(public)/posts/_components/Badge';
+import { MapPin } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { formatVnd, originText, getLocation, statusChip } from '@/lib/utils/format';
 import { SellerInfo, Specifications } from './_components';
+import { BookMarkButton } from '../_components/BookMarkButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -19,6 +20,7 @@ interface Props {
 export default function EvDetailPage({ params, searchParams }: Props) {
   const [id, setId] = useState<string>('');
   const [model, setModel] = useState<string>('');
+  const [liked, setLiked] = useState(false);
 
   // Extract ID and model from params
   useEffect(() => {
@@ -129,25 +131,26 @@ export default function EvDetailPage({ params, searchParams }: Props) {
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
             <Card className="border-none shadow-none">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-5">{post.title}</h1>
-                    <div className="text-2xl font-bold text-red-600 mb-2">
-                      {post.isNegotiable ? (
-                        <span>Liên hệ người bán</span>
-                      ) : (
-                        formatVnd(post.priceVnd)
-                      )}
-                    </div>
+              <CardContent className="py-2 px-6">
+                <div className="flex flex-col items-start justify-between mb-4 gap-4">
+                  {/* Title + Bookmark */}
+                  <div className="flex items-center justify-between w-full">
+                    <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
+                    <BookMarkButton liked={liked} onClick={() => setLiked((v) => !v)} />
                   </div>
-                  {details?.origin && (
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                      {originText(details.origin)}
-                    </Badge>
-                  )}
+
+                  {/* Price */}
+                  <div className="text-2xl font-bold text-red-600 mb-2">
+                    {post.isNegotiable ? <p>Liên hệ người bán</p> : formatVnd(post.priceVnd)}
+                  </div>
                 </div>
 
+                {/* The origin */}
+                <div className="mb-6">
+                  {details?.origin && <Badge>{originText(details.origin)}</Badge>}
+                </div>
+
+                {/* Address */}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <MapPin className="h-4 w-4" />
