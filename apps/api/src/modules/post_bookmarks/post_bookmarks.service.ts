@@ -36,11 +36,8 @@ export class PostBookmarksService {
     }
   }
 
-  async getAll(accountId?: number) {
-    if (accountId) {
-      return await this.bookmarkRepository.find({ where: { accountId } });
-    }
-    return await this.bookmarkRepository.find();
+  async getAll(accountId: number) {
+    return this.bookmarkRepository.find({ where: { accountId } });
   }
 
   async findOne(id: number) {
