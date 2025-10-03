@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { PostBookmarksService } from './post_bookmarks.service';
 import { CreatePostBookmarkDto } from './dto/create-post_bookmark.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
@@ -81,7 +81,10 @@ export class PostBookmarksController {
     type: [PostBookmarkDto],
     description: 'List of user bookmarks retrieved successfully'
   })
-  async getByUserId(@Param('userId', ParseIntPipe) userId: number) {
+  async getByUserId(@Param('userId', ParseIntPipe) userId: number, @CurrentUser() user: ReqUser) {
+    if (userId !== user.sub) {
+       throw new ForbiddenException('Cannot access other users\' bookmarks');
+     }
     return this.postBookmarksService.getByUserId(userId);
   }
 
@@ -146,5 +149,6 @@ export class PostBookmarksController {
     if (!user || !user.sub) {
       throw new UnauthorizedException('User authentication failed');
     }
-    return this.postBookmarksService.remove(id, user.sub);
+    return this.postBookmarksService.remove(id);
   }
+}
