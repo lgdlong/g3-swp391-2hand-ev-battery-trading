@@ -14,6 +14,7 @@ import { LoginResponse } from './dto/login-response.dto';
 import { SummaryAccountDto } from '../accounts/dto/summary-account.dto';
 import { SafeAccountDto } from '../accounts/dto/safe-account.dto';
 import { getRandomPassword } from 'src/shared/helpers/account.helper';
+import { AccountStatus } from '../../shared/enums/account-status.enum';
 
 @Injectable()
 export class AuthService {
@@ -60,6 +61,11 @@ export class AuthService {
     const isMatch = await comparePassword(pass, account.passwordHashed);
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials!');
+    }
+
+    // 3. Kiểm tra trạng thái tài khoản - từ chối đăng nhập nếu bị banned
+    if (account.status === AccountStatus.BANNED) {
+      throw new UnauthorizedException('Your account has been banned. Please contact support.');
     }
 
     const aEmail = account.email ? account.email : null;
@@ -133,7 +139,13 @@ export class AuthService {
       rawPasswordIfNew: getRandomPassword(),
     });
 
-    // 4) Patch mềm các field còn thiếu ----------------------
+    // 4) Kiểm tra trạng thái tài khoản ----------------------
+    // Từ chối đăng nhập nếu account bị banned
+    if (account.status === AccountStatus.BANNED) {
+      throw new UnauthorizedException('Your account has been banned. Please contact support.');
+    }
+
+    // 5) Patch mềm các field còn thiếu ----------------------
     // Chỉ cập nhật name/avatar nếu hiện tại chưa có (tránh overwrite data user cũ)
     const patch: Partial<SafeAccountDto> = {};
     if (!account.fullName && googleProfile.name) patch.fullName = googleProfile.name;
@@ -142,7 +154,7 @@ export class AuthService {
       account = await this.accountsService.update(account.id, patch);
     }
 
-    // 5) Ký JWT token ---------------------------------------
+    // 6) Ký JWT token ---------------------------------------
     // Payload chỉ chứa claims cần thiết (sub, email, phone, role).
     // Không đưa thông tin thừa từ Google vào JWT để tránh rò dữ liệu.
     const payload: JwtPayload = {
@@ -153,7 +165,7 @@ export class AuthService {
     };
     const tokens: Tokens = await this.signTokens(payload);
 
-    // 6) Trả về LoginResponse chuẩn hoá ---------------------
+    // 7) Trả về LoginResponse chuẩn hoá ---------------------
     // FE sẽ nhận được accessToken, refreshToken và thông tin account summary.
     return {
       accessToken: tokens.accessToken,
