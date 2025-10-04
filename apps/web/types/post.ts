@@ -137,8 +137,10 @@ export interface BikeDetailUI {
 
 /** Post image reference for UI */
 export interface PostImageUI {
+  id: string;
   url: string;
   alt?: string;
+  position: number;
 }
 
 /** Main post interface for UI components */
