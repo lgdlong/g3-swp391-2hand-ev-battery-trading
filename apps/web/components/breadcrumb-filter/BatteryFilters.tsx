@@ -1,12 +1,6 @@
-import { Filter, Truck, Star, DollarSign, Zap } from 'lucide-react';
+import { Truck, Star, DollarSign, Zap } from 'lucide-react';
 
 export const batteryFilterButtons = [
-  {
-    label: 'Bộ lọc',
-    icon: <Filter className="h-4 w-4" />,
-    isActive: false,
-    onClick: () => {}
-  },
   {
     label: 'Sẵn hàng',
     icon: <Truck className="h-4 w-4" />,

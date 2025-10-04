@@ -3,12 +3,7 @@
 import React from 'react';
 import { Home, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface BreadcrumbItem {
-  label: string;
-  href?: string;
-  onClick?: () => void;
-}
+import { BreadcrumbItem } from './types';
 
 interface BreadcrumbFilterProps {
   items: BreadcrumbItem[];
@@ -20,7 +15,7 @@ export function BreadcrumbFilter({ items, className }: BreadcrumbFilterProps) {
 
   return (
     <nav className={cn('flex items-center space-x-1 text-sm', className)}>
-      <button 
+      <button
         onClick={() => window.location.href = '/'}
         className="hover:text-gray-700 transition-colors duration-200"
       >

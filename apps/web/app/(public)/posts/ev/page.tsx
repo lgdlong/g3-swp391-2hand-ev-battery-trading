@@ -17,6 +17,7 @@ function EvPostsContent() {
   const [brand, setBrand] = useState('');
   const [min, setMin] = useState<number | null>(null);
   const [max, setMax] = useState<number | null>(null);
+  const [appliedFilters, setAppliedFilters] = useState<any>({});
 
   // Breadcrumb function reference
   const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
@@ -118,14 +119,60 @@ function EvPostsContent() {
 
     // Price filtering (client-side for more precise control)
     if (min !== null) {
-      data = data.filter((p) => parseFloat(p.priceVnd) >= min);
+      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') >= min);
     }
     if (max !== null) {
-      data = data.filter((p) => parseFloat(p.priceVnd) <= max);
+      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') <= max);
+    }
+
+    // Apply new filter system
+    if (appliedFilters.status) {
+      data = data.filter((p) => (p as any).status === appliedFilters.status);
+    }
+
+    if (appliedFilters.priceMin !== undefined) {
+      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') >= appliedFilters.priceMin);
+    }
+    if (appliedFilters.priceMax !== undefined) {
+      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') <= appliedFilters.priceMax);
+    }
+
+    if (appliedFilters.range) {
+      switch (appliedFilters.range) {
+        case '<300':
+          data = data.filter((p) => (p as any).batteryCapacityKWh < 30); // Approximate range based on capacity
+          break;
+        case '300-600':
+          data = data.filter((p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 60);
+          break;
+        case '>600':
+          data = data.filter((p) => (p as any).batteryCapacityKWh > 60);
+          break;
+      }
+    }
+
+    if (appliedFilters.brand) {
+      data = data.filter((p) => (p as any).title?.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
+    }
+
+    // Apply sorting
+    if (appliedFilters.sortBy === 'newest') {
+      data.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+    } else {
+      switch (sort) {
+        case 'price-asc':
+          data.sort((a, b) => parseFloat((a as any).priceVnd || '0') - parseFloat((b as any).priceVnd || '0'));
+          break;
+        case 'price-desc':
+          data.sort((a, b) => parseFloat((b as any).priceVnd || '0') - parseFloat((a as any).priceVnd || '0'));
+          break;
+        default:
+          data.sort((a, b) => ((b as any).manufactureYear || 0) - ((a as any).manufactureYear || 0));
+      }
     }
 
     return data;
-  }, [allEvPosts, location, brand, min, max]);
+  }, [allEvPosts, location, brand, min, max, sort, appliedFilters]);
 
   // Loading state
   if (isLoading) {
@@ -140,6 +187,7 @@ function EvPostsContent() {
         onSubcategoryChange={(setSubcategory: (subcategory: string) => void) => {
           setSubcategoryRef.current = setSubcategory;
         }}
+        onFilterChange={setAppliedFilters}
       />
 
       <div className="container mx-auto px-4 py-8">

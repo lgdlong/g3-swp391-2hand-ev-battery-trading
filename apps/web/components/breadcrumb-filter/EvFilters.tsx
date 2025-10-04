@@ -1,12 +1,6 @@
-import { Filter, Truck, Star, DollarSign } from 'lucide-react';
+import { Truck, Star, DollarSign, Car } from 'lucide-react';
 
 export const evFilterButtons = [
-  {
-    label: 'Bộ lọc',
-    icon: <Filter className="h-4 w-4" />,
-    isActive: false,
-    onClick: () => {}
-  },
   {
     label: 'Sẵn hàng',
     icon: <Truck className="h-4 w-4" />,
@@ -28,7 +22,8 @@ export const evFilterButtons = [
     onClick: () => {}
   },
   {
-    label: 'Nhu cầu sử dụng',
+    label: 'Hãng xe',
+    icon: <Car className="h-4 w-4" />,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,

@@ -2,18 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface BreadcrumbItem {
-  label: string;
-  href?: string;
-  onClick?: () => void;
-}
-
-interface BreadcrumbState {
-  items: BreadcrumbItem[];
-  currentCategory: string | null;
-  currentSubcategory: string | null;
-}
+import { BreadcrumbState } from './types';
 
 export function useBreadcrumb(type: 'battery' | 'ev' = 'ev') {
   const router = useRouter();
