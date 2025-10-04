@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { User, Bookmark, Bell, Settings, LogOut } from 'lucide-react';
 import { Account } from '@/types/account';
 import Image from 'next/image';
+import { isValidAvatarUrl } from '@/lib/validation/file-validation';
 
 interface UserSidebarProps {
   isOpen: boolean;
@@ -36,7 +37,7 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center">
-              {user?.avatarUrl ? (
+              {user?.avatarUrl && isValidAvatarUrl(user.avatarUrl) ? (
                 <Image
                   src={user.avatarUrl}
                   alt={user.fullName || 'User Avatar'}

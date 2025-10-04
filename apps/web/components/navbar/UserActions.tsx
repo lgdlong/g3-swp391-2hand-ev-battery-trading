@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { User, Bookmark, Bell, ChevronDown } from 'lucide-react';
 import { Account } from '@/types/account';
+import { isValidAvatarUrl } from '@/lib/validation/file-validation';
 
 interface UserActionsProps {
   className?: string;
@@ -80,7 +81,7 @@ export function UserActions({
           onClick={onUserMenuToggle}
         >
           <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 bg-emerald-600">
-            {user?.avatarUrl ? (
+            {user?.avatarUrl && isValidAvatarUrl(user.avatarUrl) ? (
               <Image
                 src={user.avatarUrl}
                 alt={user.fullName || 'User Avatar'}
