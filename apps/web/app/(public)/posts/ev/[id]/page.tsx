@@ -8,7 +8,7 @@ import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
-import { formatVnd, originText, getLocation, statusChip } from '@/lib/utils/format';
+import { formatVnd, originText, getLocation } from '@/lib/utils/format';
 import { SellerInfo, Specifications } from './_components';
 import { BookMarkButton } from '../_components/BookMarkButton';
 
@@ -97,16 +97,13 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                   />
                   {/* Post type badge */}
                   <div className="absolute top-4 left-4">
-                    <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white border-0">
+                    <Badge
+                      className={`${isCarPost ? 'bg-[#048C73]' : 'bg-[#2563EB]'} text-white border-0`}
+                    >
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
                   </div>
-                  {/* Status badge */}
-                  <div className="absolute top-4 right-4">
-                    <Badge className={`border ${statusChip.getColor(post.status)}`}>
-                      {statusChip.getText(post.status)}
-                    </Badge>
-                  </div>
+                  {/* Status badge removed as requested */}
                 </div>
               </CardContent>
             </Card>
@@ -140,8 +137,8 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                   </div>
 
                   {/* Price */}
-                  <div className="text-2xl font-bold text-red-600 mb-2">
-                    {post.isNegotiable ? <p>Liên hệ người bán</p> : formatVnd(post.priceVnd)}
+                  <div className="text-2xl font-bold text-[#048C73] mb-2">
+                    {formatVnd(post.priceVnd)}
                   </div>
                 </div>
 
