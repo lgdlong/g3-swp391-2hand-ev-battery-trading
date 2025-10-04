@@ -84,8 +84,20 @@ function adaptImages(images: FlexibleField[] | undefined): PostImageUI[] {
   if (!images) return [];
 
   return images
-    .filter((img): img is string => typeof img === 'string' && img !== null)
-    .map((url) => ({ url }));
+    .map((img): PostImageUI | undefined => {
+      if (!img) return undefined;
+      // API may return string URL or object with url field
+      if (typeof img === 'string') {
+        return { url: img };
+      }
+      if (typeof img === 'object' && 'url' in img) {
+        const anyImg = img as { url?: unknown; publicId?: unknown };
+        const url = typeof anyImg.url === 'string' ? anyImg.url : undefined;
+        if (url) return { url };
+      }
+      return undefined;
+    })
+    .filter((x): x is PostImageUI => !!x);
 }
 
 /**

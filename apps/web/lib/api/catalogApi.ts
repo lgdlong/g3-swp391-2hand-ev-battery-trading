@@ -7,7 +7,9 @@ export async function getCarBrands(): Promise<Brand[]> {
 }
 
 export async function getBikeBrands(): Promise<Brand[]> {
-  const { data } = await api.get<Brand[]>('bike-catalog/brands');
+  const { data } = await api.get<Brand[]>('bike-catalog/brands', {
+    params: { limit: 100 },
+  });
   return data;
 }
 

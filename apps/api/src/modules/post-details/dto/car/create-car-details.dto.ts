@@ -3,7 +3,7 @@ import { IsEnum, IsIn, IsInt, IsOptional, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BodyStyle, Origin, VehicleColor } from '../../../../shared/enums/vehicle.enum';
-import { SEAT_OPTIONS } from '../../../../shared/constants';
+import { SEAT_OPTIONS, type SeatOption } from '../../../../shared/constants';
 
 export class CreateCarDetailsDto {
   @ApiPropertyOptional({
@@ -66,7 +66,7 @@ export class CreateCarDetailsDto {
   )
   @IsInt()
   @IsIn(SEAT_OPTIONS as unknown as number[])
-  seats?: number;
+  seats?: SeatOption;
 
   @ApiPropertyOptional({
     description: 'Biển số',

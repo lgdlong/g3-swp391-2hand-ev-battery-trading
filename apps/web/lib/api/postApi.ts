@@ -104,6 +104,15 @@ export interface CreatePostDto {
 // Create car post DTO (specific for car creation)
 export interface CreateCarPostDto {
   postType: 'EV_CAR';
+  title: string;
+  description: string;
+  wardCode: string;
+  provinceNameCached: string;
+  districtNameCached: string;
+  wardNameCached: string;
+  addressTextCached: string;
+  priceVnd: string;
+  isNegotiable: boolean;
   carDetails: {
     brand_id: number;
     model_id: number;
@@ -374,7 +383,7 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
 
   // Debug FormData contents
   console.log('FormData entries:');
-  for (let [key, value] of formData.entries()) {
+  for (const [key, value] of formData.entries()) {
     console.log(key, value);
   }
 
@@ -399,7 +408,7 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
     const data = await response.json();
     console.log('Upload successful with fetch:', data);
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Upload error details:', error);
 
     // Fallback to axios if fetch fails
@@ -410,13 +419,13 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
       });
       console.log('Upload successful with axios:', data);
       return data;
-    } catch (axiosError: any) {
+    } catch (axiosError: unknown) {
       console.error('Axios fallback also failed:', axiosError);
 
       // Try different field names if both methods fail
       console.log('Trying different field names...');
       const altFormData = new FormData();
-      files.forEach((file, index) => {
+      files.forEach((file) => {
         altFormData.append('file', file, file.name); // Try 'file' instead of 'files'
       });
 
@@ -426,7 +435,7 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
         });
         console.log('Upload successful with alternative field name:', data);
         return data;
-      } catch (finalError: any) {
+      } catch (finalError: unknown) {
         console.error('All upload attempts failed:', finalError);
         throw finalError;
       }

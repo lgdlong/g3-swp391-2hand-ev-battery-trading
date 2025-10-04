@@ -32,27 +32,26 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
       <Card className="overflow-hidden border-0 hover:shadow-md transition-all duration-300 bg-white p-0">
         <CardContent className="p-0">
           {/* Image */}
-          <div className="relative h-48 w-full bg-gradient-to-br from-slate-50 to-slate-100">
+          <div className="relative h-48 w-full bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
             <Image
               src={
-                (typeof item.images?.[0] === 'string' ? item.images[0] : null) ||
-                '/asset/phu-tung-o-to-27.png'
+                (typeof item.images?.[0] === 'object' && item.images?.[0] && 'url' in item.images[0]
+                  ? (item.images[0] as { url: string }).url
+                  : undefined) || '/asset/phu-tung-o-to-27.png'
               }
               alt={item.title}
               fill
               sizes="(max-width:768px) 100vw, 33vw"
-              className="object-contain p-6 group-hover:scale-110 transition-transform duration-500"
+              className="object-contain group-hover:scale-110 transition-transform duration-500"
             />
             <div className="absolute left-4 top-4">
-              <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white border-0">
+              <Badge
+                className={`${item.carDetails ? 'bg-[#048C73]' : 'bg-[#2563EB]'} text-white border-0`}
+              >
                 {item.carDetails ? 'Ô tô điện' : 'Xe máy điện'}
               </Badge>
             </div>
-            <div className="absolute right-4 top-4">
-              <Badge className={`border ${getStatusColor(item.status)}`}>
-                {getStatusText(item.status)}
-              </Badge>
-            </div>
+            {/* Status badge removed */}
             {(item.carDetails?.origin === 'NOI_DIA' || item.bikeDetails?.origin === 'NOI_DIA') && (
               <div className="absolute right-4 bottom-4">
                 <Badge className="bg-blue-100 text-blue-800 border-blue-200">Nội địa</Badge>
@@ -120,9 +119,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
 
             {/* Price */}
             <div className="flex items-center justify-between">
-              <div className="text-lg font-bold text-red-600">
-                {item.isNegotiable ? <span>Liên hệ</span> : formatVnd(item.priceVnd)}
-              </div>
+              <div className="text-lg font-bold text-red-600">{formatVnd(item.priceVnd)}</div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                 <svg
                   className="h-5 w-5 text-[#048C73]"
