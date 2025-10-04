@@ -2,6 +2,8 @@ import type { Account, CreateAccountDto } from '@/types/account';
 import { api } from '@/lib/axios';
 import { getAuthHeaders } from '../auth';
 import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
+import { validateAvatarFile } from '@/lib/validation/file-validation';
+import { AxiosError } from 'axios';
 
 // Update current user profile
 export interface UpdateProfileDto {
@@ -138,4 +140,87 @@ export async function getCurrentUser(): Promise<Account> {
     headers: getAuthHeaders(),
   });
   return data;
+}
+
+/**
+ * Upload avatar with comprehensive validation and error handling
+ * Validates file type, size, and extension before upload
+ * Handles specific HTTP error codes with user-friendly messages
+ *
+ * @param file - Avatar image file
+ * @returns Updated account with new avatar URL
+ * @throws Error with user-friendly message for various failure scenarios
+ */
+export async function uploadAvatar(file: File): Promise<Account> {
+  // Step 1: Client-side validation (first line of defense)
+  const validation = validateAvatarFile(file);
+  if (!validation.isValid) {
+    throw new Error(validation.error);
+  }
+
+  // Step 2: Prepare form data
+  const form = new FormData();
+  form.append('file', file);
+
+  // Step 3: Upload with comprehensive error handling
+  try {
+    const { data } = await api.post<Account>('/accounts/me/avatar', form, {
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // Validate response has avatarUrl
+    if (!data || !data.avatarUrl) {
+      throw new Error('Server không trả về URL ảnh đại diện');
+    }
+
+    return data;
+  } catch (error) {
+    // Handle Axios errors with specific status codes
+    if (error instanceof AxiosError) {
+      const status = error.response?.status;
+      const requestId = error.response?.headers?.['x-request-id'];
+
+      // Log for debugging (include request-id if available)
+      console.error('[uploadAvatar] Error:', {
+        status,
+        requestId,
+        message: error.message,
+        data: error.response?.data,
+      });
+
+      // Map status codes to user-friendly messages
+      switch (status) {
+        case 401:
+          throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại');
+        case 413:
+          throw new Error('Kích thước file quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB');
+        case 415:
+          throw new Error('Định dạng file không được hỗ trợ. Chỉ chấp nhận: JPG, PNG, WEBP');
+        case 422:
+          throw new Error(error.response?.data?.message || 'Dữ liệu không hợp lệ');
+        case 500:
+          throw new Error('Lỗi máy chủ. Vui lòng thử lại sau');
+        case 503:
+          throw new Error('Dịch vụ tạm thời không khả dụng. Vui lòng thử lại sau');
+        default:
+          throw new Error(
+            error.response?.data?.message || 'Không thể tải ảnh lên. Vui lòng thử lại',
+          );
+      }
+    }
+
+    // Handle network errors
+    if (error instanceof Error) {
+      if (error.message.includes('Network')) {
+        throw new Error('Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet');
+      }
+      throw error;
+    }
+
+    // Fallback for unknown errors
+    throw new Error('Đã xảy ra lỗi không xác định. Vui lòng thử lại');
+  }
 }

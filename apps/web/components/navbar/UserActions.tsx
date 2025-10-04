@@ -2,21 +2,24 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { User, Bookmark, Bell, ChevronDown } from 'lucide-react';
+import { Account } from '@/types/account';
+import { isValidAvatarUrl } from '@/lib/validation/file-validation';
 
 interface UserActionsProps {
   className?: string;
   isLoggedIn?: boolean;
-  userRole?: string;
+  user?: Account | null;
   onUserMenuToggle?: () => void;
 }
 
 export function UserActions({
   className,
   isLoggedIn = false,
-  userRole,
+  user,
   onUserMenuToggle,
 }: UserActionsProps) {
   if (isLoggedIn) {
@@ -77,8 +80,18 @@ export function UserActions({
           className="flex items-center gap-2 text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors duration-200 group rounded-xl px-3 py-2"
           onClick={onUserMenuToggle}
         >
-          <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200">
-            <User className="h-4 w-4 text-white" />
+          <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 bg-emerald-600">
+            {user?.avatarUrl && isValidAvatarUrl(user.avatarUrl) ? (
+              <Image
+                src={user.avatarUrl}
+                alt={user.fullName || 'User Avatar'}
+                width={32}
+                height={32}
+                className="w-8 h-8 object-cover rounded-full"
+              />
+            ) : (
+              <User className="h-4 w-4 text-white" />
+            )}
           </div>
           <ChevronDown className="h-3 w-3 group-hover:rotate-180 transition-transform duration-300" />
         </Button>

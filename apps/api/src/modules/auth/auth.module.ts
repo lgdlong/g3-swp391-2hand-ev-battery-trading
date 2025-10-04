@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { forwardRef, Logger, Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
@@ -27,7 +27,7 @@ import { GoogleStrategy } from './google.strategy';
     forwardRef(() => AccountsModule), // use forwardRef iff there is a circular dep
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, GoogleStrategy, Logger],
   exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}
