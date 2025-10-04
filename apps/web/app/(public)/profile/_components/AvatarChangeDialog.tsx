@@ -122,7 +122,7 @@ export function AvatarChangeDialog({
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          {/* Right side buttons */}
+          {/* Left side buttons */}
           <div className="flex gap-2">
             <Button
               variant="destructive"
@@ -140,7 +140,7 @@ export function AvatarChangeDialog({
             </Button>
           </div>
 
-          {/* Left side buttons */}
+          {/* Right side buttons */}
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={upload.isPending}>
               {upload.isPending ? 'Đang lưu…' : 'Lưu'}
