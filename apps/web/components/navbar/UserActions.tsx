@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { User, LogIn, UserPlus, Bookmark, Bell, ChevronDown, Plus } from 'lucide-react';
+import { User, Bookmark, Bell, ChevronDown } from 'lucide-react';
 
 interface UserActionsProps {
   className?: string;
@@ -30,7 +30,7 @@ export function UserActions({
             size="sm"
             className="text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors duration-200 group relative rounded-xl p-2"
           >
-            <Link href="#" className="flex items-center">
+            <Link href="/bookmarks" className="flex items-center">
               <Bookmark className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
               {/* Notification badge */}
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">

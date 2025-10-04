@@ -6,6 +6,7 @@ import { MapPin } from 'lucide-react';
 import { displayValue, formatVnd, getStatusColor, getStatusText } from './utils';
 import type { Post } from './types';
 import HeartToggle from './HeartToggle';
+import { HeartCallApi } from './HeartCallApi';
 
 interface PostCardProps {
   item: Post;
@@ -142,9 +143,9 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
 
             {/* Bookmark button */}
             <div className="mt-4 flex justify-end" onClick={(e) => e.preventDefault()}>
-              <HeartToggle />
+              <HeartCallApi postId={Number(item.id)} initialBookmark={null}/>
             </div>
-          </div>
+          </div>  
         </CardContent>
       </Card>
     </Link>
