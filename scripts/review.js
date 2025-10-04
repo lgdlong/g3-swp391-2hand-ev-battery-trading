@@ -3,10 +3,15 @@ import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fetch } from 'undici';
 
-const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20250514';
+const CLAUDE_SONNET_4_5 = 'claude-sonnet-4-5-20250929';
+const CLAUDE_SONNET_4 = 'claude-sonnet-4-20241022';
+const THIRD_PARTY_BASE_URL = 'https://v98store.com';
+
+// const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20241022';
+const MODEL = CLAUDE_SONNET_4_5 || CLAUDE_SONNET_4;
 // Support both ANTHROPIC_API_KEY (for GitHub Actions) and ANTHROPIC_AUTH_TOKEN (for local testing)
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN;
-const BASE_URL = process.env.ANTHROPIC_BASE_URL || 'https://v98store.com';
+const BASE_URL = process.env.ANTHROPIC_BASE_URL || THIRD_PARTY_BASE_URL;
 const API_ENDPOINT = `${BASE_URL}/v1/messages`;
 
 if (!API_KEY) {
@@ -52,7 +57,9 @@ Hãy xuất 2 phần:
 const userHeader = `
 Repo context:
 - Ngôn ngữ: Node.js/TypeScript/Express (giả định)
+- Frameworks: Next.js, NestJS.
 - Nhiệm vụ: Review unified git diff. Nêu rõ file:line nếu có thể.
+- Ghi chú: không review các file test, comment, doc, readme, config, ci/cd, workflow và folder /scripts.
 
 Định dạng bắt buộc:
 ## REVIEW_MARKDOWN
