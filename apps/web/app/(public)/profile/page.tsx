@@ -25,7 +25,7 @@ import { UserSidebar } from '@/components/navbar/UserSidebar';
 import { AvatarChangeDialog } from './_components/AvatarChangeDialog';
 
 export default function ProfilePage() {
-  const { isLoggedIn, user, logout } = useAuth();
+  const { isLoggedIn, user, logout, refreshUser } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,10 +77,14 @@ export default function ProfilePage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAvatarUploaded = (url: string) => {
+  const handleAvatarUploaded = async (url: string) => {
     // cập nhật local UI ngay
     setFormData((prev) => ({ ...prev, avatarUrl: url }));
     setProfile((prev) => (prev ? { ...prev, avatarUrl: url } : prev));
+    
+    // ⭐ CRITICAL: Refresh auth context to update navbar avatar
+    await refreshUser();
+    
     toast.success('Tải ảnh đại diện thành công');
   };
 
