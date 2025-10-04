@@ -9,10 +9,10 @@ import { CarCatalogModule } from './modules/catalogs/cars/car-catalog.module';
 import { BikeCatalogModule } from './modules/catalogs/bikes/bike-catalog.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { UploadModule } from './modules/upload/upload.module';
-import { PostBookmarksModule } from './modules/post_bookmarks/post_bookmarks.module';
+import { PostBookmarksModule } from './modules/post-bookmarks/post-bookmarks.module';
 import { AddressModule } from './modules/address/address.module';
-
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -56,7 +56,7 @@ import { AddressModule } from './modules/address/address.module';
     PostsModule,
     UploadModule,
     PostBookmarksModule,
-    AddressModule
+    AddressModule,
   ],
   controllers: [],
   providers: [],

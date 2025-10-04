@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PostBookmarksService } from './post-bookmarks.service';
 import { PostBookmarksController } from './post-bookmarks.controller';
-import { PostBookmark } from './entities/post_bookmark.entity';
+import { PostBookmark } from './entities/post-bookmark.entity';
 import { TypeOrmModule } from '@nestjs/typeorm/dist/typeorm.module';
 
 @Module({
