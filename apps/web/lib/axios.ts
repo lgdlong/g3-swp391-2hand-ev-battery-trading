@@ -10,35 +10,38 @@ export const api = axios.create({
 
 // Thêm interceptor để xử lý lỗi chung, lấy message từ backend response nếu có
 api.interceptors.response.use(
-  (r) => r,
+  (response) => response,
   (err) => {
-    const msg = err?.response?.data?.message ?? err.message ?? 'Request failed';
+    const status = err?.response?.status;
 
-    // Handle 401 Unauthorized - only treat as token expiration if there's an auth token
-    if (err?.response?.status === 401) {
-      // Check if there's an Authorization header (meaning user was logged in)
-      const hasAuthToken = err?.config?.headers?.Authorization;
+    if (status === 401) {
+      const hasAuthToken = Boolean(err?.config?.headers?.Authorization);
 
-      // Only handle as token expiration if user was authenticated
       if (hasAuthToken) {
-        console.log('Token expired, logging out...');
+        // Token expiration case
         handleTokenExpiration();
-        return Promise.reject(new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'));
+        return Promise.reject({
+          code: 'TOKEN_EXPIRED',
+          message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+          originalError: err,
+        });
       }
 
-      // Otherwise, it's a login failure - show the backend error message
-      return Promise.reject(new Error(msg));
+      // Login failure - sanitize backend message
+      const backendMsg = err?.response?.data?.message;
+      const safeMsg =
+        typeof backendMsg === 'string'
+          ? backendMsg.slice(0, 200) // Limit length
+          : 'Authentication failed';
+
+      return Promise.reject({
+        code: 'AUTH_FAILED',
+        message: safeMsg,
+        originalError: err,
+      });
     }
 
-    return Promise.reject(new Error(msg));
+    // Other errors
+    return Promise.reject(err);
   },
 );
-
-// Thêm interceptor để xử lý lỗi chung, lấy message từ backend response nếu có
-// api.interceptors.response.use(
-//   (r) => r,
-//   (err) => {
-//     const msg = err?.response?.data?.message ?? err.message ?? 'Request failed';
-//     return Promise.reject(new Error(msg));
-//   },
-// );
