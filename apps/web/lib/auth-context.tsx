@@ -40,9 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error('Error parsing user data:', error);
           // Fallback to logged out state on error
-          setIsLoggedIn(false);
-          setUserRole(null);
-          setUser(null);
+          logout();
         }
       } else {
         // No user data found, set logged out state
