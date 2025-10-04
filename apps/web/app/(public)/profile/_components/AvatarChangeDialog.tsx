@@ -19,7 +19,7 @@ export function AvatarChangeDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initialUrl?: string | null;
-  onUploaded?: (url: string) => void;
+  onUploaded?: (url: string) => void | Promise<void>;
 }) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -32,9 +32,9 @@ export function AvatarChangeDialog({
     return () => URL.revokeObjectURL(preview);
   }, [preview]);
 
-  const upload = useUploadAvatar((url) => {
+  const upload = useUploadAvatar(async (url) => {
     toast.success('Cập nhật ảnh đại diện thành công');
-    onUploaded?.(url);
+    await onUploaded?.(url);
     clearSelection();
     onOpenChange(false);
   });
