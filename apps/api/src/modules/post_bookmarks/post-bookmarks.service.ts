@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PostBookmark } from './entities/post_bookmark.entity';
@@ -12,9 +12,16 @@ export class PostBookmarksService {
 
   async create(accountId: number, createPostBookmarkDto: CreatePostBookmarkDto) {
     try {
-      // Check for duplicate bookmark
+      // Ensure proper number types for comparison
+      const normalizedAccountId = Number(accountId);
+      const normalizedPostId = Number(createPostBookmarkDto.postId);
+      
+      // Check for duplicate bookmark with explicit type conversion
       const existing = await this.bookmarkRepository.findOne({ 
-        where: { accountId, postId: createPostBookmarkDto.postId } 
+        where: { 
+          accountId: normalizedAccountId, 
+          postId: normalizedPostId 
+        } 
       });
       
       if (existing) {
@@ -31,6 +38,18 @@ export class PostBookmarksService {
       if (error instanceof ConflictException) {
         throw error;
       }
+      
+      // Handle database constraint errors
+      if (error && typeof error === 'object' && 'code' in error) {
+        const dbError = error as any;
+        if (dbError.code === '23505') { // Unique constraint violation
+          throw new ConflictException('Post is already bookmarked by this user');
+        }
+        if (dbError.code === '23503') { // Foreign key constraint
+          throw new BadRequestException('Invalid post ID or account ID');
+        }
+      }
+      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to create bookmark: ${errorMessage}`);
     }
@@ -55,17 +74,16 @@ export class PostBookmarksService {
   }
 
 
-  async remove(id: number, accountId?: number) {
-    // Use findOneByOwner for strict ownership check
-    if (accountId !== undefined) {
-      await this.findOne(id, accountId);
-    } else {
-      const bookmark = await this.bookmarkRepository.findOne({ where: { id } });
-      if (!bookmark) {
-        throw new NotFoundException(`Bookmark with ID ${id} not found`);
-      }
+  async remove(id: number, accountId: number) {
+    //BẮT BUỘC phải có accountId để kiểm tra ownership
+    if (!accountId) {
+      throw new BadRequestException('User authentication required');
     }
     
+    //Kiểm tra bookmark có thuộc về user này không
+    const bookmark = await this.findOne(id, accountId);
+    
+    // Chỉ xóa khi đã verify ownership
     await this.bookmarkRepository.delete(id);
     return { deleted: true };
   }
