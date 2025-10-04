@@ -40,22 +40,9 @@ export class PostBookmarksService {
     return this.bookmarkRepository.find({ where: { accountId } });
   }
 
-  async findOne(id: number, accountId?: number) {
-    const bookmark = await this.bookmarkRepository.findOne({ where: { id } });
-    if (!bookmark) {
-      throw new NotFoundException(`Bookmark with ID ${id} not found`);
-    }
-    
-    // If accountId is provided, check ownership
-    if (accountId !== undefined && bookmark.accountId !== accountId) {
-      throw new ForbiddenException('You can only access your own bookmarks');
-    }
-    
-    return bookmark;
-  }
 
   // Method to find bookmark with strict ownership check
-  async findOneByOwner(id: number, accountId: number) {
+  async findOne(id: number, accountId: number) {
     const bookmark = await this.bookmarkRepository.findOne({ 
       where: { id, accountId } 
     });
@@ -67,14 +54,11 @@ export class PostBookmarksService {
     return bookmark;
   }
 
-  async getByUserId(userId: number) {
-    return await this.bookmarkRepository.find({ where: { accountId: userId } });
-  }
 
   async remove(id: number, accountId?: number) {
     // Use findOneByOwner for strict ownership check
     if (accountId !== undefined) {
-      await this.findOneByOwner(id, accountId);
+      await this.findOne(id, accountId);
     } else {
       const bookmark = await this.bookmarkRepository.findOne({ where: { id } });
       if (!bookmark) {

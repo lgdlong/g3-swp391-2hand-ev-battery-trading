@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe, UnauthorizedException, ForbiddenException } from '@nestjs/common';
-import { PostBookmarksService } from './post_bookmarks.service';
+import { PostBookmarksService } from './post-bookmarks.service';
 import { CreatePostBookmarkDto } from './dto/create-post_bookmark.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 import { 
