@@ -46,7 +46,9 @@ Hãy xuất 2 phần:
 const userHeader = `
 Repo context:
 - Ngôn ngữ: Node.js/TypeScript/Express (giả định)
+- Frameworks: Next.js, NestJS.
 - Nhiệm vụ: Review unified git diff. Nêu rõ file:line nếu có thể.
+- Ghi chú: không review các file test, comment, doc, readme, config, ci/cd, workflow và folder /scripts.
 
 Định dạng bắt buộc:
 ## REVIEW_MARKDOWN
