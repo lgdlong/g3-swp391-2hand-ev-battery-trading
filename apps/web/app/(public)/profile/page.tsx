@@ -366,7 +366,7 @@ export default function ProfilePage() {
       <UserSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        userRole={user?.role}
+        user={user}
         onLogout={logout}
       />
     </div>

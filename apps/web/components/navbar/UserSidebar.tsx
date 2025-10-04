@@ -2,16 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { User, Bookmark, Bell, Settings, LogOut, Shield } from 'lucide-react';
+import { User, Bookmark, Bell, Settings, LogOut } from 'lucide-react';
+import { Account } from '@/types/account';
+import Image from 'next/image';
 
 interface UserSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  userRole?: string;
+  user?: Account | null;
   onLogout?: () => void;
 }
 
-export function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebarProps) {
+export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProps) {
   if (!isOpen) return null;
 
   const menuItems = [
@@ -20,10 +22,6 @@ export function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebar
     { label: 'Thông báo', href: '/notifications', icon: Bell },
     { label: 'Cài đặt', href: '/settings', icon: Settings },
   ];
-
-  if (userRole === 'admin') {
-    menuItems.unshift({ label: 'Admin', href: '/admin', icon: Shield });
-  }
 
   return (
     <div
@@ -37,12 +35,22 @@ export function UserSidebar({ isOpen, onClose, userRole, onLogout }: UserSidebar
         {/* Header */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-              <User className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center">
+              {user?.avatarUrl ? (
+                <Image
+                  src={user.avatarUrl}
+                  alt={user.fullName || 'User Avatar'}
+                  width={32}
+                  height={32}
+                  className="w-10 h-10 object-cover rounded-full"
+                />
+              ) : (
+                <User className="h-4 w-4 text-white" />
+              )}
             </div>
             <div>
-              <p className="font-medium text-gray-900">Account</p>
-              <p className="text-sm text-gray-500 capitalize">{userRole || 'User'}</p>
+              <p className="font-medium text-gray-900">{user?.fullName || 'Account'}</p>
+              <p className="text-sm text-gray-500 capitalize">{user?.role || 'User'}</p>
             </div>
           </div>
         </div>

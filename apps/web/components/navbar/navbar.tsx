@@ -58,7 +58,7 @@ interface HeaderProps {
 }
 
 export function Navbar({ className }: HeaderProps) {
-  const { isLoggedIn, userRole, logout } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
@@ -89,7 +89,7 @@ export function Navbar({ className }: HeaderProps) {
             <div className="flex items-center">
               <UserActions
                 isLoggedIn={isLoggedIn}
-                userRole={userRole || undefined}
+                user={user}
                 onUserMenuToggle={() => setIsUserMenuOpen(!isUserMenuOpen)}
               />
             </div>
@@ -106,7 +106,7 @@ export function Navbar({ className }: HeaderProps) {
       <UserSidebar
         isOpen={isUserMenuOpen}
         onClose={() => setIsUserMenuOpen(false)}
-        userRole={userRole || undefined}
+        user={user}
         onLogout={logout}
       />
     </>
