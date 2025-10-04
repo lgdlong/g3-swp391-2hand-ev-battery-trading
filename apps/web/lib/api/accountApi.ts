@@ -139,3 +139,15 @@ export async function getCurrentUser(): Promise<Account> {
   });
   return data;
 }
+
+export async function uploadAvatar(file: File): Promise<Account> {
+  const form = new FormData();
+  form.append('file', file);
+  const { data } = await api.post<Account>('/accounts/me/avatar', form, {
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return data;
+}

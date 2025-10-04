@@ -8,11 +8,24 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
 import { getCurrentUser, updateCurrentAccount, UpdateProfileDto } from '@/lib/api/accountApi';
 import { Account } from '@/types/account';
-import { User, Mail, Phone, Calendar, Shield, Edit3, Save, X } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Shield,
+  Edit3,
+  Save,
+  X,
+  ImageIcon,
+  Camera,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { UserSidebar } from '@/components/navbar/UserSidebar';
+import { AvatarUploader } from '@/app/(public)/profile/_components/AvatarUploader';
+import { AvatarChangeDialog } from './_components/AvatarChangeDialog';
 
 export default function ProfilePage() {
   const { isLoggedIn, user, logout } = useAuth();
@@ -21,10 +34,10 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [validatingImage, setValidatingImage] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [avatarError, setAvatarError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+
+  // local form state (avatarUrl is now fed by AvatarUploader on success)
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -34,7 +47,6 @@ export default function ProfilePage() {
   // Fetch user profile data
   useEffect(() => {
     const fetchProfile = async () => {
-      // If not logged in, stop loading and show login prompt
       if (!isLoggedIn) {
         setLoading(false);
         return;
@@ -53,13 +65,10 @@ export default function ProfilePage() {
         console.error('Error fetching profile:', error);
         const errorMessage =
           error instanceof Error ? error.message : 'Không thể tải thông tin cá nhân';
-
-        // If it's a token expiration, don't show toast as user will be redirected
-        if (!errorMessage.includes('hết hạn')) {
+        if (!String(errorMessage).includes('hết hạn')) {
           toast.error(errorMessage);
         }
       } finally {
-        // Always set loading to false
         setLoading(false);
       }
     };
@@ -68,81 +77,29 @@ export default function ProfilePage() {
   }, [isLoggedIn]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
-    // Real-time avatar URL validation
-    if (field === 'avatarUrl') {
-      setAvatarError(null);
-      setAvatarPreview(null);
-
-      if (value.trim()) {
-        // Debounced validation
-        const timeoutId = setTimeout(async () => {
-          const isValid = await validateImageUrl(value.trim());
-          if (isValid) {
-            setAvatarPreview(value.trim());
-            setAvatarError(null);
-          } else {
-            setAvatarPreview(null);
-            setAvatarError('URL ảnh không hợp lệ hoặc không thể tải');
-          }
-        }, 1000);
-
-        return () => clearTimeout(timeoutId);
-      }
-    }
+  const handleAvatarUploaded = (url: string) => {
+    // cập nhật local UI ngay
+    setFormData((prev) => ({ ...prev, avatarUrl: url }));
+    setProfile((prev) => (prev ? { ...prev, avatarUrl: url } : prev));
+    toast.success('Tải ảnh đại diện thành công');
   };
 
   const handleSave = async () => {
     try {
       setSaving(true);
 
-      // Validate avatar URL if provided
-      if (formData.avatarUrl.trim()) {
-        setValidatingImage(true);
-        const isValidImage = await validateImageUrl(formData.avatarUrl.trim());
-        setValidatingImage(false);
-
-        if (!isValidImage) {
-          // Show popup for invalid image URL
-          const shouldRetry = window.confirm(
-            'URL ảnh đại diện không hợp lệ hoặc không thể tải được.\n\n' +
-              'Vui lòng kiểm tra lại URL và đảm bảo:\n' +
-              '• URL có định dạng đúng (http:// hoặc https://)\n' +
-              '• Ảnh tồn tại và có thể truy cập\n' +
-              '• Định dạng ảnh được hỗ trợ (JPG, PNG, GIF, WebP)\n\n' +
-              'Bạn có muốn nhập lại URL không?',
-          );
-
-          if (shouldRetry) {
-            // Focus back to avatar URL input
-            const avatarInput = document.getElementById('avatarUrl') as HTMLInputElement;
-            if (avatarInput) {
-              avatarInput.focus();
-              avatarInput.select();
-            }
-            return;
-          } else {
-            // User chose to continue without avatar
-            setFormData((prev) => ({ ...prev, avatarUrl: '' }));
-          }
-        }
-      }
-
       const updateData: UpdateProfileDto = {
         fullName: formData.fullName.trim() || undefined,
         phone: formData.phone.trim() || undefined,
-        avatarUrl: formData.avatarUrl.trim() || undefined,
+        avatarUrl: formData.avatarUrl.trim() || undefined, // set by AvatarUploader
       };
 
       // Remove undefined values
       Object.keys(updateData).forEach((key) => {
-        if (updateData[key as keyof UpdateProfileDto] === undefined) {
-          delete updateData[key as keyof UpdateProfileDto];
-        }
+        if ((updateData as any)[key] === undefined) delete (updateData as any)[key];
       });
 
       const updatedProfile = await updateCurrentAccount(updateData);
@@ -155,7 +112,6 @@ export default function ProfilePage() {
       toast.error(errorMessage);
     } finally {
       setSaving(false);
-      setValidatingImage(false);
     }
   };
 
@@ -176,44 +132,6 @@ export default function ProfilePage() {
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
-  };
-
-  const validateImageUrl = (url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (!url.trim()) {
-        resolve(true); // Empty URL is valid (will show default avatar)
-        return;
-      }
-
-      // Check if it's a data URL
-      if (url.startsWith('data:image/')) {
-        // For data URLs, just check if it's a valid data URL format
-        const dataUrlPattern = /^data:image\/(jpeg|jpg|png|gif|webp|svg\+xml);base64,/i;
-        resolve(dataUrlPattern.test(url));
-        return;
-      }
-
-      // Basic URL format validation for HTTP URLs
-      try {
-        const urlObj = new URL(url);
-        if (!['http:', 'https:'].includes(urlObj.protocol)) {
-          resolve(false);
-          return;
-        }
-      } catch {
-        resolve(false);
-        return;
-      }
-
-      // Test if image can be loaded
-      const img = new window.Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = url;
-
-      // Timeout after 10 seconds
-      setTimeout(() => resolve(false), 10000);
-    });
   };
 
   if (!isLoggedIn) {
@@ -268,9 +186,6 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4"></div>
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Card */}
           <div className="lg:col-span-1">
@@ -278,7 +193,7 @@ export default function ProfilePage() {
               <CardContent className="p-6 text-center">
                 {/* Avatar */}
                 <div className="relative mb-6">
-                  <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto bg-[#048C73] shadow-lg">
+                  <div className="w-24 h-24 rounded-full flex items-center justify-center mx-auto bg-[#048C73] shadow-lg overflow-hidden">
                     {profile.avatarUrl ? (
                       <Image
                         src={profile.avatarUrl}
@@ -291,40 +206,22 @@ export default function ProfilePage() {
                       <User className="h-12 w-12 text-white" />
                     )}
                   </div>
-                  <div
-                    className={`absolute bottom-0 right-1/2 transform translate-x-6 w-6 h-6 rounded-full border-2 border-white ${
-                      profile.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
-                    }`}
-                  ></div>
+
+                  {/* Floating change-avatar button (bottom-right) */}
+                  <button
+                    type="button"
+                    onClick={() => setAvatarDialogOpen(true)}
+                    className="absolute -bottom-2 right-1/2 translate-x-10 p-2 border-2 border-white cursor-pointer rounded-full bg-zinc-100"
+                    aria-label="Đổi ảnh đại diện"
+                  >
+                    <Camera className="h-3 w-3 text-gray-600" />
+                  </button>
                 </div>
 
                 {/* Basic Info */}
                 <h2 className="text-xl font-semibold text-gray-900 mb-1">
                   {profile.fullName || 'Người dùng ẩn danh'}
                 </h2>
-                <p className="text-gray-600 mb-4 capitalize">
-                  {profile.role.toLowerCase() === 'admin'
-                    ? 'Quản trị viên'
-                    : profile.role.toLowerCase() === 'user'
-                      ? 'Người dùng'
-                      : profile.role.toLowerCase()}
-                </p>
-
-                {/* Status Badge */}
-                <div
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    profile.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  <div
-                    className={`w-2 h-2 rounded-full mr-2 ${
-                      profile.status === 'active' ? 'bg-green-500' : 'bg-gray-500'
-                    }`}
-                  ></div>
-                  {profile.status === 'active' ? 'Đang hoạt động' : 'Không hoạt động'}
-                </div>
 
                 {/* Member Since */}
                 <div className="mt-6 pt-6 border-t border-gray-100">
@@ -365,6 +262,7 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               </CardHeader>
+
               <CardContent className="space-y-6">
                 {/* Full Name */}
                 <div>
@@ -424,147 +322,17 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                {/* Avatar URL */}
-                <div>
-                  <Label
-                    htmlFor="avatarUrl"
-                    className="text-sm font-medium text-gray-700 mb-3 block"
-                  >
-                    Ảnh đại diện
-                  </Label>
-                  {editing ? (
-                    <div className="space-y-3">
-                      {/* Avatar Preview Section */}
-                      <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                          {avatarPreview ? (
-                            <Image
-                              src={avatarPreview}
-                              alt="Preview"
-                              width={64}
-                              height={64}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-8 w-8 text-gray-400" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900 mb-1">
-                            Xem trước ảnh đại diện
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            {avatarPreview ? 'Ảnh sẽ hiển thị như này' : 'Nhập URL để xem trước'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* URL Input */}
-                      <div>
-                        <Input
-                          id="avatarUrl"
-                          type="text"
-                          value={formData.avatarUrl}
-                          onChange={(e) => handleInputChange('avatarUrl', e.target.value)}
-                          className={`h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 ${
-                            avatarError
-                              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20'
-                              : avatarPreview
-                                ? 'border-green-300 focus:border-green-500 focus:ring-green-500/20'
-                                : ''
-                          }`}
-                          placeholder="Dán URL ảnh hoặc chọn file..."
-                        />
-
-                        {/* Status indicators */}
-                        <div className="mt-2">
-                          {avatarError && (
-                            <div className="flex items-center gap-2 text-sm text-red-600">
-                              <X className="h-4 w-4" />
-                              <span>{avatarError}</span>
-                            </div>
-                          )}
-
-                          {avatarPreview && !avatarError && (
-                            <div className="flex items-center gap-2 text-sm text-green-600">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span>URL ảnh hợp lệ</span>
-                            </div>
-                          )}
-
-                          {!formData.avatarUrl.trim() && (
-                            <p className="text-xs text-gray-500">
-                              Hỗ trợ: HTTPS URLs hoặc Data URLs (base64)
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      {/* Current Avatar Display */}
-                      <div className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                          {profile.avatarUrl ? (
-                            <Image
-                              src={profile.avatarUrl}
-                              alt="Current Avatar"
-                              width={64}
-                              height={64}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-8 w-8 text-gray-400" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900 mb-1">
-                            Ảnh đại diện hiện tại
-                          </p>
-                          <p className="text-xs text-gray-600 break-all">
-                            {profile.avatarUrl
-                              ? 'Đã thiết lập ảnh đại diện'
-                              : 'Chưa có ảnh đại diện'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Role */}
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    Vai trò tài khoản
-                  </Label>
-                  <div className="flex items-center h-11 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
-                    <Shield className="h-4 w-4 text-gray-400 mr-3" />
-                    <span className="text-gray-900">
-                      {profile.role.toLowerCase() === 'admin'
-                        ? 'Quản trị viên'
-                        : profile.role.toLowerCase() === 'user'
-                          ? 'Người dùng'
-                          : profile.role.toLowerCase()}
-                    </span>
-                  </div>
-                </div>
-
                 {/* Save Button */}
                 {editing && (
                   <div className="pt-4 border-t border-gray-100">
                     <Button
                       onClick={handleSave}
-                      disabled={saving || validatingImage}
+                      disabled={saving}
                       className="w-full bg-[#048C73] hover:bg-[#037A66] disabled:bg-[#048C73]/60 text-white flex items-center justify-center gap-2"
                     >
-                      {validatingImage ? (
+                      {saving ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Đang kiểm tra ảnh...
-                        </>
-                      ) : saving ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                           Đang lưu...
                         </>
                       ) : (
@@ -588,6 +356,14 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Avatar Dialog */}
+      <AvatarChangeDialog
+        open={avatarDialogOpen}
+        onOpenChange={setAvatarDialogOpen}
+        initialUrl={profile.avatarUrl}
+        onUploaded={handleAvatarUploaded}
+      />
 
       {/* UserSidebar */}
       <UserSidebar
