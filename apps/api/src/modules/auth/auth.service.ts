@@ -22,6 +22,7 @@ export class AuthService {
     private readonly accountsService: AccountsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly logger: Console,
   ) {}
 
   /** seconds */
@@ -58,9 +59,7 @@ export class AuthService {
     }
 
     // 3. Kiểm tra trạng thái tài khoản - từ chối đăng nhập nếu bị banned
-    if (account.status === AccountStatus.BANNED) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    this.validateAccountStatus(account);
 
     // So sánh mật khẩu đã hash với mật khẩu người dùng nhập vào
     const isMatch = await comparePassword(pass, account.passwordHashed);
@@ -150,9 +149,7 @@ export class AuthService {
 
     // 5) Kiểm tra trạng thái tài khoản ----------------------
     // Từ chối đăng nhập nếu account bị banned
-    if (account.status === AccountStatus.BANNED) {
-      throw new UnauthorizedException('Your account has been banned. Please contact support.');
-    }
+    this.validateAccountStatus(account);
 
     // 6) Ký JWT token ---------------------------------------
     // Payload chỉ chứa claims cần thiết (sub, email, phone, role).
@@ -182,5 +179,13 @@ export class AuthService {
           : new Date().toISOString(), // fallback nếu DB không có createdAt
       } as SummaryAccountDto,
     };
+  }
+
+  private validateAccountStatus(account: Account | SafeAccountDto): void {
+    if (account.status === AccountStatus.BANNED) {
+      // log in nestjs terminal
+      this.logger.warn(`Banned account login attempt: ${account.id}`);
+      throw new UnauthorizedException('Invalid credentials');
+    }
   }
 }
