@@ -13,18 +13,15 @@ import {
   Mail,
   Phone,
   Calendar,
-  Shield,
   Edit3,
   Save,
   X,
-  ImageIcon,
   Camera,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { UserSidebar } from '@/components/navbar/UserSidebar';
-import { AvatarUploader } from '@/app/(public)/profile/_components/AvatarUploader';
 import { AvatarChangeDialog } from './_components/AvatarChangeDialog';
 
 export default function ProfilePage() {
