@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { AccountsService } from '../accounts/accounts.service';
 import { comparePassword } from '../../shared/helpers/account.helper';
 import { JwtService } from '@nestjs/jwt';
@@ -22,7 +22,7 @@ export class AuthService {
     private readonly accountsService: AccountsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly logger: Console,
+    private readonly logger: Logger,
   ) {}
 
   /** seconds */
