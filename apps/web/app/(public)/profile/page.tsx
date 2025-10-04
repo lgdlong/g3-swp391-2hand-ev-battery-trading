@@ -8,16 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
 import { getCurrentUser, updateCurrentAccount, UpdateProfileDto } from '@/lib/api/accountApi';
 import { Account } from '@/types/account';
-import {
-  User,
-  Mail,
-  Phone,
-  Calendar,
-  Edit3,
-  Save,
-  X,
-  Camera,
-} from 'lucide-react';
+import { User, Mail, Phone, Calendar, Edit3, Save, X, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -78,14 +69,16 @@ export default function ProfilePage() {
   };
 
   const handleAvatarUploaded = async (url: string) => {
-    // cập nhật local UI ngay
-    setFormData((prev) => ({ ...prev, avatarUrl: url }));
-    setProfile((prev) => (prev ? { ...prev, avatarUrl: url } : prev));
-    
-    // ⭐ CRITICAL: Refresh auth context to update navbar avatar
-    await refreshUser();
-    
-    toast.success('Tải ảnh đại diện thành công');
+    try {
+      setFormData((prev) => ({ ...prev, avatarUrl: url }));
+      setProfile((prev) => (prev ? { ...prev, avatarUrl: url } : prev));
+
+      // Update auth context cho navbar cập nhật preview avatar mới nhất
+      await refreshUser();
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      toast.error('Không thể đồng bộ thông tin. Vui lòng tải lại trang.');
+    }
   };
 
   const handleSave = async () => {
