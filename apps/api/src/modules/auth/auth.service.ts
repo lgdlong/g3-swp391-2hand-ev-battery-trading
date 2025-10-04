@@ -55,7 +55,7 @@ export class AuthService {
 
     // 2. Kiểm tra tài khoản có tồn tại không và mật khẩu có khớp không
     if (!account) {
-      throw new UnauthorizedException('Invalid credentials!');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ!');
     }
 
     // 3. Kiểm tra trạng thái tài khoản - từ chối đăng nhập nếu bị banned
@@ -64,7 +64,7 @@ export class AuthService {
     // So sánh mật khẩu đã hash với mật khẩu người dùng nhập vào
     const isMatch = await comparePassword(pass, account.passwordHashed);
     if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials!');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ!');
     }
 
     const aEmail = account.email ? account.email : null;
@@ -117,11 +117,11 @@ export class AuthService {
     // 1) Validate đầu vào từ Google -------------------------
     if (!googleProfile?.email) {
       // Nếu không có email thì không thể map tới account → từ chối
-      throw new UnauthorizedException('Google profile missing email');
+      throw new UnauthorizedException('Hồ sơ Google thiếu email');
     }
     if (googleProfile.emailVerified === false) {
       // Ngăn account takeover: chỉ chấp nhận email đã verify từ Google
-      throw new UnauthorizedException('Google email is not verified');
+      throw new UnauthorizedException('Email chưa được xác minh bởi Google');
     }
 
     // 2) Chuẩn hoá email để tránh duplicate (viết hoa/thường, khoảng trắng)
@@ -185,7 +185,7 @@ export class AuthService {
     if (account.status === AccountStatus.BANNED) {
       // log in nestjs terminal
       this.logger.warn(`Banned account login attempt: ${account.id}`);
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ!');
     }
   }
 }
