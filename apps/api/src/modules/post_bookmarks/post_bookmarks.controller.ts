@@ -146,7 +146,15 @@ export class PostBookmarksController {
       throw new UnauthorizedException('User authentication failed');
     }
     
-    // Service will check ownership and return 404 if not owned
+    // Lấy bookmark để verify ownership
+    const bookmark = await this.postBookmarksService.findOne(id, user.sub);
+    
+    // Double-check ownership (defense in depth)
+    if (bookmark.accountId !== user.sub) {
+      throw new ForbiddenException('Cannot delete other users\' bookmarks');
+    }
+    
+    // Chỉ xóa khi đã confirm ownership
     return this.postBookmarksService.remove(id, user.sub);
   }
 }
