@@ -1,4 +1,6 @@
 
+
+
 # 2nd-hand EV Battery Trading Platform
 
 Nền tảng thương mại điện tử chuyên về mua bán pin xe điện cũ, được xây dựng với kiến trúc monorepo sử dụng Turborepo.
