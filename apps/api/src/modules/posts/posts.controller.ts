@@ -94,6 +94,27 @@ export class PostsController {
     return this.postsService.getBikePosts(query);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Lấy tất cả bài đăng cho admin (cần quyền admin)' })
+  @ApiOkResponse({
+    description: 'Danh sách tất cả bài đăng',
+    schema: {
+      type: 'array',
+      items: { $ref: getSchemaPath(BasePostResponseDto) },
+    },
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'q', required: false, type: String, example: 'vinfast' })
+  @ApiQuery({ name: 'sort', required: false, type: String, example: '-createdAt' })
+  @ApiQuery({ name: 'status', required: false, type: String, example: 'PENDING_REVIEW' })
+  @ApiQuery({ name: 'postType', required: false, type: String, example: 'EV_CAR' })
+  async getAllPostsForAdmin(@Query() query: ListQueryDto & { status?: string; postType?: string }): Promise<BasePostResponseDto[]> {
+    return this.postsService.getAllPostsForAdmin(query);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Lấy thông tin chi tiết bài đăng theo ID' })
   @ApiParam({
