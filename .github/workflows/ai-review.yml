@@ -1,0 +1,99 @@
+name: AI Code Review (Claude)
+
+on:
+  # Gõ /ai-review trong comment của PR để chạy
+  issue_comment:
+    types: [created]
+
+  # # Vẫn cho phép chạy tay từ tab Actions nếu muốn
+  # workflow_dispatch:
+  #   inputs:
+  #     pr:
+  #       description: 'PR number to review (e.g. 123)'
+  #       required: true
+
+  # # ai tự review mỗi khi có PR mới hoặc update PR
+  # pull_request:
+  #   branches: [dev]
+  #   types: [opened, synchronize, reopened]
+  # workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  review:
+    # Chỉ chạy nếu comment tạo trong PR,
+    # bắt đầu bằng "/ai-review", và người comment là OWNER/MEMBER/COLLABORATOR
+    if: >
+      github.event.issue.pull_request != null &&
+      startsWith(github.event.comment.body, '/ai-review') &&
+      (
+        github.event.comment.author_association == 'MEMBER' ||
+        github.event.comment.author_association == 'OWNER' ||
+        github.event.comment.author_association == 'COLLABORATOR'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: npm i undici
+
+      # (THÊM MỚI — cần thiết khi dùng issue_comment)
+      # Lấy số PR & base/head SHA từ PR gắn với comment
+      - name: Resolve PR context
+        id: prctx
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR=${{ github.event.issue.number }}
+          PR_JSON=$(gh api repos/${{ github.repository }}/pulls/$PR)
+          echo "pr=$PR" >> $GITHUB_OUTPUT
+          echo "base_sha=$(echo "$PR_JSON" | jq -r .base.sha)" >> $GITHUB_OUTPUT
+          echo "head_sha=$(echo "$PR_JSON" | jq -r .head.sha)" >> $GITHUB_OUTPUT
+          echo "html_url=$(echo "$PR_JSON" | jq -r .html_url)" >> $GITHUB_OUTPUT
+
+      - name: Run Claude review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
+          PR_BASE_SHA: ${{ steps.prctx.outputs.base_sha }}
+          PR_HEAD_SHA: ${{ steps.prctx.outputs.head_sha }}
+        run: |
+          node scripts/review.js
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-review-output
+          path: |
+            review.md
+            issues.json
+
+      - name: Post PR comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.prctx.outputs.pr }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          node scripts/post_comment.js
+
+      - name: Create Issues for High/Critical
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.prctx.outputs.pr }}
+          PR_URL: ${{ steps.prctx.outputs.html_url }}
+        run: |
+          node scripts/create_issues.js
