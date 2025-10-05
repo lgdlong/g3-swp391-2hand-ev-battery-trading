@@ -6,3 +6,15 @@ export const NEXT_PUBLIC_GOOGLE_AUTH_URL =
 
 export const ACCESS_TOKEN_KEY = 'access_token';
 export const DEFAULT_AVATAR_URL = 'https://avatar.iran.liara.run/public';
+
+// Avatar upload security constants
+export const AVATAR_ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+export const AVATAR_MAX_SIZE_MB = 5;
+export const AVATAR_MAX_SIZE_BYTES = AVATAR_MAX_SIZE_MB * 1024 * 1024;
+
+// Allowed image domains for Next.js Image component
+export const ALLOWED_IMAGE_DOMAINS = [
+  'res.cloudinary.com',
+  'lh3.googleusercontent.com',
+  'avatar.iran.liara.run',
+];
