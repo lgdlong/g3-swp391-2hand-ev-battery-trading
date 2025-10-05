@@ -8,6 +8,7 @@ import { CapacityFilterDropdown } from '../CapacityFilterDropdown';
 import { CyclesFilterDropdown } from '../CyclesFilterDropdown';
 import { HealthFilterDropdown } from '../HealthFilterDropdown';
 import { BatteryBrandFilterDropdown } from '../BatteryBrandFilterDropdown';
+import { FILTER_LABELS } from '../constants/filterConstants';
 
 interface DropdownManagerProps {
   showPriceDropdown: boolean;
@@ -61,7 +62,7 @@ export function DropdownManager({
   // Helper function to render dropdown content
   const renderDropdownContent = (buttonLabel: string) => {
     const dropdownMap = {
-      'Xem theo giá': {
+      [FILTER_LABELS.PRICE]: {
         show: showPriceDropdown,
         component: PriceFilterDropdown,
         props: {
@@ -73,7 +74,7 @@ export function DropdownManager({
           }
         }
       },
-      'Hãng xe': {
+      [FILTER_LABELS.BRAND]: {
         show: showBrandDropdown,
         component: BrandFilterDropdown,
         props: {
@@ -82,7 +83,7 @@ export function DropdownManager({
           currentBrand: appliedFilters.brand
         }
       },
-      'Dung lượng pin': {
+      [FILTER_LABELS.CAPACITY]: {
         show: showCapacityDropdown,
         component: CapacityFilterDropdown,
         props: {
@@ -91,7 +92,7 @@ export function DropdownManager({
           currentCapacity: appliedFilters.capacity
         }
       },
-      'Số chu kỳ': {
+      [FILTER_LABELS.CYCLES]: {
         show: showCyclesDropdown,
         component: CyclesFilterDropdown,
         props: {
@@ -100,7 +101,7 @@ export function DropdownManager({
           currentCycles: appliedFilters.cycles
         }
       },
-      'Tình trạng pin': {
+      [FILTER_LABELS.HEALTH]: {
         show: showHealthDropdown,
         component: HealthFilterDropdown,
         props: {
@@ -109,7 +110,7 @@ export function DropdownManager({
           currentHealth: appliedFilters.health
         }
       },
-      'Thương hiệu': {
+      [FILTER_LABELS.BATTERY_BRAND]: {
         show: showBatteryBrandDropdown,
         component: BatteryBrandFilterDropdown,
         props: {
@@ -118,7 +119,7 @@ export function DropdownManager({
           currentBrand: appliedFilters.batteryBrand
         }
       },
-      'Quãng đường di chuyển': {
+      [FILTER_LABELS.RANGE]: {
         show: showRangeDropdown,
         component: RangeFilterDropdown,
         props: {

@@ -73,10 +73,7 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
   };
 
   const handleFilterClick = (filterKey: string) => {
-    if (filterKey === 'available') {
-      setActiveFilter('available');
-      updateFilters({ status: 'available' });
-    } else if (filterKey === 'new-arrivals') {
+    if (filterKey === 'new-arrivals') {
       setActiveFilter('new-arrivals');
       updateFilters({ sortBy: 'newest' });
     } else {

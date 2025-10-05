@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getCarBrands, getBikeBrands } from '@/lib/api/catalogApi';
 
 interface BrandFilterDropdownProps {
   onApply: (brand: string) => void;
@@ -11,12 +13,26 @@ interface BrandFilterDropdownProps {
 export function BrandFilterDropdown({ onApply, onClose, currentBrand = '' }: BrandFilterDropdownProps) {
   const [selectedBrand, setSelectedBrand] = useState(currentBrand);
 
-  const brands = [
-    'VinFast', 'Tesla', 'BMW', 'Mercedes-Benz',
-    'Audi', 'Porsche', 'Volkswagen', 'Hyundai',
-    'Kia', 'Nissan', 'Toyota', 'Honda',
-    'BYD', 'Ford', 'Chevrolet'
-  ];
+  // Fetch car brands
+  const { data: carBrands = [] } = useQuery({
+    queryKey: ['carBrands'],
+    queryFn: getCarBrands,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  // Fetch bike brands
+  const { data: bikeBrands = [] } = useQuery({
+    queryKey: ['bikeBrands'],
+    queryFn: getBikeBrands,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  // Combine and deduplicate brands
+  const brands = React.useMemo(() => {
+    const allBrands = [...carBrands, ...bikeBrands];
+    const uniqueBrands = Array.from(new Set(allBrands.map(brand => brand.name)));
+    return uniqueBrands.sort();
+  }, [carBrands, bikeBrands]);
 
   const handleApply = () => {
     onApply(selectedBrand);
@@ -36,19 +52,25 @@ export function BrandFilterDropdown({ onApply, onClose, currentBrand = '' }: Bra
           <h3 className="text-sm font-semibold text-gray-900">Hãng xe điện</h3>
 
           <div className="grid grid-cols-2 gap-2">
-            {brands.map((brand) => (
-              <label key={brand} className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-emerald-50 transition-colors">
-                <input
-                  type="radio"
-                  name="brand"
-                  value={brand}
-                  checked={selectedBrand === brand}
-                  onChange={(e) => setSelectedBrand(e.target.value)}
-                  className="w-3 h-3 text-emerald-600"
-                />
-                <span className="text-sm text-gray-700">{brand}</span>
-              </label>
-            ))}
+            {brands.length > 0 ? (
+              brands.map((brand) => (
+                <label key={brand} className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-emerald-50 transition-colors">
+                  <input
+                    type="radio"
+                    name="brand"
+                    value={brand}
+                    checked={selectedBrand === brand}
+                    onChange={(e) => setSelectedBrand(e.target.value)}
+                    className="w-3 h-3 text-emerald-600"
+                  />
+                  <span className="text-sm text-gray-700">{brand}</span>
+                </label>
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-4 text-gray-500 text-sm">
+                Đang tải danh sách hãng xe...
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t">

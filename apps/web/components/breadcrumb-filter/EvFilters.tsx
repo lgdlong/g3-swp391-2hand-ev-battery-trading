@@ -1,20 +1,15 @@
-import { Truck, Star, DollarSign, Car } from 'lucide-react';
+import { Star, DollarSign, Car } from 'lucide-react';
+import { FILTER_LABELS } from './constants/filterConstants';
 
 export const evFilterButtons = [
   {
-    label: 'Sẵn hàng',
-    icon: <Truck className="h-4 w-4" />,
-    isActive: false,
-    onClick: () => {}
-  },
-  {
-    label: 'Hàng mới về',
+    label: FILTER_LABELS.NEW_ARRIVALS,
     icon: <Star className="h-4 w-4" />,
     isActive: false,
     onClick: () => {}
   },
   {
-    label: 'Xem theo giá',
+    label: FILTER_LABELS.PRICE,
     icon: <DollarSign className="h-4 w-4" />,
     hasDropdown: true,
     hasInfo: true,
@@ -22,7 +17,7 @@ export const evFilterButtons = [
     onClick: () => {}
   },
   {
-    label: 'Hãng xe',
+    label: FILTER_LABELS.BRAND,
     icon: <Car className="h-4 w-4" />,
     hasDropdown: true,
     hasInfo: true,
@@ -30,7 +25,7 @@ export const evFilterButtons = [
     onClick: () => {}
   },
   {
-    label: 'Quãng đường di chuyển',
+    label: FILTER_LABELS.RANGE,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,

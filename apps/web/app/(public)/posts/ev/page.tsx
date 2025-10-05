@@ -126,6 +126,7 @@ function EvPostsContent() {
     }
 
     // Apply new filter system
+    console.log('Applied filters:', appliedFilters);
     if (appliedFilters.status) {
       data = data.filter((p) => (p as any).status === appliedFilters.status);
     }
@@ -140,15 +141,81 @@ function EvPostsContent() {
     if (appliedFilters.range) {
       switch (appliedFilters.range) {
         case '<300':
-          data = data.filter((p) => (p as any).batteryCapacityKWh < 30); // Approximate range based on capacity
+          data = data.filter((p) => (p as any).rangeKm < 300);
           break;
         case '300-600':
-          data = data.filter((p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 60);
+          data = data.filter((p) => (p as any).rangeKm >= 300 && (p as any).rangeKm <= 600);
           break;
         case '>600':
-          data = data.filter((p) => (p as any).batteryCapacityKWh > 60);
+          data = data.filter((p) => (p as any).rangeKm > 600);
           break;
       }
+    }
+
+    if (appliedFilters.capacity) {
+      console.log('Filtering by capacity:', appliedFilters.capacity);
+      switch (appliedFilters.capacity) {
+        case '<30':
+          data = data.filter((p) => (p as any).batteryCapacityKWh < 30);
+          break;
+        case '30-50':
+          data = data.filter((p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 50);
+          break;
+        case '50-70':
+          data = data.filter((p) => (p as any).batteryCapacityKWh > 50 && (p as any).batteryCapacityKWh <= 70);
+          break;
+        case '70-100':
+          data = data.filter((p) => (p as any).batteryCapacityKWh > 70 && (p as any).batteryCapacityKWh <= 100);
+          break;
+        case '>100':
+          data = data.filter((p) => (p as any).batteryCapacityKWh > 100);
+          break;
+      }
+      console.log('After capacity filtering, data length:', data.length);
+    }
+
+    if (appliedFilters.cycles) {
+      switch (appliedFilters.cycles) {
+        case '<1000':
+          data = data.filter((p) => (p as any).cyclesUsed < 1000);
+          break;
+        case '1000-2000':
+          data = data.filter((p) => (p as any).cyclesUsed >= 1000 && (p as any).cyclesUsed <= 2000);
+          break;
+        case '2000-3000':
+          data = data.filter((p) => (p as any).cyclesUsed > 2000 && (p as any).cyclesUsed <= 3000);
+          break;
+        case '3000-4000':
+          data = data.filter((p) => (p as any).cyclesUsed > 3000 && (p as any).cyclesUsed <= 4000);
+          break;
+        case '>4000':
+          data = data.filter((p) => (p as any).cyclesUsed > 4000);
+          break;
+      }
+    }
+
+    if (appliedFilters.health) {
+      switch (appliedFilters.health) {
+        case 'excellent':
+          data = data.filter((p) => (p as any).batteryHealthPct >= 90);
+          break;
+        case 'very-good':
+          data = data.filter((p) => (p as any).batteryHealthPct >= 80 && (p as any).batteryHealthPct < 90);
+          break;
+        case 'good':
+          data = data.filter((p) => (p as any).batteryHealthPct >= 70 && (p as any).batteryHealthPct < 80);
+          break;
+        case 'fair':
+          data = data.filter((p) => (p as any).batteryHealthPct >= 60 && (p as any).batteryHealthPct < 70);
+          break;
+        case 'poor':
+          data = data.filter((p) => (p as any).batteryHealthPct < 60);
+          break;
+      }
+    }
+
+    if (appliedFilters.batteryBrand) {
+      data = data.filter((p) => (p as any).batteryBrand?.toLowerCase().includes(appliedFilters.batteryBrand.toLowerCase()));
     }
 
     if (appliedFilters.brand) {
