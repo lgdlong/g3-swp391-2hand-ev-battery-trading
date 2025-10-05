@@ -27,19 +27,9 @@ function pickImageUrl(p: any): string | null {
 
 function pickPrice(p: any): number | null {
   const price = p?.priceVnd;
-  if (price === null || price === undefined) return null;
-  
-  // Handle both string and number cases
-  if (typeof price === 'string') {
-    const parsed = parseFloat(price);
-    return isNaN(parsed) ? null : parsed;
-  }
-  
-  if (typeof price === 'number') {
-    return price;
-  }
-  
-  return null;
+  if (price == null) return null;
+  const numPrice = Number(price);
+  return isNaN(numPrice) ? null : numPrice;
 }
 
 function formatTimeAgo(dateString: string): string {
