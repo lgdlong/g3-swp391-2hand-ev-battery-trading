@@ -3,14 +3,18 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { getAccessToken } from './auth';
 import { ACCESS_TOKEN_KEY } from '@/config/constants';
+import { getCurrentAccount } from '@/lib/api/accountApi';
+import type { Account } from '@/types/account';
+import { AccountRole } from '@/types/enums/account-enum';
 
 interface AuthContextType {
   isLoggedIn: boolean;
   userRole: string | null;
-  user: any | null;
-  login: (token: string, user: any) => void;
+  user: Account | null;
+  login: (token: string, user: Partial<Account>) => void;
   logout: () => void;
   loading: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,10 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(parsedUser);
         } catch (error) {
           console.error('Error parsing user data:', error);
-          // Fallback to basic login state
-          setIsLoggedIn(true);
-          setUserRole('user');
-          setUser({ role: 'user' });
+          // Fallback to logged out state on error
+          logout();
         }
       } else {
         // No user data found, set logged out state
@@ -55,12 +57,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = useCallback((token: string, userData: any) => {
+  // Fetch complete user profile from /accounts/me
+  const refreshUser = useCallback(async () => {
+    try {
+      const token = getAccessToken();
+      if (!token) return;
+
+      const fullUserData = await getCurrentAccount();
+      console.log('[AuthContext] Fetched user profile from /accounts/me:', fullUserData);
+
+      localStorage.setItem('user_data', JSON.stringify(fullUserData));
+      setUser(fullUserData);
+      setUserRole(fullUserData.role || 'user');
+    } catch (error) {
+      console.error('[AuthContext] Error fetching user profile:', error);
+    }
+  }, []);
+
+  const login = useCallback(async (token: string, userData: Partial<Account>) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, token);
     localStorage.setItem('user_data', JSON.stringify(userData));
     setIsLoggedIn(true);
-    setUserRole(userData.role || 'user');
-    setUser(userData);
+    setUserRole(userData.role || AccountRole.USER);
+    setUser(userData as Account);
+
+    // Fetch complete user profile including avatarUrl
+    try {
+      const fullUserData = await getCurrentAccount();
+      console.log('[AuthContext] Fetched complete user profile:', fullUserData);
+      localStorage.setItem('user_data', JSON.stringify(fullUserData));
+      setUser(fullUserData);
+      setUserRole(fullUserData.role || 'user');
+    } catch (error) {
+      console.error('[AuthContext] Error fetching complete user profile:', error);
+    }
   }, []);
 
   const logout = () => {
@@ -80,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         loading,
+        refreshUser,
       }}
     >
       {children}

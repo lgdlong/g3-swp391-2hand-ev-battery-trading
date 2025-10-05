@@ -67,7 +67,7 @@ export default function LoginPage() {
         String(data.account.role).toLowerCase() === 'admin';
       router.replace(isAdmin ? '/admin' : '/');
 
-      toast.success('Logged in successfully');
+      toast.success('Đăng nhập thành công');
     },
     onError: (error) => handleApiError(error, form, 'Login failed'),
   });

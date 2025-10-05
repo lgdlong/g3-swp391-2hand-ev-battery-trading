@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { AccountsService } from '../accounts/accounts.service';
 import { comparePassword } from '../../shared/helpers/account.helper';
 import { JwtService } from '@nestjs/jwt';
@@ -14,6 +14,7 @@ import { LoginResponse } from './dto/login-response.dto';
 import { SummaryAccountDto } from '../accounts/dto/summary-account.dto';
 import { SafeAccountDto } from '../accounts/dto/safe-account.dto';
 import { getRandomPassword } from 'src/shared/helpers/account.helper';
+import { AccountStatus } from '../../shared/enums/account-status.enum';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
     private readonly accountsService: AccountsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly logger: Logger,
   ) {}
 
   /** seconds */
@@ -53,13 +55,16 @@ export class AuthService {
 
     // 2. Kiểm tra tài khoản có tồn tại không và mật khẩu có khớp không
     if (!account) {
-      throw new UnauthorizedException('Invalid credentials!');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ!');
     }
+
+    // 3. Kiểm tra trạng thái tài khoản - từ chối đăng nhập nếu bị banned
+    this.validateAccountStatus(account);
 
     // So sánh mật khẩu đã hash với mật khẩu người dùng nhập vào
     const isMatch = await comparePassword(pass, account.passwordHashed);
     if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials!');
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ!');
     }
 
     const aEmail = account.email ? account.email : null;
@@ -112,11 +117,11 @@ export class AuthService {
     // 1) Validate đầu vào từ Google -------------------------
     if (!googleProfile?.email) {
       // Nếu không có email thì không thể map tới account → từ chối
-      throw new UnauthorizedException('Google profile missing email');
+      throw new UnauthorizedException('Hồ sơ Google thiếu email');
     }
     if (googleProfile.emailVerified === false) {
       // Ngăn account takeover: chỉ chấp nhận email đã verify từ Google
-      throw new UnauthorizedException('Google email is not verified');
+      throw new UnauthorizedException('Email chưa được xác minh bởi Google');
     }
 
     // 2) Chuẩn hoá email để tránh duplicate (viết hoa/thường, khoảng trắng)
@@ -142,7 +147,11 @@ export class AuthService {
       account = await this.accountsService.update(account.id, patch);
     }
 
-    // 5) Ký JWT token ---------------------------------------
+    // 5) Kiểm tra trạng thái tài khoản ----------------------
+    // Từ chối đăng nhập nếu account bị banned
+    this.validateAccountStatus(account);
+
+    // 6) Ký JWT token ---------------------------------------
     // Payload chỉ chứa claims cần thiết (sub, email, phone, role).
     // Không đưa thông tin thừa từ Google vào JWT để tránh rò dữ liệu.
     const payload: JwtPayload = {
@@ -153,7 +162,7 @@ export class AuthService {
     };
     const tokens: Tokens = await this.signTokens(payload);
 
-    // 6) Trả về LoginResponse chuẩn hoá ---------------------
+    // 7) Trả về LoginResponse chuẩn hoá ---------------------
     // FE sẽ nhận được accessToken, refreshToken và thông tin account summary.
     return {
       accessToken: tokens.accessToken,
@@ -170,5 +179,13 @@ export class AuthService {
           : new Date().toISOString(), // fallback nếu DB không có createdAt
       } as SummaryAccountDto,
     };
+  }
+
+  private validateAccountStatus(account: Account | SafeAccountDto): void {
+    if (account.status === AccountStatus.BANNED) {
+      // log in nestjs terminal
+      this.logger.warn(`Banned account login attempt: ${account.id}`);
+      throw new UnauthorizedException('Thông tin đăng nhập không hợp lệ!');
+    }
   }
 }

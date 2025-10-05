@@ -10,18 +10,38 @@ export const api = axios.create({
 
 // Thêm interceptor để xử lý lỗi chung, lấy message từ backend response nếu có
 api.interceptors.response.use(
-  (r) => r,
+  (response) => response,
   (err) => {
-    const msg = err?.response?.data?.message ?? err.message ?? 'Request failed';
+    const status = err?.response?.status;
 
-    // Handle 401 Unauthorized - token expired or invalid
-    if (err?.response?.status === 401) {
-      console.log('Token expired, logging out...');
-      handleTokenExpiration();
-      return Promise.reject(new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'));
+    if (status === 401) {
+      const hasAuthToken = Boolean(err?.config?.headers?.Authorization);
+
+      if (hasAuthToken) {
+        // Token expiration case
+        handleTokenExpiration();
+        return Promise.reject({
+          code: 'TOKEN_EXPIRED',
+          message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+          originalError: err,
+        });
+      }
+
+      // Login failure - sanitize backend message
+      const backendMsg = err?.response?.data?.message;
+      const safeMsg =
+        typeof backendMsg === 'string'
+          ? backendMsg.slice(0, 200) // Limit length
+          : 'Authentication failed';
+
+      return Promise.reject({
+        code: 'AUTH_FAILED',
+        message: safeMsg,
+        originalError: err,
+      });
     }
 
-    return Promise.reject(new Error(msg));
-  }
+    // Other errors
+    return Promise.reject(err);
+  },
 );
-
