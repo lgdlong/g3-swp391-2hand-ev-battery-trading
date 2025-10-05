@@ -18,7 +18,7 @@ export interface Post {
   addressTextCached: FlexibleField;
   priceVnd: string;
   isNegotiable: boolean;
-  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'PAUSED' | 'SOLD' | 'ARCHIVED';
   submittedAt: FlexibleField;
   reviewedAt: FlexibleField;
   seller: {
@@ -146,7 +146,7 @@ export interface CreateBikePostDto {
 
 // Update post DTO
 export interface UpdatePostDto extends Partial<CreatePostDto> {
-  status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  status?: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'PAUSED' | 'SOLD' | 'ARCHIVED';
 }
 
 // Query parameters for getting posts
@@ -158,7 +158,7 @@ export interface GetPostsQuery {
   sort?: string;
   page?: number;
   postType?: 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
-  status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  status?: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'PAUSED' | 'SOLD' | 'ARCHIVED' | 'ALL';
 }
 
 // Response wrapper for paginated results
@@ -188,16 +188,89 @@ export async function getPosts(query: GetPostsQuery = {}): Promise<PostsResponse
   const params = new URLSearchParams();
 
   if (query.q) params.append('q', query.q);
-  if (query.offset !== undefined) params.append('offset', query.offset.toString());
   if (query.limit !== undefined) params.append('limit', query.limit.toString());
-  if (query.order) params.append('order', query.order);
-  if (query.sort) params.append('sort', query.sort);
   if (query.page !== undefined) params.append('page', query.page.toString());
-  if (query.postType) params.append('postType', query.postType);
-  if (query.status) params.append('status', query.status);
+  if (query.sort) params.append('sort', query.sort);
 
-  const { data } = await api.get<PostsResponse>(`/posts?${params.toString()}`);
-  return data;
+  try {
+    // Fetch car posts
+    const carResponse = await api.get<Post[]>(`/posts/car?${params.toString()}`);
+    const carPosts = Array.isArray(carResponse.data) ? carResponse.data : [];
+
+    // Fetch bike posts  
+    const bikeResponse = await api.get<Post[]>(`/posts/bike?${params.toString()}`);
+    const bikePosts = Array.isArray(bikeResponse.data) ? bikeResponse.data : [];
+
+    // Combine and filter by status if specified
+    let allPosts = [...carPosts, ...bikePosts];
+    
+    // Filter by status if specified
+    if (query.status && query.status !== 'ALL') {
+      allPosts = allPosts.filter(post => post.status === query.status);
+    }
+
+    // Sort by createdAt
+    allPosts.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return query.order === 'ASC' ? dateA - dateB : dateB - dateA;
+    });
+
+    // Apply pagination
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const offset = (page - 1) * limit;
+    const paginatedPosts = allPosts.slice(offset, offset + limit);
+
+    return {
+      data: paginatedPosts,
+      total: allPosts.length,
+      page,
+      limit,
+    };
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get all posts for admin with optional query parameters
+ * Supports filtering by status, postType, pagination, and search
+ */
+export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsResponse> {
+  const params = new URLSearchParams();
+
+  if (query.q) params.append('q', query.q);
+  if (query.limit !== undefined) params.append('limit', query.limit.toString());
+  if (query.page !== undefined) params.append('page', query.page.toString());
+  if (query.sort) params.append('sort', query.sort);
+  if (query.status && query.status !== 'ALL') params.append('status', query.status);
+  if (query.postType) params.append('postType', query.postType);
+
+  try {
+    const response = await api.get<Post[]>(`/posts/admin/all?${params.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+    
+    const allPosts = Array.isArray(response.data) ? response.data : [];
+
+    // Apply pagination
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const offset = (page - 1) * limit;
+    const paginatedPosts = allPosts.slice(offset, offset + limit);
+
+    return {
+      data: paginatedPosts,
+      total: allPosts.length,
+      page,
+      limit,
+    };
+  } catch (error) {
+    console.error('Error fetching admin posts:', error);
+    throw error;
+  }
 }
 
 /**
