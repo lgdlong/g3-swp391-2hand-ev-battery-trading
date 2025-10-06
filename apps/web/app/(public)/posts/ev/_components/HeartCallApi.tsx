@@ -42,12 +42,13 @@ export function HeartCallApi({ postId, initialBookmark }: { postId: number; init
             const existing = list.find((b) => Number(b.postId) === Number(postId));
             if (existing) setBookmark(existing);
             
-          } else if (err?.message === 'LOGIN_REQUIRED') {
+          } else if (err?.message === 'Authentication using token required!') {
             router.push('/login');
             setTimeout(() => window.location.assign('/login'), 300); //ép buộc chuyển trang vì push phế
             console.log('User not logged in, redirecting to login page.');
             
           } else {
+            console.log(err)
             console.warn('[Create] failed:', err);
           }
         }
