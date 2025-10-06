@@ -222,26 +222,4 @@ export class PostsService {
 
     return PostMapper.toBasePostResponseDto(post);
   }
-
-  async getAllPostsForAdmin(query: ListQueryDto & { status?: string; postType?: string }): Promise<BasePostResponseDto[]> {
-    const where: any = {};
-    
-    if (query.status) {
-      where.status = query.status;
-    }
-    
-    if (query.postType) {
-      where.postType = query.postType;
-    }
-
-    const rows = await this.postsRepo.find({
-      where,
-      relations: ['carDetails', 'bikeDetails', 'seller', 'images'],
-      order: { createdAt: query.order || 'DESC' },
-      take: query.limit,
-      skip: query.offset,
-    });
-    
-    return PostMapper.toBasePostResponseDtoArray(rows);
-  }
 }

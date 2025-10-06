@@ -63,7 +63,7 @@ export default function Home() {
       getCarPostsWithQuery({
         limit: 3,
         offset: 0,
-        status: 'PUBLISHED',
+        status: 'APPROVED',
         order: 'DESC',
         sort: 'createdAt',
       }),
@@ -77,7 +77,7 @@ export default function Home() {
       getBikePostsWithQuery({
         limit: 3,
         offset: 0,
-        status: 'PUBLISHED',
+        status: 'APPROVED',
         order: 'DESC',
         sort: 'createdAt',
       }),
