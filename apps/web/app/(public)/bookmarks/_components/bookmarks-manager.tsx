@@ -33,20 +33,21 @@ function pickPrice(p: any): number | null {
 }
 
 function formatTimeAgo(dateString: string): string {
+  console.log('Formatting date:', dateString);
   try {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) return 'Hôm nay';
     if (diffDays === 1) return '1 ngày trước';
     if (diffDays < 30) return `${diffDays} ngày trước`;
-    
+
     const diffMonths = Math.floor(diffDays / 30);
     if (diffMonths === 1) return '1 tháng trước';
     if (diffMonths < 12) return `${diffMonths} tháng trước`;
-    
+
     return `${Math.floor(diffMonths / 12)} năm trước`;
   } catch {
     return 'Gần đây';
@@ -57,18 +58,18 @@ function pickLocation(p: any): string {
   const district = p?.districtNameCached;
   const ward = p?.wardNameCached;
   const province = p?.provinceNameCached;
-  
+
   // Ưu tiên hiển thị quận/huyện
   if (district && district !== 'N/A') return district;
   if (ward && ward !== 'N/A') return ward;
   if (province && province !== 'N/A') return province;
-  
+
   return 'Không rõ';
 }
 
-type Row = Bookmark & { 
-  postTitle?: string; 
-  postImageUrl?: string | null; 
+type Row = Bookmark & {
+  postTitle?: string;
+  postImageUrl?: string | null;
   priceVnd?: number | null;
   isNegotiable?: boolean;
   location?: string;
@@ -91,21 +92,21 @@ export function BookmarksManager() {
           base.map(async (b) => {
             try {
               const post = await getPostById(String(b.postId));
-              console.log('Post for bookmark', b.id, post);
-              setRows((prev) =>
-                prev?.map((r) =>
-                  r.id === b.id
-                    ? {
-                        ...r,
-                        postTitle: pickTitle(post),
-                        postImageUrl: pickImageUrl(post),
-                        priceVnd: pickPrice(post),
-                        isNegotiable: post?.isNegotiable ?? false,
-                        location: pickLocation(post),
-                        timeAgo: formatTimeAgo(b.createdAt),
-                      }
-                    : r,
-                ) ?? prev,
+              setRows(
+                (prev) =>
+                  prev?.map((r) =>
+                    r.id === b.id
+                      ? {
+                          ...r,
+                          postTitle: pickTitle(post),
+                          postImageUrl: pickImageUrl(post),
+                          priceVnd: pickPrice(post),
+                          isNegotiable: post?.isNegotiable ?? false,
+                          location: pickLocation(post),
+                          timeAgo: formatTimeAgo(post.createdAt),
+                        }
+                      : r,
+                  ) ?? prev,
               );
             } catch {
               // nếu fail giữ nguyên, hiển thị fallback
@@ -147,10 +148,7 @@ export function BookmarksManager() {
   return (
     <div className="flex flex-col divide-y divide-gray-200">
       {rows.map((b) => (
-        <div
-          key={b.id}
-          className="relative flex gap-4 p-3 hover:bg-gray-50 transition-colors"
-        >
+        <div key={b.id} className="relative flex gap-4 p-3 hover:bg-gray-50 transition-colors">
           {/* Ảnh bên trái */}
           <Link
             href={`/posts/ev/${b.postId}`}
@@ -174,24 +172,22 @@ export function BookmarksManager() {
                   {b.postTitle || `Post #${b.postId}`}
                 </h3>
               </Link>
-              
+
               {/* Price display */}
               {b.priceVnd !== null && b.priceVnd !== undefined ? (
                 <p className="text-red-600 font-bold mt-1">
-                  {b.isNegotiable ? (
-                    'Liên hệ'
-                  ) : (
-                    new Intl.NumberFormat('vi-VN', {
-                      style: 'currency',
-                      currency: 'VND',
-                      minimumFractionDigits: 0,
-                    }).format(b.priceVnd)
-                  )}
+                  {b.isNegotiable
+                    ? 'Liên hệ'
+                    : new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND',
+                        minimumFractionDigits: 0,
+                      }).format(b.priceVnd)}
                 </p>
               ) : null}
-              
+
               <p className="text-xs text-gray-500 mt-1">
-                Cá nhân • {b.timeAgo || 'Gần đây'} • {b.location || 'Không rõ'}
+                {b.timeAgo || 'Gần đây'} • {b.location || 'Không rõ'}
               </p>
             </div>
 
