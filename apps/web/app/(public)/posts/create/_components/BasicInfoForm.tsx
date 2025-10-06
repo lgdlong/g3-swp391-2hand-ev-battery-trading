@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { FileText } from 'lucide-react';
 import { useProvinces, useDistricts, useWards } from '@/hooks/useGeo';
 
@@ -181,16 +182,18 @@ export default function BasicInfoForm({
 
           <div className="md:col-span-2">
             <Label htmlFor="description">Mô tả chi tiết</Label>
-            <textarea
+            <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => onInputChange('description', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                onInputChange('description', e.target.value)
+              }
               placeholder={
                 postType === 'ev'
                   ? 'Xe gia đình sử dụng kỹ, bảo dưỡng định kỳ tại hãng, pin còn tốt.'
                   : 'Pack tháo xe, đã test dung lượng, phù hợp thay thế hoặc dự phòng.'
               }
-              className="w-full min-h-24 px-3 py-2 border border-input rounded-md resize-none text-base"
+              className="min-h-24 resize-none text-base"
               rows={4}
             />
           </div>

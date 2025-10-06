@@ -13,7 +13,7 @@ interface EVDetailsFormProps {
     modelId: string;
     manufactureYear: string;
     bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE';
-    bikeStyle: 'SCOOTER' | 'SPORT' | 'CRUISER';
+    bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED';
     origin: 'NOI_DIA' | 'NHAP_KHAU';
     color: 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER';
     seats: string;
@@ -213,6 +213,18 @@ export default function EVDetailsForm({
           </div>
 
           <div>
+            <Label htmlFor="motorPowerKw">Công suất động cơ (kW)</Label>
+            <Input
+              id="motorPowerKw"
+              type="number"
+              value={formData.motorPowerKw}
+              onChange={(e) => onInputChange('motorPowerKw', e.target.value)}
+              placeholder="150"
+              className="text-base"
+            />
+          </div>
+
+          <div>
             <Label htmlFor="batteryHealthPct">Tình trạng pin (%)</Label>
             <Input
               id="batteryHealthPct"
@@ -266,11 +278,13 @@ export default function EVDetailsForm({
             <Label htmlFor="seats">Số chỗ ngồi</Label>
             <select
               id="seats"
-              value={formData.seats}
+              value={formData.vehicleType === 'xe_may' ? '2' : formData.seats}
               onChange={(e) => onInputChange('seats', e.target.value)}
               className="w-full px-3 py-2 border border-input rounded-md text-base"
+              disabled={formData.vehicleType === 'xe_may'}
             >
               <option value="">Chọn số chỗ ngồi</option>
+              <option value="2">2 chỗ</option>
               <option value="5">5 chỗ</option>
               <option value="8">8 chỗ</option>
             </select>
@@ -280,14 +294,30 @@ export default function EVDetailsForm({
             <Label htmlFor="bodyStyle">Kiểu dáng</Label>
             <select
               id="bodyStyle"
-              value={formData.bodyStyle}
-              onChange={(e) => onInputChange('bodyStyle', e.target.value)}
+              value={formData.vehicleType === 'xe_may' ? formData.bikeStyle : formData.bodyStyle}
+              onChange={(e) =>
+                onInputChange(
+                  formData.vehicleType === 'xe_may' ? 'bikeStyle' : 'bodyStyle',
+                  e.target.value,
+                )
+              }
               className="w-full px-3 py-2 border border-input rounded-md text-base"
             >
-              <option value="SEDAN">Sedan</option>
-              <option value="SUV">SUV</option>
-              <option value="HATCHBACK">Hatchback</option>
-              <option value="COUPE">Coupe</option>
+              {formData.vehicleType === 'xe_may' ? (
+                <>
+                  <option value="SCOOTER">Scooter</option>
+                  <option value="UNDERBONE">Underbone</option>
+                  <option value="MOTORCYCLE">Motorcycle</option>
+                  <option value="MOPED">Moped</option>
+                </>
+              ) : (
+                <>
+                  <option value="SEDAN">Sedan</option>
+                  <option value="SUV">SUV</option>
+                  <option value="HATCHBACK">Hatchback</option>
+                  <option value="COUPE">Coupe</option>
+                </>
+              )}
             </select>
           </div>
 
@@ -324,4 +354,3 @@ export default function EVDetailsForm({
     </Card>
   );
 }
-

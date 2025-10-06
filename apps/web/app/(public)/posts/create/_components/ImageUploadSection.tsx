@@ -48,22 +48,25 @@ export default function ImageUploadSection({
               onChange={onFileSelect}
               className="hidden"
             />
-            <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center">
+            <div className="flex flex-col items-center">
               <Upload className="h-12 w-12 text-gray-400 mb-4" />
               <p className="text-lg font-medium text-gray-700 mb-2">
                 Kéo thả hình ảnh vào đây hoặc
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white"
-              >
-                Chọn hình ảnh
-              </Button>
+              <label htmlFor="image-upload" className="cursor-pointer">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white"
+                  asChild
+                >
+                  <span>Chọn hình ảnh</span>
+                </Button>
+              </label>
               <p className="text-sm text-gray-500 mt-2">
                 Hỗ trợ: JPG, PNG, GIF (tối đa 10MB mỗi ảnh, tối đa 10 ảnh)
               </p>
-            </label>
+            </div>
           </div>
 
           {/* Image Previews */}
@@ -121,4 +124,3 @@ export default function ImageUploadSection({
     </div>
   );
 }
-

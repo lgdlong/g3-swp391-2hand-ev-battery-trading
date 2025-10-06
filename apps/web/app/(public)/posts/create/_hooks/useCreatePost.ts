@@ -33,7 +33,7 @@ export interface FormData {
   modelId: string;
   manufactureYear: string;
   bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE';
-  bikeStyle: 'SCOOTER' | 'SPORT' | 'CRUISER';
+  bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED';
   origin: 'NOI_DIA' | 'NHAP_KHAU';
   color: 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER';
   seats: string;
@@ -111,10 +111,19 @@ export function useCreatePost() {
   const [districtCode, setDistrictCode] = useState<string>('');
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+
+      // Auto-set seats to "2" when vehicleType changes to "xe_may"
+      if (field === 'vehicleType' && value === 'xe_may') {
+        newData.seats = '2';
+      }
+
+      return newData;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -452,4 +461,3 @@ export function useCreatePost() {
     formatNumberWithCommas,
   };
 }
-

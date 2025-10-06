@@ -177,7 +177,9 @@ export default function EvDetailPage({ params, searchParams }: Props) {
               <Card className="border-none shadow-none">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">Mô tả chi tiết</h2>
-                  <p className="text-gray-700 leading-relaxed">{post.description}</p>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {post.description}
+                  </p>
                 </CardContent>
               </Card>
             )}

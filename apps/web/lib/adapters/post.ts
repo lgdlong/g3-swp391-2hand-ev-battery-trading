@@ -84,17 +84,29 @@ function adaptImages(images: FlexibleField[] | undefined): PostImageUI[] {
   if (!images) return [];
 
   return images
-    .map((img): PostImageUI | undefined => {
+    .map((img, index): PostImageUI | undefined => {
       if (!img) return undefined;
-      // API may return string URL or object with url field
+
       if (typeof img === 'string') {
-        return { url: img };
+        return {
+          id: crypto.randomUUID(), // hoặc dùng index.toString() nếu bạn không cần unique
+          url: img,
+          position: index,
+        };
       }
+
       if (typeof img === 'object' && 'url' in img) {
         const anyImg = img as { url?: unknown; publicId?: unknown };
         const url = typeof anyImg.url === 'string' ? anyImg.url : undefined;
-        if (url) return { url };
+        if (url) {
+          return {
+            id: (anyImg.publicId as string) ?? crypto.randomUUID(),
+            url,
+            position: index,
+          };
+        }
       }
+
       return undefined;
     })
     .filter((x): x is PostImageUI => !!x);
