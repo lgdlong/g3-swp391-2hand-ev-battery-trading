@@ -8,7 +8,7 @@ export function HeartCallApi({ postId, initialBookmark }: { postId: number; init
   const [bookmark, setBookmark] = useState<Bookmark | null>(initialBookmark ?? null);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
-  // ✅ HYDRATE khi vừa vào trang / sau đăng nhập
+  // ✅ HYDRATE khi vừa vào trang / sau đăng nhập (giống tạo sẵn HTMl rồi chờ mình đăng nhập là nó sẽ load thêm dữ liệu mới chứ không phải load lại trang)
   useEffect(() => {
     if (bookmark) return; // đã có rồi thì thôi
     (async () => {
@@ -44,8 +44,9 @@ export function HeartCallApi({ postId, initialBookmark }: { postId: number; init
             
           } else if (err?.message === 'Authentication using token required!') {
             router.push('/login');
-            setTimeout(() => window.location.assign('/login'), 300); //ép buộc chuyển trang vì push phế
             console.log('User not logged in, redirecting to login page.');
+            setTimeout(() => window.location.assign('/login'), 300); //ép buộc chuyển trang vì push phế
+            
             
           } else {
             console.log(err)

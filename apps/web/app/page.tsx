@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { getCarPostsWithQuery, getBikePostsWithQuery } from '@/lib/api/postApi';
 import { useQuery } from '@tanstack/react-query';
-// import { SearchBar } from '@/components/searchbar'; // Currently unused
 
 export default function Home() {
   const categories = [
