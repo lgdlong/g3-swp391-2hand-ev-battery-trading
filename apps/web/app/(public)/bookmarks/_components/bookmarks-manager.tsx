@@ -152,7 +152,7 @@ export function BookmarksManager() {
           {/* Ảnh bên trái */}
           <Link
             href={`/posts/ev/${b.postId}`}
-            className="relative flex-shrink-0 w-32 h-24 rounded-md overflow-hidden bg-gray-100"
+            className="relative flex-shrink-0 w-32 h-24 overflow-hidden bg-gray-100"
           >
             <Image
               src={b.postImageUrl || '/asset/phu-tung-o-to-27.png'}
