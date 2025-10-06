@@ -10,7 +10,6 @@ import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { formatVnd, originText, getLocation, statusChip } from '@/lib/utils/format';
 import { SellerInfo, Specifications } from './_components';
-import { BookMarkButton } from '../_components/BookMarkButton';
 import { HeartCallApi } from '../_components/HeartCallApi';
 
 interface Props {

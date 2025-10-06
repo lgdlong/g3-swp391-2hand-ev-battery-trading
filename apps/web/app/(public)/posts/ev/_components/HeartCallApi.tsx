@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import HeartToggle from './HeartToggle';
 import { createBookmark, deleteBookmark, getAllBookmarks } from '@/lib/api/bookmarkApi';
 import type { Bookmark } from '@/types/bookmark';
+import { useRouter } from 'next/navigation';
 
 export function HeartCallApi({ postId, initialBookmark }: { postId: number; initialBookmark?: Bookmark | null }) {
   const [bookmark, setBookmark] = useState<Bookmark | null>(initialBookmark ?? null);
   const [busy, setBusy] = useState(false);
-
+  const router = useRouter();
   // ✅ HYDRATE khi vừa vào trang / sau đăng nhập
   useEffect(() => {
     if (bookmark) return; // đã có rồi thì thôi
@@ -16,7 +17,6 @@ export function HeartCallApi({ postId, initialBookmark }: { postId: number; init
         const existing = list.find((b) => Number(b.postId) === Number(postId));
         if (existing) setBookmark(existing);
       } catch {
-        // chưa login thì bỏ qua, lần sau có token sẽ hydrate lại (xem Cách B với authReady)
       }
     })();
   }, [postId]); // thêm [authReady] nếu bạn có biến báo token sẵn sàng
@@ -33,14 +33,20 @@ export function HeartCallApi({ postId, initialBookmark }: { postId: number; init
           const created = await createBookmark({ postId });
           setBookmark(created);
         } catch (err: any) {
+          // Nếu server báo đã tồn tại (409) -> đồng bộ lại từ server
           const status = err?.response?.status ?? err?.status;
+           
           if (status === 409) {
             // đồng bộ lại
             const list = await getAllBookmarks();
             const existing = list.find((b) => Number(b.postId) === Number(postId));
             if (existing) setBookmark(existing);
+            
           } else if (err?.message === 'LOGIN_REQUIRED') {
-            // show login
+            router.push('/login');
+            setTimeout(() => window.location.assign('/login'), 300); //ép buộc chuyển trang vì push phế
+            console.log('User not logged in, redirecting to login page.');
+            
           } else {
             console.warn('[Create] failed:', err);
           }
