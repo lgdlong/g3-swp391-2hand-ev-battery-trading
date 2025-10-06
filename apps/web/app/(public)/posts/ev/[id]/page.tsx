@@ -10,7 +10,7 @@ import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { formatVnd, originText, getLocation } from '@/lib/utils/format';
 import { SellerInfo, Specifications } from './_components';
-import { BookMarkButton } from '../_components/BookMarkButton';
+import { HeartCallApi } from '../_components/HeartCallApi';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -153,7 +153,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 <div className="flex flex-col items-start justify-between mb-4 gap-4">
                   <div className="flex items-center justify-between w-full">
                     <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
-                    <BookMarkButton liked={liked} onClick={() => setLiked((v) => !v)} />
+                    <HeartCallApi postId={Number(post.id)} initialBookmark={null} />
                   </div>
                   <div className="text-2xl font-bold text-[#048C73] mb-2">
                     {formatVnd(post.priceVnd)}
