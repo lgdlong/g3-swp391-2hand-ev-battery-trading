@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { sampleBatteryPosts, formatVnd } from './sample-battery';
 import { FilterButtons } from '@/components/breadcrumb-filter';
-import HeartToggle from '@/app/(public)/posts/ev/_components/HeartToggle';
+import { HeartCallApi } from '../ev/_components/HeartCallApi';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
@@ -275,7 +275,7 @@ function BatteryPostsContent() {
 
                       {/* Bookmark button */}
                       <div className="mt-4 flex justify-end" onClick={(e) => e.preventDefault()}>
-                        <HeartToggle />
+                        <HeartCallApi postId={Number(item.id)} initialBookmark={null} />
                       </div>
                     </div>
                   </CardContent>
