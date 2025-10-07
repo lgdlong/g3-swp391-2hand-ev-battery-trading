@@ -277,25 +277,24 @@ export default function Home() {
                       <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
                         <Image
                           src={
-                            (typeof post.images?.[0] === 'string' ? post.images[0] : null) ||
-                            '/asset/phu-tung-o-to-27.png'
+                            // support legacy types where images may be array of strings
+                            (Array.isArray(post.images) &&
+                            typeof (post.images as any)[0] === 'object'
+                              ? (post.images as any)[0]?.url
+                              : undefined) || '/asset/phu-tung-o-to-27.png'
                           }
                           alt={post.title}
                           fill
-                          className="object-contain p-6 group-hover:scale-105 transition-transform duration-300"
+                          className="object-contain group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute top-3 left-3">
-                          <span className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
-                            {isCarPost ? 'Ô TÔ ĐIỆN' : 'XE MÁY ĐIỆN'}
-                          </span>
-                        </div>
-                        <div className="absolute top-3 right-3">
                           <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(post.status)}`}
+                            className={`${isCarPost ? 'bg-[#048C73]' : 'bg-[#2563EB]'} text-white px-2 py-1 rounded text-xs font-medium`}
                           >
-                            {getStatusText(post.status)}
+                            {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                           </span>
                         </div>
+                        {/* Status badge removed */}
                       </div>
                       <div className="p-6">
                         <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-[#048C73] transition-colors line-clamp-2">
