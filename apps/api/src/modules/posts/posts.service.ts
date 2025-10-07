@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
-import { PostType } from '../../shared/enums/post.enum';
+import { PostType, PostStatus } from '../../shared/enums/post.enum';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
 import { Account } from '../accounts/entities/account.entity';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
@@ -243,5 +243,45 @@ export class PostsService {
     });
     
     return PostMapper.toBasePostResponseDtoArray(rows);
+  }
+
+  /**
+   * Approve a post (Admin only)
+   */
+  async approvePost(id: string): Promise<BasePostResponseDto> {
+    const post = await this.postsRepo.findOne({
+      where: { id: id },
+      relations: ['seller', 'carDetails', 'bikeDetails', 'batteryDetails'],
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    post.status = PostStatus.PUBLISHED;
+    post.reviewedAt = new Date();
+    await this.postsRepo.save(post);
+
+    return PostMapper.toBasePostResponseDto(post);
+  }
+
+  /**
+   * Reject a post (Admin only)
+   */
+  async rejectPost(id: string, reason?: string): Promise<BasePostResponseDto> {
+    const post = await this.postsRepo.findOne({
+      where: { id: id },
+      relations: ['seller', 'carDetails', 'bikeDetails', 'batteryDetails'],
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+
+    post.status = PostStatus.REJECTED;
+    post.reviewedAt = new Date();
+    await this.postsRepo.save(post);
+
+    return PostMapper.toBasePostResponseDto(post);
   }
 }
