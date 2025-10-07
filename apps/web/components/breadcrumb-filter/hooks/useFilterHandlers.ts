@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 export interface FilterState {
-  activeFilter: string;
   appliedFilters: any;
   showPriceDropdown: boolean;
   showRangeDropdown: boolean;
@@ -13,7 +12,6 @@ export interface FilterState {
 }
 
 export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
-  const [activeFilter, setActiveFilter] = useState('all');
   const [appliedFilters, setAppliedFilters] = useState<any>({});
   const [showPriceDropdown, setShowPriceDropdown] = useState(false);
   const [showRangeDropdown, setShowRangeDropdown] = useState(false);
@@ -30,37 +28,93 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     onFilterChange?.(newFilters);
   };
 
-  const handlePriceApply = (priceRange: { min: number; max: number }) => {
-    updateFilters({ priceMin: priceRange.min, priceMax: priceRange.max });
+  const handlePriceApply = (priceRange: { min: number | null; max: number | null }) => {
+    if (priceRange.min === null && priceRange.max === null) {
+      // Clear price filter by removing the keys
+      const newFilters = { ...appliedFilters };
+      delete newFilters.priceMin;
+      delete newFilters.priceMax;
+      setAppliedFilters(newFilters);
+      onFilterChange?.(newFilters);
+    } else {
+      updateFilters({ priceMin: priceRange.min, priceMax: priceRange.max });
+    }
   };
 
   const handleRangeApply = (range: string) => {
-    updateFilters({ range });
+    if (range === '') {
+      // Clear range filter
+      const newFilters = { ...appliedFilters };
+      delete newFilters.range;
+      setAppliedFilters(newFilters);
+      onFilterChange?.(newFilters);
+    } else {
+      updateFilters({ range });
+    }
   };
 
   const handleBrandApply = (brand: string) => {
-    updateFilters({ brand });
+    if (brand === '') {
+      // Clear brand filter
+      const newFilters = { ...appliedFilters };
+      delete newFilters.brand;
+      setAppliedFilters(newFilters);
+      onFilterChange?.(newFilters);
+    } else {
+      updateFilters({ brand });
+    }
   };
 
   const handleCapacityApply = (capacity: string) => {
-    updateFilters({ capacity });
+    if (capacity === '') {
+      // Clear capacity filter
+      const newFilters = { ...appliedFilters };
+      delete newFilters.capacity;
+      setAppliedFilters(newFilters);
+      onFilterChange?.(newFilters);
+    } else {
+      updateFilters({ capacity });
+    }
   };
 
   const handleCyclesApply = (cycles: string) => {
-    updateFilters({ cycles });
+    if (cycles === '') {
+      // Clear cycles filter
+      const newFilters = { ...appliedFilters };
+      delete newFilters.cycles;
+      setAppliedFilters(newFilters);
+      onFilterChange?.(newFilters);
+    } else {
+      updateFilters({ cycles });
+    }
   };
 
   const handleHealthApply = (health: string) => {
-    updateFilters({ health });
+    if (health === '') {
+      // Clear health filter
+      const newFilters = { ...appliedFilters };
+      delete newFilters.health;
+      setAppliedFilters(newFilters);
+      onFilterChange?.(newFilters);
+    } else {
+      updateFilters({ health });
+    }
   };
 
   const handleBatteryBrandApply = (brand: string) => {
-    updateFilters({ batteryBrand: brand });
+    if (brand === '') {
+      // Clear battery brand filter
+      const newFilters = { ...appliedFilters };
+      delete newFilters.batteryBrand;
+      setAppliedFilters(newFilters);
+      onFilterChange?.(newFilters);
+    } else {
+      updateFilters({ batteryBrand: brand });
+    }
   };
 
   const handleClearAllFilters = () => {
     setAppliedFilters({});
-    setActiveFilter('all');
     // Close all dropdowns
     setShowPriceDropdown(false);
     setShowRangeDropdown(false);
@@ -74,7 +128,7 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
 
   const handleFilterClick = (filterKey: string) => {
     if (filterKey === 'new-arrivals') {
-      setActiveFilter('new-arrivals');
+      // For new-arrivals, apply immediately since no dropdown
       updateFilters({ sortBy: 'newest' });
     } else {
       // Handle dropdown toggles
@@ -90,7 +144,6 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
 
       const currentDropdownSetter = dropdownStates[filterKey as keyof typeof dropdownStates];
       if (currentDropdownSetter) {
-        setActiveFilter(filterKey);
         currentDropdownSetter(prev => !prev);
 
         // Close all other dropdowns
@@ -104,7 +157,6 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
   };
 
   return {
-    activeFilter,
     appliedFilters,
     showPriceDropdown,
     showRangeDropdown,

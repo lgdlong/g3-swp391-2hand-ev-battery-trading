@@ -5,7 +5,7 @@ import { PRICE_CONSTANTS, DROPDOWN_TITLES } from './constants/dropdownConstants'
 import { DropdownButtons } from './components/DropdownButtons';
 
 interface PriceFilterDropdownProps {
-  onApply: (priceRange: { min: number; max: number }) => void;
+  onApply: (priceRange: { min: number | null; max: number | null }) => void;
   onClose: () => void;
   currentRange?: { min: number; max: number };
 }
@@ -30,12 +30,8 @@ export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFil
   };
 
   const handleClear = () => {
-    const defaultRange = {
-      min: PRICE_CONSTANTS.MIN_PRICE,
-      max: PRICE_CONSTANTS.DEFAULT_MAX_PRICE
-    };
-    setPriceRange(defaultRange);
-    onApply(defaultRange);
+    // Clear the price filter completely
+    onApply({ min: null, max: null });
     onClose();
   };
 

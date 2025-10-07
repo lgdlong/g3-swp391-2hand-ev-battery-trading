@@ -29,7 +29,7 @@ export function FilterButton({
         className={cn(
           'flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200 text-sm font-medium',
           isActive
-            ? 'border-red-500 text-red-500 bg-red-50' // Nút "Bộ lọc" - màu đỏ
+            ? 'border-emerald-500 text-emerald-600 bg-emerald-50 shadow-sm' // Nút được chọn - màu xanh lá
             : 'border-gray-300 text-gray-700 bg-gray-50 hover:bg-gray-100 hover:border-gray-400'
         )}
       >

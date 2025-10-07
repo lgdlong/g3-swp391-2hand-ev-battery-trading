@@ -1,13 +1,7 @@
-import { Star, DollarSign, Zap } from 'lucide-react';
+import { DollarSign, Zap } from 'lucide-react';
 import { FILTER_LABELS } from './constants/filterConstants';
 
 export const batteryFilterButtons = [
-  {
-    label: FILTER_LABELS.NEW_ARRIVALS,
-    icon: <Star className="h-4 w-4" />,
-    isActive: false,
-    onClick: () => {}
-  },
   {
     label: FILTER_LABELS.PRICE,
     icon: <DollarSign className="h-4 w-4" />,

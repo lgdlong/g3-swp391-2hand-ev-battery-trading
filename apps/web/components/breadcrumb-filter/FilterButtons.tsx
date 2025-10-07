@@ -23,7 +23,6 @@ export function FilterButtons({
 
   // Use filter handlers hook
   const {
-    activeFilter,
     appliedFilters,
     showPriceDropdown,
     showRangeDropdown,
@@ -105,7 +104,7 @@ export function FilterButtons({
           <h3 className="text-lg font-bold text-gray-900">Chọn theo tiêu chí</h3>
           <ButtonRenderer
             type={type}
-            activeFilter={activeFilter}
+            appliedFilters={appliedFilters}
             handleFilterClick={handleFilterClick}
             renderDropdownContent={renderDropdownContent}
           />

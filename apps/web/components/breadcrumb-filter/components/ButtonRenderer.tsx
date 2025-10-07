@@ -8,27 +8,51 @@ import { LABEL_TO_FILTER_KEY } from '../constants/filterConstants';
 
 interface ButtonRendererProps {
   type: 'ev' | 'battery';
-  activeFilter: string;
+  appliedFilters: any;
   handleFilterClick: (filterKey: string) => void;
   renderDropdownContent: (buttonLabel: string) => React.ReactNode;
 }
 
 export function ButtonRenderer({
   type,
-  activeFilter,
+  appliedFilters,
   handleFilterClick,
   renderDropdownContent
 }: ButtonRendererProps) {
   // Get filter buttons based on type
   const filterButtons = type === 'battery' ? batteryFilterButtons : evFilterButtons;
 
-  // Update button states with active filter
+  // Helper function to check if a filter is applied
+  const isFilterApplied = (filterKey: string): boolean => {
+    switch (filterKey) {
+      case 'price':
+        return !!(appliedFilters.priceMin && appliedFilters.priceMax);
+      case 'brand':
+        return !!appliedFilters.brand;
+      case 'capacity':
+        return !!appliedFilters.capacity;
+      case 'cycles':
+        return !!appliedFilters.cycles;
+      case 'health':
+        return !!appliedFilters.health;
+      case 'batteryBrand':
+        return !!appliedFilters.batteryBrand;
+      case 'range':
+        return !!appliedFilters.range;
+      case 'new-arrivals':
+        return !!appliedFilters.sortBy;
+      default:
+        return false;
+    }
+  };
+
+  // Update button states with applied filters
   const buttonsWithState = filterButtons.map(button => {
     const filterKey = LABEL_TO_FILTER_KEY[button.label] || 'all';
 
     return {
       ...button,
-      isActive: activeFilter === filterKey,
+      isActive: isFilterApplied(filterKey),
       onClick: () => handleFilterClick(filterKey)
     };
   });
