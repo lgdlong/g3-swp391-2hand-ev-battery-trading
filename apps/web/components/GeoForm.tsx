@@ -19,7 +19,6 @@ export default function GeoForm() {
       wardCode,
       specificAddress
     });
-    // TODO: Implement address submission logic
     setIsOpen(false);
   };
   const districtsQ = useDistricts(provinceCode || undefined);

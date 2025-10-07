@@ -4,11 +4,23 @@ import { handleTokenExpiration } from '@/lib/auth-manager';
 
 export const api = axios.create({
   baseURL: DEFAULT_API_BASE_URL,
-  headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+  // Don't force Content-Type globally; let axios set it based on payload
+  headers: { Accept: 'application/json' },
   timeout: 15000,
 });
 
 // Thêm interceptor để xử lý lỗi chung, lấy message từ backend response nếu có
+// Ensure correct Content-Type for JSON requests only
+api.interceptors.request.use((config) => {
+  const isFormData = typeof FormData !== 'undefined' && config.data instanceof FormData;
+  if (!isFormData && config.headers && config.data && typeof config.data === 'object') {
+    if (!config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json';
+    }
+  }
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
   (err) => {
