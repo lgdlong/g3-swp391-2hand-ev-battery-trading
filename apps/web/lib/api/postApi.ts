@@ -210,6 +210,45 @@ export async function getPosts(query: GetPostsQuery = {}): Promise<PostsResponse
 }
 
 /**
+ * Get all posts for admin with optional query parameters
+ * Supports filtering by status, postType, pagination, and search
+ */
+export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsResponse> {
+  const params = new URLSearchParams();
+
+  if (query.q) params.append('q', query.q);
+  if (query.limit !== undefined) params.append('limit', query.limit.toString());
+  if (query.page !== undefined) params.append('page', query.page.toString());
+  if (query.sort) params.append('sort', query.sort);
+  if (query.status && query.status !== 'ALL') params.append('status', query.status);
+  if (query.postType) params.append('postType', query.postType);
+
+  try {
+    const response = await api.get<Post[]>(`/posts/admin/all?${params.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+    
+    const allPosts = Array.isArray(response.data) ? response.data : [];
+
+    // Apply pagination
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const offset = (page - 1) * limit;
+    const paginatedPosts = allPosts.slice(offset, offset + limit);
+
+    return {
+      data: paginatedPosts,
+      total: allPosts.length, // Đây là tổng số bài đăng với status tương ứng
+      page,
+      limit,
+    };
+  } catch (error) {
+    console.error('Error fetching admin posts:', error);
+    throw error;
+  }
+}
+
+/**
  * Get posts by specific type (car, bike, battery)
  */
 export async function getPostsByType(

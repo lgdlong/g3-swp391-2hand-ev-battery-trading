@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UploadedFiles,
@@ -57,7 +58,7 @@ export class PostsController {
   //-----------------------------------------
   //------------ GET ENDPOINTS --------------
   //-----------------------------------------
-
+@ApiBearerAuth()
   @Get('car')
   @ApiOperation({ summary: 'Danh sách bài đăng xe ô tô điện (EV_CAR)' })
   @ApiOkResponse({
@@ -92,6 +93,28 @@ export class PostsController {
   @ApiQuery({ name: 'sort', required: false, type: String, example: 'price' })
   async getBikePosts(@Query() query: ListQueryDto): Promise<BasePostResponseDto[]> {
     return this.postsService.getBikePosts(query);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Lấy tất cả bài đăng cho admin (cần quyền admin)' })
+  @ApiOkResponse({
+    description: 'Danh sách tất cả bài đăng',
+    schema: {
+      type: 'array',
+      items: { $ref: getSchemaPath(BasePostResponseDto) },
+    },
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'q', required: false, type: String, example: 'vinfast' })
+  @ApiQuery({ name: 'sort', required: false, type: String, example: '-createdAt' })
+  @ApiQuery({ name: 'status', required: false, type: String, example: 'PENDING_REVIEW' })
+  @ApiQuery({ name: 'postType', required: false, type: String, example: 'EV_CAR' })
+  async getAllPostsForAdmin(@Query() query: ListQueryDto & { status?: string; postType?: string }): Promise<BasePostResponseDto[]> {
+    return this.postsService.getAllPostsForAdmin(query);
   }
 
   @Get(':id')
@@ -238,5 +261,55 @@ export class PostsController {
     await this.postsService.addImages(postId, uploaded);
 
     return { images: uploaded };
+  }
+
+  //-----------------------------------------
+  //------------ PATCH ENDPOINTS ------------
+  //-----------------------------------------
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Patch(':id/approve')
+  @ApiOperation({ summary: 'Duyệt bài đăng (Admin only)' })
+  @ApiParam({ name: 'id', type: String, example: '123' })
+  @ApiOkResponse({
+    description: 'Duyệt bài đăng thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiNotFoundResponse({ description: 'Không tìm thấy bài đăng' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không đủ quyền admin' })
+  async approvePost(@Param('id') id: string): Promise<BasePostResponseDto> {
+    return this.postsService.approvePost(id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Patch(':id/reject')
+  @ApiOperation({ summary: 'Từ chối bài đăng (Admin only)' })
+  @ApiParam({ name: 'id', type: String, example: '123' })
+  @ApiBody({
+    description: 'Lý do từ chối (optional)',
+    schema: {
+      type: 'object',
+      properties: {
+        reason: { type: 'string', example: 'Nội dung không phù hợp' },
+      },
+    },
+  })
+  @ApiOkResponse({
+    description: 'Từ chối bài đăng thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiNotFoundResponse({ description: 'Không tìm thấy bài đăng' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không đủ quyền admin' })
+  async rejectPost(
+    @Param('id') id: string,
+    @Body() body?: { reason?: string },
+  ): Promise<BasePostResponseDto> {
+    return this.postsService.rejectPost(id, body?.reason);
   }
 }
