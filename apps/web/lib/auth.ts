@@ -13,7 +13,6 @@ export function getAuthHeaders() {
     throw new Error('Authentication using token required!');
   }
   return {
-    'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
   };
 }
