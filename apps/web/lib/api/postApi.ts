@@ -263,7 +263,7 @@ export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsRes
 
     return {
       data: paginatedPosts,
-      total: allPosts.length,
+      total: allPosts.length, // Đây là tổng số bài đăng với status tương ứng
       page,
       limit,
     };
