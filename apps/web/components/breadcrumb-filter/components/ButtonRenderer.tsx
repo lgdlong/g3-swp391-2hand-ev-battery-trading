@@ -4,7 +4,7 @@ import React from 'react';
 import { FilterButton } from '../FilterButton';
 import { evFilterButtons } from '../EvFilters';
 import { batteryFilterButtons } from '../BatteryFilters';
-import { LABEL_TO_FILTER_KEY } from '../constants/filterConstants';
+import { LABEL_TO_FILTER_KEY } from '@/config/constants/filterConstants';
 
 interface ButtonRendererProps {
   type: 'ev' | 'battery';
@@ -17,19 +17,19 @@ export function ButtonRenderer({
   type,
   activeFilter,
   handleFilterClick,
-  renderDropdownContent
+  renderDropdownContent,
 }: ButtonRendererProps) {
   // Get filter buttons based on type
   const filterButtons = type === 'battery' ? batteryFilterButtons : evFilterButtons;
 
   // Update button states with active filter
-  const buttonsWithState = filterButtons.map(button => {
+  const buttonsWithState = filterButtons.map((button) => {
     const filterKey = LABEL_TO_FILTER_KEY[button.label] || 'all';
 
     return {
       ...button,
       isActive: activeFilter === filterKey,
-      onClick: () => handleFilterClick(filterKey)
+      onClick: () => handleFilterClick(filterKey),
     };
   });
 

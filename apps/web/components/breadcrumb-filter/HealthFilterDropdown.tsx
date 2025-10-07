@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { HEALTH_OPTIONS, DROPDOWN_TITLES } from './constants/dropdownConstants';
+import { HEALTH_OPTIONS, DROPDOWN_TITLES } from '@/config/constants/dropdownConstants';
 import { DropdownButtons } from './components/DropdownButtons';
 
 interface HealthFilterDropdownProps {
@@ -10,7 +10,11 @@ interface HealthFilterDropdownProps {
   currentHealth?: string;
 }
 
-export function HealthFilterDropdown({ onApply, onClose, currentHealth = '' }: HealthFilterDropdownProps) {
+export function HealthFilterDropdown({
+  onApply,
+  onClose,
+  currentHealth = '',
+}: HealthFilterDropdownProps) {
   const [selectedHealth, setSelectedHealth] = useState(currentHealth);
 
   const handleApply = () => {
@@ -46,11 +50,7 @@ export function HealthFilterDropdown({ onApply, onClose, currentHealth = '' }: H
             ))}
           </div>
 
-          <DropdownButtons
-            onClear={handleClear}
-            onCancel={onClose}
-            onApply={handleApply}
-          />
+          <DropdownButtons onClear={handleClear} onCancel={onClose} onApply={handleApply} />
         </div>
       </div>
     </div>

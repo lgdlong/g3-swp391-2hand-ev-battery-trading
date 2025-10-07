@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { RANGE_OPTIONS, DROPDOWN_TITLES } from './constants/dropdownConstants';
+import { RANGE_OPTIONS, DROPDOWN_TITLES } from '@/config/constants/dropdownConstants';
 import { DropdownButtons } from './components/DropdownButtons';
 
 interface RangeFilterDropdownProps {
@@ -46,14 +46,9 @@ export function RangeFilterDropdown({ onApply, onClose, currentRange }: RangeFil
             ))}
           </div>
 
-          <DropdownButtons
-            onClear={handleClear}
-            onCancel={onClose}
-            onApply={handleApply}
-          />
+          <DropdownButtons onClear={handleClear} onCancel={onClose} onApply={handleApply} />
         </div>
       </div>
     </div>
   );
 }
-

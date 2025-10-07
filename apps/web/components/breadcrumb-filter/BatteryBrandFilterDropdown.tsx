@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BATTERY_BRAND_OPTIONS, DROPDOWN_TITLES } from './constants/dropdownConstants';
+import { BATTERY_BRAND_OPTIONS, DROPDOWN_TITLES } from '@/config/constants/dropdownConstants';
 import { DropdownButtons } from './components/DropdownButtons';
 
 interface BrandFilterDropdownProps {
@@ -10,7 +10,11 @@ interface BrandFilterDropdownProps {
   currentBrand?: string;
 }
 
-export function BatteryBrandFilterDropdown({ onApply, onClose, currentBrand = '' }: BrandFilterDropdownProps) {
+export function BatteryBrandFilterDropdown({
+  onApply,
+  onClose,
+  currentBrand = '',
+}: BrandFilterDropdownProps) {
   const [selectedBrand, setSelectedBrand] = useState(currentBrand);
 
   const handleApply = () => {
@@ -46,11 +50,7 @@ export function BatteryBrandFilterDropdown({ onApply, onClose, currentBrand = ''
             ))}
           </div>
 
-          <DropdownButtons
-            onClear={handleClear}
-            onCancel={onClose}
-            onApply={handleApply}
-          />
+          <DropdownButtons onClear={handleClear} onCancel={onClose} onApply={handleApply} />
         </div>
       </div>
     </div>

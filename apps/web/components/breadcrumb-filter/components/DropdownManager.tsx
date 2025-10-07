@@ -8,7 +8,7 @@ import { CapacityFilterDropdown } from '../CapacityFilterDropdown';
 import { CyclesFilterDropdown } from '../CyclesFilterDropdown';
 import { HealthFilterDropdown } from '../HealthFilterDropdown';
 import { BatteryBrandFilterDropdown } from '../BatteryBrandFilterDropdown';
-import { FILTER_LABELS } from '../constants/filterConstants';
+import { FILTER_LABELS } from '@/config/constants/filterConstants';
 
 interface DropdownManagerProps {
   showPriceDropdown: boolean;
@@ -57,7 +57,7 @@ export function DropdownManager({
   handleCapacityApply,
   handleCyclesApply,
   handleHealthApply,
-  handleBatteryBrandApply
+  handleBatteryBrandApply,
 }: DropdownManagerProps) {
   // Helper function to render dropdown content
   const renderDropdownContent = (buttonLabel: string) => {
@@ -70,9 +70,9 @@ export function DropdownManager({
           onClose: () => setShowPriceDropdown(false),
           currentRange: {
             min: appliedFilters.priceMin || 0,
-            max: appliedFilters.priceMax || 1000000000
-          }
-        }
+            max: appliedFilters.priceMax || 1000000000,
+          },
+        },
       },
       [FILTER_LABELS.BRAND]: {
         show: showBrandDropdown,
@@ -80,8 +80,8 @@ export function DropdownManager({
         props: {
           onApply: handleBrandApply,
           onClose: () => setShowBrandDropdown(false),
-          currentBrand: appliedFilters.brand
-        }
+          currentBrand: appliedFilters.brand,
+        },
       },
       [FILTER_LABELS.CAPACITY]: {
         show: showCapacityDropdown,
@@ -89,8 +89,8 @@ export function DropdownManager({
         props: {
           onApply: handleCapacityApply,
           onClose: () => setShowCapacityDropdown(false),
-          currentCapacity: appliedFilters.capacity
-        }
+          currentCapacity: appliedFilters.capacity,
+        },
       },
       [FILTER_LABELS.CYCLES]: {
         show: showCyclesDropdown,
@@ -98,8 +98,8 @@ export function DropdownManager({
         props: {
           onApply: handleCyclesApply,
           onClose: () => setShowCyclesDropdown(false),
-          currentCycles: appliedFilters.cycles
-        }
+          currentCycles: appliedFilters.cycles,
+        },
       },
       [FILTER_LABELS.HEALTH]: {
         show: showHealthDropdown,
@@ -107,8 +107,8 @@ export function DropdownManager({
         props: {
           onApply: handleHealthApply,
           onClose: () => setShowHealthDropdown(false),
-          currentHealth: appliedFilters.health
-        }
+          currentHealth: appliedFilters.health,
+        },
       },
       [FILTER_LABELS.BATTERY_BRAND]: {
         show: showBatteryBrandDropdown,
@@ -116,8 +116,8 @@ export function DropdownManager({
         props: {
           onApply: handleBatteryBrandApply,
           onClose: () => setShowBatteryBrandDropdown(false),
-          currentBrand: appliedFilters.batteryBrand
-        }
+          currentBrand: appliedFilters.batteryBrand,
+        },
       },
       [FILTER_LABELS.RANGE]: {
         show: showRangeDropdown,
@@ -125,9 +125,9 @@ export function DropdownManager({
         props: {
           onApply: handleRangeApply,
           onClose: () => setShowRangeDropdown(false),
-          currentRange: appliedFilters.range
-        }
-      }
+          currentRange: appliedFilters.range,
+        },
+      },
     };
 
     const config = dropdownMap[buttonLabel as keyof typeof dropdownMap];
@@ -140,8 +140,3 @@ export function DropdownManager({
 
   return { renderDropdownContent };
 }
-
-
-
-
-

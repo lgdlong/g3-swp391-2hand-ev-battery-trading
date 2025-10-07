@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CAPACITY_OPTIONS, DROPDOWN_TITLES } from './constants/dropdownConstants';
+import { CAPACITY_OPTIONS, DROPDOWN_TITLES } from '@/config/constants/dropdownConstants';
 import { DropdownButtons } from './components/DropdownButtons';
 
 interface CapacityFilterDropdownProps {
@@ -10,7 +10,11 @@ interface CapacityFilterDropdownProps {
   currentCapacity?: string;
 }
 
-export function CapacityFilterDropdown({ onApply, onClose, currentCapacity = '' }: CapacityFilterDropdownProps) {
+export function CapacityFilterDropdown({
+  onApply,
+  onClose,
+  currentCapacity = '',
+}: CapacityFilterDropdownProps) {
   const [selectedCapacity, setSelectedCapacity] = useState(currentCapacity);
 
   const handleApply = () => {
@@ -46,11 +50,7 @@ export function CapacityFilterDropdown({ onApply, onClose, currentCapacity = '' 
             ))}
           </div>
 
-          <DropdownButtons
-            onClear={handleClear}
-            onCancel={onClose}
-            onApply={handleApply}
-          />
+          <DropdownButtons onClear={handleClear} onCancel={onClose} onApply={handleApply} />
         </div>
       </div>
     </div>

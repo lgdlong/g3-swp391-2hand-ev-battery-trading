@@ -1,12 +1,12 @@
 import { Star, DollarSign, Car } from 'lucide-react';
-import { FILTER_LABELS } from './constants/filterConstants';
+import { FILTER_LABELS } from '@/config/constants/filterConstants';
 
 export const evFilterButtons = [
   {
     label: FILTER_LABELS.NEW_ARRIVALS,
     icon: <Star className="h-4 w-4" />,
     isActive: false,
-    onClick: () => {}
+    onClick: () => {},
   },
   {
     label: FILTER_LABELS.PRICE,
@@ -14,7 +14,7 @@ export const evFilterButtons = [
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
+    onClick: () => {},
   },
   {
     label: FILTER_LABELS.BRAND,
@@ -22,13 +22,13 @@ export const evFilterButtons = [
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
+    onClick: () => {},
   },
   {
     label: FILTER_LABELS.RANGE,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
-  }
+    onClick: () => {},
+  },
 ];

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CYCLES_OPTIONS, DROPDOWN_TITLES } from './constants/dropdownConstants';
+import { CYCLES_OPTIONS, DROPDOWN_TITLES } from '@/config/constants/dropdownConstants';
 import { DropdownButtons } from './components/DropdownButtons';
 
 interface CyclesFilterDropdownProps {
@@ -10,7 +10,11 @@ interface CyclesFilterDropdownProps {
   currentCycles?: string;
 }
 
-export function CyclesFilterDropdown({ onApply, onClose, currentCycles = '' }: CyclesFilterDropdownProps) {
+export function CyclesFilterDropdown({
+  onApply,
+  onClose,
+  currentCycles = '',
+}: CyclesFilterDropdownProps) {
   const [selectedCycles, setSelectedCycles] = useState(currentCycles);
 
   const handleApply = () => {
@@ -46,11 +50,7 @@ export function CyclesFilterDropdown({ onApply, onClose, currentCycles = '' }: C
             ))}
           </div>
 
-          <DropdownButtons
-            onClear={handleClear}
-            onCancel={onClose}
-            onApply={handleApply}
-          />
+          <DropdownButtons onClear={handleClear} onCancel={onClose} onApply={handleApply} />
         </div>
       </div>
     </div>
