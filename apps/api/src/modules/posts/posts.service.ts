@@ -18,6 +18,7 @@ import { PostImageMapper } from './mappers/post-image.mapper';
 import { AddressService } from '../address/address.service';
 import { buildAddressText } from 'src/shared/helpers/address.helper';
 import { CarDetailsService } from '../post-details/services/car-details.service';
+import { DISPLAYABLE_POST_STATUS } from 'src/shared/constants/post';
 
 @Injectable()
 export class PostsService {
@@ -34,7 +35,10 @@ export class PostsService {
 
   async getCarPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
     const rows = await this.postsRepo.find({
-      where: { postType: PostType.EV_CAR },
+      where: {
+        postType: PostType.EV_CAR,
+        status: DISPLAYABLE_POST_STATUS, // Only return published posts
+      },
       relations: ['carDetails', 'seller', 'images'],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
@@ -107,7 +111,10 @@ export class PostsService {
 
   async getBikePosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
     const rows = await this.postsRepo.find({
-      where: { postType: PostType.EV_BIKE },
+      where: {
+        postType: PostType.EV_BIKE,
+        status: DISPLAYABLE_POST_STATUS, // Only return published posts
+      },
       relations: ['bikeDetails', 'seller', 'images'],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
@@ -122,7 +129,7 @@ export class PostsService {
   ): Promise<BasePostResponseDto[]> {
     const where: any = {
       title: ILike(`%${searchQuery}%`),
-      status: PostStatus.PUBLISHED, // Only search published posts
+      status: DISPLAYABLE_POST_STATUS, // Only search published posts
     };
 
     // Filter by postType if provided
@@ -302,7 +309,7 @@ export class PostsService {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
-    post.status = PostStatus.PUBLISHED;
+    post.status = DISPLAYABLE_POST_STATUS;
     post.reviewedAt = new Date();
     await this.postsRepo.save(post);
 
