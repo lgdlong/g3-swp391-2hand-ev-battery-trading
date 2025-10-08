@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LocationSelector } from './LocationSelector';
@@ -71,6 +71,16 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
     setIsFilterOpen(false);
   };
 
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSelectedLocation('');
+    setSelectedBrand('');
+    setIsFilterOpen(false);
+    // Navigate back to default list
+    router.push('/posts/ev');
+    toast.success('Đã xóa bộ lọc tìm kiếm');
+  };
+
   return (
     <div className={`w-full relative overflow-visible z-10 ${className}`}>
       {/* Clean Background */}
@@ -89,9 +99,22 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-transparent border-0 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-0 text-base h-full rounded-xl shadow-none"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
+
+            {/* Clear Search Button - show only when there's a search query or location */}
+            {(searchQuery || selectedLocation) && (
+              <Button
+                onClick={handleClearSearch}
+                variant="ghost"
+                size="sm"
+                className="h-10 w-10 p-0 hover:bg-gray-100 rounded-full flex-shrink-0"
+                title="Xóa tìm kiếm"
+              >
+                <X strokeWidth={4} size={36} className="text-zinc-950" />
+              </Button>
+            )}
 
             {/* Location Dropdown */}
             <LocationSelector

@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getCarPostsWithQuery, getBikePostsWithQuery } from '@/lib/api/postApi';
+import { getCarPostsWithQuery, getBikePostsWithQuery, searchPosts } from '@/lib/api/postApi';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FilterButtons } from '@/components/breadcrumb-filter';
@@ -33,16 +33,37 @@ function EvPostsContent() {
     setMax(maxParam ? Number(maxParam) : null);
   }, [searchParams]);
 
-  // Fetch car posts from API
+  // Use search API when query exists, otherwise fetch regular posts
+  const shouldUseSearch = !!query;
+
+  // Search posts when query exists
+  const {
+    data: searchResults = [],
+    isLoading: isLoadingSearch,
+    error: searchError,
+  } = useQuery({
+    queryKey: ['searchPosts', query, location, sort],
+    queryFn: async () => {
+      if (!query) return [];
+      return await searchPosts(query, {
+        provinceNameCached: location || undefined,
+        limit: 100,
+        order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+      });
+    },
+    enabled: shouldUseSearch, // Only run when there's a search query
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch car posts from API (only when not searching)
   const {
     data: carPosts = [],
     isLoading: isLoadingCars,
     error: carError,
   } = useQuery({
-    queryKey: ['carPosts', query, location, brand, min, max, sort],
+    queryKey: ['carPosts', sort],
     queryFn: async () => {
       const queryParams = {
-        q: query || undefined,
         offset: 0,
         limit: 50,
         order: (sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC') as
@@ -53,19 +74,19 @@ function EvPostsContent() {
       };
       return await getCarPostsWithQuery(queryParams);
     },
+    enabled: !shouldUseSearch, // Only fetch when not searching
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch bike posts from API
+  // Fetch bike posts from API (only when not searching)
   const {
     data: bikePosts = [],
     isLoading: isLoadingBikes,
     error: bikeError,
   } = useQuery({
-    queryKey: ['bikePosts', query, location, brand, min, max, sort],
+    queryKey: ['bikePosts', sort],
     queryFn: async () => {
       const queryParams = {
-        q: query || undefined,
         offset: 0,
         limit: 50,
         order: (sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC') as
@@ -76,28 +97,36 @@ function EvPostsContent() {
       };
       return await getBikePostsWithQuery(queryParams);
     },
+    enabled: !shouldUseSearch, // Only fetch when not searching
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Combine loading states and errors
-  const isLoading = isLoadingCars || isLoadingBikes;
+  const isLoading = shouldUseSearch ? isLoadingSearch : isLoadingCars || isLoadingBikes;
 
   // Handle API errors
   useEffect(() => {
-    if (carError) {
+    if (searchError && shouldUseSearch) {
+      toast.error('Không thể tìm kiếm. Vui lòng thử lại.');
+      console.error('Error searching posts:', searchError);
+    }
+    if (carError && !shouldUseSearch) {
       toast.error('Không thể tải danh sách xe điện. Vui lòng thử lại.');
       console.error('Error fetching car posts:', carError);
     }
-    if (bikeError) {
+    if (bikeError && !shouldUseSearch) {
       toast.error('Không thể tải danh sách xe máy điện. Vui lòng thử lại.');
       console.error('Error fetching bike posts:', bikeError);
     }
-  }, [carError, bikeError]);
+  }, [carError, bikeError, searchError, shouldUseSearch]);
 
-  // Combine car and bike posts
+  // Combine car and bike posts, or use search results
   const allEvPosts = useMemo(() => {
+    if (shouldUseSearch) {
+      return searchResults;
+    }
     return [...carPosts, ...bikePosts];
-  }, [carPosts, bikePosts]);
+  }, [carPosts, bikePosts, searchResults, shouldUseSearch]);
 
   // Client-side filtering (additional filtering beyond API)
   const filtered = useMemo(() => {
