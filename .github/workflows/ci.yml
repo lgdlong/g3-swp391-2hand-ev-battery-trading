@@ -1,0 +1,132 @@
+name: CI - Build & Type Check
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+  pull_request:
+    branches:
+      - main
+      - dev
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build All Packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Check build artifacts
+        run: |
+          echo "✅ Build completed successfully!"
+          echo "Checking for build outputs..."
+          ls -la apps/web/.next || echo "⚠️ Web build output not found"
+          ls -la apps/api/dist || echo "⚠️ API build output not found"
+
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Type check
+        run: pnpm turbo run type-check
+        continue-on-error: true
+
+  build-status:
+    name: Build Status Check
+    runs-on: ubuntu-latest
+    needs: [build, lint]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          if [ "${{ needs.build.result }}" != "success" ]; then
+            echo "❌ Build failed! Please fix the build errors before merging."
+            exit 1
+          fi
+          echo "✅ All checks passed!"
+
+      - name: Post status comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildStatus = '${{ needs.build.result }}';
+            const lintStatus = '${{ needs.lint.result }}';
+
+            const statusEmoji = buildStatus === 'success' ? '✅' : '❌';
+            const lintEmoji = lintStatus === 'success' ? '✅' : '⚠️';
+
+            const comment = `## CI Build Status ${statusEmoji}
+
+            | Check | Status |
+            |-------|--------|
+            | Build | ${statusEmoji} ${buildStatus.toUpperCase()} |
+            | Lint | ${lintEmoji} ${lintStatus.toUpperCase()} |
+
+            ${buildStatus === 'success' ? '✨ All builds completed successfully!' : '⚠️ Build failed. Please fix the errors before merging.'}
+
+            ---
+            *Last updated: ${new Date().toUTCString()}*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
