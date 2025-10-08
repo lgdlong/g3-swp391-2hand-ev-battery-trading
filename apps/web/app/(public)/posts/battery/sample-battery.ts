@@ -24,6 +24,7 @@ export type BatteryPost = {
   status: 'available' | 'sold' | 'reserved';
   cyclesUsed?: number; // số lần đã sạc
   healthPercent?: number; // % tuổi thọ còn lại
+  rangeKm?: number; // quãng đường di chuyển trên 1 lần sạc (km)
 };
 
 export const sampleBatteryPosts: BatteryPost[] = [
@@ -50,6 +51,7 @@ export const sampleBatteryPosts: BatteryPost[] = [
     status: 'available',
     cyclesUsed: 320,
     healthPercent: 90,
+    rangeKm: 450,
   },
   {
     id: 'bat-102',
@@ -74,6 +76,32 @@ export const sampleBatteryPosts: BatteryPost[] = [
     status: 'sold',
     cyclesUsed: 800,
     healthPercent: 85,
+    rangeKm: 280,
+  },
+  {
+    id: 'bat-103',
+    sellerId: 'seller-500',
+    title: 'Pack pin EV 15kWh - phạm vi ngắn',
+    description: 'Pack pin nhỏ gọn, phù hợp xe điện cỡ nhỏ, phạm vi hoạt động ngắn.',
+    imageUrl: '/next.svg',
+    statusPost: 'approved',
+    priceVnd: 25000000,
+    wardId: 'ward-05',
+    addressText: 'Quận 1, TP.HCM',
+    createdAt: '2024-12-01',
+    updatedAt: '2025-01-15',
+
+    type: 'battery',
+    location: 'TP.HCM',
+    thumbnail: '/next.svg',
+
+    brand: 'BYD',
+    batteryCapacityKWh: 15,
+    year: 2022,
+    status: 'available',
+    cyclesUsed: 150,
+    healthPercent: 95,
+    rangeKm: 180,
   },
 ];
 

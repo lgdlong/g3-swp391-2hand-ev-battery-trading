@@ -141,13 +141,25 @@ function EvPostsContent() {
     if (appliedFilters.range) {
       switch (appliedFilters.range) {
         case '<300':
-          data = data.filter((p) => (p as any).rangeKm < 300);
+          data = data.filter((p) => {
+            const rangeKm = p.carDetails?.range_km || p.bikeDetails?.range_km;
+            const range = parseFloat(rangeKm?.toString() || '0');
+            return range > 0 && range < 300; // Chỉ hiển thị post có range > 0 và < 300
+          });
           break;
         case '300-600':
-          data = data.filter((p) => (p as any).rangeKm >= 300 && (p as any).rangeKm <= 600);
+          data = data.filter((p) => {
+            const rangeKm = p.carDetails?.range_km || p.bikeDetails?.range_km;
+            const range = parseFloat(rangeKm?.toString() || '0');
+            return range >= 300 && range <= 600;
+          });
           break;
         case '>600':
-          data = data.filter((p) => (p as any).rangeKm > 600);
+          data = data.filter((p) => {
+            const rangeKm = p.carDetails?.range_km || p.bikeDetails?.range_km;
+            const range = parseFloat(rangeKm?.toString() || '0');
+            return range > 600;
+          });
           break;
       }
     }

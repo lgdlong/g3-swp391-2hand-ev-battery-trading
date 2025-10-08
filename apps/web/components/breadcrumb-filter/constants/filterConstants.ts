@@ -3,7 +3,7 @@ export const FILTER_LABELS = {
   NEW_ARRIVALS: 'Hàng mới về',
   PRICE: 'Xem theo giá',
   BRAND: 'Hãng xe',
-  RANGE: 'Quãng đường di chuyển',
+  RANGE: 'Quãng đường di chuyển trên 1 lần sạc',
   CAPACITY: 'Dung lượng pin',
   HEALTH: 'Tình trạng pin',
   CYCLES: 'Số chu kỳ',

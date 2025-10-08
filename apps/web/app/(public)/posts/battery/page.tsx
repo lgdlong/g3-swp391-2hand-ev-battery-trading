@@ -35,6 +35,9 @@ function BatteryPostsContent() {
 
   const filtered = useMemo(() => {
     let data = [...sampleBatteryPosts];
+
+    // Default filter: only show available posts
+    data = data.filter((p) => p.status === 'available');
     const q = query.trim().toLowerCase();
     if (q)
       data = data.filter(

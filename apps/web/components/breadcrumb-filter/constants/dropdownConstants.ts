@@ -16,9 +16,9 @@ export const CAPACITY_OPTIONS = [
 ] as const;
 
 export const RANGE_OPTIONS = [
-  { value: '<300', label: 'Dưới 300km' },
-  { value: '300-600', label: '300km - 600km' },
-  { value: '>600', label: 'Trên 600km' }
+  { value: '<300', label: 'Dưới 300km/lần sạc' },
+  { value: '300-600', label: '300km - 600km/lần sạc' },
+  { value: '>600', label: 'Trên 600km/lần sạc' }
 ] as const;
 
 export const HEALTH_OPTIONS = [
@@ -61,7 +61,7 @@ export const BUTTON_LABELS = {
 export const DROPDOWN_TITLES = {
   CYCLES: 'Số chu kỳ',
   CAPACITY: 'Dung lượng pin',
-  RANGE: 'Quãng đường di chuyển',
+  RANGE: 'Quãng đường di chuyển trên 1 lần sạc',
   HEALTH: 'Tình trạng pin',
   PRICE: 'Chọn khoảng giá',
   BRAND: 'Hãng xe điện',
