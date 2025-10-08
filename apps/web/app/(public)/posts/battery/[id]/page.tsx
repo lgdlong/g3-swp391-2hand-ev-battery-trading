@@ -57,6 +57,7 @@ export default async function BatteryDetailPage({ params, searchParams }: Props)
         type="battery"
         initialCategory="Pin EV"
         initialSubcategory={brand || post.brand || post.title}
+        showFilters={false}
       />
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { Logo } from './Logo';
@@ -74,7 +75,7 @@ export function Navbar({ className }: HeaderProps) {
       >
         <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex h-16 items-center justify-between">
-            {/* Left: Sidebar Menu + Logo + User Mode Toggle */}
+            {/* Left: Logo + User Mode Toggle */}
             <div className="flex items-center gap-4">
               <Logo size="md" className="group-hover:scale-105 transition-transform duration-300" />
               <UserModeToggle />
@@ -112,3 +113,6 @@ export function Navbar({ className }: HeaderProps) {
     </>
   );
 }
+
+// Export individual components for potential reuse
+export { Logo, Navigation, UserActions, UserSidebar, UserModeToggle };

@@ -1,26 +1,9 @@
-import { Filter, Truck, Star, DollarSign, Zap } from 'lucide-react';
+import { DollarSign, Zap } from 'lucide-react';
+import { FILTER_LABELS } from './constants/filterConstants';
 
 export const batteryFilterButtons = [
   {
-    label: 'Bộ lọc',
-    icon: <Filter className="h-4 w-4" />,
-    isActive: false,
-    onClick: () => {}
-  },
-  {
-    label: 'Sẵn hàng',
-    icon: <Truck className="h-4 w-4" />,
-    isActive: false,
-    onClick: () => {}
-  },
-  {
-    label: 'Hàng mới về',
-    icon: <Star className="h-4 w-4" />,
-    isActive: false,
-    onClick: () => {}
-  },
-  {
-    label: 'Xem theo giá',
+    label: FILTER_LABELS.PRICE,
     icon: <DollarSign className="h-4 w-4" />,
     hasDropdown: true,
     hasInfo: true,
@@ -28,7 +11,7 @@ export const batteryFilterButtons = [
     onClick: () => {}
   },
   {
-    label: 'Dung lượng pin',
+    label: FILTER_LABELS.CAPACITY,
     icon: <Zap className="h-4 w-4" />,
     hasDropdown: true,
     hasInfo: true,
@@ -36,21 +19,21 @@ export const batteryFilterButtons = [
     onClick: () => {}
   },
   {
-    label: 'Tình trạng pin',
+    label: FILTER_LABELS.HEALTH,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
     onClick: () => {}
   },
   {
-    label: 'Số chu kỳ',
+    label: FILTER_LABELS.CYCLES,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
     onClick: () => {}
   },
   {
-    label: 'Thương hiệu',
+    label: FILTER_LABELS.BATTERY_BRAND,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
