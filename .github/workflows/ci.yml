@@ -44,7 +44,7 @@ jobs:
           cache: 'pnpm'
 
       - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: HUSKY=0 pnpm install --frozen-lockfile
 
       - name: ⚡ Build changed packages only (with cache)
         run: pnpm turbo run build --filter=...[HEAD^1]
