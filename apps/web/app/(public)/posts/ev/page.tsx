@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getCarPostsWithQuery, getBikePostsWithQuery } from '@/lib/api/postApi';
+import { getCarPostsWithQuery, getBikePostsWithQuery, searchPosts } from '@/lib/api/postApi';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FilterButtons } from '@/components/breadcrumb-filter';
@@ -24,7 +24,8 @@ function EvPostsContent() {
 
   useEffect(() => {
     setQuery(searchParams.get('q') || '');
-    setLocation(searchParams.get('loc') || '');
+    // Support both 'loc' and 'location' params for backward compatibility
+    setLocation(searchParams.get('location') || searchParams.get('loc') || '');
     setBrand(searchParams.get('brand') || '');
     const minParam = searchParams.get('min');
     const maxParam = searchParams.get('max');
@@ -32,16 +33,37 @@ function EvPostsContent() {
     setMax(maxParam ? Number(maxParam) : null);
   }, [searchParams]);
 
-  // Fetch car posts from API
+  // Use search API when query exists, otherwise fetch regular posts
+  const shouldUseSearch = !!query;
+
+  // Search posts when query exists
+  const {
+    data: searchResults = [],
+    isLoading: isLoadingSearch,
+    error: searchError,
+  } = useQuery({
+    queryKey: ['searchPosts', query, location, sort],
+    queryFn: async () => {
+      if (!query) return [];
+      return await searchPosts(query, {
+        provinceNameCached: location || undefined,
+        limit: 100,
+        order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+      });
+    },
+    enabled: shouldUseSearch, // Only run when there's a search query
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch car posts from API (only when not searching)
   const {
     data: carPosts = [],
     isLoading: isLoadingCars,
     error: carError,
   } = useQuery({
-    queryKey: ['carPosts', query, location, brand, min, max, sort],
+    queryKey: ['carPosts', sort],
     queryFn: async () => {
       const queryParams = {
-        q: query || undefined,
         offset: 0,
         limit: 50,
         order: (sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC') as
@@ -52,19 +74,19 @@ function EvPostsContent() {
       };
       return await getCarPostsWithQuery(queryParams);
     },
+    enabled: !shouldUseSearch, // Only fetch when not searching
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch bike posts from API
+  // Fetch bike posts from API (only when not searching)
   const {
     data: bikePosts = [],
     isLoading: isLoadingBikes,
     error: bikeError,
   } = useQuery({
-    queryKey: ['bikePosts', query, location, brand, min, max, sort],
+    queryKey: ['bikePosts', sort],
     queryFn: async () => {
       const queryParams = {
-        q: query || undefined,
         offset: 0,
         limit: 50,
         order: (sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC') as
@@ -75,28 +97,36 @@ function EvPostsContent() {
       };
       return await getBikePostsWithQuery(queryParams);
     },
+    enabled: !shouldUseSearch, // Only fetch when not searching
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Combine loading states and errors
-  const isLoading = isLoadingCars || isLoadingBikes;
+  const isLoading = shouldUseSearch ? isLoadingSearch : isLoadingCars || isLoadingBikes;
 
   // Handle API errors
   useEffect(() => {
-    if (carError) {
+    if (searchError && shouldUseSearch) {
+      toast.error('Không thể tìm kiếm. Vui lòng thử lại.');
+      console.error('Error searching posts:', searchError);
+    }
+    if (carError && !shouldUseSearch) {
       toast.error('Không thể tải danh sách xe điện. Vui lòng thử lại.');
       console.error('Error fetching car posts:', carError);
     }
-    if (bikeError) {
+    if (bikeError && !shouldUseSearch) {
       toast.error('Không thể tải danh sách xe máy điện. Vui lòng thử lại.');
       console.error('Error fetching bike posts:', bikeError);
     }
-  }, [carError, bikeError]);
+  }, [carError, bikeError, searchError, shouldUseSearch]);
 
-  // Combine car and bike posts
+  // Combine car and bike posts, or use search results
   const allEvPosts = useMemo(() => {
+    if (shouldUseSearch) {
+      return searchResults;
+    }
     return [...carPosts, ...bikePosts];
-  }, [carPosts, bikePosts]);
+  }, [carPosts, bikePosts, searchResults, shouldUseSearch]);
 
   // Client-side filtering (additional filtering beyond API)
   const filtered = useMemo(() => {
@@ -171,13 +201,19 @@ function EvPostsContent() {
           data = data.filter((p) => (p as any).batteryCapacityKWh < 30);
           break;
         case '30-50':
-          data = data.filter((p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 50);
+          data = data.filter(
+            (p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 50,
+          );
           break;
         case '50-70':
-          data = data.filter((p) => (p as any).batteryCapacityKWh > 50 && (p as any).batteryCapacityKWh <= 70);
+          data = data.filter(
+            (p) => (p as any).batteryCapacityKWh > 50 && (p as any).batteryCapacityKWh <= 70,
+          );
           break;
         case '70-100':
-          data = data.filter((p) => (p as any).batteryCapacityKWh > 70 && (p as any).batteryCapacityKWh <= 100);
+          data = data.filter(
+            (p) => (p as any).batteryCapacityKWh > 70 && (p as any).batteryCapacityKWh <= 100,
+          );
           break;
         case '>100':
           data = data.filter((p) => (p as any).batteryCapacityKWh > 100);
@@ -212,13 +248,19 @@ function EvPostsContent() {
           data = data.filter((p) => (p as any).batteryHealthPct >= 90);
           break;
         case 'very-good':
-          data = data.filter((p) => (p as any).batteryHealthPct >= 80 && (p as any).batteryHealthPct < 90);
+          data = data.filter(
+            (p) => (p as any).batteryHealthPct >= 80 && (p as any).batteryHealthPct < 90,
+          );
           break;
         case 'good':
-          data = data.filter((p) => (p as any).batteryHealthPct >= 70 && (p as any).batteryHealthPct < 80);
+          data = data.filter(
+            (p) => (p as any).batteryHealthPct >= 70 && (p as any).batteryHealthPct < 80,
+          );
           break;
         case 'fair':
-          data = data.filter((p) => (p as any).batteryHealthPct >= 60 && (p as any).batteryHealthPct < 70);
+          data = data.filter(
+            (p) => (p as any).batteryHealthPct >= 60 && (p as any).batteryHealthPct < 70,
+          );
           break;
         case 'poor':
           data = data.filter((p) => (p as any).batteryHealthPct < 60);
@@ -227,26 +269,40 @@ function EvPostsContent() {
     }
 
     if (appliedFilters.batteryBrand) {
-      data = data.filter((p) => (p as any).batteryBrand?.toLowerCase().includes(appliedFilters.batteryBrand.toLowerCase()));
+      data = data.filter((p) =>
+        (p as any).batteryBrand?.toLowerCase().includes(appliedFilters.batteryBrand.toLowerCase()),
+      );
     }
 
     if (appliedFilters.brand) {
-      data = data.filter((p) => (p as any).title?.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
+      data = data.filter((p) =>
+        (p as any).title?.toLowerCase().includes(appliedFilters.brand.toLowerCase()),
+      );
     }
 
     // Apply sorting
     if (appliedFilters.sortBy === 'newest') {
-      data.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+      data.sort(
+        (a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime(),
+      );
     } else {
       switch (sort) {
         case 'price-asc':
-          data.sort((a, b) => parseFloat((a as any).priceVnd || '0') - parseFloat((b as any).priceVnd || '0'));
+          data.sort(
+            (a, b) =>
+              parseFloat((a as any).priceVnd || '0') - parseFloat((b as any).priceVnd || '0'),
+          );
           break;
         case 'price-desc':
-          data.sort((a, b) => parseFloat((b as any).priceVnd || '0') - parseFloat((a as any).priceVnd || '0'));
+          data.sort(
+            (a, b) =>
+              parseFloat((b as any).priceVnd || '0') - parseFloat((a as any).priceVnd || '0'),
+          );
           break;
         default:
-          data.sort((a, b) => ((b as any).manufactureYear || 0) - ((a as any).manufactureYear || 0));
+          data.sort(
+            (a, b) => ((b as any).manufactureYear || 0) - ((a as any).manufactureYear || 0),
+          );
       }
     }
 

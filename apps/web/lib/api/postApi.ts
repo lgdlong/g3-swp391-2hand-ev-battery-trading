@@ -125,6 +125,34 @@ export async function getBatteryPosts(query: GetPostsQuery = {}): Promise<PostsR
 }
 
 /**
+ * Search posts by title
+ * Supports filtering by province and post type
+ * Public endpoint - no authentication required
+ */
+export async function searchPosts(
+  searchQuery: string,
+  options: {
+    provinceNameCached?: string;
+    postType?: 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
+    limit?: number;
+    offset?: number;
+    order?: 'ASC' | 'DESC';
+  } = {},
+): Promise<Post[]> {
+  const params = new URLSearchParams();
+
+  params.append('q', searchQuery);
+  if (options.provinceNameCached) params.append('provinceNameCached', options.provinceNameCached);
+  if (options.postType) params.append('postType', options.postType);
+  if (options.limit !== undefined) params.append('limit', options.limit.toString());
+  if (options.offset !== undefined) params.append('offset', options.offset.toString());
+  if (options.order) params.append('order', options.order);
+
+  const { data } = await api.get<Post[]>(`/posts/search?${params.toString()}`);
+  return data;
+}
+
+/**
  * Get a single post by ID
  */
 export async function getPostById(id: string): Promise<Post> {

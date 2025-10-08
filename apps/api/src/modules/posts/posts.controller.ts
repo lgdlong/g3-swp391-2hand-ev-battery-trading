@@ -95,6 +95,47 @@ export class PostsController {
     return this.postsService.getBikePosts(query);
   }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Tìm kiếm bài đăng theo tiêu đề (title)' })
+  @ApiOkResponse({
+    description: 'Danh sách bài đăng phù hợp với từ khóa tìm kiếm',
+    schema: {
+      type: 'array',
+      items: { $ref: getSchemaPath(BasePostResponseDto) },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Query không hợp lệ' })
+  @ApiQuery({
+    name: 'q',
+    required: true,
+    type: String,
+    example: 'vinfast',
+    description: 'Từ khóa tìm kiếm trong tiêu đề bài đăng',
+  })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'offset', required: false, type: Number, example: 0 })
+  @ApiQuery({
+    name: 'postType',
+    required: false,
+    enum: ['EV_CAR', 'EV_BIKE', 'BATTERY'],
+    description: 'Lọc theo loại bài đăng',
+  })
+  @ApiQuery({
+    name: 'provinceNameCached',
+    required: false,
+    type: String,
+    example: 'Hà Nội',
+    description: 'Lọc theo tỉnh/thành phố',
+  })
+  async searchPosts(
+    @Query() query: ListQueryDto & { postType?: PostType; provinceNameCached?: string },
+  ): Promise<BasePostResponseDto[]> {
+    if (!query.q) {
+      throw new BadRequestException('Tham số "q" (từ khóa tìm kiếm) là bắt buộc');
+    }
+    return this.postsService.searchPostsByTitle(query.q, query);
+  }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
