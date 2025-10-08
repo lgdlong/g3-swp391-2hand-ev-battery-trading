@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { PostType, PostStatus } from '../../shared/enums/post.enum';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
@@ -113,6 +113,36 @@ export class PostsService {
       take: query.limit,
       skip: query.offset,
     });
+    return PostMapper.toBasePostResponseDtoArray(rows);
+  }
+
+  async searchPostsByTitle(
+    searchQuery: string,
+    query: ListQueryDto & { postType?: PostType; provinceNameCached?: string },
+  ): Promise<BasePostResponseDto[]> {
+    const where: any = {
+      title: ILike(`%${searchQuery}%`),
+      status: PostStatus.PUBLISHED, // Only search published posts
+    };
+
+    // Filter by postType if provided
+    if (query.postType) {
+      where.postType = query.postType;
+    }
+
+    // Filter by province if provided
+    if (query.provinceNameCached) {
+      where.provinceNameCached = query.provinceNameCached;
+    }
+
+    const rows = await this.postsRepo.find({
+      where,
+      relations: ['carDetails', 'bikeDetails', 'batteryDetails', 'seller', 'images'],
+      order: { createdAt: query.order || 'DESC' },
+      take: query.limit,
+      skip: query.offset,
+    });
+
     return PostMapper.toBasePostResponseDtoArray(rows);
   }
 
