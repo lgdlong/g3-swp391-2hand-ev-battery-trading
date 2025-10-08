@@ -1,5 +1,5 @@
 import { PostCard } from './PostCard';
-import type { Post } from './types';
+import type { Post } from '@/types/api/post';
 
 interface PostGridProps {
   posts: Post[];

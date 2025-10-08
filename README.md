@@ -1,6 +1,8 @@
 
 # 2nd-hand EV Battery Trading Platform
 
+[![CI](https://github.com/lgdlong/g3-swp391-2hand-ev-battery-trading/actions/workflows/ci.yml/badge.svg)](https://github.com/lgdlong/g3-swp391-2hand-ev-battery-trading/actions/workflows/ci.yml)
+
 Nền tảng thương mại điện tử chuyên về mua bán pin xe điện cũ, được xây dựng với kiến trúc monorepo sử dụng Turborepo.
 
 > [Frontend Docs](apps/web/README.md)

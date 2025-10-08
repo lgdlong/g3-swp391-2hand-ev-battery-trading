@@ -3,9 +3,8 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin } from 'lucide-react';
-import { displayValue, formatVnd, getStatusColor, getStatusText } from './utils';
-import type { Post } from './types';
-import HeartToggle from './HeartToggle';
+import { displayValue, formatVnd } from './utils';
+import type { Post } from '@/types/api/post';
 import { HeartCallApi } from './HeartCallApi';
 
 interface PostCardProps {
@@ -140,9 +139,9 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
 
             {/* Bookmark button */}
             <div className="mt-4 flex justify-end" onClick={(e) => e.preventDefault()}>
-              <HeartCallApi postId={Number(item.id)} initialBookmark={null}/>
+              <HeartCallApi postId={Number(item.id)} initialBookmark={null} />
             </div>
-          </div>  
+          </div>
         </CardContent>
       </Card>
     </Link>
