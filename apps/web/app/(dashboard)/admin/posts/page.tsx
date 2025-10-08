@@ -5,27 +5,27 @@ import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Car, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Eye, 
-  Check, 
+import {
+  Car,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Eye,
+  Check,
   X,
   Calendar,
   MapPin,
   User,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
-import { getAdminPosts, approvePost, rejectPost, type PostsResponse } from '@/lib/api/postApi';
+import { getAdminPosts, approvePost, rejectPost } from '@/lib/api/postApi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Post, PostsResponse, PostStatus } from '@/types/api/post';
 
-type FilterStatus = 'DRAFT' | 'PUBLISHED' | 'REJECTED';
 
 export default function AdminPostsPage() {
-  const [currentFilter, setCurrentFilter] = useState<FilterStatus>('DRAFT');
-  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [currentFilter, setCurrentFilter] = useState<PostStatus>('PENDING_REVIEW');
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,19 +33,25 @@ export default function AdminPostsPage() {
   const queryClient = useQueryClient();
 
   // Fetch posts based on current filter
-  const { data: postsData, isLoading, error, refetch } = useQuery<PostsResponse>({
+  const {
+    data: postsData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<PostsResponse>({
     queryKey: ['admin-posts', currentFilter, currentPage],
-    queryFn: () => getAdminPosts({
-      status: currentFilter,
-      page: currentPage,
-      limit: pageSize,
-      order: 'DESC',
-      sort: 'createdAt'
-    }),
+    queryFn: () =>
+      getAdminPosts({
+        status: currentFilter,
+        page: currentPage,
+        limit: pageSize,
+        order: 'DESC',
+        sort: 'createdAt',
+      }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
-  console.log(postsData)
+  console.log(postsData);
   // Approve post mutation
   const approveMutation = useMutation({
     mutationFn: (postId: string) => approvePost(postId),
@@ -76,7 +82,6 @@ export default function AdminPostsPage() {
     },
   });
 
-
   // Get status counts with caching - lấy tất cả để đếm đúng số lượng
   const { data: draftData } = useQuery<PostsResponse>({
     queryKey: ['admin-posts-count', 'DRAFT'],
@@ -85,7 +90,14 @@ export default function AdminPostsPage() {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  const { data: approvedData } = useQuery<PostsResponse>({
+  const { data: pendingReviewData } = useQuery<PostsResponse>({
+    queryKey: ['admin-posts-count', 'PENDING_REVIEW'],
+    queryFn: () => getAdminPosts({ status: 'PENDING_REVIEW', limit: 1000 }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  const { data: publishedData } = useQuery<PostsResponse>({
     queryKey: ['admin-posts-count', 'PUBLISHED'],
     queryFn: () => getAdminPosts({ status: 'PUBLISHED', limit: 1000 }),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -100,12 +112,13 @@ export default function AdminPostsPage() {
   });
 
   const draftCount = draftData?.total || 0;
-  const approvedCount = approvedData?.total || 0;
+  const pendingReviewCount = pendingReviewData?.total || 0;
+  const publishedCount = publishedData?.total || 0;
   const rejectedCount = rejectedData?.total || 0;
 
   // Debug log để kiểm tra số lượng
-  console.log('Counts:', { draftCount, approvedCount, rejectedCount });
-  console.log('Data:', { draftData, approvedData, rejectedData });
+  console.log('Counts:', { draftCount, pendingReviewCount, publishedCount, rejectedCount });
+  console.log('Data:', { draftData, pendingReviewData, publishedData, rejectedData });
 
   const handleApprove = (postId: string) => {
     if (confirm('Bạn có chắc chắn muốn duyệt bài viết này?')) {
@@ -119,8 +132,7 @@ export default function AdminPostsPage() {
     }
   };
 
-
-  const handleViewDetails = (post: any) => {
+  const handleViewDetails = (post: Post) => {
     setSelectedPost(post);
     setShowModal(true);
   };
@@ -164,17 +176,17 @@ export default function AdminPostsPage() {
   const handleRefresh = async () => {
     try {
       setIsRefreshing(true);
-      
+
       // Reset to first page when refreshing
       setCurrentPage(1);
-      
+
       // Invalidate và refetch tất cả queries để cập nhật dữ liệu mới
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin-posts'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-posts-count'] }),
-        refetch()
+        refetch(),
       ]);
-      
+
       // Hiển thị thông báo
       alert('Đã làm mới dữ liệu thành công!');
     } catch (error) {
@@ -204,18 +216,22 @@ export default function AdminPostsPage() {
   };
 
   const META = {
-    DRAFT:          { label: 'Bản nháp',     cls: 'bg-gray-50 text-gray-700 border-gray-200' },
-    PENDING_REVIEW: { label: 'Chờ duyệt',    cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-    PUBLISHED:      { label: 'Đã đăng',      cls: 'bg-green-50 text-green-700 border-green-200' },
-    REJECTED:       { label: 'Từ chối',      cls: 'bg-red-50 text-red-700 border-red-200' },
-    PAUSED:         { label: 'Tạm dừng',     cls: 'bg-orange-50 text-orange-700 border-orange-200' },
-    SOLD:           { label: 'Đã bán',       cls: 'bg-purple-50 text-purple-700 border-purple-200' },
-    ARCHIVED:       { label: 'Lưu trữ',      cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+    DRAFT: { label: 'Bản nháp', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+    PENDING_REVIEW: { label: 'Chờ duyệt', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+    PUBLISHED: { label: 'Đã đăng', cls: 'bg-green-50 text-green-700 border-green-200' },
+    REJECTED: { label: 'Từ chối', cls: 'bg-red-50 text-red-700 border-red-200' },
+    PAUSED: { label: 'Tạm dừng', cls: 'bg-orange-50 text-orange-700 border-orange-200' },
+    SOLD: { label: 'Đã bán', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+    ARCHIVED: { label: 'Lưu trữ', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
   } as const;
 
   const getStatusBadge = (status: string) => {
     const meta = META[status as keyof typeof META] || { label: status, cls: '' };
-    return <Badge variant="outline" className={meta.cls}>{meta.label}</Badge>;
+    return (
+      <Badge variant="outline" className={meta.cls}>
+        {meta.label}
+      </Badge>
+    );
   };
 
   return (
@@ -225,7 +241,7 @@ export default function AdminPostsPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Car className="w-8 h-8 text-black" />
-          <div>
+            <div>
               <h1 className="text-3xl font-bold text-black">2Hand</h1>
               <p className="text-gray-600">EV Battery</p>
             </div>
@@ -240,7 +256,7 @@ export default function AdminPostsPage() {
         <div className="mb-4">
           <h2 className="text-xl font-semibold text-black">Thống kê bài đăng</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-gray-50 border-gray-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -253,12 +269,24 @@ export default function AdminPostsPage() {
             </CardContent>
           </Card>
 
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-medium text-black mb-2">Chờ duyệt</h3>
+                  <div className="text-3xl font-bold text-black">{pendingReviewCount}</div>
+                </div>
+                <Clock className="w-8 h-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="bg-green-50 border-green-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-medium text-black mb-2">Đã duyệt</h3>
-                  <div className="text-3xl font-bold text-black">{approvedCount}</div>
+                  <h3 className="text-lg font-medium text-black mb-2">Đã đăng</h3>
+                  <div className="text-3xl font-bold text-black">{publishedCount}</div>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
@@ -312,6 +340,16 @@ export default function AdminPostsPage() {
                 Bản nháp ({draftCount})
               </Button>
               <Button
+                variant={currentFilter === 'PENDING_REVIEW' ? 'default' : 'outline'}
+                onClick={() => {
+                  setCurrentFilter('PENDING_REVIEW');
+                  setCurrentPage(1);
+                }}
+                className={currentFilter === 'PENDING_REVIEW' ? 'bg-black text-white' : ''}
+              >
+                Chờ duyệt ({pendingReviewCount})
+              </Button>
+              <Button
                 variant={currentFilter === 'PUBLISHED' ? 'default' : 'outline'}
                 onClick={() => {
                   setCurrentFilter('PUBLISHED');
@@ -319,7 +357,7 @@ export default function AdminPostsPage() {
                 }}
                 className={currentFilter === 'PUBLISHED' ? 'bg-black text-white' : ''}
               >
-                Đã duyệt ({approvedCount})
+                Đã đăng ({publishedCount})
               </Button>
               <Button
                 variant={currentFilter === 'REJECTED' ? 'default' : 'outline'}
@@ -352,7 +390,7 @@ export default function AdminPostsPage() {
                 <p className="text-gray-500">Không có tin đăng nào trong danh mục này.</p>
               </div>
             )}
-            
+
             {!isLoading && !error && postsData?.data && postsData.data.length > 0 && (
               <div className="space-y-4">
                 {postsData.data.map((post) => (
@@ -363,7 +401,11 @@ export default function AdminPostsPage() {
                         <div className="flex-shrink-0">
                           {post.images && Array.isArray(post.images) && post.images.length > 0 ? (
                             <Image
-                              src={typeof post.images[0] === 'string' ? post.images[0] : (post.images[0] as { url: string })?.url}
+                              src={
+                                typeof post.images[0] === 'string'
+                                  ? post.images[0]
+                                  : (post.images[0] as { url: string })?.url
+                              }
                               alt={post.title}
                               width={200}
                               height={150}
@@ -380,22 +422,26 @@ export default function AdminPostsPage() {
                         <div className="flex-1 space-y-3">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-black mb-2">{post.title}</h3>
+                              <h3 className="text-lg font-semibold text-black mb-2">
+                                {post.title}
+                              </h3>
                               <div className="text-sm text-gray-600 mb-3">
                                 <p className="line-clamp-3">{post.description}</p>
                               </div>
                             </div>
-                            <div className="flex-shrink-0">
-                              {getStatusBadge(post.status)}
-                            </div>
+                            <div className="flex-shrink-0">{getStatusBadge(post.status)}</div>
                           </div>
-                          
+
                           <div className="flex items-center gap-6 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4" />
                               <span>
-                                {typeof post.provinceNameCached === 'string' ? post.provinceNameCached : ''}
-                                {typeof post.districtNameCached === 'string' ? `, ${post.districtNameCached}` : ''}
+                                {typeof post.provinceNameCached === 'string'
+                                  ? post.provinceNameCached
+                                  : ''}
+                                {typeof post.districtNameCached === 'string'
+                                  ? `, ${post.districtNameCached}`
+                                  : ''}
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -412,17 +458,27 @@ export default function AdminPostsPage() {
                           {(post.carDetails || post.bikeDetails) && (
                             <div className="text-sm text-gray-600">
                               {post.carDetails && (
-                                <span>Xe ô tô • {String(post.carDetails.manufacture_year || 'N/A')} • {String(post.carDetails.odo_km || 'N/A')} km</span>
+                                <span>
+                                  Xe ô tô • {String(post.carDetails.manufacture_year || 'N/A')} •{' '}
+                                  {String(post.carDetails.odo_km || 'N/A')} km
+                                </span>
                               )}
                               {post.bikeDetails && (
-                                <span>Xe máy • {String(post.bikeDetails.manufacture_year || 'N/A')} • {String(post.bikeDetails.odo_km || 'N/A')} km</span>
+                                <span>
+                                  Xe máy • {String(post.bikeDetails.manufacture_year || 'N/A')} •{' '}
+                                  {String(post.bikeDetails.odo_km || 'N/A')} km
+                                </span>
                               )}
                             </div>
                           )}
 
                           <div className="text-xl font-bold text-green-600">
                             {formatPrice(post.priceVnd)}
-                            {post.isNegotiable && <span className="text-sm text-gray-500 ml-2">(Có thể thương lượng)</span>}
+                            {post.isNegotiable && (
+                              <span className="text-sm text-gray-500 ml-2">
+                                (Có thể thương lượng)
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -437,8 +493,8 @@ export default function AdminPostsPage() {
                             <Eye className="w-4 h-4" />
                             Xem chi tiết
                           </Button>
-                          
-                          {post.status === 'DRAFT' && (
+
+                          {post.status === 'PENDING_REVIEW' && (
                             <>
                               <Button
                                 onClick={() => handleApprove(post.id)}
@@ -496,17 +552,21 @@ export default function AdminPostsPage() {
                     ×
                   </button>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Hình ảnh */}
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Hình ảnh</h3>
-                    {selectedPost.images && Array.isArray(selectedPost.images) && selectedPost.images.length > 0 ? (
+                    {selectedPost.images &&
+                    Array.isArray(selectedPost.images) &&
+                    selectedPost.images.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2">
-                        {selectedPost.images.map((image: any, index: number) => (
+                        {selectedPost.images.map((image, index: number) => (
                           <Image
                             key={index}
-                            src={typeof image === 'string' ? image : image?.url}
+                            src={
+                              typeof image === 'string' ? image : (image as { url: string })?.url
+                            }
                             alt={`${selectedPost.title} ${index + 1}`}
                             width={200}
                             height={150}
@@ -535,7 +595,9 @@ export default function AdminPostsPage() {
                       </div>
                       <div>
                         <span className="font-medium">Giá:</span>
-                        <p className="text-green-600 font-bold">{formatPrice(selectedPost.priceVnd)}</p>
+                        <p className="text-green-600 font-bold">
+                          {formatPrice(selectedPost.priceVnd)}
+                        </p>
                       </div>
                       <div>
                         <span className="font-medium">Trạng thái:</span>
@@ -544,8 +606,12 @@ export default function AdminPostsPage() {
                       <div>
                         <span className="font-medium">Địa chỉ:</span>
                         <p className="text-gray-700">
-                          {typeof selectedPost.provinceNameCached === 'string' ? selectedPost.provinceNameCached : ''}
-                          {typeof selectedPost.districtNameCached === 'string' ? `, ${selectedPost.districtNameCached}` : ''}
+                          {typeof selectedPost.provinceNameCached === 'string'
+                            ? selectedPost.provinceNameCached
+                            : ''}
+                          {typeof selectedPost.districtNameCached === 'string'
+                            ? `, ${selectedPost.districtNameCached}`
+                            : ''}
                         </p>
                       </div>
                     </div>
@@ -566,7 +632,9 @@ export default function AdminPostsPage() {
                     </div>
                     <div>
                       <span className="font-medium">Số điện thoại:</span>
-                      <p className="text-gray-700">{selectedPost.seller.phone || 'Chưa cung cấp'}</p>
+                      <p className="text-gray-700">
+                        {selectedPost.seller.phone || 'Chưa cung cấp'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -584,15 +652,21 @@ export default function AdminPostsPage() {
                           </div>
                           <div>
                             <span className="font-medium">Năm sản xuất:</span>
-                            <p className="text-gray-700">{selectedPost.carDetails.manufacture_year || 'N/A'}</p>
+                            <p className="text-gray-700">
+                              {String(selectedPost.carDetails.manufacture_year || 'N/A')}
+                            </p>
                           </div>
                           <div>
                             <span className="font-medium">Số km đã chạy:</span>
-                            <p className="text-gray-700">{selectedPost.carDetails.odo_km || 'N/A'} km</p>
+                            <p className="text-gray-700">
+                              {String(selectedPost.carDetails.odo_km || 'N/A')} km
+                            </p>
                           </div>
                           <div>
                             <span className="font-medium">Dung lượng pin:</span>
-                            <p className="text-gray-700">{selectedPost.carDetails.battery_capacity_kwh || 'N/A'} kWh</p>
+                            <p className="text-gray-700">
+                              {String(selectedPost.carDetails.battery_capacity_kwh || 'N/A')} kWh
+                            </p>
                           </div>
                         </>
                       )}
@@ -604,15 +678,21 @@ export default function AdminPostsPage() {
                           </div>
                           <div>
                             <span className="font-medium">Năm sản xuất:</span>
-                            <p className="text-gray-700">{selectedPost.bikeDetails.manufacture_year || 'N/A'}</p>
+                            <p className="text-gray-700">
+                              {String(selectedPost.bikeDetails.manufacture_year || 'N/A')}
+                            </p>
                           </div>
                           <div>
                             <span className="font-medium">Số km đã chạy:</span>
-                            <p className="text-gray-700">{selectedPost.bikeDetails.odo_km || 'N/A'} km</p>
+                            <p className="text-gray-700">
+                              {String(selectedPost.bikeDetails.odo_km || 'N/A')} km
+                            </p>
                           </div>
                           <div>
                             <span className="font-medium">Dung lượng pin:</span>
-                            <p className="text-gray-700">{selectedPost.bikeDetails.battery_capacity_kwh || 'N/A'} kWh</p>
+                            <p className="text-gray-700">
+                              {String(selectedPost.bikeDetails.battery_capacity_kwh || 'N/A')} kWh
+                            </p>
                           </div>
                         </>
                       )}
@@ -623,7 +703,7 @@ export default function AdminPostsPage() {
                 {/* Nút hành động */}
                 <div className="mt-6 flex justify-between">
                   <div className="flex gap-3">
-                    {selectedPost.status === 'DRAFT' && (
+                    {selectedPost.status === 'PENDING_REVIEW' && (
                       <>
                         <Button
                           onClick={() => {
