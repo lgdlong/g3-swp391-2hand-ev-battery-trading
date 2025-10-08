@@ -48,10 +48,10 @@ export interface CreateCarPostDto {
   priceVnd: string;
   isNegotiable: boolean;
   carDetails: {
-    brand_id: number;
-    model_id: number;
+    brand_id?: number;
+    model_id?: number;
     manufacture_year: number;
-    body_style: string;
+    body_style?: string;
     origin: string;
     color: string;
     seats: number;
@@ -69,10 +69,10 @@ export interface CreateCarPostDto {
 export interface CreateBikePostDto {
   postType: 'EV_BIKE';
   bikeDetails: {
-    brand_id: number;
-    model_id: number;
+    brand_id?: number;
+    model_id?: number;
     manufacture_year: number;
-    bike_style: string;
+    bike_style?: string;
     origin: string;
     color: string;
     license_plate: string;

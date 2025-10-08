@@ -32,8 +32,8 @@ export interface FormData {
   brandId: string;
   modelId: string;
   manufactureYear: string;
-  bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE';
-  bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED';
+  bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE' | 'OTHER';
+  bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED' | 'OTHER';
   origin: 'NOI_DIA' | 'NHAP_KHAU';
   color: 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER';
   seats: string;
@@ -122,6 +122,11 @@ export function useCreatePost() {
         newData.seats = '2';
       }
 
+      // Clear model when brand changes to "other"
+      if (field === 'brandId' && value === 'other') {
+        newData.modelId = '';
+      }
+
       return newData;
     });
   };
@@ -162,10 +167,19 @@ export function useCreatePost() {
           priceVnd: unformatNumber(formData.priceVnd),
           isNegotiable: false,
           carDetails: {
-            brand_id: parseInt(formData.brandId) || 1,
-            model_id: parseInt(formData.modelId) || 1,
+            // Only send brand_id if not "other" option
+            ...(formData.brandId !== 'other' && formData.brandId
+              ? { brand_id: parseInt(formData.brandId) }
+              : {}),
+            // Only send model_id if not "other" option
+            ...(formData.modelId !== 'other' && formData.modelId
+              ? { model_id: parseInt(formData.modelId) }
+              : {}),
             manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
-            body_style: formData.bodyStyle,
+            // Only send body_style if not "OTHER"
+            ...(formData.bodyStyle !== 'OTHER' && formData.bodyStyle
+              ? { body_style: formData.bodyStyle }
+              : {}),
             origin: formData.origin,
             color: formData.color,
             seats: parseInt(formData.seats) || 5,
@@ -195,10 +209,19 @@ export function useCreatePost() {
           priceVnd: unformatNumber(formData.priceVnd),
           isNegotiable: false,
           bikeDetails: {
-            brand_id: parseInt(formData.brandId) || 1,
-            model_id: parseInt(formData.modelId) || 1,
+            // Only send brand_id if not "other" option
+            ...(formData.brandId !== 'other' && formData.brandId
+              ? { brand_id: parseInt(formData.brandId) }
+              : {}),
+            // Only send model_id if not "other" option
+            ...(formData.modelId !== 'other' && formData.modelId
+              ? { model_id: parseInt(formData.modelId) }
+              : {}),
             manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
-            bike_style: formData.bikeStyle,
+            // Only send bike_style if not "OTHER"
+            ...(formData.bikeStyle !== 'OTHER' && formData.bikeStyle
+              ? { bike_style: formData.bikeStyle }
+              : {}),
             origin: formData.origin,
             color: formData.color,
             license_plate: formData.licensePlate,
