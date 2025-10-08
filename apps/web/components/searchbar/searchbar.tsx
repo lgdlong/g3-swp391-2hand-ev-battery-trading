@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LocationSelector } from './LocationSelector';
 import { FilterDropdown } from './FilterDropdown';
+import { searchPosts } from '@/lib/api/postApi';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface SearchBarProps {
   className?: string;
@@ -13,14 +16,47 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ className, showFilters = true }: SearchBarProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = () => {
-    console.log('Search:', { searchQuery, selectedLocation, selectedBrand });
-    // TODO: Implement search logic
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      toast.error('Vui lòng nhập từ khóa tìm kiếm');
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const results = await searchPosts(searchQuery, {
+        provinceNameCached: selectedLocation || undefined,
+        limit: 20,
+        order: 'DESC',
+      });
+
+      console.log('Search results:', results);
+
+      // Store search results and navigate to results page
+      // You can either:
+      // 1. Navigate to a dedicated search results page with query params
+      const params = new URLSearchParams();
+      params.append('q', searchQuery);
+      if (selectedLocation) params.append('location', selectedLocation);
+      if (selectedBrand) params.append('brand', selectedBrand);
+
+      router.push(`/posts/ev?${params.toString()}`);
+
+      // 2. Or show results in a modal/dropdown (implement later)
+      toast.success(`Tìm thấy ${results.length} kết quả`);
+    } catch (error) {
+      console.error('Search error:', error);
+      toast.error('Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handlePriceRange = (priceTag: any) => {
@@ -33,6 +69,16 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
     setSelectedBrand('');
     setSearchQuery('');
     setIsFilterOpen(false);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSelectedLocation('');
+    setSelectedBrand('');
+    setIsFilterOpen(false);
+    // Navigate back to default list
+    router.push('/posts/ev');
+    toast.success('Đã xóa bộ lọc tìm kiếm');
   };
 
   return (
@@ -53,9 +99,22 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-transparent border-0 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-0 text-base h-full rounded-xl shadow-none"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
+
+            {/* Clear Search Button - show only when there's a search query or location */}
+            {(searchQuery || selectedLocation) && (
+              <Button
+                onClick={handleClearSearch}
+                variant="ghost"
+                size="sm"
+                className="h-10 w-10 p-0 hover:bg-gray-100 rounded-full flex-shrink-0"
+                title="Xóa tìm kiếm"
+              >
+                <X strokeWidth={4} size={36} className="text-zinc-950" />
+              </Button>
+            )}
 
             {/* Location Dropdown */}
             <LocationSelector
@@ -79,9 +138,10 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
             {/* Search Button */}
             <Button
               onClick={handleSearch}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm hover:shadow-md transition-colors duration-200 px-8 py-3 rounded-full text-sm font-semibold h-10 flex-shrink-0"
+              disabled={isSearching}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white border-0 shadow-sm hover:shadow-md transition-colors duration-200 px-8 py-3 rounded-full text-sm font-semibold h-10 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Tìm kiếm
+              {isSearching ? 'Đang tìm...' : 'Tìm kiếm'}
             </Button>
           </div>
         </div>
