@@ -235,13 +235,15 @@ export class PostsService {
     return PostMapper.toBasePostResponseDto(post);
   }
 
-  async getAllPostsForAdmin(query: ListQueryDto & { status?: string; postType?: string }): Promise<BasePostResponseDto[]> {
+  async getAllPostsForAdmin(
+    query: ListQueryDto & { status?: string; postType?: string },
+  ): Promise<BasePostResponseDto[]> {
     const where: any = {};
-    
+
     if (query.status) {
       where.status = query.status;
     }
-    
+
     if (query.postType) {
       where.postType = query.postType;
     }
@@ -253,7 +255,7 @@ export class PostsService {
       take: query.limit,
       skip: query.offset,
     });
-    
+
     return PostMapper.toBasePostResponseDtoArray(rows);
   }
 

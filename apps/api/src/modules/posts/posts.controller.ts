@@ -58,7 +58,7 @@ export class PostsController {
   //-----------------------------------------
   //------------ GET ENDPOINTS --------------
   //-----------------------------------------
-@ApiBearerAuth()
+  @ApiBearerAuth()
   @Get('car')
   @ApiOperation({ summary: 'Danh sách bài đăng xe ô tô điện (EV_CAR)' })
   @ApiOkResponse({
@@ -113,7 +113,9 @@ export class PostsController {
   @ApiQuery({ name: 'sort', required: false, type: String, example: '-createdAt' })
   @ApiQuery({ name: 'status', required: false, type: String, example: 'PENDING_REVIEW' })
   @ApiQuery({ name: 'postType', required: false, type: String, example: 'EV_CAR' })
-  async getAllPostsForAdmin(@Query() query: ListQueryDto & { status?: string; postType?: string }): Promise<BasePostResponseDto[]> {
+  async getAllPostsForAdmin(
+    @Query() query: ListQueryDto & { status?: string; postType?: string },
+  ): Promise<BasePostResponseDto[]> {
     return this.postsService.getAllPostsForAdmin(query);
   }
 
