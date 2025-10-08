@@ -1,0 +1,2 @@
+npx husky add .husky/pre-push "pnpm run prepush"
+chmod +x .husky/pre-push
