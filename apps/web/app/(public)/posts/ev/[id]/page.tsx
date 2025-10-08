@@ -11,6 +11,7 @@ import { usePost, useAccount } from '../_queries';
 import { formatVnd, originText, getLocation } from '@/lib/utils/format';
 import { SellerInfo, Specifications } from './_components';
 import { HeartCallApi } from '../_components/HeartCallApi';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -115,7 +116,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                     {post.images
                       .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
                       .map((img, idx) => (
-                        <button
+                        <Button
                           key={img.id || `thumb-${idx}`}
                           onClick={() => setMainImage(img.url)}
                           className={`relative h-16 w-24 border rounded overflow-hidden flex-shrink-0 ${
@@ -130,7 +131,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                             fill
                             className="object-cover"
                           />
-                        </button>
+                        </Button>
                       ))}
                   </div>
                 )}
