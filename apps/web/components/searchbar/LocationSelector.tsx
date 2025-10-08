@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 import { MapPin, ChevronDown } from 'lucide-react';
+import { getProvinces } from '@/lib/tinhthanhpho';
+import { Province } from '@/lib/tinhthanhpho';
+import { useQuery } from '@tanstack/react-query';
 
 interface LocationSelectorProps {
   selectedLocation: string;
@@ -9,73 +12,25 @@ interface LocationSelectorProps {
   className?: string;
 }
 
-const locations = [
-  'Hồ Chí Minh',
-  'Hà Nội',
-  'Đà Nẵng',
-  'Cần Thơ',
-  'Hải Phòng',
-  'An Giang',
-  'Bà Rịa - Vũng Tàu',
-  'Bạc Liêu',
-  'Bắc Giang',
-  'Bắc Kạn',
-  'Bắc Ninh',
-  'Bến Tre',
-  'Bình Dương',
-  'Bình Phước',
-  'Bình Thuận',
-  'Cà Mau',
-  'Cao Bằng',
-  'Đắk Lắk',
-  'Đắk Nông',
-  'Điện Biên',
-  'Đồng Nai',
-  'Đồng Tháp',
-  'Gia Lai',
-  'Hà Giang',
-  'Hà Nam',
-  'Hà Tĩnh',
-  'Hải Dương',
-  'Hậu Giang',
-  'Hòa Bình',
-  'Hưng Yên',
-  'Khánh Hòa',
-  'Kiên Giang',
-  'Kon Tum',
-  'Lai Châu',
-  'Lâm Đồng',
-  'Lạng Sơn',
-  'Lào Cai',
-  'Long An',
-  'Nam Định',
-  'Nghệ An',
-  'Ninh Bình',
-  'Ninh Thuận',
-  'Phú Thọ',
-  'Phú Yên',
-  'Quảng Bình',
-  'Quảng Nam',
-  'Quảng Ngãi',
-  'Quảng Ninh',
-  'Quảng Trị',
-  'Sóc Trăng',
-  'Sơn La',
-  'Tây Ninh',
-  'Thái Bình',
-  'Thái Nguyên',
-  'Thanh Hóa',
-  'Thừa Thiên Huế',
-  'Tiền Giang',
-  'Trà Vinh',
-  'Tuyên Quang',
-  'Vĩnh Long',
-  'Vĩnh Phúc',
-  'Yên Bái'
-];
+const CACHE_CONFIG = {
+  STALE_TIME: 24 * 60 * 60 * 1000, // 24 hours - provinces don't change often
+  GC_TIME: 7 * 24 * 60 * 60 * 1000, // 7 days cache
+} as const;
 
-export function LocationSelector({ selectedLocation, onLocationChange, className }: LocationSelectorProps) {
+export function LocationSelector({
+  selectedLocation,
+  onLocationChange,
+  className,
+}: LocationSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Fetch provinces using TanStack Query for caching
+  const { data: provinces = [], isLoading: loading } = useQuery<Province[]>({
+    queryKey: ['provinces'],
+    queryFn: () => getProvinces(),
+    staleTime: CACHE_CONFIG.STALE_TIME,
+    gcTime: CACHE_CONFIG.GC_TIME,
+  });
 
   const handleLocationChange = (location: string) => {
     onLocationChange(location);
@@ -112,31 +67,30 @@ export function LocationSelector({ selectedLocation, onLocationChange, className
               >
                 Tất cả khu vực
               </div>
-              {locations.map((location) => (
-                <div
-                  key={location}
-                  onClick={() => handleLocationChange(location)}
-                  className={`px-3 py-2 text-sm rounded-xl cursor-pointer transition-colors ${
-                    selectedLocation === location
-                      ? 'bg-emerald-100 text-emerald-700 font-medium'
-                      : 'text-gray-700 hover:bg-[#7EF2DD]/10'
-                  }`}
-                >
-                  {location}
-                </div>
-              ))}
+              {loading ? (
+                <div className="px-3 py-2 text-sm text-gray-500 text-center">Đang tải...</div>
+              ) : (
+                provinces.map((province: Province) => (
+                  <div
+                    key={province.code}
+                    onClick={() => handleLocationChange(province.name)}
+                    className={`px-3 py-2 text-sm rounded-xl cursor-pointer transition-colors ${
+                      selectedLocation === province.name
+                        ? 'bg-emerald-100 text-emerald-700 font-medium'
+                        : 'text-gray-700 hover:bg-[#7EF2DD]/10'
+                    }`}
+                  >
+                    {province.name}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
       </div>
 
       {/* Backdrop để đóng dropdown khi click bên ngoài */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-10"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />}
     </div>
   );
 }
