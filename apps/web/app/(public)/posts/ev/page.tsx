@@ -24,7 +24,8 @@ function EvPostsContent() {
 
   useEffect(() => {
     setQuery(searchParams.get('q') || '');
-    setLocation(searchParams.get('loc') || '');
+    // Support both 'loc' and 'location' params for backward compatibility
+    setLocation(searchParams.get('location') || searchParams.get('loc') || '');
     setBrand(searchParams.get('brand') || '');
     const minParam = searchParams.get('min');
     const maxParam = searchParams.get('max');
@@ -171,13 +172,19 @@ function EvPostsContent() {
           data = data.filter((p) => (p as any).batteryCapacityKWh < 30);
           break;
         case '30-50':
-          data = data.filter((p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 50);
+          data = data.filter(
+            (p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 50,
+          );
           break;
         case '50-70':
-          data = data.filter((p) => (p as any).batteryCapacityKWh > 50 && (p as any).batteryCapacityKWh <= 70);
+          data = data.filter(
+            (p) => (p as any).batteryCapacityKWh > 50 && (p as any).batteryCapacityKWh <= 70,
+          );
           break;
         case '70-100':
-          data = data.filter((p) => (p as any).batteryCapacityKWh > 70 && (p as any).batteryCapacityKWh <= 100);
+          data = data.filter(
+            (p) => (p as any).batteryCapacityKWh > 70 && (p as any).batteryCapacityKWh <= 100,
+          );
           break;
         case '>100':
           data = data.filter((p) => (p as any).batteryCapacityKWh > 100);
@@ -212,13 +219,19 @@ function EvPostsContent() {
           data = data.filter((p) => (p as any).batteryHealthPct >= 90);
           break;
         case 'very-good':
-          data = data.filter((p) => (p as any).batteryHealthPct >= 80 && (p as any).batteryHealthPct < 90);
+          data = data.filter(
+            (p) => (p as any).batteryHealthPct >= 80 && (p as any).batteryHealthPct < 90,
+          );
           break;
         case 'good':
-          data = data.filter((p) => (p as any).batteryHealthPct >= 70 && (p as any).batteryHealthPct < 80);
+          data = data.filter(
+            (p) => (p as any).batteryHealthPct >= 70 && (p as any).batteryHealthPct < 80,
+          );
           break;
         case 'fair':
-          data = data.filter((p) => (p as any).batteryHealthPct >= 60 && (p as any).batteryHealthPct < 70);
+          data = data.filter(
+            (p) => (p as any).batteryHealthPct >= 60 && (p as any).batteryHealthPct < 70,
+          );
           break;
         case 'poor':
           data = data.filter((p) => (p as any).batteryHealthPct < 60);
@@ -227,26 +240,40 @@ function EvPostsContent() {
     }
 
     if (appliedFilters.batteryBrand) {
-      data = data.filter((p) => (p as any).batteryBrand?.toLowerCase().includes(appliedFilters.batteryBrand.toLowerCase()));
+      data = data.filter((p) =>
+        (p as any).batteryBrand?.toLowerCase().includes(appliedFilters.batteryBrand.toLowerCase()),
+      );
     }
 
     if (appliedFilters.brand) {
-      data = data.filter((p) => (p as any).title?.toLowerCase().includes(appliedFilters.brand.toLowerCase()));
+      data = data.filter((p) =>
+        (p as any).title?.toLowerCase().includes(appliedFilters.brand.toLowerCase()),
+      );
     }
 
     // Apply sorting
     if (appliedFilters.sortBy === 'newest') {
-      data.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+      data.sort(
+        (a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime(),
+      );
     } else {
       switch (sort) {
         case 'price-asc':
-          data.sort((a, b) => parseFloat((a as any).priceVnd || '0') - parseFloat((b as any).priceVnd || '0'));
+          data.sort(
+            (a, b) =>
+              parseFloat((a as any).priceVnd || '0') - parseFloat((b as any).priceVnd || '0'),
+          );
           break;
         case 'price-desc':
-          data.sort((a, b) => parseFloat((b as any).priceVnd || '0') - parseFloat((a as any).priceVnd || '0'));
+          data.sort(
+            (a, b) =>
+              parseFloat((b as any).priceVnd || '0') - parseFloat((a as any).priceVnd || '0'),
+          );
           break;
         default:
-          data.sort((a, b) => ((b as any).manufactureYear || 0) - ((a as any).manufactureYear || 0));
+          data.sort(
+            (a, b) => ((b as any).manufactureYear || 0) - ((a as any).manufactureYear || 0),
+          );
       }
     }
 
