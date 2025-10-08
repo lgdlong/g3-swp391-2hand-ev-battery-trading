@@ -12,8 +12,8 @@ interface EVDetailsFormProps {
     brandId: string;
     modelId: string;
     manufactureYear: string;
-    bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE';
-    bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED';
+    bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE' | 'OTHER';
+    bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED' | 'OTHER';
     origin: 'NOI_DIA' | 'NHAP_KHAU';
     color: 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER';
     seats: string;
@@ -85,33 +85,40 @@ export default function EVDetailsForm({
                   {brand.name}
                 </option>
               ))}
+              <option value="other">Khác</option>
             </select>
           </div>
 
           <div>
             <Label htmlFor="modelId">
-              Model <span className="text-red-500">*</span>
+              Model {formData.brandId !== 'other' && <span className="text-red-500">*</span>}
             </Label>
             <select
               id="modelId"
               value={formData.modelId}
               onChange={(e) => onInputChange('modelId', e.target.value)}
               className="w-full px-3 py-2 border border-input rounded-md text-base"
-              required
-              disabled={loadingModels || !formData.brandId}
+              required={formData.brandId !== 'other'}
+              disabled={loadingModels || !formData.brandId || formData.brandId === 'other'}
             >
               <option value="">
                 {loadingModels
                   ? 'Đang tải...'
                   : !formData.brandId
                     ? 'Chọn hãng xe trước'
-                    : 'Chọn model'}
+                    : formData.brandId === 'other'
+                      ? 'Chọn "Khác" nếu không có model'
+                      : 'Chọn model'}
               </option>
               {models.map((model) => (
                 <option key={model.id} value={model.id.toString()}>
                   {model.name}
                 </option>
               ))}
+              {formData.brandId && formData.brandId !== 'other' && (
+                <option value="other">Khác</option>
+              )}
+              {formData.brandId === 'other' && <option value="other">Khác</option>}
             </select>
           </div>
 
@@ -309,6 +316,7 @@ export default function EVDetailsForm({
                   <option value="UNDERBONE">Underbone</option>
                   <option value="MOTORCYCLE">Motorcycle</option>
                   <option value="MOPED">Moped</option>
+                  <option value="OTHER">Khác</option>
                 </>
               ) : (
                 <>
@@ -316,6 +324,7 @@ export default function EVDetailsForm({
                   <option value="SUV">SUV</option>
                   <option value="HATCHBACK">Hatchback</option>
                   <option value="COUPE">Coupe</option>
+                  <option value="OTHER">Khác</option>
                 </>
               )}
             </select>

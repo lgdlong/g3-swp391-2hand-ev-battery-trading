@@ -1,26 +1,42 @@
 // types/post.ts
 
-// ===== UI-focused types for EV posts =====
-export type PostTypeUI = 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
-export type PostStatusUI = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
-export type PostOriginUI = 'NOI_DIA' | 'NHAP_KHAU';
+// ===== Core Enums (Backend-aligned) =====
 
-// ===== Legacy enums (kept for backward compatibility) =====
-export type PostType = 'CAR' | 'BIKE' | 'BATTERY' | string;
-export type PostStatus = 'DRAFT' | 'PUBLISHED' | 'HIDDEN' | 'SOLD' | string;
+/** Post type enum matching backend */
+export type PostType = 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
 
-export type BodyStyle =
-  | 'SEDAN'
-  | 'HATCHBACK'
-  | 'SUV'
-  | 'MPV'
-  | 'COUPE'
-  | 'WAGON'
-  | 'PICKUP'
-  | string;
+/** Post status enum matching backend */
+export type PostStatus =
+  | 'DRAFT'
+  | 'PENDING_REVIEW'
+  | 'REJECTED'
+  | 'PUBLISHED'
+  | 'PAUSED'
+  | 'SOLD'
+  | 'ARCHIVED';
 
-export type BikeStyle = 'SCOOTER' | 'STANDARD' | 'SPORT' | 'CRUISER' | string;
+/** Origin type for vehicles */
+export type PostOrigin = 'NOI_DIA' | 'NHAP_KHAU';
 
+// ===== Legacy type aliases (for backward compatibility) =====
+/** @deprecated Use PostType instead */
+export type PostTypeUI = PostType;
+
+/** @deprecated Use PostStatus instead */
+export type PostStatusUI = PostStatus;
+
+/** @deprecated Use PostOrigin instead */
+export type PostOriginUI = PostOrigin;
+
+// ===== Vehicle Detail Enums =====
+
+/** Car body style types */
+export type BodyStyle = 'SEDAN' | 'HATCHBACK' | 'SUV' | 'MPV' | 'COUPE' | 'WAGON' | 'PICKUP';
+
+/** Bike style types */
+export type BikeStyle = 'SCOOTER' | 'STANDARD' | 'SPORT' | 'CRUISER';
+
+/** Vehicle color options */
 export type VehicleColor =
   | 'WHITE'
   | 'BLACK'
@@ -31,13 +47,16 @@ export type VehicleColor =
   | 'GREEN'
   | 'YELLOW'
   | 'ORANGE'
-  | 'BROWN'
-  | string;
+  | 'BROWN';
 
-export type Origin = 'VIETNAM' | 'JAPAN' | 'KOREA' | 'CHINA' | 'EUROPE' | 'USA' | 'OTHER' | string;
+/** Country of origin */
+export type Origin = 'VIETNAM' | 'JAPAN' | 'KOREA' | 'CHINA' | 'EUROPE' | 'USA' | 'OTHER';
+
+// Type for flexible API fields (can be string, number, object, or null)
+export type FlexibleField = string | number | object | null;
 
 // ===== PostImage =====
-// matches PostImageResponseDto
+/** Post image interface matching backend PostImageResponseDto */
 export interface PostImage {
   id: string;
   publicId: string;
@@ -47,59 +66,71 @@ export interface PostImage {
   bytes: number;
   format?: string | null;
   position: number;
-  createdAt: string; // ISO date string
-  [k: string]: unknown; // phòng khi backend thêm trường
+  createdAt: string;
+}
+
+// ===== Seller =====
+/** Seller/user information in post context */
+export interface PostSeller {
+  id: number;
+  email: string;
+  phone: string | null;
+  fullName: string;
+  avatarUrl: string | null;
+  status: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ===== CarDetail =====
-// dựa trên CarDetailsResponseDto (snake_case để khớp payload backend)
+/** Car details interface matching backend CarDetailsResponseDto */
 export interface CarDetail {
-  brand_id: number | null;
-  model_id: number | null;
-  manufacture_year: number | null;
-
-  body_style: BodyStyle | null;
-
-  exterior_color?: VehicleColor | null;
-  interior_color?: VehicleColor | null;
-  origin?: Origin | null;
-
-  // EV specs
-  battery_capacity_kwh: number | null;
-  range_km: number | null;
-  charge_ac_kw: number | null;
-  charge_dc_kw: number | null;
-  battery_health_pct: number | null;
-
-  // Bạn có thể thêm các trường khác của DTO tại đây nếu có:
-  // seats?: number | null;
-  // doors?: number | null;
-  // mileage_km?: number | null;
-  // condition?: string | null;
-
-  [k: string]: unknown;
+  brand_id: FlexibleField;
+  model_id: FlexibleField;
+  manufacture_year: FlexibleField;
+  body_style: string;
+  origin: string;
+  color: string;
+  seats: FlexibleField;
+  license_plate: FlexibleField;
+  owners_count: FlexibleField;
+  odo_km: FlexibleField;
+  battery_capacity_kwh: FlexibleField;
+  range_km: FlexibleField;
+  charge_ac_kw: FlexibleField;
+  charge_dc_kw: FlexibleField;
+  battery_health_pct: FlexibleField;
 }
 
 // ===== BikeDetail =====
-// dựa trên BikeDetailsResponseDto (snake_case để khớp payload backend)
+/** Bike details interface matching backend BikeDetailsResponseDto */
 export interface BikeDetail {
-  brand_id: number | null;
-  model_id: number | null;
-  manufacture_year: number | null;
+  brand_id: FlexibleField;
+  model_id: FlexibleField;
+  manufacture_year: FlexibleField;
+  bike_style: string;
+  origin: string;
+  color: string;
+  license_plate: FlexibleField;
+  owners_count: FlexibleField;
+  odo_km: FlexibleField;
+  battery_capacity_kwh: FlexibleField;
+  range_km: FlexibleField;
+  motor_power_kw: FlexibleField;
+  charge_ac_kw: FlexibleField;
+  battery_health_pct: FlexibleField;
+}
 
-  bike_style: BikeStyle | null;
-
-  color?: VehicleColor | null;
-  origin?: Origin | null;
-
-  // EV specs
-  battery_capacity_kwh: number | null;
-  range_km: number | null;
-  motor_power_kw: number | null;
-  charge_ac_kw: number | null;
-  battery_health_pct: number | null;
-
-  [k: string]: unknown;
+// ===== BatteryDetail =====
+/** Battery details interface */
+export interface BatteryDetail {
+  brand_name: string;
+  capacity_kwh: number;
+  manufacture_year: number;
+  cycles_used: number;
+  health_percent: number;
+  compatible_models: string[];
 }
 
 // ===== UI-focused interfaces =====
@@ -166,49 +197,41 @@ export interface PostUI {
   reviewedAt?: string;
 }
 
-// ===== Legacy interfaces (kept for existing code) =====
+// ===== Main Post Interface =====
+/**
+ * Main post interface matching backend response
+ * Used for API responses and data handling
+ */
+export interface Post {
+  id: string;
+  postType: PostType;
+  title: string;
+  description: string;
+  wardCode: string;
+  provinceNameCached: FlexibleField;
+  districtNameCached: FlexibleField;
+  wardNameCached: FlexibleField;
+  addressTextCached: FlexibleField;
+  priceVnd: string;
+  isNegotiable: boolean;
+  status: PostStatus;
+  submittedAt: FlexibleField;
+  reviewedAt: FlexibleField;
+  seller: PostSeller;
+  carDetails?: CarDetail;
+  bikeDetails?: BikeDetail;
+  batteryDetails?: BatteryDetail;
+  images: FlexibleField[];
+  createdAt: string;
+  updatedAt: string;
+}
 
-// ===== Legacy interfaces (kept for existing code) =====
+// ===== Legacy/Alternative Interfaces =====
 
-// SafeAccountDto (Legacy seller interface)
+/** @deprecated Use PostSeller instead */
 export interface Seller {
   id: string | number;
   fullName?: string | null;
   avatarUrl?: string | null;
-  // tuỳ backend có thể trả thêm email/phone...
-  [k: string]: unknown;
-}
-
-// ===== Post =====
-// dựa trên BasePostResponseDto
-export interface Post {
-  id: string;
-  postType: PostType;
-  status?: PostStatus; // nếu backend có
-  title?: string;
-  description?: string | null;
-
-  price?: number | null;
-  currency?: string; // 'VND' | 'USD' | ...
-
-  // liên quan vị trí / hiển thị
-  location_text?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-
-  // người bán
-  seller: Seller;
-
-  // chi tiết theo loại
-  carDetails?: CarDetail;
-  bikeDetails?: BikeDetail;
-  // batteryDetails?: BatteryDetail; // nếu sau này có
-
-  // ảnh
-  images?: PostImage[];
-
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
-
   [k: string]: unknown;
 }
