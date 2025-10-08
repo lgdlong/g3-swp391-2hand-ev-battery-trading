@@ -47,7 +47,7 @@ function EvPostsContent() {
           | 'ASC'
           | 'DESC',
         sort: sort === 'newest' ? 'createdAt' : 'priceVnd',
-        status: 'APPROVED' as const,
+        status: 'PUBLISHED' as const,
       };
       return await getCarPostsWithQuery(queryParams);
     },
@@ -70,7 +70,7 @@ function EvPostsContent() {
           | 'ASC'
           | 'DESC',
         sort: sort === 'newest' ? 'createdAt' : 'priceVnd',
-        status: 'APPROVED' as const,
+        status: 'PUBLISHED' as const,
       };
       return await getBikePostsWithQuery(queryParams);
     },

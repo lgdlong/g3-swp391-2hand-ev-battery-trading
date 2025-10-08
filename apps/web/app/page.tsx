@@ -63,7 +63,7 @@ export default function Home() {
       getCarPostsWithQuery({
         limit: 3,
         offset: 0,
-        status: 'APPROVED',
+        status: 'PUBLISHED',
         order: 'DESC',
         sort: 'createdAt',
       }),
@@ -77,7 +77,7 @@ export default function Home() {
       getBikePostsWithQuery({
         limit: 3,
         offset: 0,
-        status: 'APPROVED',
+        status: 'PUBLISHED',
         order: 'DESC',
         sort: 'createdAt',
       }),
@@ -242,14 +242,20 @@ export default function Home() {
 
               const getStatusText = (status: string) => {
                 switch (status) {
-                  case 'APPROVED':
+                  case 'PUBLISHED':
                     return 'Đã duyệt';
-                  case 'PENDING':
+                  case 'PENDING_REVIEW':
                     return 'Chờ duyệt';
                   case 'DRAFT':
                     return 'Nháp';
                   case 'REJECTED':
                     return 'Từ chối';
+                  case 'PAUSED':
+                    return 'Tạm dừng';
+                  case 'SOLD':
+                    return 'Đã bán';
+                  case 'ARCHIVED':
+                    return 'Lưu trữ';
                   default:
                     return status;
                 }
@@ -257,14 +263,20 @@ export default function Home() {
 
               const getStatusColor = (status: string) => {
                 switch (status) {
-                  case 'APPROVED':
+                  case 'PUBLISHED':
                     return 'bg-green-100 text-green-800';
-                  case 'PENDING':
+                  case 'PENDING_REVIEW':
                     return 'bg-yellow-100 text-yellow-800';
                   case 'DRAFT':
                     return 'bg-gray-100 text-gray-800';
                   case 'REJECTED':
                     return 'bg-red-100 text-red-800';
+                  case 'PAUSED':
+                    return 'bg-blue-100 text-blue-800';
+                  case 'SOLD':
+                    return 'bg-purple-100 text-purple-800';
+                  case 'ARCHIVED':
+                    return 'bg-gray-100 text-gray-600';
                   default:
                     return 'bg-gray-100 text-gray-800';
                 }
