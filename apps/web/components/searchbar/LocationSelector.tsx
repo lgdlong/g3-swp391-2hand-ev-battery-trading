@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MapPin, ChevronDown } from 'lucide-react';
 import { getProvinces } from '@/lib/tinhthanhpho';
 import { Province } from '@/lib/tinhthanhpho';
+import { useQuery } from '@tanstack/react-query';
 
 interface LocationSelectorProps {
   selectedLocation: string;
@@ -11,29 +12,25 @@ interface LocationSelectorProps {
   className?: string;
 }
 
+const CACHE_CONFIG = {
+  STALE_TIME: 24 * 60 * 60 * 1000, // 24 hours - provinces don't change often
+  GC_TIME: 7 * 24 * 60 * 60 * 1000, // 7 days cache
+} as const;
+
 export function LocationSelector({
   selectedLocation,
   onLocationChange,
   className,
 }: LocationSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [provinces, setProvinces] = useState<Province[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      try {
-        const data = await getProvinces();
-        setProvinces(data);
-      } catch (error) {
-        console.error('Failed to fetch provinces:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProvinces();
-  }, []);
+  // Fetch provinces using TanStack Query for caching
+  const { data: provinces = [], isLoading: loading } = useQuery<Province[]>({
+    queryKey: ['provinces'],
+    queryFn: () => getProvinces(),
+    staleTime: CACHE_CONFIG.STALE_TIME,
+    gcTime: CACHE_CONFIG.GC_TIME,
+  });
 
   const handleLocationChange = (location: string) => {
     onLocationChange(location);
@@ -73,7 +70,7 @@ export function LocationSelector({
               {loading ? (
                 <div className="px-3 py-2 text-sm text-gray-500 text-center">Đang tải...</div>
               ) : (
-                provinces.map((province) => (
+                provinces.map((province: Province) => (
                   <div
                     key={province.code}
                     onClick={() => handleLocationChange(province.name)}
