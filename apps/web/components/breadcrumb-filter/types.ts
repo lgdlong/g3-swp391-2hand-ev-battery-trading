@@ -12,6 +12,7 @@ export interface FilterButtonsProps {
   initialSubcategory?: string;
   onSubcategoryChange?: (setSubcategory: (subcategory: string) => void) => void;
   onFilterChange?: (filters: any) => void;
+  showFilters?: boolean; // Control visibility of filter buttons section
 }
 
 export interface BreadcrumbState {
@@ -19,4 +20,3 @@ export interface BreadcrumbState {
   currentCategory: string | null;
   currentSubcategory: string | null;
 }
-

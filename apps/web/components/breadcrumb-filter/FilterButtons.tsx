@@ -16,7 +16,8 @@ export function FilterButtons({
   initialCategory,
   initialSubcategory,
   onSubcategoryChange,
-  onFilterChange
+  onFilterChange,
+  showFilters = true,
 }: FilterButtonsProps) {
   // Use breadcrumb hook
   const { breadcrumbState, setCategory, setSubcategory } = useBreadcrumb(type);
@@ -45,7 +46,7 @@ export function FilterButtons({
     handleCyclesApply,
     handleHealthApply,
     handleBatteryBrandApply,
-    handleFilterClick
+    handleFilterClick,
   } = useFilterHandlers(onFilterChange);
 
   // Use dropdown manager
@@ -71,7 +72,7 @@ export function FilterButtons({
     handleCapacityApply,
     handleCyclesApply,
     handleHealthApply,
-    handleBatteryBrandApply
+    handleBatteryBrandApply,
   });
 
   // Initialize breadcrumb on mount
@@ -91,7 +92,8 @@ export function FilterButtons({
   }, [onSubcategoryChange, setSubcategory]);
 
   // Use internal breadcrumb if no external breadcrumbItems provided
-  const displayBreadcrumbItems = breadcrumbItems.length > 0 ? breadcrumbItems : breadcrumbState.items;
+  const displayBreadcrumbItems =
+    breadcrumbItems.length > 0 ? breadcrumbItems : breadcrumbState.items;
   return (
     <div className={cn('w-full bg-white rounded-xl border-gray-200', className)}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -100,15 +102,17 @@ export function FilterButtons({
             <BreadcrumbFilter items={displayBreadcrumbItems} />
           </div>
         )}
-        <div className="space-y-4">
-          <h3 className="text-lg font-bold text-gray-900">Chọn theo tiêu chí</h3>
-          <ButtonRenderer
-            type={type}
-            appliedFilters={appliedFilters}
-            handleFilterClick={handleFilterClick}
-            renderDropdownContent={renderDropdownContent}
-          />
-        </div>
+        {showFilters && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-gray-900">Chọn theo tiêu chí</h3>
+            <ButtonRenderer
+              type={type}
+              appliedFilters={appliedFilters}
+              handleFilterClick={handleFilterClick}
+              renderDropdownContent={renderDropdownContent}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
