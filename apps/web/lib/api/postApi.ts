@@ -1,182 +1,27 @@
 import { api } from '@/lib/axios';
 import { getAuthHeaders } from '@/lib/auth';
 import { DEFAULT_API_BASE_URL } from '@/config/constants';
+import type {
+  Post,
+  PostsResponse,
+  CreatePostDto,
+  CreateCarPostDto,
+  CreateBikePostDto,
+  UpdatePostDto,
+  GetPostsQuery,
+  FlexibleField,
+} from '@/types/api/post';
 
-// Type for fields that can be string, number, object, or null based on API response
-type FlexibleField = string | number | object | null;
-
-// Post base interface
-export interface Post {
-  id: string;
-  postType: 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
-  title: string;
-  description: string;
-  wardCode: string;
-  provinceNameCached: FlexibleField;
-  districtNameCached: FlexibleField;
-  wardNameCached: FlexibleField;
-  addressTextCached: FlexibleField;
-  priceVnd: string;
-  isNegotiable: boolean;
-  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
-  submittedAt: FlexibleField;
-  reviewedAt: FlexibleField;
-  seller: {
-    id: number;
-    email: string;
-    phone: string | null;
-    fullName: string;
-    avatarUrl: string | null;
-    status: string;
-    role: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-  carDetails?: CarDetails;
-  bikeDetails?: BikeDetails;
-  batteryDetails?: BatteryDetails;
-  images: FlexibleField[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Car details interface
-export interface CarDetails {
-  brand_id: FlexibleField;
-  model_id: FlexibleField;
-  manufacture_year: FlexibleField;
-  body_style: string;
-  origin: string;
-  color: string;
-  seats: FlexibleField;
-  license_plate: FlexibleField;
-  owners_count: FlexibleField;
-  odo_km: FlexibleField;
-  battery_capacity_kwh: FlexibleField;
-  range_km: FlexibleField;
-  charge_ac_kw: FlexibleField;
-  charge_dc_kw: FlexibleField;
-  battery_health_pct: FlexibleField;
-}
-
-// Bike details interface
-export interface BikeDetails {
-  brand_id: FlexibleField;
-  model_id: FlexibleField;
-  manufacture_year: FlexibleField;
-  bike_style: string;
-  origin: string;
-  color: string;
-  license_plate: FlexibleField;
-  owners_count: FlexibleField;
-  odo_km: FlexibleField;
-  battery_capacity_kwh: FlexibleField;
-  range_km: FlexibleField;
-  motor_power_kw: FlexibleField;
-  charge_ac_kw: FlexibleField;
-  battery_health_pct: FlexibleField;
-}
-
-// Battery details interface
-export interface BatteryDetails {
-  brand_name: string;
-  capacity_kwh: number;
-  manufacture_year: number;
-  cycles_used: number;
-  health_percent: number;
-  compatible_models: string[];
-}
-
-// Create post DTO
-export interface CreatePostDto {
-  postType: 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
-  title: string;
-  description: string;
-  wardCode: string;
-  addressText: string;
-  priceVnd: number;
-  isNegotiable: boolean;
-  carDetails?: Partial<CarDetails>;
-  bikeDetails?: Partial<BikeDetails>;
-  batteryDetails?: Partial<BatteryDetails>;
-}
-
-// Create car post DTO (specific for car creation)
-export interface CreateCarPostDto {
-  postType: 'EV_CAR';
-  title: string;
-  description: string;
-  wardCode: string;
-  provinceNameCached: string;
-  districtNameCached: string;
-  wardNameCached: string;
-  addressTextCached: string;
-  priceVnd: string;
-  isNegotiable: boolean;
-  carDetails: {
-    brand_id: number;
-    model_id: number;
-    manufacture_year: number;
-    body_style: string;
-    origin: string;
-    color: string;
-    seats: number;
-    license_plate: string;
-    owners_count: number;
-    odo_km: number;
-    battery_capacity_kwh: number;
-    range_km: number;
-    charge_ac_kw: number;
-    charge_dc_kw: number;
-    battery_health_pct: number;
-  };
-}
-
-// Create bike post DTO (specific for bike creation)
-export interface CreateBikePostDto {
-  postType: 'EV_BIKE';
-  bikeDetails: {
-    brand_id: number;
-    model_id: number;
-    manufacture_year: number;
-    bike_style: string;
-    origin: string;
-    color: string;
-    license_plate: string;
-    owners_count: number;
-    odo_km: number;
-    battery_capacity_kwh: number;
-    range_km: number;
-    motor_power_kw: number;
-    charge_ac_kw: number;
-    battery_health_pct: number;
-  };
-}
-
-// Update post DTO
-export interface UpdatePostDto extends Partial<CreatePostDto> {
-  status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
-}
-
-// Query parameters for getting posts
-export interface GetPostsQuery {
-  q?: string;
-  offset?: number;
-  limit?: number;
-  order?: 'ASC' | 'DESC';
-  sort?: string;
-  page?: number;
-  postType?: 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
-  status?: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
-}
-
-// Response wrapper for paginated results
-export interface PostsResponse {
-  data: Post[];
-  total: number;
-  page: number;
-  limit: number;
-}
+// Re-export types for backward compatibility
+export type {
+  Post,
+  PostsResponse,
+  CreatePostDto,
+  CreateCarPostDto,
+  CreateBikePostDto,
+  UpdatePostDto,
+  GetPostsQuery,
+};
 
 /**
  * Create a new post
@@ -227,7 +72,7 @@ export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsRes
     const response = await api.get<Post[]>(`/posts/admin/all?${params.toString()}`, {
       headers: getAuthHeaders(),
     });
-    
+
     const allPosts = Array.isArray(response.data) ? response.data : [];
 
     // Apply pagination
