@@ -9,14 +9,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Post, PostsResponse, PostStatus } from '@/types/api/post';
 
 // Import các component đã tách
-import { 
-  AdminHeader, 
-  StatusSummaryCards, 
-  FilterButtons, 
-  PostCard, 
-  PostDetailModal 
+import {
+  StatusSummaryCards,
+  FilterButtons,
+  PostCard,
+  PostDetailModal,
 } from './_components';
-
 
 export default function AdminPostsPage() {
   const [currentFilter, setCurrentFilter] = useState<PostStatus>('PENDING_REVIEW');
@@ -192,20 +190,16 @@ export default function AdminPostsPage() {
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="w-full px-8 py-6 space-y-6">
-        {/* Header */}
-        <AdminHeader />
-
         {/* Status Summary Cards */}
-        <StatusSummaryCards 
+        <StatusSummaryCards
           counts={{
             draftCount,
             pendingReviewCount,
             publishedCount,
-            rejectedCount
+            rejectedCount,
           }}
         />
 
@@ -235,13 +229,13 @@ export default function AdminPostsPage() {
               currentFilter={currentFilter}
               onFilterChange={(filter) => {
                 setCurrentFilter(filter);
-                  setCurrentPage(1);
-                }}
+                setCurrentPage(1);
+              }}
               counts={{
                 draftCount,
                 pendingReviewCount,
                 publishedCount,
-                rejectedCount
+                rejectedCount,
               }}
             />
 
