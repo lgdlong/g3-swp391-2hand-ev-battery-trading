@@ -22,6 +22,9 @@ import { buildAddressText } from 'src/shared/helpers/address.helper';
 import { CarDetailsService } from '../post-details/services/car-details.service';
 import { DISPLAYABLE_POST_STATUS } from 'src/shared/constants/post';
 
+// Union type for all post creation DTOs
+type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
+
 @Injectable()
 export class PostsService {
   constructor(
@@ -35,6 +38,113 @@ export class PostsService {
     private readonly addressService: AddressService,
     private readonly cloudinary: CloudinaryService,
   ) {}
+
+  /**
+   * Generic method to create any type of post (car, bike, or battery)
+   * Eliminates code duplication across createCarPost, createBikePost, and createBatteryPost
+   */
+  private async createPost(
+    dto: CreateAnyPostDto,
+    sellerId: number,
+  ): Promise<BasePostResponseDto | null> {
+    // Validate postType matches the DTO
+    if (
+      (dto instanceof CreateCarPostDto && dto.postType !== PostType.EV_CAR) ||
+      (dto instanceof CreateBikePostDto && dto.postType !== PostType.EV_BIKE) ||
+      (dto instanceof CreateBatteryPostDto && dto.postType !== PostType.BATTERY)
+    ) {
+      throw new Error('Invalid postType for this endpoint');
+    }
+
+    // Fetch address names if not provided
+    if (!dto.provinceNameCached && !dto.districtNameCached && !dto.wardNameCached) {
+      const fullAddress = await this.addressService.getFullAddressByWardCode(dto.wardCode);
+      dto.provinceNameCached = fullAddress.data.province.name;
+      dto.districtNameCached = fullAddress.data.district.name;
+      dto.wardNameCached = fullAddress.data.ward.name;
+    }
+
+    // Build address text for caching
+    dto.addressTextCached =
+      buildAddressText(
+        dto.wardNameCached ?? undefined,
+        dto.districtNameCached ?? undefined,
+        dto.provinceNameCached ?? undefined,
+      ) || '';
+
+    return this.postsRepo.manager.transaction(async (trx) => {
+      // 1) Create Post entity
+      const post = trx.create(Post, {
+        seller: { id: sellerId } as Account,
+        postType: dto.postType,
+        title: dto.title,
+        description: dto.description,
+        wardCode: dto.wardCode,
+        provinceNameCached: dto.provinceNameCached ?? null,
+        districtNameCached: dto.districtNameCached ?? null,
+        wardNameCached: dto.wardNameCached ?? null,
+        addressTextCached: dto.addressTextCached ?? null,
+        priceVnd: dto.priceVnd,
+        isNegotiable: dto.isNegotiable ?? false,
+      });
+      const savedPost = await trx.save(Post, post);
+
+      // 2) Create post-specific details based on postType
+      switch (dto.postType) {
+        case PostType.EV_CAR:
+          if ('carDetails' in dto && dto.carDetails) {
+            await this.carDetailsService.createWithTrx(trx, {
+              post_id: savedPost.id,
+              ...dto.carDetails,
+            });
+          }
+          break;
+
+        case PostType.EV_BIKE:
+          if ('bikeDetails' in dto && dto.bikeDetails) {
+            await this.bikeDetailsService.createWithTrx(trx, {
+              post_id: savedPost.id,
+              ...dto.bikeDetails,
+            });
+          }
+          break;
+
+        case PostType.BATTERY:
+          if ('batteryDetails' in dto && dto.batteryDetails) {
+            await this.batteryDetailsService.createWithTrx(trx, {
+              post_id: savedPost.id,
+              ...dto.batteryDetails,
+            });
+          }
+          break;
+
+        default:
+          // TypeScript exhaustiveness check - this should never be reached
+          throw new Error('Unsupported postType');
+      }
+
+      // 3) Fetch created post with appropriate relations based on postType
+      const relations: string[] = ['seller'];
+      switch (dto.postType) {
+        case PostType.EV_CAR:
+          relations.push('carDetails');
+          break;
+        case PostType.EV_BIKE:
+          relations.push('bikeDetails');
+          break;
+        case PostType.BATTERY:
+          relations.push('batteryDetails');
+          break;
+      }
+
+      const createdPost = await trx.findOne(Post, {
+        where: { id: savedPost.id },
+        relations,
+      });
+
+      return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
+    });
+  }
 
   async getCarPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
     const rows = await this.postsRepo.find({
@@ -54,62 +164,7 @@ export class PostsService {
     dto: CreateCarPostDto,
     sellerId: number,
   ): Promise<BasePostResponseDto | null> {
-    if (dto.postType !== PostType.EV_CAR) {
-      throw new Error('Invalid postType for this endpoint');
-    }
-
-    if (!dto.provinceNameCached && !dto.districtNameCached && !dto.wardNameCached) {
-      const fullAddress = await this.addressService.getFullAddressByWardCode(dto.wardCode);
-      dto.provinceNameCached = fullAddress.data.province.name;
-      dto.districtNameCached = fullAddress.data.district.name;
-      dto.wardNameCached = fullAddress.data.ward.name;
-    }
-
-    dto.addressTextCached =
-      buildAddressText(
-        dto.wardNameCached ?? undefined,
-        dto.districtNameCached ?? undefined,
-        dto.provinceNameCached ?? undefined,
-      ) || '';
-
-    return this.postsRepo.manager.transaction(async (trx) => {
-      // 1) tạo Post
-      const post = trx.create(Post, {
-        // nếu bạn map seller bằng ManyToOne đối tượng:
-        seller: { id: sellerId } as Account,
-        postType: dto.postType,
-        title: dto.title,
-        description: dto.description,
-        wardCode: dto.wardCode,
-        provinceNameCached: dto.provinceNameCached ?? null,
-        districtNameCached: dto.districtNameCached ?? null,
-        wardNameCached: dto.wardNameCached ?? null,
-        addressTextCached: dto.addressTextCached ?? null,
-        priceVnd: dto.priceVnd,
-        isNegotiable: dto.isNegotiable ?? false,
-      });
-      const savedPost = await trx.save(Post, post);
-
-      // 2) Create car details
-      if (dto.carDetails) {
-        await this.carDetailsService.createWithTrx(trx, {
-          post_id: savedPost.id,
-          ...dto.carDetails,
-        });
-      }
-
-      // 3) (tuỳ chọn) tự chuyển sang PENDING_REVIEW + log
-      // await trx.update(Post, { id: savedPost.id }, { status: PostStatus.PENDING_REVIEW, submittedAt: new Date() });
-      // await trx.save(PostReviewLog, trx.create(PostReviewLog, { post: savedPost, action: ReviewActionEnum.SUBMITTED, actor: {id: dto.sellerId} as any, oldStatus: PostStatus.DRAFT, newStatus: PostStatus.PENDING_REVIEW }));
-
-      // 5) trả về Post + relations
-      const createdPost = await trx.findOne(Post, {
-        where: { id: savedPost.id },
-        relations: ['carDetails', 'seller'],
-      });
-
-      return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
-    });
+    return this.createPost(dto, sellerId);
   }
 
   async getBikePosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
@@ -160,59 +215,7 @@ export class PostsService {
     dto: CreateBikePostDto,
     sellerId: number,
   ): Promise<BasePostResponseDto | null> {
-    if (dto.postType !== PostType.EV_BIKE) {
-      throw new Error('Invalid postType for this endpoint');
-    }
-
-    return this.postsRepo.manager.transaction(async (trx) => {
-      // 1) tạo Post
-      const post = trx.create(Post, {
-        seller: { id: sellerId } as Account,
-        postType: dto.postType,
-        title: dto.title,
-        description: dto.description,
-        wardCode: dto.wardCode,
-        provinceNameCached: dto.provinceNameCached ?? null,
-        districtNameCached: dto.districtNameCached ?? null,
-        wardNameCached: dto.wardNameCached ?? null,
-        addressTextCached: dto.addressTextCached ?? null,
-        priceVnd: dto.priceVnd,
-        isNegotiable: dto.isNegotiable ?? false,
-      });
-      const savedPost = await trx.save(Post, post);
-
-      // 2) tạo Bike Details
-      if (dto.bikeDetails) {
-        await this.bikeDetailsService.createWithTrx(trx, {
-          post_id: savedPost.id,
-          ...dto.bikeDetails,
-        });
-      }
-
-      // 3) tạo Media (nếu có)
-      // if (dto.media?.length) {
-      //   const rows = dto.media.map((m) =>
-      //     trx.create(PostMedia, {
-      //       kind: m.kind,
-      //       url: m.url,
-      //       position: m.position ?? 0,
-      //       post: savedPost,
-      //     }),
-      //   );
-      //   await trx.save(PostMedia, rows);
-      // }
-
-      // 4) (optional) cập nhật status/log như createCarPost nếu cần
-      // ...
-
-      // 5) trả về Post + relations, rồi map DTO giống createCarPost
-      const createdPost = await trx.findOne(Post, {
-        where: { id: savedPost.id },
-        relations: ['bikeDetails', 'seller'],
-      });
-
-      return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
-    });
+    return this.createPost(dto, sellerId);
   }
 
   async getBatteryPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
@@ -233,57 +236,7 @@ export class PostsService {
     dto: CreateBatteryPostDto,
     sellerId: number,
   ): Promise<BasePostResponseDto | null> {
-    if (dto.postType !== PostType.BATTERY) {
-      throw new Error('Invalid postType for this endpoint');
-    }
-
-    if (!dto.provinceNameCached && !dto.districtNameCached && !dto.wardNameCached) {
-      const fullAddress = await this.addressService.getFullAddressByWardCode(dto.wardCode);
-      dto.provinceNameCached = fullAddress.data.province.name;
-      dto.districtNameCached = fullAddress.data.district.name;
-      dto.wardNameCached = fullAddress.data.ward.name;
-    }
-
-    dto.addressTextCached =
-      buildAddressText(
-        dto.wardNameCached ?? undefined,
-        dto.districtNameCached ?? undefined,
-        dto.provinceNameCached ?? undefined,
-      ) || '';
-
-    return this.postsRepo.manager.transaction(async (trx) => {
-      // 1) Create Post
-      const post = trx.create(Post, {
-        seller: { id: sellerId } as Account,
-        postType: dto.postType,
-        title: dto.title,
-        description: dto.description,
-        wardCode: dto.wardCode,
-        provinceNameCached: dto.provinceNameCached ?? null,
-        districtNameCached: dto.districtNameCached ?? null,
-        wardNameCached: dto.wardNameCached ?? null,
-        addressTextCached: dto.addressTextCached ?? null,
-        priceVnd: dto.priceVnd,
-        isNegotiable: dto.isNegotiable ?? false,
-      });
-      const savedPost = await trx.save(Post, post);
-
-      // 2) Create Battery Details
-      if (dto.batteryDetails) {
-        await this.batteryDetailsService.createWithTrx(trx, {
-          post_id: savedPost.id,
-          ...dto.batteryDetails,
-        });
-      }
-
-      // 3) Return Post + relations
-      const createdPost = await trx.findOne(Post, {
-        where: { id: savedPost.id },
-        relations: ['batteryDetails', 'seller'],
-      });
-
-      return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
-    });
+    return this.createPost(dto, sellerId);
   }
 
   async addImages(postId: string, images: CreatePostImageDto[]) {
