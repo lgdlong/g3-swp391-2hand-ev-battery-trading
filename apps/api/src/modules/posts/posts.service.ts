@@ -4,9 +4,11 @@ import { ILike, Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { PostType, PostStatus } from '../../shared/enums/post.enum';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
+import { BatteryDetailsService } from '../post-details/services/battery-details.service';
 import { Account } from '../accounts/entities/account.entity';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
 import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
+import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { PostMapper } from './mappers/post.mapper';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
@@ -29,6 +31,7 @@ export class PostsService {
     private readonly imagesRepo: Repository<PostImage>,
     private readonly bikeDetailsService: BikeDetailsService,
     private readonly carDetailsService: CarDetailsService,
+    private readonly batteryDetailsService: BatteryDetailsService,
     private readonly addressService: AddressService,
     private readonly cloudinary: CloudinaryService,
   ) {}
@@ -206,6 +209,77 @@ export class PostsService {
       const createdPost = await trx.findOne(Post, {
         where: { id: savedPost.id },
         relations: ['bikeDetails', 'seller'],
+      });
+
+      return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
+    });
+  }
+
+  async getBatteryPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
+    const rows = await this.postsRepo.find({
+      where: {
+        postType: PostType.BATTERY,
+        status: DISPLAYABLE_POST_STATUS,
+      },
+      relations: ['batteryDetails', 'seller', 'images'],
+      order: { createdAt: query.order || 'DESC' },
+      take: query.limit,
+      skip: query.offset,
+    });
+    return PostMapper.toBasePostResponseDtoArray(rows);
+  }
+
+  async createBatteryPost(
+    dto: CreateBatteryPostDto,
+    sellerId: number,
+  ): Promise<BasePostResponseDto | null> {
+    if (dto.postType !== PostType.BATTERY) {
+      throw new Error('Invalid postType for this endpoint');
+    }
+
+    if (!dto.provinceNameCached && !dto.districtNameCached && !dto.wardNameCached) {
+      const fullAddress = await this.addressService.getFullAddressByWardCode(dto.wardCode);
+      dto.provinceNameCached = fullAddress.data.province.name;
+      dto.districtNameCached = fullAddress.data.district.name;
+      dto.wardNameCached = fullAddress.data.ward.name;
+    }
+
+    dto.addressTextCached =
+      buildAddressText(
+        dto.wardNameCached ?? undefined,
+        dto.districtNameCached ?? undefined,
+        dto.provinceNameCached ?? undefined,
+      ) || '';
+
+    return this.postsRepo.manager.transaction(async (trx) => {
+      // 1) Create Post
+      const post = trx.create(Post, {
+        seller: { id: sellerId } as Account,
+        postType: dto.postType,
+        title: dto.title,
+        description: dto.description,
+        wardCode: dto.wardCode,
+        provinceNameCached: dto.provinceNameCached ?? null,
+        districtNameCached: dto.districtNameCached ?? null,
+        wardNameCached: dto.wardNameCached ?? null,
+        addressTextCached: dto.addressTextCached ?? null,
+        priceVnd: dto.priceVnd,
+        isNegotiable: dto.isNegotiable ?? false,
+      });
+      const savedPost = await trx.save(Post, post);
+
+      // 2) Create Battery Details
+      if (dto.batteryDetails) {
+        await this.batteryDetailsService.createWithTrx(trx, {
+          post_id: savedPost.id,
+          ...dto.batteryDetails,
+        });
+      }
+
+      // 3) Return Post + relations
+      const createdPost = await trx.findOne(Post, {
+        where: { id: savedPost.id },
+        relations: ['batteryDetails', 'seller'],
       });
 
       return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
