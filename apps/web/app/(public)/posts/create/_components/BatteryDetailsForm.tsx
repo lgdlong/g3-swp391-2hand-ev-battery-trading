@@ -17,6 +17,7 @@ import { getBatteryBrands } from '@/lib/api/catalogApi';
 import { BatteryFormData } from '@/types/form-data';
 import { BATTERY_CHEMISTRY_LABELS, BATTERY_ORIGIN_LABELS, BatteryChemistry } from '@/types/enums';
 
+const QUERY_KEY = 'battery-brands';
 const STALE_TIME_MS = 5 * 60 * 1000; // Cache for 5 minutes
 const RETRY_TIMES = 2;
 
@@ -47,7 +48,7 @@ export default function BatteryDetailsForm({ formData, onInputChange }: BatteryD
     isError,
     error,
   } = useQuery({
-    queryKey: ['battery-brands'],
+    queryKey: [QUERY_KEY],
     queryFn: getBatteryBrands,
     staleTime: STALE_TIME_MS,
     retry: RETRY_TIMES,
