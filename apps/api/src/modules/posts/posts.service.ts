@@ -19,7 +19,8 @@ import { AddressService } from '../address/address.service';
 import { buildAddressText } from 'src/shared/helpers/address.helper';
 import { CarDetailsService } from '../post-details/services/car-details.service';
 import { DISPLAYABLE_POST_STATUS } from 'src/shared/constants/post';
-
+import { PostReviewService } from '../post-review/post-review.service';
+import { ReviewActionEnum } from 'src/shared/enums/review.enum';
 @Injectable()
 export class PostsService {
   constructor(
@@ -31,6 +32,7 @@ export class PostsService {
     private readonly carDetailsService: CarDetailsService,
     private readonly addressService: AddressService,
     private readonly cloudinary: CloudinaryService,
+    private readonly postReviewService: PostReviewService,
   ) {}
 
   async getCarPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
@@ -328,10 +330,18 @@ export class PostsService {
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
-
+    const oldStatus = post.status;
     post.status = PostStatus.REJECTED;
     post.reviewedAt = new Date();
     await this.postsRepo.save(post);
+    await this.postReviewService.create({
+      postId: post.id,
+      actorId: post.seller.id,
+      oldStatus,
+      newStatus: post.status,
+      reason,
+      action: ReviewActionEnum.REJECTED,
+    });
 
     return PostMapper.toBasePostResponseDto(post);
   }
