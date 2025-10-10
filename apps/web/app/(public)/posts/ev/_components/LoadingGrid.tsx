@@ -1,3 +1,5 @@
+import { PageTitle } from './PageTitle';
+
 interface LoadingGridProps {
   itemCount?: number;
 }
@@ -5,10 +7,7 @@ interface LoadingGridProps {
 export function LoadingGrid({ itemCount = 6 }: LoadingGridProps) {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-2">Xe điện (EV)</h1>
-        <p className="text-muted-foreground">Khám phá các mẫu xe điện chất lượng</p>
-      </div>
+      <PageTitle />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {Array.from({ length: itemCount }).map((_, i) => (
           <div key={i} className="animate-pulse">
