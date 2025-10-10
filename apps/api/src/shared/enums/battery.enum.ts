@@ -7,6 +7,7 @@ export enum BatteryChemistry {
   NCA = 'NCA',
   LMO = 'LMO',
   LCO = 'LCO',
+  OTHER = 'OTHER',
 }
 
 /**

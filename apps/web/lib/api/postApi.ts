@@ -7,6 +7,7 @@ import type {
   CreatePostDto,
   CreateCarPostDto,
   CreateBikePostDto,
+  CreateBatteryPostDto,
   UpdatePostDto,
   GetPostsQuery,
   FlexibleField,
@@ -409,6 +410,19 @@ export async function deleteBikePost(id: string): Promise<void> {
   await api.delete(`/posts/bike/${id}`, {
     headers: getAuthHeaders(),
   });
+}
+
+// ==================== BATTERY SPECIFIC API FUNCTIONS ====================
+
+/**
+ * Create a new battery post
+ * Requires authentication token in headers
+ */
+export async function createBatteryPost(payload: CreateBatteryPostDto): Promise<Post> {
+  const { data } = await api.post<Post>('/posts/battery', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
 }
 
 // ==================== CAR SPECIFIC API FUNCTIONS ====================
