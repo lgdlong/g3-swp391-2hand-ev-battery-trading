@@ -415,6 +415,25 @@ export async function deleteBikePost(id: string): Promise<void> {
 // ==================== BATTERY SPECIFIC API FUNCTIONS ====================
 
 /**
+ * Get battery posts with query parameters
+ * Supports filtering, pagination, and search specifically for batteries
+ */
+export async function getBatteryPostsWithQuery(query: GetPostsQuery = {}): Promise<Post[]> {
+  const params = new URLSearchParams();
+
+  if (query.q) params.append('q', query.q);
+  if (query.offset !== undefined) params.append('offset', query.offset.toString());
+  if (query.limit !== undefined) params.append('limit', query.limit.toString());
+  if (query.order) params.append('order', query.order);
+  if (query.sort) params.append('sort', query.sort);
+  if (query.page !== undefined) params.append('page', query.page.toString());
+  if (query.status) params.append('status', query.status);
+
+  const { data } = await api.get<Post[]>(`/posts/battery?${params.toString()}`);
+  return data;
+}
+
+/**
  * Create a new battery post
  * Requires authentication token in headers
  */
