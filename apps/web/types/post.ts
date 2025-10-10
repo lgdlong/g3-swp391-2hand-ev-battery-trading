@@ -49,9 +49,6 @@ export type VehicleColor =
   | 'ORANGE'
   | 'BROWN';
 
-/** Country of origin */
-export type Origin = 'VIETNAM' | 'JAPAN' | 'KOREA' | 'CHINA' | 'EUROPE' | 'USA' | 'OTHER';
-
 // Type for flexible API fields (can be string, number, object, or null)
 export type FlexibleField = string | number | object | null;
 

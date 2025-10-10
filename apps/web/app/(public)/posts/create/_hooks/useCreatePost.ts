@@ -2,94 +2,21 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCarBrands, getBikeBrands, getCarModels, getBikeModels } from '@/lib/api/catalogApi';
-import { createCarPost, createBikePost, uploadPostImages } from '@/lib/api/postApi';
+import {
+  createCarPost,
+  createBikePost,
+  createBatteryPost,
+  uploadPostImages,
+} from '@/lib/api/postApi';
 import { toast } from 'sonner';
 import { Brand, Model } from '@/types/catalog';
-
-type PostType = 'ev' | 'battery';
+import { PostType, FormData, initialFormData } from '@/types/form-data';
 
 // Helpers: format thousand separators and strip non-digits for API
 const formatNumberWithCommas = (value: string) =>
   value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 const unformatNumber = (value: string) => value.replace(/\D/g, '');
-
-export interface FormData {
-  // Common fields
-  title: string;
-  description: string;
-  priceVnd: string;
-  addressText: string;
-  addressTextCached: string;
-  wardCode: string;
-  provinceNameCached: string;
-  districtNameCached: string;
-  wardNameCached: string;
-  isNegotiable: boolean;
-
-  // EV specific
-  vehicleType: 'xe_hoi' | 'xe_may';
-  brandId: string;
-  modelId: string;
-  manufactureYear: string;
-  bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE' | 'OTHER';
-  bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED' | 'OTHER';
-  origin: 'NOI_DIA' | 'NHAP_KHAU';
-  color: 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER';
-  seats: string;
-  trimName: string;
-  licensePlate: string;
-  ownersCount: string;
-  odoKm: string;
-  batteryCapacityKwh: string;
-  rangeKm: string;
-  chargeAcKw: string;
-  chargeDcKw: string;
-  motorPowerKw: string;
-  batteryHealthPct: string;
-
-  // Battery specific
-  brand: string;
-  year: string;
-  cyclesUsed: string;
-  healthPercent: string;
-}
-
-const initialFormData: FormData = {
-  title: '',
-  description: '',
-  priceVnd: '',
-  addressText: '',
-  addressTextCached: '',
-  wardCode: '',
-  provinceNameCached: '',
-  districtNameCached: '',
-  wardNameCached: '',
-  isNegotiable: false,
-  vehicleType: 'xe_hoi',
-  brandId: '',
-  modelId: '',
-  manufactureYear: '',
-  bodyStyle: 'SEDAN',
-  bikeStyle: 'SCOOTER',
-  origin: 'NOI_DIA',
-  color: 'BLACK',
-  seats: '',
-  trimName: '',
-  licensePlate: '',
-  ownersCount: '',
-  odoKm: '',
-  batteryCapacityKwh: '',
-  rangeKm: '',
-  chargeAcKw: '',
-  chargeDcKw: '',
-  motorPowerKw: '',
-  batteryHealthPct: '',
-  brand: '',
-  year: '',
-  cyclesUsed: '',
-  healthPercent: '',
-};
 
 export function useCreatePost() {
   const router = useRouter();
@@ -140,9 +67,55 @@ export function useCreatePost() {
     }
 
     if (postType === 'battery') {
-      // Keep battery logic as is (demo)
-      console.log('Battery form submitted:', { postType, formData });
-      toast.success('Tin đăng pin đã được gửi! (Demo)');
+      // Battery post creation with real API
+      setIsSubmitting(true);
+
+      try {
+        const batteryPostData = {
+          postType: 'BATTERY' as const,
+          title: formData.title,
+          description: formData.description,
+          wardCode: formData.wardCode || '00001',
+          provinceNameCached: formData.provinceNameCached || '',
+          districtNameCached: formData.districtNameCached || '',
+          wardNameCached: formData.wardNameCached || '',
+          addressTextCached: formData.addressTextCached || formData.addressText || '',
+          priceVnd: unformatNumber(formData.priceVnd),
+          isNegotiable: formData.isNegotiable,
+          batteryDetails: {
+            // Only send brand_id if not empty string (which represents "Khác")
+            ...(formData.brand_id && formData.brand_id !== ''
+              ? { brand_id: parseInt(formData.brand_id) }
+              : {}),
+            voltageV: parseFloat(formData.voltageV) || 0,
+            capacityAh: parseFloat(formData.capacityAh) || 0,
+            chargeTimeHours: parseFloat(formData.chargeTimeHours) || 0,
+            // Only send chemistry if not empty string (which represents "Khác")
+            ...(formData.chemistry !== '' ? { chemistry: formData.chemistry } : {}),
+            // Only send origin if not empty string (which represents "Khác")
+            origin: formData.origin,
+            weightKg: parseFloat(formData.weightKg) || 0,
+            cycleLife: parseInt(formData.cycleLife) || 0,
+            rangeKm: parseInt(formData.rangeKm) || 0,
+            compatibleNotes: formData.compatibleNotes || '',
+          },
+        };
+
+        const createdPost = await createBatteryPost(batteryPostData);
+        toast.success('Tạo bài đăng pin thành công!');
+
+        // Save the created post ID for image upload step
+        setCreatedPostId(createdPost.id);
+      } catch (error: unknown) {
+        console.error('Failed to create battery post:', error);
+        type ApiError = { response?: { data?: { message?: string } }; message?: string };
+        const err = error as ApiError;
+        const errorMessage =
+          err?.response?.data?.message || err?.message || 'Tạo bài đăng pin thất bại';
+        toast.error(`Tạo bài đăng pin thất bại: ${errorMessage}`);
+      } finally {
+        setIsSubmitting(false);
+      }
       return;
     }
 

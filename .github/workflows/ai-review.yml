@@ -1,10 +1,22 @@
 name: AI Code Review (Claude)
 
 on:
-  pull_request:
-    branches: [dev]
-    types: [opened, synchronize, reopened]
-  workflow_dispatch:
+  # Gõ /ai-review trong comment của PR để chạy
+  issue_comment:
+    types: [created]
+
+  # # Vẫn cho phép chạy tay từ tab Actions nếu muốn
+  # workflow_dispatch:
+  #   inputs:
+  #     pr:
+  #       description: 'PR number to review (e.g. 123)'
+  #       required: true
+
+  # # ai tự review mỗi khi có PR mới hoặc update PR
+  # pull_request:
+  #   branches: [dev]
+  #   types: [opened, synchronize, reopened]
+  # workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,6 +25,16 @@ permissions:
 
 jobs:
   review:
+    # Chỉ chạy nếu comment tạo trong PR,
+    # bắt đầu bằng "/ai-review", và người comment là OWNER/MEMBER/COLLABORATOR
+    if: >
+      github.event.issue.pull_request != null &&
+      startsWith(github.event.comment.body, '/ai-review') &&
+      (
+        github.event.comment.author_association == 'MEMBER' ||
+        github.event.comment.author_association == 'OWNER' ||
+        github.event.comment.author_association == 'COLLABORATOR'
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout full history
@@ -28,12 +50,26 @@ jobs:
       - name: Install deps
         run: npm i undici
 
+      # (THÊM MỚI — cần thiết khi dùng issue_comment)
+      # Lấy số PR & base/head SHA từ PR gắn với comment
+      - name: Resolve PR context
+        id: prctx
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR=${{ github.event.issue.number }}
+          PR_JSON=$(gh api repos/${{ github.repository }}/pulls/$PR)
+          echo "pr=$PR" >> $GITHUB_OUTPUT
+          echo "base_sha=$(echo "$PR_JSON" | jq -r .base.sha)" >> $GITHUB_OUTPUT
+          echo "head_sha=$(echo "$PR_JSON" | jq -r .head.sha)" >> $GITHUB_OUTPUT
+          echo "html_url=$(echo "$PR_JSON" | jq -r .html_url)" >> $GITHUB_OUTPUT
+
       - name: Run Claude review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_SHA: ${{ steps.prctx.outputs.base_sha }}
+          PR_HEAD_SHA: ${{ steps.prctx.outputs.head_sha }}
         run: |
           node scripts/review.js
 
@@ -48,7 +84,7 @@ jobs:
       - name: Post PR comment
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ steps.prctx.outputs.pr }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           node scripts/post_comment.js
@@ -57,7 +93,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ steps.prctx.outputs.pr }}
+          PR_URL: ${{ steps.prctx.outputs.html_url }}
         run: |
           node scripts/create_issues.js

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Car } from 'lucide-react';
 import { Brand, Model } from '@/types/catalog';
+import { Origin } from '@/types/enums';
 
 interface EVDetailsFormProps {
   formData: {
@@ -14,7 +15,7 @@ interface EVDetailsFormProps {
     manufactureYear: string;
     bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE' | 'OTHER';
     bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED' | 'OTHER';
-    origin: 'NOI_DIA' | 'NHAP_KHAU';
+    origin: Origin;
     color: 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER';
     seats: string;
     trimName: string;
