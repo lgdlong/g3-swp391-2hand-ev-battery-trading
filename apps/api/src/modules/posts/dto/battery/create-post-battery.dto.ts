@@ -1,5 +1,5 @@
 import { ApiProperty, ApiExtraModels } from '@nestjs/swagger';
-import { ValidateNested } from 'class-validator';
+import { IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BaseCreatePostDto } from '../base-create-post.dto';
 import { PostType } from '../../../../shared/enums/post.enum';
@@ -12,6 +12,8 @@ export class CreateBatteryPostDto extends BaseCreatePostDto {
     default: PostType.BATTERY,
     description: 'Loại bài đăng. Endpoint này cố định là BATTERY.',
   })
+  @IsEnum(PostType)
+  @IsOptional()
   postType: PostType = PostType.BATTERY;
 
   @ApiProperty({
