@@ -147,11 +147,11 @@ export function filterByAppliedFilters(posts: Post[], appliedFilters: AppliedFil
 }
 
 /**
- * Filter posts by battery capacity ranges
+ * Filter posts by battery capacity ranges (now using Ah instead of kWh)
  */
 export function filterByCapacity(posts: Post[], capacityRange: string): Post[] {
   return posts.filter((post) => {
-    const capacity = post.batteryDetails?.capacity_kwh || 0;
+    const capacity = post.batteryDetails?.capacityAh || 0;
 
     switch (capacityRange) {
       case '<30':
@@ -170,32 +170,21 @@ export function filterByCapacity(posts: Post[], capacityRange: string): Post[] {
 
 /**
  * Filter posts by battery health percentage ranges
+ * Note: health_percent is not available in the current API, returning all posts
  */
-export function filterByHealth(posts: Post[], healthRange: string): Post[] {
-  return posts.filter((post) => {
-    const health = post.batteryDetails?.health_percent || 0;
-
-    switch (healthRange) {
-      case '>90':
-        return health > 90;
-      case '80-90':
-        return health >= 80 && health <= 90;
-      case '70-80':
-        return health >= 70 && health < 80;
-      case '<70':
-        return health < 70;
-      default:
-        return true;
-    }
-  });
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function filterByHealth(posts: Post[], _healthRange: string): Post[] {
+  // Since health_percent is not available in the new API, return all posts
+  return posts;
 }
 
 /**
- * Filter posts by battery cycle count ranges
+ * Filter posts by battery cycle life ranges
+ * Note: Using cycleLife (total expected cycles) instead of cycles_used
  */
 export function filterByCycles(posts: Post[], cyclesRange: string): Post[] {
   return posts.filter((post) => {
-    const cycles = post.batteryDetails?.cycles_used || 0;
+    const cycles = post.batteryDetails?.cycleLife || 0;
 
     switch (cyclesRange) {
       case '<500':

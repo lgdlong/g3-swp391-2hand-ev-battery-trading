@@ -63,7 +63,9 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
                   {item.title}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {displayValue(item.batteryDetails?.brand_name)}
+                  {item.batteryDetails?.brand_id
+                    ? `Brand ID: ${item.batteryDetails.brand_id}`
+                    : 'Không rõ'}
                 </p>
                 <p className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                   <MapPin className="h-3 w-3" />
@@ -82,7 +84,7 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
                     d="M13 10V3L4 14h7v7l9-11h-7z"
                   />
                 </svg>
-                {displayValue(item.batteryDetails?.capacity_kwh)} kWh
+                {item.batteryDetails?.capacityAh ? `${item.batteryDetails.capacityAh} Ah` : 'N/A'}
               </div>
               <div className="flex items-center gap-1">
                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,7 +95,9 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                {displayValue(item.batteryDetails?.cycles_used)} chu kỳ
+                {item.batteryDetails?.cycleLife
+                  ? `${item.batteryDetails.cycleLife.toLocaleString()} chu kỳ`
+                  : 'N/A'}
               </div>
             </div>
 

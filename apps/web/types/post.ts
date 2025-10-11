@@ -122,12 +122,16 @@ export interface BikeDetail {
 // ===== BatteryDetail =====
 /** Battery details interface */
 export interface BatteryDetail {
-  brand_name: string;
-  capacity_kwh: number;
-  manufacture_year: number;
-  cycles_used: number;
-  health_percent: number;
-  compatible_models: string[];
+  brand_id: number | null;
+  voltageV: number | null;
+  capacityAh: number | null;
+  chargeTimeHours: number | null;
+  chemistry: 'LFP' | 'NMC' | 'NCA' | 'LMO' | 'LCO' | 'OTHER' | null;
+  origin: 'NOI_DIA' | 'NHAP_KHAU' | null;
+  weightKg: number | null;
+  cycleLife: number | null;
+  rangeKm: number | null;
+  compatibleNotes: string | null;
 }
 
 // ===== UI-focused interfaces =====
