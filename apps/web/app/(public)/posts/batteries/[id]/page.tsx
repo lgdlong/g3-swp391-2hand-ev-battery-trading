@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../../ev/_queries';
 import { SellerInfo, PostHeader } from '@/app/(public)/posts/_components';
+import { Specifications } from './_components';
+import { DEFAULT_IMAGE } from '@/constants/images';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -31,7 +33,7 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
     if (post?.images?.[0]?.url) {
       setMainImage(post.images[0].url);
     } else {
-      setMainImage('/asset/phu-tung-o-to-27.png');
+      setMainImage(DEFAULT_IMAGE);
     }
   }, [post]);
 
@@ -138,46 +140,8 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
             {/* Header */}
             <PostHeader post={post} details={undefined} />
 
-            {/* Basic Specifications */}
-            <Card className="shadow-lg">
-              <CardContent className="p-6">
-                <h2 className="text-xl font-semibold mb-4">Thông tin chi tiết</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Loại bài đăng</div>
-                      <div className="font-medium">Pin EV</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Trạng thái</div>
-                      <div className="font-medium">
-                        {post.status === 'PUBLISHED'
-                          ? 'Đã đăng'
-                          : post.status === 'PENDING_REVIEW'
-                            ? 'Chờ duyệt'
-                            : 'Đã từ chối'}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Giá có thể thương lượng</div>
-                      <div className="font-medium">{post.isNegotiable ? 'Có' : 'Không'}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <div>
-                      <div className="text-sm text-muted-foreground">Ngày đăng</div>
-                      <div className="font-medium">
-                        {new Date(post.createdAt).toLocaleDateString('vi-VN')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Battery Specifications */}
+            <Specifications post={post} />
 
             {/* Description */}
             {post.description && (

@@ -2,6 +2,7 @@ import type {
   PostUI,
   CarDetailUI,
   BikeDetailUI,
+  BatteryDetail,
   SellerLite,
   PostImageUI,
   PostType,
@@ -78,6 +79,26 @@ function adaptBikeDetails(dto: PostDtoRaw['bikeDetails']): BikeDetailUI | undefi
 }
 
 /**
+ * Adapts raw battery details DTO to UI interface
+ */
+function adaptBatteryDetails(dto: PostDtoRaw['batteryDetails']): BatteryDetail | undefined {
+  if (!dto) return undefined;
+
+  return {
+    brand_id: dto.brand_id ? toNumber(dto.brand_id) : null,
+    voltageV: dto.voltageV ? toNumber(dto.voltageV) : null,
+    capacityAh: dto.capacityAh ? toNumber(dto.capacityAh) : null,
+    chargeTimeHours: dto.chargeTimeHours ? toNumber(dto.chargeTimeHours) : null,
+    chemistry: dto.chemistry as 'LFP' | 'NMC' | 'NCA' | 'LMO' | 'LCO' | 'OTHER' | null,
+    origin: dto.origin as 'NOI_DIA' | 'NHAP_KHAU' | null,
+    weightKg: dto.weightKg ? toNumber(dto.weightKg) : null,
+    cycleLife: dto.cycleLife ? toNumber(dto.cycleLife) : null,
+    rangeKm: dto.rangeKm ? toNumber(dto.rangeKm) : null,
+    compatibleNotes: dto.compatibleNotes ? toString(dto.compatibleNotes) : null,
+  };
+}
+
+/**
  * Adapts raw images array to UI interface
  */
 function adaptImages(images: FlexibleField[] | undefined): PostImageUI[] {
@@ -146,6 +167,7 @@ export function adaptPostDto(dto: PostDtoRaw): PostUI {
     seller: adaptSeller(dto.seller),
     carDetails: adaptCarDetails(dto.carDetails),
     bikeDetails: adaptBikeDetails(dto.bikeDetails),
+    batteryDetails: adaptBatteryDetails(dto.batteryDetails),
     images: adaptImages(dto.images),
 
     createdAt: dto.createdAt,
