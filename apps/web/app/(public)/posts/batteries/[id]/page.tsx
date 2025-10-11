@@ -4,14 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../../ev/_queries';
-import { formatVnd } from '@/lib/utils/format';
-import { SellerInfo } from '@/app/(public)/posts/_components';
-import { HeartCallApi } from '../../ev/_components/HeartCallApi';
-import { Button } from '@/components/ui/button';
+import { SellerInfo, PostHeader } from '@/app/(public)/posts/_components';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -70,7 +66,7 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
             href="/posts/batteries"
             className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
-            ← Quay lại danh sách pin
+            ← Quay lại danh sách
           </Link>
         </div>
       </div>
@@ -99,15 +95,7 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
         showFilters={false}
       />
       <div className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <Link
-            href="/posts/batteries"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 hover:underline"
-          >
-            ← Quay lại danh sách pin
-          </Link>
-        </div>
-
+        {/* Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Image Section */}
           <div className="lg:col-span-1 space-y-6">
@@ -148,31 +136,7 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
           {/* Details Section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
-            <Card className="shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
-                    <div className="text-3xl font-bold text-gray-900 mb-2">
-                      {formatVnd(Number(post.priceVnd))}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    <HeartCallApi postId={Number(post.id)} initialBookmark={null} />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <span>Đăng bởi {post.seller.fullName}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{post.provinceNameCached || 'Không rõ'}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <PostHeader post={post} details={undefined} />
 
             {/* Basic Specifications */}
             <Card className="shadow-lg">
@@ -226,21 +190,6 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
                 </CardContent>
               </Card>
             )}
-
-            {/* Contact Section */}
-            <Card className="shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">Liên hệ người bán</h3>
-                    <p className="text-gray-600">Nhấn để hiển thị số điện thoại</p>
-                  </div>
-                  <Button size="lg" className="px-8">
-                    Liên hệ ngay
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>

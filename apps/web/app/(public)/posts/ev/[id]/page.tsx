@@ -4,14 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
-import { formatVnd, originText, getLocation } from '@/lib/utils/format';
-import { SellerInfo } from '@/app/(public)/posts/_components';
+import { SellerInfo, PostHeader } from '@/app/(public)/posts/_components';
 import { Specifications } from './_components';
-import { HeartCallApi } from '../_components/HeartCallApi';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -22,7 +19,6 @@ interface Props {
 export default function EvDetailPage({ params, searchParams }: Props) {
   const [id, setId] = useState<string>('');
   const [model, setModel] = useState<string>('all');
-  const [liked, setLiked] = useState(false);
   const [mainImage, setMainImage] = useState<string>('');
 
   useEffect(() => {
@@ -155,28 +151,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
           </div>
 
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-none shadow-none">
-              <CardContent className="py-2 px-6">
-                <div className="flex flex-col items-start justify-between mb-4 gap-4">
-                  <div className="flex items-center justify-between w-full">
-                    <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
-                    <HeartCallApi postId={Number(post.id)} initialBookmark={null} />
-                  </div>
-                  <div className="text-2xl font-bold text-[#048C73] mb-2">
-                    {formatVnd(post.priceVnd)}
-                  </div>
-                </div>
-                <div className="mb-6">
-                  {details?.origin && <Badge>{originText(details.origin)}</Badge>}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{getLocation(post)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <PostHeader post={post} details={details} />
 
             <Specifications post={post} />
 
