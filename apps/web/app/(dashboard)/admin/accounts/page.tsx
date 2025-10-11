@@ -27,7 +27,7 @@ import { Account } from '@/types/account';
 import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
 import { getAccounts, toggleBan, demoteAccount, promoteAccount } from '@/lib/api/accountApi';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 export default function AdminDashboard() {
   const [accounts, setAccounts] = useState<Account[]>([]);
