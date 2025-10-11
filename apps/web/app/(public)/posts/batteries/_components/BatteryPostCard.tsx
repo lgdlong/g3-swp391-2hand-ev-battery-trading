@@ -63,11 +63,6 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
                 >
                   {item.title}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {item.batteryDetails?.brand_id
-                    ? `Brand ID: ${item.batteryDetails.brand_id}`
-                    : 'Không rõ'}
-                </p>
                 <p className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                   <MapPin className="h-3 w-3" />
                   {!location ? 'Không rõ' : location}
@@ -76,30 +71,17 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
             </div>
 
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
-              <div className="flex items-center gap-1">
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-                {item.batteryDetails?.capacityAh ? `${item.batteryDetails.capacityAh} Ah` : 'N/A'}
-              </div>
-              <div className="flex items-center gap-1">
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+              <span>
+                {item.batteryDetails?.capacityAh ? `${item.batteryDetails.capacityAh} Ah` : '~ Ah'}
+              </span>
+              <span>
+                {item.batteryDetails?.voltageV ? `${item.batteryDetails.voltageV} V` : '~ V'}
+              </span>
+              <span>
                 {item.batteryDetails?.cycleLife
                   ? `${item.batteryDetails.cycleLife.toLocaleString()} chu kỳ`
-                  : 'N/A'}
-              </div>
+                  : '~ chu kỳ'}
+              </span>
             </div>
 
             {/* Price */}
