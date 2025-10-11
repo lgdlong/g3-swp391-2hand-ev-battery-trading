@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostReviewLog } from './entities/post-review-log.entity';
 import { ReviewActionEnum } from 'src/shared/enums/review.enum';
+import { CreateReviewLogDto } from './dto/create-review-log.dto';
 
 
 @Injectable()
@@ -12,22 +13,15 @@ export class PostReviewService {
     private readonly postReviewRepo : Repository<PostReviewLog>,
     )
   {}
- 
-  async create(data: {
-    postId: string;
-    actorId: number | null;
-    oldStatus: string | null;
-    newStatus: string | null;
-    reason: string | undefined;
-     action: ReviewActionEnum;
-  }): Promise<PostReviewLog> {
+
+  async create(dto: CreateReviewLogDto): Promise<PostReviewLog> {
     const reviewLog = this.postReviewRepo.create({
-      post: { id: String(data.postId) } as any,   
-      actor: data.actorId ? ({ id: data.actorId } as any) : null,
-      oldStatus: data.oldStatus as any,
-      newStatus: data.newStatus as any,
-      reason: data.reason,
-      action: data.action,
+      post: { id: dto.postId },   
+      actor: dto.actorId ? ({ id: String(dto.actorId) } as any) : null,
+      oldStatus: dto.oldStatus as any,
+      newStatus: dto.newStatus as any,
+      reason: dto.reason,
+      action: dto.action,
     });
 
     return this.postReviewRepo.save(reviewLog);

@@ -336,7 +336,7 @@ export class PostsService {
     await this.postsRepo.save(post);
     await this.postReviewService.create({
       postId: post.id,
-      actorId: post.seller.id,
+      actorId: String(post.seller.id),
       oldStatus,
       newStatus: post.status,
       reason,

@@ -1,4 +1,3 @@
-// dto/post-review-log.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { ReviewActionEnum } from '../../../shared/enums/review.enum';
 import { PostStatus } from '../../../shared/enums/post.enum';
@@ -7,8 +6,8 @@ export class PostReviewLogDto {
   @ApiProperty({ example: '101' })
   id!: string;
 
-  @ApiProperty({ example: 123 })
-  postId!: number;
+  @ApiProperty({ example: '123' })
+  postId!: string;
 
   @ApiProperty({ enum: ReviewActionEnum, example: ReviewActionEnum.REJECTED })
   action!: ReviewActionEnum;
