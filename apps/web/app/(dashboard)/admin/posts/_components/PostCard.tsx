@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Post } from '@/types/api/post';
 import { Eye, Check, X, Calendar, MapPin, User, Car } from 'lucide-react';
+import { DEFAULT_IMAGE } from '@/constants/images';
 
 interface PostCardProps {
   post: Post;
@@ -16,13 +17,13 @@ interface PostCardProps {
   isRejecting?: boolean;
 }
 
-export function PostCard({ 
-  post, 
-  onViewDetails, 
-  onApprove, 
-  onReject, 
-  isApproving = false, 
-  isRejecting = false 
+export function PostCard({
+  post,
+  onViewDetails,
+  onApprove,
+  onReject,
+  isApproving = false,
+  isRejecting = false,
 }: PostCardProps) {
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -43,13 +44,13 @@ export function PostCard({
   };
 
   const META = {
-    DRAFT:          { label: 'Bản nháp', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+    DRAFT: { label: 'Bản nháp', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
     PENDING_REVIEW: { label: 'Chờ duyệt', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-    PUBLISHED:      { label: 'Đã đăng', cls: 'bg-green-50 text-green-700 border-green-200' },
-    REJECTED:       { label: 'Từ chối', cls: 'bg-red-50 text-red-700 border-red-200' },
-    PAUSED:         { label: 'Tạm dừng', cls: 'bg-orange-50 text-orange-700 border-orange-200' },
-    SOLD:           { label: 'Đã bán', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
-    ARCHIVED:       { label: 'Lưu trữ', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+    PUBLISHED: { label: 'Đã đăng', cls: 'bg-green-50 text-green-700 border-green-200' },
+    REJECTED: { label: 'Từ chối', cls: 'bg-red-50 text-red-700 border-red-200' },
+    PAUSED: { label: 'Tạm dừng', cls: 'bg-orange-50 text-orange-700 border-orange-200' },
+    SOLD: { label: 'Đã bán', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+    ARCHIVED: { label: 'Lưu trữ', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
   } as const;
 
   const getStatusBadge = (status: string) => {
@@ -70,11 +71,7 @@ export function PostCard({
             {post.images && Array.isArray(post.images) && post.images.length > 0 ? (
               <div className="relative w-56 h-40 overflow-hidden">
                 <Image
-                  src={
-                    typeof post.images[0] === 'string'
-                      ? post.images[0]
-                      : (post.images[0] as { url: string })?.url
-                  }
+                  src={typeof post.images[0] === 'string' ? post.images[0] : DEFAULT_IMAGE}
                   alt={post.title}
                   width={224}
                   height={160}
@@ -110,9 +107,7 @@ export function PostCard({
               <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full">
                 <MapPin className="w-4 h-4 text-blue-500" />
                 <span className="font-medium">
-                  {typeof post.provinceNameCached === 'string'
-                    ? post.provinceNameCached
-                    : ''}
+                  {typeof post.provinceNameCached === 'string' ? post.provinceNameCached : ''}
                   {typeof post.districtNameCached === 'string'
                     ? `, ${post.districtNameCached}`
                     : ''}
@@ -134,13 +129,13 @@ export function PostCard({
                 <div className="text-sm  font-medium">
                   {post.carDetails && (
                     <span>
-                       Xe ô tô • {String(post.carDetails.manufacture_year || 'N/A')} •{' '}
+                      Xe ô tô • {String(post.carDetails.manufacture_year || 'N/A')} •{' '}
                       {String(post.carDetails.odo_km || 'N/A')} km
                     </span>
                   )}
                   {post.bikeDetails && (
                     <span>
-                       Xe máy • {String(post.bikeDetails.manufacture_year || 'N/A')} •{' '}
+                      Xe máy • {String(post.bikeDetails.manufacture_year || 'N/A')} •{' '}
                       {String(post.bikeDetails.odo_km || 'N/A')} km
                     </span>
                   )}
@@ -149,9 +144,7 @@ export function PostCard({
             )}
 
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-green-600">
-                {formatPrice(post.priceVnd)}
-              </div>
+              <div className="text-2xl font-bold text-green-600">{formatPrice(post.priceVnd)}</div>
             </div>
           </div>
 

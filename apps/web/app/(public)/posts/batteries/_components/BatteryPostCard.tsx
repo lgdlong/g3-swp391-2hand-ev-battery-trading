@@ -6,6 +6,7 @@ import { MapPin } from 'lucide-react';
 import { displayValue, formatVnd } from './utils';
 import type { Post } from '@/types/api/post';
 import { HeartCallApi } from './HeartCallApi';
+import { DEFAULT_IMAGE } from '@/constants/images';
 
 interface BatteryPostCardProps {
   item: Post;
@@ -37,7 +38,7 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
               src={
                 (typeof item.images?.[0] === 'object' && item.images?.[0] && 'url' in item.images[0]
                   ? (item.images[0] as { url: string }).url
-                  : undefined) || '/asset/phu-tung-o-to-27.png'
+                  : undefined) || DEFAULT_IMAGE
               }
               alt={item.title}
               fill
