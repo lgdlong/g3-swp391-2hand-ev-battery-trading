@@ -13,14 +13,14 @@ export class PostReviewService {
     private readonly postReviewRepo : Repository<PostReviewLog>,
     )
   {}
-
+    // xài dto 
   async create(dto: CreateReviewLogDto): Promise<PostReviewLog> {
     const reviewLog = this.postReviewRepo.create({
-      post: { id: dto.postId },   
-      actor: dto.actorId ? ({ id: String(dto.actorId) } as any) : null,
-      oldStatus: dto.oldStatus as any,
-      newStatus: dto.newStatus as any,
-      reason: dto.reason,
+      post: { id: dto.postId },
+      actor: dto.actorId ? { id: Number(dto.actorId) } : null,
+      oldStatus: dto.oldStatus || null,
+      newStatus: dto.newStatus || null,
+      reason: dto.reason || null,
       action: dto.action,
     });
 

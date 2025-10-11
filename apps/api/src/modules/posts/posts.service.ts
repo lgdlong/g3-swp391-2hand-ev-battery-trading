@@ -129,8 +129,17 @@ export class PostsService {
     searchQuery: string,
     query: ListQueryDto & { postType?: PostType; provinceNameCached?: string },
   ): Promise<BasePostResponseDto[]> {
-    const where: any = {
-      title: ILike(`%${searchQuery}%`),
+    // ✅ Sanitize search query to prevent SQL injection
+    const sanitizedQuery = searchQuery.replace(/['"\\%_]/g, '\\$&');
+    
+    // ✅ Properly typed where clause instead of 'any'
+    const where: {
+      title: any;
+      status: PostStatus;
+      postType?: PostType;
+      provinceNameCached?: string;
+    } = {
+      title: ILike(`%${sanitizedQuery}%`),
       status: DISPLAYABLE_POST_STATUS, // Only search published posts
     };
 

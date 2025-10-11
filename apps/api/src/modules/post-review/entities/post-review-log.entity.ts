@@ -36,7 +36,7 @@ export class PostReviewLog {
   })
   @JoinColumn({ name: 'actor_id' })
   actor: Account | null = null;
-  actorId!: number | null;
+  actorId!: string | null;
 
   @Column({ name: 'old_status', type: 'enum', enum: PostStatus, nullable: true })
   oldStatus: PostStatus | null = null;
