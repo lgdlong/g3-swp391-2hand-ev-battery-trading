@@ -27,6 +27,20 @@ type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPost
 
 @Injectable()
 export class PostsService {
+  // Relation constants
+  private readonly CAR_DETAILS = 'carDetails';
+  private readonly BIKE_DETAILS = 'bikeDetails';
+  private readonly BATTERY_DETAILS = 'batteryDetails';
+  private readonly SELLER = 'seller';
+  private readonly IMAGES = 'images';
+  private readonly POST_FULL_RELATIONS = [
+    this.CAR_DETAILS,
+    this.BIKE_DETAILS,
+    this.BATTERY_DETAILS,
+    this.SELLER,
+    this.IMAGES,
+  ];
+
   constructor(
     @InjectRepository(Post)
     private readonly postsRepo: Repository<Post>,
@@ -124,16 +138,16 @@ export class PostsService {
       }
 
       // 3) Fetch created post with appropriate relations based on postType
-      const relations: string[] = ['seller'];
+      const relations: string[] = [this.SELLER];
       switch (dto.postType) {
         case PostType.EV_CAR:
-          relations.push('carDetails');
+          relations.push(this.CAR_DETAILS);
           break;
         case PostType.EV_BIKE:
-          relations.push('bikeDetails');
+          relations.push(this.BIKE_DETAILS);
           break;
         case PostType.BATTERY:
-          relations.push('batteryDetails');
+          relations.push(this.BATTERY_DETAILS);
           break;
       }
 
@@ -152,7 +166,7 @@ export class PostsService {
         postType: PostType.EV_CAR,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: ['carDetails', 'seller', 'images'],
+      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -173,7 +187,7 @@ export class PostsService {
         postType: PostType.EV_BIKE,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: ['bikeDetails', 'seller', 'images'],
+      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -202,7 +216,7 @@ export class PostsService {
 
     const rows = await this.postsRepo.find({
       where,
-      relations: ['carDetails', 'bikeDetails', 'batteryDetails', 'seller', 'images'],
+      relations: this.POST_FULL_RELATIONS,
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -224,7 +238,7 @@ export class PostsService {
         postType: PostType.BATTERY,
         status: DISPLAYABLE_POST_STATUS,
       },
-      relations: ['batteryDetails', 'seller', 'images'],
+      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -289,7 +303,7 @@ export class PostsService {
   async getPostById(id: string): Promise<BasePostResponseDto> {
     const post = await this.postsRepo.findOne({
       where: { id },
-      relations: ['seller', 'images', 'carDetails', 'bikeDetails'],
+      relations: this.POST_FULL_RELATIONS,
     });
 
     if (!post) {
@@ -314,7 +328,7 @@ export class PostsService {
 
     const rows = await this.postsRepo.find({
       where,
-      relations: ['carDetails', 'bikeDetails', 'seller', 'images'],
+      relations: this.POST_FULL_RELATIONS,
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -329,7 +343,7 @@ export class PostsService {
   async approvePost(id: string): Promise<BasePostResponseDto> {
     const post = await this.postsRepo.findOne({
       where: { id: id },
-      relations: ['seller', 'carDetails', 'bikeDetails', 'batteryDetails'],
+      relations: this.POST_FULL_RELATIONS,
     });
 
     if (!post) {
@@ -349,7 +363,7 @@ export class PostsService {
   async rejectPost(id: string, reason?: string): Promise<BasePostResponseDto> {
     const post = await this.postsRepo.findOne({
       where: { id: id },
-      relations: ['seller', 'carDetails', 'bikeDetails', 'batteryDetails'],
+      relations: this.POST_FULL_RELATIONS,
     });
 
     if (!post) {
