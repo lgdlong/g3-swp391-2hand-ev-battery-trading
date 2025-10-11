@@ -90,7 +90,7 @@ export class AccountsService {
     } as CreateAccountResponseDto;
   }
 
-  async findAll(limit = 20, offset = 0): Promise<SafeAccountDto[]> {
+  async findAll(limit?: number, offset = 0): Promise<SafeAccountDto[]> {
     const accounts: Account[] = await this.repo.find({
       take: limit, // giới hạn số lượng record
       skip: offset, // số lượng bỏ qua record tính từ đầu (phục vụ pagination)
