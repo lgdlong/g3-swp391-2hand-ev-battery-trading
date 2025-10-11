@@ -285,7 +285,9 @@ export class PostsService {
       const allowedAdminStatuses = ['PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'PAUSED', 'SOLD', 'ARCHIVED'];
       if (allowedAdminStatuses.includes(query.status)) {
         where.status = query.status;
-      } 
+      } else {
+        throw new BadRequestException(`Invalid status value: ${query.status}`);
+      }
     }
 
     if (query.postType) {
