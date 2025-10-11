@@ -1,8 +1,9 @@
 import Image from 'next/image';
-import { Calendar, MapPin, User, Clock, MessageCircle, Phone } from 'lucide-react';
-import { relativeTime, getLocation } from '@/lib/utils/format';
+import { Calendar, User, Clock, MessageCircle, Phone } from 'lucide-react';
+import { relativeTime } from '@/lib/utils/format';
 import type { PostUI } from '@/types/post';
 import type { AccountUI } from '@/types/account';
+import { Badge } from '@/components/ui/badge';
 
 interface SellerInfoProps {
   account: AccountUI | undefined;
@@ -38,25 +39,29 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
         <div>
           <h3 className="font-semibold text-gray-900">{account.fullName}</h3>
           <div className="flex items-center gap-1 text-sm text-gray-500">
-            <span className="capitalize">{account.role.toLowerCase()}</span>
-            {account.status === 'active' && (
-              <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">
-                Hoạt động
-              </span>
+            {account.status === 'active' ? (
+              <Badge className="bg-emerald-600 text-white">Đang hoạt động</Badge>
+            ) : (
+              <Badge variant="destructive">Không hoạt động</Badge>
             )}
           </div>
         </div>
       </div>
 
       <div className="space-y-2 text-sm text-gray-600 mb-4">
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <Clock className="h-4 w-4" />
           <span>Hoạt động {relativeTime(account.updatedAt)}</span>
-        </div>
-        {account.email && (
+        </div> */}
+        {account.email ? (
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="truncate">{account.email}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span className="truncate">Không rõ</span>
           </div>
         )}
         {account.phone ? (
