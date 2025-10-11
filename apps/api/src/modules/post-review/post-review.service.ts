@@ -22,8 +22,8 @@ export class PostReviewService {
      action: ReviewActionEnum;
   }): Promise<PostReviewLog> {
     const reviewLog = this.postReviewRepo.create({
-      postId: data.postId,   
-      actorId: data.actorId,
+      post: { id: String(data.postId) } as any,   
+      actor: data.actorId ? ({ id: data.actorId } as any) : null,
       oldStatus: data.oldStatus as any,
       newStatus: data.newStatus as any,
       reason: data.reason,
@@ -33,11 +33,17 @@ export class PostReviewService {
     return this.postReviewRepo.save(reviewLog);
   }
 
-  findAll() {
-    return this.postReviewRepo.find()
+  findAll(): Promise<PostReviewLog[]> {
+    return this.postReviewRepo.find({
+      relations: ['post', 'actor'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
-  findOne(id: string) {
-    return this.postReviewRepo.findOne({ where: { id } });
+  findOne(id: string): Promise<PostReviewLog | null> {
+    return this.postReviewRepo.findOne({ 
+      where: { id },
+      relations: ['post', 'actor'],
+    });
   }
 }

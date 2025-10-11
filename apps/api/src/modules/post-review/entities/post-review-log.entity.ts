@@ -24,20 +24,19 @@ export class PostReviewLog {
   })
   @JoinColumn({ name: 'post_id' })
   post!: Post;
-  @Column({ name: 'post_id', type: 'bigint' })  
   postId!: string;
 
   @Column({ name: 'action', type: 'enum', enum: ReviewActionEnum })
   action!: ReviewActionEnum;
 
-  @Column({ name: 'actor_id', type: 'int', nullable: true })
-  actorId!: number | null;
+ 
   @ManyToOne(() => require('../../accounts/entities/account.entity').Account, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'actor_id' })
   actor: Account | null = null;
+  actorId!: number | null;
 
   @Column({ name: 'old_status', type: 'enum', enum: PostStatus, nullable: true })
   oldStatus: PostStatus | null = null;
