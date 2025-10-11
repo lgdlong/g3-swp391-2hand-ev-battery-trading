@@ -11,10 +11,10 @@ import {
   Gauge,
 } from 'lucide-react';
 import { SpecItem } from './SpecItem';
-import type { Post } from '@/types/api/post';
+import { PostUI } from '@/types/post';
 
 interface SpecificationsProps {
-  post: Post;
+  post: PostUI;
 }
 
 /**
