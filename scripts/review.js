@@ -114,7 +114,7 @@ Repo context:
 async function callClaudeOneShot(content) {
   const body = {
     model: MODEL,
-    max_tokens: Number(process.env.MAX_TOKENS || 2000),
+    max_tokens: Number(process.env.MAX_TOKENS || 5000),
     temperature: 0.2,
     system: systemPrompt,
     messages: [
