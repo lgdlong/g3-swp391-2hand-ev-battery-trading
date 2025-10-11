@@ -71,10 +71,6 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
           </div>
         )}
         <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4" />
-          <span>{getLocation(post)}</span>
-        </div>
-        <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           <span>Tham gia {relativeTime(account.createdAt)}</span>
         </div>
