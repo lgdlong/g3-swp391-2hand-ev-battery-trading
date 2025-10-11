@@ -75,14 +75,7 @@ export default function AdminPostsPage() {
     },
   });
 
-  // Get status counts with caching - lấy tất cả để đếm đúng số lượng
-  const { data: draftData } = useQuery<PostsResponse>({
-    queryKey: ['admin-posts-count', 'DRAFT'],
-    queryFn: () => getAdminPosts({ status: 'DRAFT', limit: 1000 }),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-  });
-
+  // Get status counts với caching - chỉ lấy admin status, bỏ DRAFT
   const { data: pendingReviewData } = useQuery<PostsResponse>({
     queryKey: ['admin-posts-count', 'PENDING_REVIEW'],
     queryFn: () => getAdminPosts({ status: 'PENDING_REVIEW', limit: 1000 }),
@@ -104,14 +97,14 @@ export default function AdminPostsPage() {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  const draftCount = draftData?.total || 0;
+  const draftCount = 0; // ✅ Admin không cần quản lý DRAFT
   const pendingReviewCount = pendingReviewData?.total || 0;
   const publishedCount = publishedData?.total || 0;
   const rejectedCount = rejectedData?.total || 0;
 
   // Debug log để kiểm tra số lượng
   console.log('Counts:', { draftCount, pendingReviewCount, publishedCount, rejectedCount });
-  console.log('Data:', { draftData, pendingReviewData, publishedData, rejectedData });
+  console.log('Data:', { pendingReviewData, publishedData, rejectedData });
 
   const handleApprove = (postId: string) => {
     if (confirm('Bạn có chắc chắn muốn duyệt bài viết này?')) {

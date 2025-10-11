@@ -69,24 +69,12 @@ export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsRes
   if (query.postType) params.append('postType', query.postType);
 
   try {
-    const response = await api.get<Post[]>(`/posts/admin/all?${params.toString()}`, {
+    // ✅ Backend bây giờ return PaginatedBasePostResponseDto trực tiếp
+    const { data } = await api.get<PostsResponse>(`/posts/admin/all?${params.toString()}`, {
       headers: getAuthHeaders(),
     });
 
-    const allPosts = Array.isArray(response.data) ? response.data : [];
-
-    // Apply pagination
-    const page = query.page || 1;
-    const limit = query.limit || 20;
-    const offset = (page - 1) * limit;
-    const paginatedPosts = allPosts.slice(offset, offset + limit);
-
-    return {
-      data: paginatedPosts,
-      total: allPosts.length, // Đây là tổng số bài đăng với status tương ứng
-      page,
-      limit,
-    };
+    return data;
   } catch (error) {
     console.error('Error fetching admin posts:', error);
     throw error;

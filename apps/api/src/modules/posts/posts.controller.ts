@@ -25,6 +25,7 @@ import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
+import { PaginatedBasePostResponseDto } from './dto/paginated-post-response.dto';
 import { BikeDetailsResponseDto } from '../post-details/dto/bike/bike-details-response.dto';
 import { CarDetailsResponseDto } from '../post-details/dto/car/car-details-response.dto';
 
@@ -45,6 +46,7 @@ import {
   ApiUnauthorizedResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
+import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 
 @ApiTags('posts')
 @ApiExtraModels(BasePostResponseDto, CarDetailsResponseDto, BikeDetailsResponseDto)
@@ -142,21 +144,12 @@ export class PostsController {
   @Get('admin/all')
   @ApiOperation({ summary: 'Lấy tất cả bài đăng cho admin (cần quyền admin)' })
   @ApiOkResponse({
-    description: 'Danh sách tất cả bài đăng',
-    schema: {
-      type: 'array',
-      items: { $ref: getSchemaPath(BasePostResponseDto) },
-    },
+    description: 'Danh sách tất cả bài đăng với pagination',
+    type: PaginatedBasePostResponseDto,
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
-  @ApiQuery({ name: 'q', required: false, type: String, example: 'vinfast' })
-  @ApiQuery({ name: 'sort', required: false, type: String, example: '-createdAt' })
-  @ApiQuery({ name: 'status', required: false, type: String, example: 'PENDING_REVIEW' })
-  @ApiQuery({ name: 'postType', required: false, type: String, example: 'EV_CAR' })
   async getAllPostsForAdmin(
-    @Query() query: ListQueryDto & { status?: string; postType?: string },
-  ): Promise<BasePostResponseDto[]> {
+    @Query() query: AdminListPostsQueryDto,
+  ): Promise<PaginatedBasePostResponseDto> {
     return this.postsService.getAllPostsForAdmin(query);
   }
 
