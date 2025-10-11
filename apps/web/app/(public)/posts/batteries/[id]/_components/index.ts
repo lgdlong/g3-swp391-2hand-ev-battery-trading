@@ -1,2 +1,2 @@
-export { SpecItem } from './SpecItem';
 export { Specifications } from './Specifications';
+export { SpecItem } from './SpecItem';

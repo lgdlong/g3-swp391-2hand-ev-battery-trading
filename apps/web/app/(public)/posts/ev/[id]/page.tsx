@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { formatVnd, originText, getLocation } from '@/lib/utils/format';
-import { SellerInfo, Specifications } from './_components';
+import { SellerInfo } from '@/app/(public)/posts/_components';
+import { Specifications } from './_components';
 import { HeartCallApi } from '../_components/HeartCallApi';
 import { Button } from '@/components/ui/button';
 
