@@ -4,7 +4,6 @@ import { PostsController } from './posts.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Post } from './entities/post.entity';
 import { AuthModule } from '../auth/auth.module';
-import { PostReviewLog } from '../post-review/entities/post-review-log.entity';
 import { PostDetailsModule } from '../post-details/post-details.module';
 import { PostImage } from './entities/post-image.entity';
 import { UploadModule } from '../upload/upload.module';
@@ -13,7 +12,7 @@ import { PostReviewModule } from '../post-review/post-review.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Post, PostImage, PostReviewLog]),
+    TypeOrmModule.forFeature([Post, PostImage]),
     AuthModule,
     UploadModule,
     AddressModule,

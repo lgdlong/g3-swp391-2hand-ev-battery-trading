@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostReviewLog } from './entities/post-review-log.entity';
-import { ReviewActionEnum } from 'src/shared/enums/review.enum';
 import { CreateReviewLogDto } from './dto/create-review-log.dto';
 
 
