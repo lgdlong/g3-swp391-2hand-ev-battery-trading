@@ -3,6 +3,7 @@ import { DecimalTransformer } from '../../../shared/transformers/decimal.transfo
 import { BatteryChemistry, OriginEnum } from '../../../shared/enums/battery.enum';
 import type { BatteryBrand } from '../../catalogs/batteries/entities/battery-brand.entity';
 import type { Post } from '../../posts/entities/post.entity';
+import { Origin } from 'src/shared/enums/vehicle.enum';
 
 @Entity('post_battery_details')
 @Index(['brand'], { where: '"brand_id" IS NOT NULL' })
@@ -11,23 +12,9 @@ export class PostBatteryDetails {
   @PrimaryColumn({ type: 'bigint', name: 'post_id' })
   postId!: string;
 
-  // Quan hệ tới Post
-  @OneToOne(
-    () => require('../../posts/entities/post.entity').Post,
-    (post: Post) => post.batteryDetails,
-    { onDelete: 'CASCADE' },
-  )
-  @JoinColumn({ name: 'post_id' })
-  post!: Post;
-
   // Thương hiệu (FK, optional)
-  @ManyToOne(
-    () => require('../../catalogs/batteries/entities/battery-brand.entity').BatteryBrand,
-    (b: BatteryBrand) => b.batteryDetails,
-    { nullable: true },
-  )
-  @JoinColumn({ name: 'brand_id' })
-  brand?: BatteryBrand;
+  @Column({ type: 'bigint', name: 'brand_id', nullable: true })
+  brandId?: number | null;
 
   // ========== Thông số kỹ thuật chính ==========
   @Column({
@@ -74,11 +61,11 @@ export class PostBatteryDetails {
 
   @Column({
     type: 'enum',
-    enum: OriginEnum,
+    enum: Origin,
     nullable: true,
     comment: 'Xuất xứ: NOI_DIA | NHAP_KHAU',
   })
-  origin?: OriginEnum | null;
+  origin?: Origin | null;
 
   // ========== Khác ==========
   @Column({
@@ -115,4 +102,22 @@ export class PostBatteryDetails {
     comment: 'Ghi chú tương thích (xe, BMS, cell, kích thước...)',
   })
   compatibleNotes?: string | null;
+
+  // Quan hệ tới Post
+  @OneToOne(
+    () => require('../../posts/entities/post.entity').Post,
+    (post: Post) => post.batteryDetails,
+    { onDelete: 'CASCADE' },
+  )
+  @JoinColumn({ name: 'post_id' })
+  post!: Post;
+
+  // Thương hiệu (FK, optional)
+  @ManyToOne(
+    () => require('../../catalogs/batteries/entities/battery-brand.entity').BatteryBrand,
+    (b: BatteryBrand) => b.batteryDetails,
+    { nullable: true },
+  )
+  @JoinColumn({ name: 'brand_id' })
+  brand?: BatteryBrand;
 }
