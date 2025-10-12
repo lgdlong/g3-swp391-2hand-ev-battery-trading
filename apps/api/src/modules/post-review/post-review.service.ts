@@ -25,16 +25,34 @@ export class PostReviewService {
   }
 
   findAll(): Promise<PostReviewLog[]> {
-    return this.postReviewRepo.find({
-      relations: ['post', 'actor'],
-      order: { createdAt: 'DESC' },
-    });
+    // ❌ Old approach (N+1 queries): For 100 logs → 1 + 100 + 100 = 201 queries
+    // return this.postReviewRepo.find({
+    //   relations: ['post', 'actor'],
+    //   order: { createdAt: 'DESC' },
+    // });
+
+    // ✅ New approach (Single JOIN query): All data in 1 query
+    return this.postReviewRepo
+      .createQueryBuilder('reviewLog')
+      .leftJoinAndSelect('reviewLog.post', 'post')
+      .leftJoinAndSelect('reviewLog.actor', 'actor')
+      .orderBy('reviewLog.createdAt', 'DESC')
+      .getMany();
   }
 
   findOne(id: string): Promise<PostReviewLog | null> {
-    return this.postReviewRepo.findOne({
-      where: { id },
-      relations: ['post', 'actor'],
-    });
+    // ❌ Old approach (Potential N+1 queries)
+    // return this.postReviewRepo.findOne({
+    //   where: { id },
+    //   relations: ['post', 'actor'],
+    // });
+
+    // ✅ New approach (Single JOIN query)
+    return this.postReviewRepo
+      .createQueryBuilder('reviewLog')
+      .leftJoinAndSelect('reviewLog.post', 'post')
+      .leftJoinAndSelect('reviewLog.actor', 'actor')
+      .where('reviewLog.id = :id', { id })
+      .getOne();
   }
 }
