@@ -65,6 +65,33 @@ export class PostsController {
   //-----------------------------------------
   //------------ GET ENDPOINTS --------------
   //-----------------------------------------
+
+  @Get('count')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Đếm số lượng bài đăng theo status (admin only)' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['DRAFT', 'PENDING_REVIEW', 'REJECTED', 'PUBLISHED', 'PAUSED', 'SOLD', 'ARCHIVED'],
+    description: 'Filter by post status (case-insensitive). If not provided, count all posts.',
+  })
+  @ApiOkResponse({
+    description: 'Post count',
+    schema: {
+      type: 'object',
+      properties: {
+        count: { type: 'number', example: 250 },
+        status: { type: 'string', example: 'PUBLISHED', nullable: true },
+      },
+    },
+  })
+  @ApiForbiddenResponse({ description: 'Admin access required' })
+  countPosts(@Query('status') status?: string): Promise<{ count: number; status?: string }> {
+    return this.postsService.countPosts(status);
+  }
+
   @ApiBearerAuth()
   @Get('car')
   @ApiOperation({ summary: 'Danh sách bài đăng xe ô tô điện (EV_CAR)' })

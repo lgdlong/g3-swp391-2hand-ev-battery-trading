@@ -120,6 +120,33 @@ export class AccountsController {
     return this.accountsService.findAll(limit, offset);
   }
 
+  @Get('count')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Đếm số lượng account theo status (admin only)' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['active', 'banned'],
+    description:
+      'Filter by account status (case-insensitive). If not provided, count all accounts.',
+  })
+  @ApiOkResponse({
+    description: 'Account count',
+    schema: {
+      type: 'object',
+      properties: {
+        count: { type: 'number', example: 150 },
+        status: { type: 'string', example: 'active', nullable: true },
+      },
+    },
+  })
+  @ApiForbiddenResponse({ description: 'Admin access required' })
+  countAccounts(@Query('status') status?: string): Promise<{ count: number; status?: string }> {
+    return this.accountsService.countAccounts(status);
+  }
+
   @Get('email/:email')
   @ApiOperation({ summary: 'Tìm account theo email (public)' })
   @ApiOkResponse({ type: SafeAccountDto })

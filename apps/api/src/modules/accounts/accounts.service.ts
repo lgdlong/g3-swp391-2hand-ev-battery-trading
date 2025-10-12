@@ -111,6 +111,18 @@ export class AccountsService {
     return AccountMapper.toSafeDto(account);
   }
 
+  async countAccounts(status?: string): Promise<{ count: number; status?: string }> {
+    const queryBuilder = this.repo.createQueryBuilder('account');
+
+    if (status) {
+      // Cast enum to text before applying UPPER for PostgreSQL compatibility
+      queryBuilder.where('UPPER(account.status::text) = UPPER(:status)', { status });
+    }
+
+    const count = await queryBuilder.getCount();
+    return { count, status };
+  }
+
   async findOneByEmailOrPhone(value: string): Promise<Account | null> {
     return this.repo.findOne({ where: normalizeEmailOrPhone(value) });
   }

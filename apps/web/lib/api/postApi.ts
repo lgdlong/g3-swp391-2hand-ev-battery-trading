@@ -25,6 +25,26 @@ export type {
 };
 
 /**
+ * Count posts with optional status filter (Admin only)
+ */
+export async function countPosts(
+  status?: 'DRAFT' | 'PENDING_REVIEW' | 'REJECTED' | 'PUBLISHED' | 'PAUSED' | 'SOLD' | 'ARCHIVED',
+): Promise<{ count: number; status?: string }> {
+  const params = new URLSearchParams();
+  if (status) {
+    params.append('status', status);
+  }
+
+  const { data } = await api.get<{ count: number; status?: string }>(
+    `/posts/count?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
  * Create a new post
  * Requires authentication token in headers
  */

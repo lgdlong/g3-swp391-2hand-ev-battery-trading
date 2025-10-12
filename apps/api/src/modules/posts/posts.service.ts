@@ -56,6 +56,18 @@ export class PostsService {
     private readonly postReviewService: PostReviewService,
   ) {}
 
+  async countPosts(status?: string): Promise<{ count: number; status?: string }> {
+    const queryBuilder = this.postsRepo.createQueryBuilder('post');
+
+    if (status) {
+      // Cast enum to text before applying UPPER for PostgreSQL compatibility
+      queryBuilder.where('UPPER(post.status::text) = UPPER(:status)', { status });
+    }
+
+    const count = await queryBuilder.getCount();
+    return { count, status };
+  }
+
   /**
    * Generic method to create any type of post (car, bike, or battery)
    * Eliminates code duplication across createCarPost, createBikePost, and createBatteryPost
