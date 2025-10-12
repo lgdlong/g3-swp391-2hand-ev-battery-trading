@@ -4,15 +4,13 @@ import { Repository } from 'typeorm';
 import { PostReviewLog } from './entities/post-review-log.entity';
 import { CreateReviewLogDto } from './dto/create-review-log.dto';
 
-
 @Injectable()
 export class PostReviewService {
   constructor(
     @InjectRepository(PostReviewLog)
-    private readonly postReviewRepo : Repository<PostReviewLog>,
-    )
-  {}
-    // xài dto 
+    private readonly postReviewRepo: Repository<PostReviewLog>,
+  ) {}
+  // xài dto
   async create(dto: CreateReviewLogDto): Promise<PostReviewLog> {
     const reviewLog = this.postReviewRepo.create({
       post: { id: dto.postId },
@@ -34,7 +32,7 @@ export class PostReviewService {
   }
 
   findOne(id: string): Promise<PostReviewLog | null> {
-    return this.postReviewRepo.findOne({ 
+    return this.postReviewRepo.findOne({
       where: { id },
       relations: ['post', 'actor'],
     });

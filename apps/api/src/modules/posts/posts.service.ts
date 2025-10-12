@@ -131,7 +131,7 @@ export class PostsService {
   ): Promise<BasePostResponseDto[]> {
     // ✅ Sanitize search query to prevent SQL injection
     const sanitizedQuery = searchQuery.replace(/['"\\%_]/g, '\\$&');
-    
+
     // ✅ Properly typed where clause instead of 'any'
     const where: {
       title: any;

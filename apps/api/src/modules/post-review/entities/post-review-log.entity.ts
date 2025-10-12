@@ -29,7 +29,6 @@ export class PostReviewLog {
   @Column({ name: 'action', type: 'enum', enum: ReviewActionEnum })
   action!: ReviewActionEnum;
 
- 
   @ManyToOne(() => require('../../accounts/entities/account.entity').Account, {
     nullable: true,
     onDelete: 'SET NULL',

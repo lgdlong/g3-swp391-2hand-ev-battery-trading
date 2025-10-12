@@ -1,7 +1,7 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PostStatus } from "src/shared/enums/post.enum";
-import { ReviewActionEnum } from "src/shared/enums/review.enum";
+import { PostStatus } from 'src/shared/enums/post.enum';
+import { ReviewActionEnum } from 'src/shared/enums/review.enum';
 
 export class CreateReviewLogDto {
   @ApiProperty({ example: '123', description: 'ID của bài đăng' })
