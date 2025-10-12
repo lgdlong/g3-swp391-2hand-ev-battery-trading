@@ -27,7 +27,7 @@ export async function getAccounts(limit?: number, offset?: number): Promise<Acco
   return data;
 }
 
-// Count accounts with optional status filter
+// Count accounts with optional status filter (Admin only)
 export async function countAccounts(
   status?: 'active' | 'banned',
 ): Promise<{ count: number; status?: string }> {
@@ -38,6 +38,9 @@ export async function countAccounts(
 
   const { data } = await api.get<{ count: number; status?: string }>(
     `/accounts/count?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
   );
   return data;
 }

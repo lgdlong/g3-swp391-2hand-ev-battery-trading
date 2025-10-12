@@ -25,7 +25,7 @@ export type {
 };
 
 /**
- * Count posts with optional status filter
+ * Count posts with optional status filter (Admin only)
  */
 export async function countPosts(
   status?: 'DRAFT' | 'PENDING_REVIEW' | 'REJECTED' | 'PUBLISHED' | 'PAUSED' | 'SOLD' | 'ARCHIVED',
@@ -37,6 +37,9 @@ export async function countPosts(
 
   const { data } = await api.get<{ count: number; status?: string }>(
     `/posts/count?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
   );
   return data;
 }

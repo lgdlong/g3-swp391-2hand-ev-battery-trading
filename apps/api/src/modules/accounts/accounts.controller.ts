@@ -121,7 +121,10 @@ export class AccountsController {
   }
 
   @Get('count')
-  @ApiOperation({ summary: 'Đếm số lượng account theo status (public)' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Đếm số lượng account theo status (admin only)' })
   @ApiQuery({
     name: 'status',
     required: false,
@@ -139,6 +142,7 @@ export class AccountsController {
       },
     },
   })
+  @ApiForbiddenResponse({ description: 'Admin access required' })
   countAccounts(@Query('status') status?: string): Promise<{ count: number; status?: string }> {
     return this.accountsService.countAccounts(status);
   }

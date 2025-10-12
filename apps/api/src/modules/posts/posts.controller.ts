@@ -67,7 +67,10 @@ export class PostsController {
   //-----------------------------------------
 
   @Get('count')
-  @ApiOperation({ summary: 'Đếm số lượng bài đăng theo status (public)' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Đếm số lượng bài đăng theo status (admin only)' })
   @ApiQuery({
     name: 'status',
     required: false,
@@ -84,6 +87,7 @@ export class PostsController {
       },
     },
   })
+  @ApiForbiddenResponse({ description: 'Admin access required' })
   countPosts(@Query('status') status?: string): Promise<{ count: number; status?: string }> {
     return this.postsService.countPosts(status);
   }

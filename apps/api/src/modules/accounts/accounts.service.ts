@@ -115,8 +115,8 @@ export class AccountsService {
     const queryBuilder = this.repo.createQueryBuilder('account');
 
     if (status) {
-      // Case-insensitive comparison using UPPER for compatibility across databases
-      queryBuilder.where('UPPER(account.status) = UPPER(:status)', { status });
+      // Cast enum to text before applying UPPER for PostgreSQL compatibility
+      queryBuilder.where('UPPER(account.status::text) = UPPER(:status)', { status });
     }
 
     const count = await queryBuilder.getCount();
