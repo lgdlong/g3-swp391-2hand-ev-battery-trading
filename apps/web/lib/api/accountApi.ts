@@ -27,6 +27,21 @@ export async function getAccounts(limit?: number, offset?: number): Promise<Acco
   return data;
 }
 
+// Count accounts with optional status filter
+export async function countAccounts(
+  status?: 'active' | 'banned',
+): Promise<{ count: number; status?: string }> {
+  const params = new URLSearchParams();
+  if (status) {
+    params.append('status', status);
+  }
+
+  const { data } = await api.get<{ count: number; status?: string }>(
+    `/accounts/count?${params.toString()}`,
+  );
+  return data;
+}
+
 // Get account by ID (public) - accepts string or number
 export async function getAccountById(id: string | number): Promise<Account> {
   const { data } = await api.get<Account>(`/accounts/${id}`);
