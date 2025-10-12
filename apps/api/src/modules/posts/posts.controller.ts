@@ -23,11 +23,13 @@ import type { AuthUser } from '../../core/guards/roles.guard';
 import { User } from '../../core/decorators/user.decorator';
 import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
+import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PaginatedBasePostResponseDto } from './dto/paginated-post-response.dto';
 import { BikeDetailsResponseDto } from '../post-details/dto/bike/bike-details-response.dto';
 import { CarDetailsResponseDto } from '../post-details/dto/car/car-details-response.dto';
+import { BatteryDetailResponseDto } from '../post-details/dto/battery/battery-detail-response.dto';
 
 import {
   ApiBadRequestResponse,
@@ -49,7 +51,12 @@ import {
 import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 
 @ApiTags('posts')
-@ApiExtraModels(BasePostResponseDto, CarDetailsResponseDto, BikeDetailsResponseDto)
+@ApiExtraModels(
+  BasePostResponseDto,
+  CarDetailsResponseDto,
+  BikeDetailsResponseDto,
+  BatteryDetailResponseDto,
+)
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -95,6 +102,24 @@ export class PostsController {
   @ApiQuery({ name: 'sort', required: false, type: String, example: 'price' })
   async getBikePosts(@Query() query: ListQueryDto): Promise<BasePostResponseDto[]> {
     return this.postsService.getBikePosts(query);
+  }
+
+  @Get('battery')
+  @ApiOperation({ summary: 'Danh sách bài đăng pin (BATTERY)' })
+  @ApiOkResponse({
+    description: 'Danh sách bài đăng pin',
+    schema: {
+      type: 'array',
+      items: { $ref: getSchemaPath(BasePostResponseDto) },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Query không hợp lệ' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'q', required: false, type: String, example: 'tesla' })
+  @ApiQuery({ name: 'sort', required: false, type: String, example: '-createdAt' })
+  async getBatteryPosts(@Query() query: ListQueryDto): Promise<BasePostResponseDto[]> {
+    return this.postsService.getBatteryPosts(query);
   }
 
   @Get('search')
@@ -216,6 +241,28 @@ export class PostsController {
     dto.postType = PostType.EV_BIKE;
     const sellerId = user.sub;
     return this.postsService.createBikePost(dto, sellerId);
+  }
+
+  @Post('battery')
+  @ApiOperation({ summary: 'Tạo bài đăng pin' })
+  @ApiBearerAuth()
+  @ApiCreatedResponse({
+    description: 'Tạo bài đăng thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiBadRequestResponse({ description: 'Body không hợp lệ' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không đủ quyền' })
+  @ApiBody({ type: CreateBatteryPostDto })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  async createBatteryPost(
+    @Body() dto: CreateBatteryPostDto,
+    @User() user: AuthUser,
+  ): Promise<BasePostResponseDto | null> {
+    dto.postType = PostType.BATTERY;
+    const sellerId = user.sub;
+    return this.postsService.createBatteryPost(dto, sellerId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -29,14 +29,13 @@ export class PostReviewLog {
   @Column({ name: 'action', type: 'enum', enum: ReviewActionEnum })
   action!: ReviewActionEnum;
 
- 
   @ManyToOne(() => require('../../accounts/entities/account.entity').Account, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'actor_id' })
   actor: Account | null = null;
-  actorId!: number | null;
+  actorId!: string | null;
 
   @Column({ name: 'old_status', type: 'enum', enum: PostStatus, nullable: true })
   oldStatus: PostStatus | null = null;

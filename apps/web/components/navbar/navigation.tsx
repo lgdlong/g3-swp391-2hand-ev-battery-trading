@@ -11,7 +11,7 @@ interface NavigationProps {
 const navigationItems = [
   { label: 'Trang chủ', href: '/' },
   { label: 'Xe điện', href: '/posts/ev' },
-  { label: 'Pin', href: '/posts/battery' },
+  { label: 'Pin', href: '/posts/batteries' },
 ];
 
 export function Navigation({ className }: NavigationProps) {
