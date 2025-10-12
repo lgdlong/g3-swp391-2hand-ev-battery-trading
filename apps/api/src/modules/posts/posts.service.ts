@@ -21,6 +21,8 @@ import { AddressService } from '../address/address.service';
 import { buildAddressText } from 'src/shared/helpers/address.helper';
 import { CarDetailsService } from '../post-details/services/car-details.service';
 import { DISPLAYABLE_POST_STATUS } from 'src/shared/constants/post';
+import { PostReviewService } from '../post-review/post-review.service';
+import { ReviewActionEnum } from 'src/shared/enums/review.enum';
 
 // Union type for all post creation DTOs
 type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
@@ -51,6 +53,7 @@ export class PostsService {
     private readonly batteryDetailsService: BatteryDetailsService,
     private readonly addressService: AddressService,
     private readonly cloudinary: CloudinaryService,
+    private readonly postReviewService: PostReviewService,
   ) {}
 
   /**
@@ -199,8 +202,17 @@ export class PostsService {
     searchQuery: string,
     query: ListQueryDto & { postType?: PostType; provinceNameCached?: string },
   ): Promise<BasePostResponseDto[]> {
-    const where: any = {
-      title: ILike(`%${searchQuery}%`),
+    // ✅ Sanitize search query to prevent SQL injection
+    const sanitizedQuery = searchQuery.replace(/['"\\%_]/g, '\\$&');
+
+    // ✅ Properly typed where clause instead of 'any'
+    const where: {
+      title: any;
+      status: PostStatus;
+      postType?: PostType;
+      provinceNameCached?: string;
+    } = {
+      title: ILike(`%${sanitizedQuery}%`),
       status: DISPLAYABLE_POST_STATUS, // Only search published posts
     };
 
@@ -370,9 +382,25 @@ export class PostsService {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
+    // Only allow rejecting posts that are in PENDING_REVIEW status
+    if (post.status !== PostStatus.PENDING_REVIEW) {
+      throw new BadRequestException(
+        `Cannot reject post with status ${post.status}. Only posts with PENDING_REVIEW status can be rejected.`,
+      );
+    }
+
+    const oldStatus = post.status;
     post.status = PostStatus.REJECTED;
     post.reviewedAt = new Date();
     await this.postsRepo.save(post);
+    await this.postReviewService.create({
+      postId: post.id,
+      actorId: String(post.seller.id),
+      oldStatus,
+      newStatus: post.status,
+      reason,
+      action: ReviewActionEnum.REJECTED,
+    });
 
     return PostMapper.toBasePostResponseDto(post);
   }

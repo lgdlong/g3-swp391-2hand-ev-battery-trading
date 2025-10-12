@@ -12,6 +12,7 @@ import { PostsModule } from './modules/posts/posts.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { PostBookmarksModule } from './modules/post-bookmarks/post-bookmarks.module';
 import { AddressModule } from './modules/address/address.module';
+import { PostReviewModule } from './modules/post-review/post-review.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -59,6 +60,7 @@ import { AddressModule } from './modules/address/address.module';
     UploadModule,
     PostBookmarksModule,
     AddressModule,
+    PostReviewModule,
   ],
   controllers: [],
   providers: [],
