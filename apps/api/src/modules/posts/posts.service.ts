@@ -4,9 +4,11 @@ import { ILike, Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { PostType, PostStatus } from '../../shared/enums/post.enum';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
+import { BatteryDetailsService } from '../post-details/services/battery-details.service';
 import { Account } from '../accounts/entities/account.entity';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
 import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
+import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { PostMapper } from './mappers/post.mapper';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
@@ -19,9 +21,28 @@ import { AddressService } from '../address/address.service';
 import { buildAddressText } from 'src/shared/helpers/address.helper';
 import { CarDetailsService } from '../post-details/services/car-details.service';
 import { DISPLAYABLE_POST_STATUS } from 'src/shared/constants/post';
+import { PostReviewService } from '../post-review/post-review.service';
+import { ReviewActionEnum } from 'src/shared/enums/review.enum';
+
+// Union type for all post creation DTOs
+type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
 
 @Injectable()
 export class PostsService {
+  // Relation constants
+  private readonly CAR_DETAILS = 'carDetails';
+  private readonly BIKE_DETAILS = 'bikeDetails';
+  private readonly BATTERY_DETAILS = 'batteryDetails';
+  private readonly SELLER = 'seller';
+  private readonly IMAGES = 'images';
+  private readonly POST_FULL_RELATIONS = [
+    this.CAR_DETAILS,
+    this.BIKE_DETAILS,
+    this.BATTERY_DETAILS,
+    this.SELLER,
+    this.IMAGES,
+  ];
+
   constructor(
     @InjectRepository(Post)
     private readonly postsRepo: Repository<Post>,
@@ -29,32 +50,30 @@ export class PostsService {
     private readonly imagesRepo: Repository<PostImage>,
     private readonly bikeDetailsService: BikeDetailsService,
     private readonly carDetailsService: CarDetailsService,
+    private readonly batteryDetailsService: BatteryDetailsService,
     private readonly addressService: AddressService,
     private readonly cloudinary: CloudinaryService,
+    private readonly postReviewService: PostReviewService,
   ) {}
 
-  async getCarPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
-    const rows = await this.postsRepo.find({
-      where: {
-        postType: PostType.EV_CAR,
-        status: DISPLAYABLE_POST_STATUS, // Only return published posts
-      },
-      relations: ['carDetails', 'seller', 'images'],
-      order: { createdAt: query.order || 'DESC' },
-      take: query.limit,
-      skip: query.offset,
-    });
-    return PostMapper.toBasePostResponseDtoArray(rows);
-  }
-
-  async createCarPost(
-    dto: CreateCarPostDto,
+  /**
+   * Generic method to create any type of post (car, bike, or battery)
+   * Eliminates code duplication across createCarPost, createBikePost, and createBatteryPost
+   */
+  private async createPost(
+    dto: CreateAnyPostDto,
     sellerId: number,
   ): Promise<BasePostResponseDto | null> {
-    if (dto.postType !== PostType.EV_CAR) {
+    // Validate postType matches the DTO
+    if (
+      (dto instanceof CreateCarPostDto && dto.postType !== PostType.EV_CAR) ||
+      (dto instanceof CreateBikePostDto && dto.postType !== PostType.EV_BIKE) ||
+      (dto instanceof CreateBatteryPostDto && dto.postType !== PostType.BATTERY)
+    ) {
       throw new Error('Invalid postType for this endpoint');
     }
 
+    // Fetch address names if not provided
     if (!dto.provinceNameCached && !dto.districtNameCached && !dto.wardNameCached) {
       const fullAddress = await this.addressService.getFullAddressByWardCode(dto.wardCode);
       dto.provinceNameCached = fullAddress.data.province.name;
@@ -62,6 +81,7 @@ export class PostsService {
       dto.wardNameCached = fullAddress.data.ward.name;
     }
 
+    // Build address text for caching
     dto.addressTextCached =
       buildAddressText(
         dto.wardNameCached ?? undefined,
@@ -70,9 +90,8 @@ export class PostsService {
       ) || '';
 
     return this.postsRepo.manager.transaction(async (trx) => {
-      // 1) tạo Post
+      // 1) Create Post entity
       const post = trx.create(Post, {
-        // nếu bạn map seller bằng ManyToOne đối tượng:
         seller: { id: sellerId } as Account,
         postType: dto.postType,
         title: dto.title,
@@ -87,26 +106,82 @@ export class PostsService {
       });
       const savedPost = await trx.save(Post, post);
 
-      // 2) Create car details
-      if (dto.carDetails) {
-        await this.carDetailsService.createWithTrx(trx, {
-          post_id: savedPost.id,
-          ...dto.carDetails,
-        });
+      // 2) Create post-specific details based on postType
+      switch (dto.postType) {
+        case PostType.EV_CAR:
+          if ('carDetails' in dto && dto.carDetails) {
+            await this.carDetailsService.createWithTrx(trx, {
+              post_id: savedPost.id,
+              ...dto.carDetails,
+            });
+          }
+          break;
+
+        case PostType.EV_BIKE:
+          if ('bikeDetails' in dto && dto.bikeDetails) {
+            await this.bikeDetailsService.createWithTrx(trx, {
+              post_id: savedPost.id,
+              ...dto.bikeDetails,
+            });
+          }
+          break;
+
+        case PostType.BATTERY:
+          if ('batteryDetails' in dto && dto.batteryDetails) {
+            await this.batteryDetailsService.createWithTrx(trx, {
+              post_id: savedPost.id,
+              ...dto.batteryDetails,
+            });
+          }
+          break;
+
+        default:
+          // TypeScript exhaustiveness check - this should never be reached
+          throw new Error('Unsupported postType');
       }
 
-      // 3) (tuỳ chọn) tự chuyển sang PENDING_REVIEW + log
-      // await trx.update(Post, { id: savedPost.id }, { status: PostStatus.PENDING_REVIEW, submittedAt: new Date() });
-      // await trx.save(PostReviewLog, trx.create(PostReviewLog, { post: savedPost, action: ReviewActionEnum.SUBMITTED, actor: {id: dto.sellerId} as any, oldStatus: PostStatus.DRAFT, newStatus: PostStatus.PENDING_REVIEW }));
+      // 3) Fetch created post with appropriate relations based on postType
+      const relations: string[] = [this.SELLER];
+      switch (dto.postType) {
+        case PostType.EV_CAR:
+          relations.push(this.CAR_DETAILS);
+          break;
+        case PostType.EV_BIKE:
+          relations.push(this.BIKE_DETAILS);
+          break;
+        case PostType.BATTERY:
+          relations.push(this.BATTERY_DETAILS);
+          break;
+      }
 
-      // 5) trả về Post + relations
       const createdPost = await trx.findOne(Post, {
         where: { id: savedPost.id },
-        relations: ['carDetails', 'seller'],
+        relations,
       });
 
       return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
     });
+  }
+
+  async getCarPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
+    const rows = await this.postsRepo.find({
+      where: {
+        postType: PostType.EV_CAR,
+        status: DISPLAYABLE_POST_STATUS, // Only return published posts
+      },
+      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES],
+      order: { createdAt: query.order || 'DESC' },
+      take: query.limit,
+      skip: query.offset,
+    });
+    return PostMapper.toBasePostResponseDtoArray(rows);
+  }
+
+  async createCarPost(
+    dto: CreateCarPostDto,
+    sellerId: number,
+  ): Promise<BasePostResponseDto | null> {
+    return this.createPost(dto, sellerId);
   }
 
   async getBikePosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
@@ -115,7 +190,7 @@ export class PostsService {
         postType: PostType.EV_BIKE,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: ['bikeDetails', 'seller', 'images'],
+      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -127,8 +202,17 @@ export class PostsService {
     searchQuery: string,
     query: ListQueryDto & { postType?: PostType; provinceNameCached?: string },
   ): Promise<BasePostResponseDto[]> {
-    const where: any = {
-      title: ILike(`%${searchQuery}%`),
+    // ✅ Sanitize search query to prevent SQL injection
+    const sanitizedQuery = searchQuery.replace(/['"\\%_]/g, '\\$&');
+
+    // ✅ Properly typed where clause instead of 'any'
+    const where: {
+      title: any;
+      status: PostStatus;
+      postType?: PostType;
+      provinceNameCached?: string;
+    } = {
+      title: ILike(`%${sanitizedQuery}%`),
       status: DISPLAYABLE_POST_STATUS, // Only search published posts
     };
 
@@ -144,7 +228,7 @@ export class PostsService {
 
     const rows = await this.postsRepo.find({
       where,
-      relations: ['carDetails', 'bikeDetails', 'batteryDetails', 'seller', 'images'],
+      relations: this.POST_FULL_RELATIONS,
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -157,59 +241,28 @@ export class PostsService {
     dto: CreateBikePostDto,
     sellerId: number,
   ): Promise<BasePostResponseDto | null> {
-    if (dto.postType !== PostType.EV_BIKE) {
-      throw new Error('Invalid postType for this endpoint');
-    }
+    return this.createPost(dto, sellerId);
+  }
 
-    return this.postsRepo.manager.transaction(async (trx) => {
-      // 1) tạo Post
-      const post = trx.create(Post, {
-        seller: { id: sellerId } as Account,
-        postType: dto.postType,
-        title: dto.title,
-        description: dto.description,
-        wardCode: dto.wardCode,
-        provinceNameCached: dto.provinceNameCached ?? null,
-        districtNameCached: dto.districtNameCached ?? null,
-        wardNameCached: dto.wardNameCached ?? null,
-        addressTextCached: dto.addressTextCached ?? null,
-        priceVnd: dto.priceVnd,
-        isNegotiable: dto.isNegotiable ?? false,
-      });
-      const savedPost = await trx.save(Post, post);
-
-      // 2) tạo Bike Details
-      if (dto.bikeDetails) {
-        await this.bikeDetailsService.createWithTrx(trx, {
-          post_id: savedPost.id,
-          ...dto.bikeDetails,
-        });
-      }
-
-      // 3) tạo Media (nếu có)
-      // if (dto.media?.length) {
-      //   const rows = dto.media.map((m) =>
-      //     trx.create(PostMedia, {
-      //       kind: m.kind,
-      //       url: m.url,
-      //       position: m.position ?? 0,
-      //       post: savedPost,
-      //     }),
-      //   );
-      //   await trx.save(PostMedia, rows);
-      // }
-
-      // 4) (optional) cập nhật status/log như createCarPost nếu cần
-      // ...
-
-      // 5) trả về Post + relations, rồi map DTO giống createCarPost
-      const createdPost = await trx.findOne(Post, {
-        where: { id: savedPost.id },
-        relations: ['bikeDetails', 'seller'],
-      });
-
-      return createdPost ? PostMapper.toBasePostResponseDto(createdPost) : null;
+  async getBatteryPosts(query: ListQueryDto): Promise<BasePostResponseDto[]> {
+    const rows = await this.postsRepo.find({
+      where: {
+        postType: PostType.BATTERY,
+        status: DISPLAYABLE_POST_STATUS,
+      },
+      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES],
+      order: { createdAt: query.order || 'DESC' },
+      take: query.limit,
+      skip: query.offset,
     });
+    return PostMapper.toBasePostResponseDtoArray(rows);
+  }
+
+  async createBatteryPost(
+    dto: CreateBatteryPostDto,
+    sellerId: number,
+  ): Promise<BasePostResponseDto | null> {
+    return this.createPost(dto, sellerId);
   }
 
   async addImages(postId: string, images: CreatePostImageDto[]) {
@@ -262,7 +315,7 @@ export class PostsService {
   async getPostById(id: string): Promise<BasePostResponseDto> {
     const post = await this.postsRepo.findOne({
       where: { id },
-      relations: ['seller', 'images', 'carDetails', 'bikeDetails'],
+      relations: this.POST_FULL_RELATIONS,
     });
 
     if (!post) {
@@ -287,7 +340,7 @@ export class PostsService {
 
     const rows = await this.postsRepo.find({
       where,
-      relations: ['carDetails', 'bikeDetails', 'seller', 'images'],
+      relations: this.POST_FULL_RELATIONS,
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -302,7 +355,7 @@ export class PostsService {
   async approvePost(id: string): Promise<BasePostResponseDto> {
     const post = await this.postsRepo.findOne({
       where: { id: id },
-      relations: ['seller', 'carDetails', 'bikeDetails', 'batteryDetails'],
+      relations: this.POST_FULL_RELATIONS,
     });
 
     if (!post) {
@@ -322,16 +375,32 @@ export class PostsService {
   async rejectPost(id: string, reason?: string): Promise<BasePostResponseDto> {
     const post = await this.postsRepo.findOne({
       where: { id: id },
-      relations: ['seller', 'carDetails', 'bikeDetails', 'batteryDetails'],
+      relations: this.POST_FULL_RELATIONS,
     });
 
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
+    // Only allow rejecting posts that are in PENDING_REVIEW status
+    if (post.status !== PostStatus.PENDING_REVIEW) {
+      throw new BadRequestException(
+        `Cannot reject post with status ${post.status}. Only posts with PENDING_REVIEW status can be rejected.`,
+      );
+    }
+
+    const oldStatus = post.status;
     post.status = PostStatus.REJECTED;
     post.reviewedAt = new Date();
     await this.postsRepo.save(post);
+    await this.postReviewService.create({
+      postId: post.id,
+      actorId: String(post.seller.id),
+      oldStatus,
+      newStatus: post.status,
+      reason,
+      action: ReviewActionEnum.REJECTED,
+    });
 
     return PostMapper.toBasePostResponseDto(post);
   }

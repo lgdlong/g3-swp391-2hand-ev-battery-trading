@@ -2,16 +2,17 @@ import type {
   PostUI,
   CarDetailUI,
   BikeDetailUI,
+  BatteryDetail,
   SellerLite,
   PostImageUI,
-  PostTypeUI,
-  PostStatusUI,
-  PostOriginUI,
+  PostType,
+  PostStatus,
 } from '@/types/post';
-import type { Post as PostApiResponse } from '@/lib/api/postApi';
+import type { Post } from '@/lib/api/postApi';
+import { Origin } from '@/types/enums';
 
 // We'll adapt the existing API response instead of defining a new DTO type
-type PostDtoRaw = PostApiResponse;
+type PostDtoRaw = Post;
 type FlexibleField = string | number | object | null | undefined;
 
 /**
@@ -55,7 +56,7 @@ function adaptCarDetails(dto: PostDtoRaw['carDetails']): CarDetailUI | undefined
     charge_dc_kw: dto.charge_dc_kw ? toString(dto.charge_dc_kw) : undefined,
     range_km: dto.range_km ? toNumber(dto.range_km) : undefined,
     license_plate: dto.license_plate ? toString(dto.license_plate) : undefined,
-    origin: dto.origin as PostOriginUI | undefined,
+    origin: dto.origin as Origin | undefined,
   };
 }
 
@@ -73,7 +74,27 @@ function adaptBikeDetails(dto: PostDtoRaw['bikeDetails']): BikeDetailUI | undefi
     motor_power_kw: dto.motor_power_kw ? toString(dto.motor_power_kw) : undefined,
     range_km: dto.range_km ? toNumber(dto.range_km) : undefined,
     license_plate: dto.license_plate ? toString(dto.license_plate) : undefined,
-    origin: dto.origin as PostOriginUI | undefined,
+    origin: dto.origin as Origin | undefined,
+  };
+}
+
+/**
+ * Adapts raw battery details DTO to UI interface
+ */
+function adaptBatteryDetails(dto: PostDtoRaw['batteryDetails']): BatteryDetail | undefined {
+  if (!dto) return undefined;
+
+  return {
+    brand_id: dto.brand_id ? toNumber(dto.brand_id) : null,
+    voltageV: dto.voltageV ? toNumber(dto.voltageV) : null,
+    capacityAh: dto.capacityAh ? toNumber(dto.capacityAh) : null,
+    chargeTimeHours: dto.chargeTimeHours ? toNumber(dto.chargeTimeHours) : null,
+    chemistry: dto.chemistry as 'LFP' | 'NMC' | 'NCA' | 'LMO' | 'LCO' | 'OTHER' | null,
+    origin: dto.origin as 'NOI_DIA' | 'NHAP_KHAU' | null,
+    weightKg: dto.weightKg ? toNumber(dto.weightKg) : null,
+    cycleLife: dto.cycleLife ? toNumber(dto.cycleLife) : null,
+    rangeKm: dto.rangeKm ? toNumber(dto.rangeKm) : null,
+    compatibleNotes: dto.compatibleNotes ? toString(dto.compatibleNotes) : null,
   };
 }
 
@@ -130,20 +151,25 @@ function adaptSeller(seller: PostDtoRaw['seller']): SellerLite {
 export function adaptPostDto(dto: PostDtoRaw): PostUI {
   return {
     id: dto.id,
-    postType: dto.postType as PostTypeUI,
+    postType: dto.postType as PostType,
     title: dto.title,
     description: dto.description,
+    // wardCode: dto.wardCode,
     priceVnd: dto.priceVnd,
     isNegotiable: dto.isNegotiable,
-    status: dto.status as PostStatusUI,
+    status: dto.status as PostStatus,
+
     provinceNameCached: toStringOrUndefined(dto.provinceNameCached),
     districtNameCached: toStringOrUndefined(dto.districtNameCached),
     wardNameCached: toStringOrUndefined(dto.wardNameCached),
     addressTextCached: toStringOrUndefined(dto.addressTextCached),
+
     seller: adaptSeller(dto.seller),
     carDetails: adaptCarDetails(dto.carDetails),
     bikeDetails: adaptBikeDetails(dto.bikeDetails),
+    batteryDetails: adaptBatteryDetails(dto.batteryDetails),
     images: adaptImages(dto.images),
+
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     submittedAt: toStringOrUndefined(dto.submittedAt),

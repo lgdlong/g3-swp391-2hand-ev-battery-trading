@@ -7,10 +7,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { CarCatalogModule } from './modules/catalogs/cars/car-catalog.module';
 import { BikeCatalogModule } from './modules/catalogs/bikes/bike-catalog.module';
+import { BatteryCatalogModule } from './modules/catalogs/batteries/battery-catalog.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { PostBookmarksModule } from './modules/post-bookmarks/post-bookmarks.module';
 import { AddressModule } from './modules/address/address.module';
+import { PostReviewModule } from './modules/post-review/post-review.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -53,10 +55,12 @@ import { AddressModule } from './modules/address/address.module';
     AuthModule,
     CarCatalogModule,
     BikeCatalogModule,
+    BatteryCatalogModule,
     PostsModule,
     UploadModule,
     PostBookmarksModule,
     AddressModule,
+    PostReviewModule,
   ],
   controllers: [],
   providers: [],

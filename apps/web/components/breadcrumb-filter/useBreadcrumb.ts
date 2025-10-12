@@ -13,47 +13,53 @@ export function useBreadcrumb(type: 'battery' | 'ev' = 'ev') {
     currentSubcategory: null,
   });
 
-  const setCategory = useCallback((category: string) => {
-    setBreadcrumbState(prev => ({
-      ...prev,
-      currentCategory: category,
-      currentSubcategory: null,
-      items: [
-        {
-          label: category,
-          onClick: () => {
-            if (type === 'ev' && category === 'Xe điện') {
-              router.push('/posts/ev');
-            } else if (type === 'battery' && category === 'Pin EV') {
-              router.push('/posts/battery');
-            }
+  const setCategory = useCallback(
+    (category: string) => {
+      setBreadcrumbState((prev) => ({
+        ...prev,
+        currentCategory: category,
+        currentSubcategory: null,
+        items: [
+          {
+            label: category,
+            onClick: () => {
+              if (type === 'ev' && category === 'Xe điện') {
+                router.push('/posts/ev');
+              } else if (type === 'battery' && category === 'Pin EV') {
+                router.push('/posts/batteries');
+              }
+            },
           },
-        }
-      ]
-    }));
-  }, [type, router]);
+        ],
+      }));
+    },
+    [type, router],
+  );
 
-  const setSubcategory = useCallback((subcategory: string) => {
-    setBreadcrumbState(prev => ({
-      ...prev,
-      currentSubcategory: subcategory,
-      items: [
-        {
-          label: prev.currentCategory || 'Trang chủ',
-          onClick: () => {
-            if (type === 'ev' && prev.currentCategory === 'Xe điện') {
-              router.push('/posts/ev');
-            } else if (type === 'battery' && prev.currentCategory === 'Pin EV') {
-              router.push('/posts/battery');
-            }
+  const setSubcategory = useCallback(
+    (subcategory: string) => {
+      setBreadcrumbState((prev) => ({
+        ...prev,
+        currentSubcategory: subcategory,
+        items: [
+          {
+            label: prev.currentCategory || 'Trang chủ',
+            onClick: () => {
+              if (type === 'ev' && prev.currentCategory === 'Xe điện') {
+                router.push('/posts/ev');
+              } else if (type === 'battery' && prev.currentCategory === 'Pin EV') {
+                router.push('/posts/batteries');
+              }
+            },
           },
-        },
-        {
-          label: subcategory,
-        }
-      ]
-    }));
-  }, [type, router]);
+          {
+            label: subcategory,
+          },
+        ],
+      }));
+    },
+    [type, router],
+  );
 
   return {
     breadcrumbState,
