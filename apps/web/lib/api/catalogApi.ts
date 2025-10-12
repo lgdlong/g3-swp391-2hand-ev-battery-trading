@@ -15,6 +15,13 @@ export async function getBikeBrands(): Promise<Brand[]> {
   return data;
 }
 
+export async function getBatteryBrands(): Promise<Brand[]> {
+  const { data } = await api.get<Brand[]>('battery-catalog/brands', {
+    params: { limit: DEFAULT_BRAND_QUERY_LIMIT },
+  });
+  return data;
+}
+
 export async function getCarModels(brandId: number): Promise<Model[]> {
   const { data } = await api.get<Model[]>(`car-catalog/brands/${brandId}/models`);
   return data;

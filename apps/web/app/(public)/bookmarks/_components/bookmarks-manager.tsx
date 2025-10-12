@@ -8,6 +8,7 @@ import { Heart } from 'lucide-react';
 import { getAllBookmarks, deleteBookmark } from '@/lib/api/bookmarkApi';
 import type { Bookmark } from '@/types/bookmark';
 import { getPostById } from '@/lib/api/postApi';
+import { DEFAULT_IMAGE } from '@/constants/images';
 import {
   pickTitle,
   pickImageUrl,
@@ -169,7 +170,7 @@ export function BookmarksManager() {
             className="relative flex-shrink-0 w-32 h-24 overflow-hidden bg-gray-100"
           >
             <Image
-              src={b.postImageUrl || '/asset/phu-tung-o-to-27.png'}
+              src={b.postImageUrl || DEFAULT_IMAGE}
               alt={b.postTitle || `Post #${b.postId}`}
               fill
               sizes="128px"
