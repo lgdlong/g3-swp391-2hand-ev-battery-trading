@@ -5,11 +5,11 @@ import { ApiOkResponse } from '@nestjs/swagger/dist/decorators/api-response.deco
 import { PostReviewLogDto } from './dto/post-review-logs.dto';
 import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Post Review Logs')
 @Controller('post-review')
 export class PostReviewController {
   constructor(private readonly postReviewService: PostReviewService) {}
 
-  @ApiTags('Post Review Logs')
   @Get()
   @ApiOperation({ summary: 'Get all post review logs' })
   @ApiOkResponse({
