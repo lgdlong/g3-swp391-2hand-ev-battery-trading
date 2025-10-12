@@ -2,8 +2,10 @@ import { Post } from '../entities/post.entity';
 import { BasePostResponseDto } from '../dto/base-post-response.dto';
 import { CarDetailsResponseDto } from '../../post-details/dto/car/car-details-response.dto';
 import { BikeDetailsResponseDto } from '../../post-details/dto/bike/bike-details-response.dto';
+import { BatteryDetailResponseDto } from '../../post-details/dto/battery/battery-detail-response.dto';
 import { PostEvCarDetails } from 'src/modules/post-details/entities/post-ev-car-details.entity';
 import { PostEvBikeDetails } from 'src/modules/post-details/entities/post-ev-bike-details.entity';
+import { PostBatteryDetails } from 'src/modules/post-details/entities/post-battery-details.entity';
 import { AccountMapper } from '../../accounts/mappers';
 import { PostImageMapper } from './post-image.mapper';
 
@@ -44,10 +46,10 @@ export class PostMapper {
       dto.bikeDetails = PostMapper.toBikeDetailsResponseDto(post.bikeDetails);
     }
 
-    // TODO: Add battery details mapping when BatteryDetailsResponseDto is created
-    // if (post.batteryDetails) {
-    //   dto.batteryDetails = PostMapper.toBatteryDetailsResponseDto(post.batteryDetails);
-    // }
+    // Map battery details if available
+    if (post.batteryDetails) {
+      dto.batteryDetails = PostMapper.toBatteryDetailsResponseDto(post.batteryDetails);
+    }
 
     // Map images if available
     if (post.images) {
@@ -97,6 +99,23 @@ export class PostMapper {
     dto.motor_power_kw = bikeDetails.motor_power_kw;
     dto.charge_ac_kw = bikeDetails.charge_ac_kw;
     dto.battery_health_pct = bikeDetails.battery_health_pct;
+    return dto;
+  }
+
+  private static toBatteryDetailsResponseDto(
+    batteryDetails: PostBatteryDetails,
+  ): BatteryDetailResponseDto {
+    const dto = new BatteryDetailResponseDto();
+    dto.brandId = batteryDetails.brandId || null;
+    dto.voltageV = batteryDetails.voltageV ?? null;
+    dto.capacityAh = batteryDetails.capacityAh ?? null;
+    dto.chargeTimeHours = batteryDetails.chargeTimeHours ?? null;
+    dto.chemistry = batteryDetails.chemistry ?? null;
+    dto.origin = batteryDetails.origin ?? null;
+    dto.weightKg = batteryDetails.weightKg ?? null;
+    dto.cycleLife = batteryDetails.cycleLife ?? null;
+    dto.rangeKm = batteryDetails.rangeKm ?? null;
+    dto.compatibleNotes = batteryDetails.compatibleNotes ?? null;
     return dto;
   }
 }

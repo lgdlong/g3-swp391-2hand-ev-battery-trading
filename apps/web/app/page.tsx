@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { getCarPostsWithQuery, getBikePostsWithQuery } from '@/lib/api/postApi';
 import { useQuery } from '@tanstack/react-query';
+import { DEFAULT_IMAGE } from '@/constants/images';
 
 export default function Home() {
   const categories = [
@@ -293,7 +294,7 @@ export default function Home() {
                             (Array.isArray(post.images) &&
                             typeof (post.images as any)[0] === 'object'
                               ? (post.images as any)[0]?.url
-                              : undefined) || '/asset/phu-tung-o-to-27.png'
+                              : undefined) || DEFAULT_IMAGE
                           }
                           alt={post.title}
                           fill
