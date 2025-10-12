@@ -339,6 +339,14 @@ export class PostsService {
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
+
+    // Only allow rejecting posts that are in PENDING_REVIEW status
+    if (post.status !== PostStatus.PENDING_REVIEW) {
+      throw new BadRequestException(
+        `Cannot reject post with status ${post.status}. Only posts with PENDING_REVIEW status can be rejected.`,
+      );
+    }
+
     const oldStatus = post.status;
     post.status = PostStatus.REJECTED;
     post.reviewedAt = new Date();
