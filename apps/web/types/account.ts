@@ -7,7 +7,6 @@ export interface AccountUI {
   fullName: string;
   email?: string;
   phone?: string;
-  // passwordHashed: string; // ⚠️ thường frontend không cần field này
   avatarUrl?: string;
   status: AccountStatus;
   role: AccountRole;
