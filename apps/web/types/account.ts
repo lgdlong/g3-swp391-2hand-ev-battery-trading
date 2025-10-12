@@ -19,7 +19,6 @@ export interface Account {
   id: number;
   email: string | null;
   phone: string | null;
-  // passwordHashed: string; // ⚠️ thường frontend không cần field này
   fullName: string;
   avatarUrl: string | null;
   status: AccountStatus;
