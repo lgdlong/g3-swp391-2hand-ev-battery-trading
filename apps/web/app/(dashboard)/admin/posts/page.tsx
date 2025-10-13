@@ -81,7 +81,6 @@ export default function AdminPostsPage() {
     },
   });
 
-  // Get status counts với caching - chỉ lấy admin status, bỏ DRAFT
   const { data: pendingReviewData } = useQuery<PostsResponse>({
     queryKey: ['admin-posts-count', 'PENDING_REVIEW'],
     queryFn: () => getAdminPosts({ status: 'PENDING_REVIEW', limit: 1000 }),
