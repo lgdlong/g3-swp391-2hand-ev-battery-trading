@@ -5,26 +5,31 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Post } from '@/types/api/post';
-import { Eye, Check, X, Calendar, MapPin, User, Car } from 'lucide-react';
+import { Eye, Check, Calendar, MapPin, User, Car } from 'lucide-react';
 import { DEFAULT_IMAGE } from '@/constants/images';
+import { RejectDialog } from './RejectDialog';
+import { useState } from 'react';
 
 interface PostCardProps {
   post: Post;
-  onViewDetails: (post: Post) => void;
-  onApprove: (postId: string) => void;
-  onReject: (postId: string) => void;
-  isApproving?: boolean;
-  isRejecting?: boolean;
+  onApprove: (postId: number | string) => Promise<void>;
+  onReject: (postId: number | string, reason: string) => Promise<void>;
+  onViewDetails?: (post: Post) => void;
 }
 
-export function PostCard({
-  post,
-  onViewDetails,
-  onApprove,
-  onReject,
-  isApproving = false,
-  isRejecting = false,
-}: PostCardProps) {
+export default function PostCard({ post, onApprove, onReject, onViewDetails }: PostCardProps) {
+  const [isApproving, setIsApproving] = useState(false);
+
+  const handleApprove = async () => {
+    setIsApproving(true);
+    try {
+      await onApprove(Number(post.id));
+    } catch (error) {
+      console.error('Failed to approve post:', error);
+    } finally {
+      setIsApproving(false);
+    }
+  };
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
     return new Intl.NumberFormat('vi-VN', {
@@ -151,7 +156,7 @@ export function PostCard({
           {/* Actions */}
           <div className="flex-shrink-0 bg-gray-50 p-6 flex flex-col justify-center gap-3 min-w-[180px]">
             <Button
-              onClick={() => onViewDetails(post)}
+              onClick={() => onViewDetails?.(post)}
               variant="outline"
               size="sm"
               className="flex items-center gap-2 text-sm border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
@@ -163,14 +168,14 @@ export function PostCard({
             {post.status === 'PENDING_REVIEW' && (
               <>
                 <Button
-                  onClick={() => onApprove(post.id)}
+                  onClick={handleApprove}
                   disabled={isApproving}
                   className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
                 >
                   <Check className="w-4 h-4" />
                   {isApproving ? 'Đang duyệt...' : 'Duyệt'}
                 </Button>
-                <Button
+                {/* <Button
                   onClick={() => onReject(post.id)}
                   disabled={isRejecting}
                   variant="destructive"
@@ -179,7 +184,13 @@ export function PostCard({
                 >
                   <X className="w-4 h-4" />
                   {isRejecting ? 'Đang từ chối...' : 'Từ chối'}
-                </Button>
+                </Button> */}
+                <RejectDialog
+                  onReject={async (reason: string) => {
+                    await onReject(Number(post.id), reason);
+                  }}
+                  triggerVariant="sm"
+                />
               </>
             )}
           </div>

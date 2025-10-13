@@ -1,6 +1,5 @@
 'use client';
 
-import { PostDetailModalProps } from './types';
 import { PostDetailModalHeader } from './PostDetailModalHeader';
 import { PostDebugPanel } from './PostDebugPanel';
 import { PostImagesGallery } from './PostImagesGallery';
@@ -9,6 +8,17 @@ import { PostSellerInfo } from './PostSellerInfo';
 import { PostTimeInfo } from './PostTimeInfo';
 import { PostVehicleDetails } from './PostVehicleDetails';
 import { PostDetailActions } from './PostDetailActions';
+import { Post } from '@/types/post';
+
+export interface PostDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  post: Post | null;
+  onApprove: (postId: number | string) => void;
+  onReject: (postId: number | string, reason: string) => void;
+  isApproving?: boolean;
+  isRejecting?: boolean;
+}
 
 export function PostDetailModal({
   isOpen,
