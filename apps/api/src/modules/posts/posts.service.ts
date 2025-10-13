@@ -10,6 +10,7 @@ import { CreateCarPostDto } from './dto/car/create-post-car.dto';
 import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
 import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
+import { PostsQueryDto } from './dto/posts-query.dto';
 import { PostMapper } from './mappers/post.mapper';
 import { PaginatedBasePostResponseDto } from './dto/paginated-post-response.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
@@ -24,6 +25,7 @@ import { CarDetailsService } from '../post-details/services/car-details.service'
 import { DISPLAYABLE_POST_STATUS } from 'src/shared/constants/post';
 import { PostReviewService } from '../post-review/post-review.service';
 import { ReviewActionEnum } from 'src/shared/enums/review.enum';
+import { DEFAULT_PAGE_SIZE } from 'src/shared/constants';
 
 // Union type for all post creation DTOs
 type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
@@ -325,6 +327,44 @@ export class PostsService {
     return PostImageMapper.toResponseDtoArray(images);
   }
 
+  async getPostsByUserId(userId: number, query: PostsQueryDto): Promise<BasePostResponseDto[]> {
+    const where: any = {
+      seller: { id: userId },
+    };
+
+    // Add status filter if provided
+    if (query.status) {
+      where.status = query.status;
+    }
+
+    // Add search query if provided
+    if (query.q) {
+      where.title = ILike(`%${query.q}%`);
+    }
+
+    // Calculate offset from page if page is provided instead of offset
+    let offset = query.offset || 0;
+    if (query.page && query.page > 1) {
+      offset = (query.page - 1) * (query.limit || DEFAULT_PAGE_SIZE);
+    }
+
+    // Determine sort field and order
+    const orderField = query.sort || 'createdAt';
+    const orderDirection = query.order || 'DESC';
+    const orderBy: Record<string, 'ASC' | 'DESC'> = {};
+    orderBy[orderField] = orderDirection;
+
+    const rows = await this.postsRepo.find({
+      where,
+      relations: this.POST_FULL_RELATIONS,
+      order: orderBy,
+      take: query.limit || DEFAULT_PAGE_SIZE,
+      skip: offset,
+    });
+
+    return PostMapper.toBasePostResponseDtoArray(rows);
+  }
+
   async getPostById(id: string): Promise<BasePostResponseDto> {
     const post = await this.postsRepo.findOne({
       where: { id },
@@ -345,7 +385,14 @@ export class PostsService {
 
     if (query.status) {
       //  Chỉ cho phép admin status
-      const allowedAdminStatuses = ['PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'PAUSED', 'SOLD', 'ARCHIVED'];
+      const allowedAdminStatuses = [
+        'PENDING_REVIEW',
+        'PUBLISHED',
+        'REJECTED',
+        'PAUSED',
+        'SOLD',
+        'ARCHIVED',
+      ];
       if (allowedAdminStatuses.includes(query.status)) {
         where.status = query.status;
       } else {
@@ -368,16 +415,18 @@ export class PostsService {
       skip: query.offset,
     });
 
-    const page = query.offset ? Math.floor(query.offset / (query.limit || 20)) + 1 : 1;
-    const limit = query.limit || 20;
+    const page = query.offset
+      ? Math.floor(query.offset / (query.limit || DEFAULT_PAGE_SIZE)) + 1
+      : 1;
+    const limit = query.limit || DEFAULT_PAGE_SIZE;
     const totalPages = Math.ceil(total / limit);
 
     return {
       data: PostMapper.toBasePostResponseDtoArray(rows),
       total,
       page,
-      limit, 
-      totalPages
+      limit,
+      totalPages,
     };
   }
 
