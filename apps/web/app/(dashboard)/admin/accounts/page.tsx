@@ -28,6 +28,7 @@ import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/en
 import { getAccounts, toggleBan, demoteAccount, promoteAccount } from '@/lib/api/accountApi';
 import { toast } from 'sonner';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { AccountDetailsDialog } from './_components/AccountDetailsDialog';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -43,6 +44,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [pendingPromoteId, setPendingPromoteId] = useState<number | null>(null);
   const [pendingDemoteId, setPendingDemoteId] = useState<number | null>(null);
+  const [selectedAccountDetails, setSelectedAccountDetails] = useState<Account | null>(null);
 
   // Fetch accounts data
   useEffect(() => {
@@ -181,12 +183,7 @@ export default function AdminDashboard() {
   const handleViewDetails = (accountId: number) => {
     const account = accounts.find((acc) => acc.id === accountId);
     if (account) {
-      toast.info(
-        `Tên: ${account.fullName}\nEmail: ${account.email}\nSĐT: ${account.phone}\nVai trò: ${account.role}\nTrạng thái: ${account.status}\nNgày tạo: ${new Date(account.createdAt).toLocaleDateString('vi-VN')}`,
-        {
-          duration: 10000,
-        },
-      );
+      setSelectedAccountDetails(account);
     }
   };
 
@@ -430,7 +427,7 @@ export default function AdminDashboard() {
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               >
                                 <Eye className="h-4 w-4 mr-2" />
-                                see details
+                                Details
                               </button>
 
                               {account.role === RoleEnum.USER && (
@@ -584,6 +581,13 @@ export default function AdminDashboard() {
         onConfirm={confirmDemote}
         open={!!pendingDemoteId}
         onOpenChange={(open: boolean) => !open && setPendingDemoteId(null)}
+      />
+
+      {/* Account Details Dialog */}
+      <AccountDetailsDialog
+        account={selectedAccountDetails}
+        open={!!selectedAccountDetails}
+        onOpenChange={(open) => !open && setSelectedAccountDetails(null)}
       />
     </div>
   );
