@@ -18,18 +18,24 @@ import EmptyState from './_components/empty-state';
 import PostListSkeleton from './_components/post-list-skeleton';
 import Pagination from './_components/pagination';
 
-export default function MyListingsPage() {
+export default function MyPostsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, loading } = useAuth();
 
-  // Redirect if not logged in
+  // Redirect if not logged in - but wait for auth to initialize
   useEffect(() => {
+    // Don't redirect if still loading auth state
+    if (loading) {
+      return;
+    }
+
     if (!isLoggedIn) {
       toast.error('Vui lòng đăng nhập để xem tin đăng của bạn');
       router.push('/login');
     }
-  }, [isLoggedIn, router]);
+  }, [isLoggedIn, loading, router]);
+
   const [activeTab, setActiveTab] = useState<PostStatus>('PENDING_REVIEW');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price-asc' | 'price-desc'>('newest');
@@ -77,6 +83,12 @@ export default function MyListingsPage() {
     enabled: isLoggedIn, // Only run query if user is logged in
     retry: 1, // Only retry once
   });
+
+  // Process data
+  const getPostCounts = () => ({ DRAFT: 0, PENDING_REVIEW: 0, PUBLISHED: 0, REJECTED: 0, SOLD: 0 });
+  const counts = getPostCounts();
+  const posts = postsData || [];
+  const totalPages = 1; // For now, since we're returning array directly
 
   const deleteMutation = useMutation({
     mutationFn: deletePost,
@@ -133,10 +145,17 @@ export default function MyListingsPage() {
     router.push('/posts/create');
   };
 
-  const getPostCounts = () => ({ DRAFT: 0, PENDING_REVIEW: 0, PUBLISHED: 0, REJECTED: 0, SOLD: 0 });
-  const counts = getPostCounts();
-  const posts = postsData?.data || [];
-  const totalPages = postsData?.totalPages || 1;
+  // Show loading state while auth is initializing
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-4 md:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Đang kiểm tra trạng thái đăng nhập...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>
