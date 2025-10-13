@@ -250,7 +250,7 @@ export default function MyPostsPage() {
                     </button>
                   </div>
                 ) : posts.length === 0 ? (
-                  <EmptyState status={status} />
+                  <EmptyState status={status} onCreateNew={handleCreateNew} />
                 ) : (
                   <>
                     <div className="space-y-0">

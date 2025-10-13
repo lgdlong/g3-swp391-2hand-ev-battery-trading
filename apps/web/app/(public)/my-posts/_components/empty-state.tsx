@@ -3,9 +3,10 @@ import { FileText, Plus } from 'lucide-react';
 
 interface EmptyStateProps {
   status: string;
+  onCreateNew?: () => void;
 }
 
-export default function EmptyState({ status }: EmptyStateProps) {
+export default function EmptyState({ status, onCreateNew }: EmptyStateProps) {
   const getMessage = () => {
     switch (status) {
       case 'PENDING_REVIEW':
@@ -26,7 +27,7 @@ export default function EmptyState({ status }: EmptyStateProps) {
       <FileText className="h-16 w-16 text-muted-foreground mb-4" />
       <h3 className="text-lg font-medium text-foreground mb-2">Chưa có tin nào trong mục này</h3>
       <p className="text-sm text-muted-foreground mb-6">{getMessage()}</p>
-      <Button className="gap-2">
+      <Button className="gap-2" onClick={onCreateNew}>
         <Plus className="h-4 w-4" />
         Đăng tin mới
       </Button>

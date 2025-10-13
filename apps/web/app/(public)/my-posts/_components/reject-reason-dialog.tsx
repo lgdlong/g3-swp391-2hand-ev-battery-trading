@@ -80,8 +80,8 @@ export default function RejectReasonDialog({
                 )}
               </div>
 
-              <div className="bg-muted p-4 rounded-lg">
-                <h4 className="font-medium mb-2 text-foreground">Lý do từ chối:</h4>
+              <h4 className="font-medium mb-2 text-foreground">Lý do từ chối:</h4>
+              <div className="p-4 rounded-sm bg-zinc-300">
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{rejectionLog.reason}</p>
               </div>
 
