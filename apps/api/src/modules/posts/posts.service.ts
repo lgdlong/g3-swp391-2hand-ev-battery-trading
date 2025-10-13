@@ -11,6 +11,7 @@ import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
 import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { PostMapper } from './mappers/post.mapper';
+import { PaginatedBasePostResponseDto } from './dto/paginated-post-response.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PostImage } from './entities/post-image.entity';
 import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
@@ -339,16 +340,25 @@ export class PostsService {
 
   async getAllPostsForAdmin(
     query: ListQueryDto & { status?: string; postType?: string },
-  ): Promise<BasePostResponseDto[]> {
+  ): Promise<PaginatedBasePostResponseDto> {
     const where: any = {};
 
     if (query.status) {
-      where.status = query.status;
+      //  Chỉ cho phép admin status
+      const allowedAdminStatuses = ['PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'PAUSED', 'SOLD', 'ARCHIVED'];
+      if (allowedAdminStatuses.includes(query.status)) {
+        where.status = query.status;
+      } else {
+        throw new BadRequestException(`Invalid status value: ${query.status}`);
+      }
     }
 
     if (query.postType) {
       where.postType = query.postType;
     }
+
+    // Get total count for pagination
+    const total = await this.postsRepo.count({ where });
 
     const rows = await this.postsRepo.find({
       where,
@@ -358,7 +368,17 @@ export class PostsService {
       skip: query.offset,
     });
 
-    return PostMapper.toBasePostResponseDtoArray(rows);
+    const page = query.offset ? Math.floor(query.offset / (query.limit || 20)) + 1 : 1;
+    const limit = query.limit || 20;
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: PostMapper.toBasePostResponseDtoArray(rows),
+      total,
+      page,
+      limit, 
+      totalPages
+    };
   }
 
   /**
