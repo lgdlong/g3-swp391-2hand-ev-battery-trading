@@ -302,8 +302,8 @@ export default function AdminPostsPage() {
           post={selectedPost}
           onApprove={handleApprove}
           onReject={handleReject}
-          isApproving={approveMutation.isPending}
-          isRejecting={rejectMutation.isPending}
+          isApproving={isApproving}
+          isRejecting={isRejecting}
         />
 
         {/* Confirmation Dialogs */}
