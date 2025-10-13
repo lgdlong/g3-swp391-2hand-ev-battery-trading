@@ -159,8 +159,8 @@ export default function MyPostsPage() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="mx-auto max-w-7xl">
+      <div className="min-h-screen bg-background md:p-8">
+        <div className="mx-auto max-w-6xl p-6 bg-white rounded-2xl shadow">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-6">Quản lý tin đăng</h1>
             <SearchBar
@@ -172,8 +172,11 @@ export default function MyPostsPage() {
             />
           </div>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8 h-auto py-6">
-              <TabsTrigger value="PENDING_REVIEW" className="gap-2 text-base">
+            <TabsList className="grid w-3/5 grid-cols-4 mb-8 p-1 h-auto bg-background">
+              <TabsTrigger
+                value="PENDING_REVIEW"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
                 Chờ duyệt
                 {counts.PENDING_REVIEW > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
@@ -181,7 +184,10 @@ export default function MyPostsPage() {
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="PUBLISHED" className="gap-2 text-base">
+              <TabsTrigger
+                value="PUBLISHED"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
                 Đang hiển thị
                 {counts.PUBLISHED > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
@@ -189,7 +195,10 @@ export default function MyPostsPage() {
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="REJECTED" className="gap-2 text-base">
+              <TabsTrigger
+                value="REJECTED"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
                 Bị từ chối
                 {counts.REJECTED > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
@@ -197,7 +206,10 @@ export default function MyPostsPage() {
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="SOLD" className="gap-2 text-base">
+              <TabsTrigger
+                value="SOLD"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
                 Đã bán
                 {counts.SOLD > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
