@@ -133,7 +133,7 @@ export default function PostListItem({
 
         {/* Price, Location, Date */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          <p className="font-semibold text-foreground">
+          <p className="font-semibold text-foreground text-red-600">
             {formatPrice(post.priceVnd)}
             {post.isNegotiable && (
               <span className="text-xs font-normal text-muted-foreground ml-1">

@@ -121,7 +121,7 @@ export default function PostDetailDialog({ open, onOpenChange, post }: PostDetai
                 {getStatusLabel(post.status)}
               </Badge>
             </div>
-            <p className="text-2xl font-bold text-foreground">
+            <p className="text-2xl font-bold text-foreground text-red-600">
               {formatPrice(post.priceVnd)}
               {post.isNegotiable && (
                 <span className="text-sm font-normal text-muted-foreground ml-2">
