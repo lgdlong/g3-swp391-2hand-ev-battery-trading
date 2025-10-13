@@ -10,6 +10,7 @@ interface PostListItemProps {
   onDelete?: (postId: string) => void;
   onView?: (post: Post) => void;
   onMarkAsSold?: (postId: string) => void;
+  onViewRejectReason?: (postId: string, postTitle: string) => void;
 }
 
 const formatPrice = (priceVnd: string): string => {
@@ -89,6 +90,7 @@ export default function PostListItem({
   onDelete,
   onView,
   onMarkAsSold,
+  onViewRejectReason,
 }: PostListItemProps) {
   // Get the first image URL
   const firstImageUrl =
@@ -208,6 +210,26 @@ export default function PostListItem({
               </TooltipTrigger>
               <TooltipContent>
                 <p>Đánh dấu đã bán</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+          {/* View reject reason */}
+          {post.status === 'REJECTED' && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 bg-transparent"
+                  onClick={() => onViewRejectReason?.(post.id, post.title)}
+                >
+                  <Eye className="h-4 w-4" />
+                  Xem Lý do
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Xem lý do từ chối</p>
               </TooltipContent>
             </Tooltip>
           )}

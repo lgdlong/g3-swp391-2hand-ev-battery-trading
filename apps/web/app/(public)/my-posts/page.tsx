@@ -14,6 +14,7 @@ import SearchBar from './_components/search-bar';
 import PostListItem from './_components/post-list-item';
 import PostDetailDialog from './_components/post-detail-dialog';
 import DeleteConfirmDialog from './_components/delete-confirm-dialog';
+import RejectReasonDialog from './_components/reject-reason-dialog';
 import EmptyState from './_components/empty-state';
 import PostListSkeleton from './_components/post-list-skeleton';
 import Pagination from './_components/pagination';
@@ -44,6 +45,11 @@ export default function MyPostsPage() {
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [postToView, setPostToView] = useState<Post | null>(null);
+  const [rejectReasonDialogOpen, setRejectReasonDialogOpen] = useState(false);
+  const [postForRejectReason, setPostForRejectReason] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const itemsPerPage = 6;
 
   const {
@@ -143,6 +149,10 @@ export default function MyPostsPage() {
   };
   const handleCreateNew = () => {
     router.push('/posts/create');
+  };
+  const handleViewRejectReason = (postId: string, postTitle: string) => {
+    setPostForRejectReason({ id: postId, title: postTitle });
+    setRejectReasonDialogOpen(true);
   };
 
   // Show loading state while auth is initializing
@@ -252,6 +262,7 @@ export default function MyPostsPage() {
                             onDelete={handleDelete}
                             onView={handleViewDetail}
                             onMarkAsSold={handleMarkAsSold}
+                            onViewRejectReason={handleViewRejectReason}
                           />
                         </div>
                       ))}
@@ -276,6 +287,12 @@ export default function MyPostsPage() {
           open={viewDialogOpen}
           onOpenChange={setViewDialogOpen}
           post={postToView}
+        />
+        <RejectReasonDialog
+          open={rejectReasonDialogOpen}
+          onOpenChange={setRejectReasonDialogOpen}
+          postId={postForRejectReason?.id || ''}
+          postTitle={postForRejectReason?.title || ''}
         />
       </div>
     </TooltipProvider>
