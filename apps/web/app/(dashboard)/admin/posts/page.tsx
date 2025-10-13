@@ -9,12 +9,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Post, PostsResponse, PostStatus } from '@/types/api/post';
 
 // Import các component đã tách
-import {
-  StatusSummaryCards,
-  FilterButtons,
-  PostCard,
-  PostDetailModal,
-} from './_components';
+import { StatusSummaryCards, FilterButtons, PostDetailModal } from './_components';
+import PostCard from './_components/PostCard';
+import { useModeration } from '@/hooks/useModeration';
+import { toast } from 'sonner';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 export default function AdminPostsPage() {
   const [currentFilter, setCurrentFilter] = useState<PostStatus>('PENDING_REVIEW');
@@ -23,7 +22,13 @@ export default function AdminPostsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5);
+  const [pendingApproveId, setPendingApproveId] = useState<string | null>(null);
+  const [pendingRejectData, setPendingRejectData] = useState<{
+    postId: string;
+    reason: string;
+  } | null>(null);
   const queryClient = useQueryClient();
+  const { approve, reject, isApproving, isRejecting } = useModeration(currentFilter, currentPage);
 
   // Fetch posts based on current filter
   const {
@@ -52,26 +57,27 @@ export default function AdminPostsPage() {
       // Refresh all queries to update counts and lists
       queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
       queryClient.invalidateQueries({ queryKey: ['admin-posts-count'] });
-      alert('Duyệt bài viết thành công!');
+      toast.success('Duyệt bài viết thành công!');
     },
     onError: (error) => {
       console.error('Error approving post:', error);
-      alert('Có lỗi xảy ra khi duyệt bài viết!');
+      toast.error('Có lỗi xảy ra khi duyệt bài viết!');
     },
   });
 
   // Reject post mutation
   const rejectMutation = useMutation({
-    mutationFn: (postId: string) => rejectPost(postId),
+    mutationFn: ({ postId, reason }: { postId: string; reason: string }) =>
+      rejectPost(postId, reason),
     onSuccess: () => {
       // Refresh all queries to update counts and lists
       queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
       queryClient.invalidateQueries({ queryKey: ['admin-posts-count'] });
-      alert('Từ chối bài viết thành công!');
+      toast.success('Từ chối bài viết thành công!');
     },
     onError: (error) => {
       console.error('Error rejecting post:', error);
-      alert('Có lỗi xảy ra khi từ chối bài viết!');
+      toast.error('Có lỗi xảy ra khi từ chối bài viết!');
     },
   });
 
@@ -113,15 +119,29 @@ export default function AdminPostsPage() {
   console.log('Counts:', { draftCount, pendingReviewCount, publishedCount, rejectedCount });
   console.log('Data:', { draftData, pendingReviewData, publishedData, rejectedData });
 
-  const handleApprove = (postId: string) => {
-    if (confirm('Bạn có chắc chắn muốn duyệt bài viết này?')) {
-      approveMutation.mutate(postId);
+  const handleApprove = async (postId: number | string) => {
+    setPendingApproveId(String(postId));
+  };
+
+  const handleReject = async (postId: number | string, reason: string) => {
+    if (!reason?.trim()) {
+      toast.error('Vui lòng nhập lý do từ chối');
+      return;
+    }
+    setPendingRejectData({ postId: String(postId), reason });
+  };
+
+  const confirmApprove = () => {
+    if (pendingApproveId) {
+      approve(pendingApproveId);
+      setPendingApproveId(null);
     }
   };
 
-  const handleReject = (postId: string) => {
-    if (confirm('Bạn có chắc chắn muốn từ chối bài viết này?')) {
-      rejectMutation.mutate(postId);
+  const confirmReject = () => {
+    if (pendingRejectData) {
+      reject(pendingRejectData.postId, pendingRejectData.reason);
+      setPendingRejectData(null);
     }
   };
 
@@ -181,10 +201,10 @@ export default function AdminPostsPage() {
       ]);
 
       // Hiển thị thông báo
-      alert('Đã làm mới dữ liệu thành công!');
+      toast.success('Đã làm mới dữ liệu thành công!');
     } catch (error) {
       console.error('Error refreshing data:', error);
-      alert('Có lỗi xảy ra khi làm mới dữ liệu!');
+      toast.error('Có lỗi xảy ra khi làm mới dữ liệu!');
     } finally {
       setIsRefreshing(false);
     }
@@ -268,8 +288,6 @@ export default function AdminPostsPage() {
                     onViewDetails={handleViewDetails}
                     onApprove={handleApprove}
                     onReject={handleReject}
-                    isApproving={approveMutation.isPending}
-                    isRejecting={rejectMutation.isPending}
                   />
                 ))}
               </div>
@@ -284,8 +302,28 @@ export default function AdminPostsPage() {
           post={selectedPost}
           onApprove={handleApprove}
           onReject={handleReject}
-          isApproving={approveMutation.isPending}
-          isRejecting={rejectMutation.isPending}
+          isApproving={isApproving}
+          isRejecting={isRejecting}
+        />
+
+        {/* Confirmation Dialogs */}
+        <ConfirmationDialog
+          title="Xác nhận duyệt bài viết"
+          description="Bạn có chắc muốn duyệt bài viết này?"
+          confirmText="Duyệt"
+          onConfirm={confirmApprove}
+          open={!!pendingApproveId}
+          onOpenChange={(open: boolean) => !open && setPendingApproveId(null)}
+        />
+
+        <ConfirmationDialog
+          title="Xác nhận từ chối bài viết"
+          description="Bạn có chắc muốn từ chối bài viết này?"
+          confirmText="Từ chối"
+          variant="destructive"
+          onConfirm={confirmReject}
+          open={!!pendingRejectData}
+          onOpenChange={(open: boolean) => !open && setPendingRejectData(null)}
         />
       </main>
     </div>

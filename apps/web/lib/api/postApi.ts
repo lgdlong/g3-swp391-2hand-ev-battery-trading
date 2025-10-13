@@ -268,7 +268,7 @@ export async function approvePost(id: string): Promise<Post> {
  * Reject a post (Admin only)
  * Requires authentication token in headers
  */
-export async function rejectPost(id: string, reason?: string): Promise<Post> {
+export async function rejectPost(id: string, reason: string): Promise<Post> {
   const { data } = await api.patch<Post>(
     `/posts/${id}/reject`,
     { reason },
