@@ -68,6 +68,15 @@ export interface CreateCarPostDto {
 
 export interface CreateBikePostDto {
   postType: 'EV_BIKE';
+  title: string;
+  description: string;
+  wardCode: string;
+  provinceNameCached: string;
+  districtNameCached: string;
+  wardNameCached: string;
+  addressTextCached: string;
+  priceVnd: string;
+  isNegotiable: boolean;
   bikeDetails: {
     brand_id?: number;
     model_id?: number;
@@ -83,6 +92,31 @@ export interface CreateBikePostDto {
     motor_power_kw: number;
     charge_ac_kw: number;
     battery_health_pct: number;
+  };
+}
+
+export interface CreateBatteryPostDto {
+  postType: 'BATTERY';
+  title: string;
+  description: string;
+  wardCode: string;
+  provinceNameCached: string;
+  districtNameCached: string;
+  wardNameCached: string;
+  addressTextCached: string;
+  priceVnd: string;
+  isNegotiable: boolean;
+  batteryDetails: {
+    brand_id?: number;
+    voltageV: number;
+    capacityAh: number;
+    chargeTimeHours: number;
+    chemistry?: string;
+    origin?: string;
+    weightKg: number;
+    cycleLife: number;
+    rangeKm: number;
+    compatibleNotes?: string;
   };
 }
 

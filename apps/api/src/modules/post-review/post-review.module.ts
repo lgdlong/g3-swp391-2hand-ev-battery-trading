@@ -3,9 +3,10 @@ import { PostReviewService } from './post-review.service';
 import { PostReviewController } from './post-review.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PostReviewLog } from './entities/post-review-log.entity';
+import { Post } from '../posts/entities/post.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PostReviewLog])],
+  imports: [TypeOrmModule.forFeature([PostReviewLog, Post])],
   controllers: [PostReviewController],
   providers: [PostReviewService],
   exports: [PostReviewService],

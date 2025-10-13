@@ -25,9 +25,9 @@ import {
 } from 'lucide-react';
 import { Account } from '@/types/account';
 import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
-import { getAccounts, updateAccount, deleteAccount, toggleBan, demoteAccount, promoteAccount } from '@/lib/api/accountApi';
+import { getAccounts, toggleBan, demoteAccount, promoteAccount } from '@/lib/api/accountApi';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 export default function AdminDashboard() {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -47,6 +47,7 @@ export default function AdminDashboard() {
         setLoading(true);
         setError(null);
         const data = await getAccounts();
+        console.log(data.length);
         setAccounts(data);
       } catch (err) {
         setError('Không thể tải danh sách tài khoản');

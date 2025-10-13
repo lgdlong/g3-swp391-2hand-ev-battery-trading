@@ -90,7 +90,7 @@ export class AccountsService {
     } as CreateAccountResponseDto;
   }
 
-  async findAll(limit = 20, offset = 0): Promise<SafeAccountDto[]> {
+  async findAll(limit?: number, offset?: number): Promise<SafeAccountDto[]> {
     const accounts: Account[] = await this.repo.find({
       take: limit, // giới hạn số lượng record
       skip: offset, // số lượng bỏ qua record tính từ đầu (phục vụ pagination)
@@ -109,6 +109,18 @@ export class AccountsService {
     }
 
     return AccountMapper.toSafeDto(account);
+  }
+
+  async countAccounts(status?: string): Promise<{ count: number; status?: string }> {
+    const queryBuilder = this.repo.createQueryBuilder('account');
+
+    if (status) {
+      // Cast enum to text before applying UPPER for PostgreSQL compatibility
+      queryBuilder.where('UPPER(account.status::text) = UPPER(:status)', { status });
+    }
+
+    const count = await queryBuilder.getCount();
+    return { count, status };
   }
 
   async findOneByEmailOrPhone(value: string): Promise<Account | null> {
