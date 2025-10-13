@@ -24,7 +24,7 @@ export function UserActions({
 }: UserActionsProps) {
   if (isLoggedIn) {
     return (
-      <div className={cn('flex items-center gap-8', className)}>
+      <div className={cn('flex items-center gap-6', className)}>
         <div className="flex gap-3">
           {/* Bookmark Button */}
           <Button
@@ -58,6 +58,20 @@ export function UserActions({
             </Link>
           </Button>
         </div>
+
+        {/* View My Posts Button */}
+        <Button
+          asChild
+          size="sm"
+          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 hover:border-emerald-400 shadow-sm hover:shadow-md transition-colors duration-200 group rounded-full px-5 py-2 h-10 min-h-[40px] text-sm"
+        >
+          <Link
+            href="/my-posts"
+            className="flex items-center gap-2 group-hover:scale-105 transition-transform duration-300"
+          >
+            <span className="hidden sm:inline font-semibold">Quản lý tin</span>
+          </Link>
+        </Button>
 
         {/* Post Ad Button */}
         <Button
