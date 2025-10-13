@@ -26,6 +26,9 @@ import {
 import { Account } from '@/types/account';
 import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
 import { getAccounts, toggleBan, demoteAccount, promoteAccount } from '@/lib/api/accountApi';
+import { toast } from 'sonner';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+import { AccountDetailsDialog } from './_components/AccountDetailsDialog';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -39,6 +42,9 @@ export default function AdminDashboard() {
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingPromoteId, setPendingPromoteId] = useState<number | null>(null);
+  const [pendingDemoteId, setPendingDemoteId] = useState<number | null>(null);
+  const [selectedAccountDetails, setSelectedAccountDetails] = useState<Account | null>(null);
 
   // Fetch accounts data
   useEffect(() => {
@@ -110,8 +116,6 @@ export default function AdminDashboard() {
     setCurrentPage(page);
   };
 
-
-
   // const handleDeleteAccount = async (accountId: number) => {
   //   if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
   //     try {
@@ -127,51 +131,59 @@ export default function AdminDashboard() {
 
   // Promote
   const handlePromoteToAdmin = async (accountId: number) => {
-    if (!confirm('Bạn có chắc muốn thăng cấp thành admin?')) return;
-    try {
-      const updated = await promoteAccount(accountId);
-      setAccounts(prev => prev.map(a => (a.id === accountId ? updated : a)));
-      alert('Đã thăng cấp thành admin');
-    } catch (e) {
-      console.error('Promote failed:', e);
-      alert((e as Error).message || 'Không thể thăng cấp');
-    }
+    setPendingPromoteId(accountId);
   };
 
   // Demote
   const handleDemoteToMember = async (accountId: number) => {
-    if (!confirm('Hạ quyền về Member?')) return;
+    setPendingDemoteId(accountId);
+  };
+
+  const confirmPromote = async () => {
+    if (!pendingPromoteId) return;
     try {
-      const updated = await demoteAccount(accountId);
-      setAccounts(prev => prev.map(a => (a.id === accountId ? updated : a)));
-      alert('Đã hạ quyền về Member');
+      const updated = await promoteAccount(pendingPromoteId);
+      setAccounts((prev) => prev.map((a) => (a.id === pendingPromoteId ? updated : a)));
+      toast.success('Đã thăng cấp thành admin');
+      setPendingPromoteId(null);
+    } catch (e) {
+      console.error('Promote failed:', e);
+      toast.error((e as Error).message || 'Không thể thăng cấp');
+      setPendingPromoteId(null);
+    }
+  };
+
+  const confirmDemote = async () => {
+    if (!pendingDemoteId) return;
+    try {
+      const updated = await demoteAccount(pendingDemoteId);
+      setAccounts((prev) => prev.map((a) => (a.id === pendingDemoteId ? updated : a)));
+      toast.success('Đã hạ quyền về Member');
+      setPendingDemoteId(null);
     } catch (e) {
       console.error('Demote failed:', e);
-      alert((e as Error).message || 'Không thể hạ quyền');
+      toast.error((e as Error).message || 'Không thể hạ quyền');
+      setPendingDemoteId(null);
     }
   };
 
   // Ban / Unban
- const handleBanAccount = async (accountId: number) => {
-  try {
-    const acc = accounts.find(a => a.id === accountId);
-    if (!acc) return;
-    const updated = await toggleBan(accountId, acc.status);
-    setAccounts(prev => prev.map(a => (a.id === accountId ? updated : a)));
-  } catch (e) {
-    console.error('Toggle ban failed:', e);
-    alert((e as Error).message || 'Không thể cập nhật trạng thái');
-  }
-};
-
-  
+  const handleBanAccount = async (accountId: number) => {
+    try {
+      const acc = accounts.find((a) => a.id === accountId);
+      if (!acc) return;
+      const updated = await toggleBan(accountId, acc.status);
+      setAccounts((prev) => prev.map((a) => (a.id === accountId ? updated : a)));
+    } catch (e) {
+      console.error('Toggle ban failed:', e);
+      toast.error((e as Error).message || 'Không thể cập nhật trạng thái');
+    }
+  };
 
   const handleViewDetails = (accountId: number) => {
     const account = accounts.find((acc) => acc.id === accountId);
     if (account) {
-      alert(
-        `Chi tiết tài khoản:\n\nTên: ${account.fullName}\nEmail: ${account.email}\nSĐT: ${account.phone}\nVai trò: ${account.role}\nTrạng thái: ${account.status}\nNgày tạo: ${new Date(account.createdAt).toLocaleDateString('vi-VN')}`,
-      );
+      setSelectedAccountDetails(account);
     }
   };
 
@@ -415,7 +427,7 @@ export default function AdminDashboard() {
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               >
                                 <Eye className="h-4 w-4 mr-2" />
-                                see details
+                                Details
                               </button>
 
                               {account.role === RoleEnum.USER && (
@@ -436,10 +448,11 @@ export default function AdminDashboard() {
                                   handleBanAccount(account.id);
                                   setSelectedAccount(null);
                                 }}
-                                className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 ${account.status === StatusEnum.ACTIVE
+                                className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-100 ${
+                                  account.status === StatusEnum.ACTIVE
                                     ? 'text-red-600 hover:bg-red-50'
                                     : 'text-green-600 hover:bg-green-50'
-                                  }`}
+                                }`}
                               >
                                 {account.status === StatusEnum.ACTIVE ? (
                                   <>
@@ -454,7 +467,7 @@ export default function AdminDashboard() {
                                 )}
                               </button>
 
-                              {/* KHONG XOA 
+                              {/* KHONG XOA
                               <button
                                 onClick={() => {
                                   handleDeleteAccount(account.id);
@@ -504,7 +517,7 @@ export default function AdminDashboard() {
 
                 <div className="flex space-x-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum : number;
+                    let pageNum: number;
                     if (totalPages <= 5) {
                       pageNum = i + 1;
                     } else if (currentPage <= 3) {
@@ -549,6 +562,33 @@ export default function AdminDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Confirmation Dialogs */}
+      <ConfirmationDialog
+        title="Xác nhận thăng cấp"
+        description="Bạn có chắc muốn thăng cấp tài khoản này thành admin?"
+        confirmText="Thăng cấp"
+        onConfirm={confirmPromote}
+        open={!!pendingPromoteId}
+        onOpenChange={(open: boolean) => !open && setPendingPromoteId(null)}
+      />
+
+      <ConfirmationDialog
+        title="Xác nhận hạ quyền"
+        description="Bạn có chắc muốn hạ quyền tài khoản này về Member?"
+        confirmText="Hạ quyền"
+        variant="destructive"
+        onConfirm={confirmDemote}
+        open={!!pendingDemoteId}
+        onOpenChange={(open: boolean) => !open && setPendingDemoteId(null)}
+      />
+
+      {/* Account Details Dialog */}
+      <AccountDetailsDialog
+        account={selectedAccountDetails}
+        open={!!selectedAccountDetails}
+        onOpenChange={(open) => !open && setSelectedAccountDetails(null)}
+      />
     </div>
   );
 }
