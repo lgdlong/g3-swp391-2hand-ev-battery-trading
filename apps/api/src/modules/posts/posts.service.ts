@@ -479,4 +479,20 @@ export class PostsService {
 
     return PostMapper.toBasePostResponseDto(post);
   }
+
+  async deletePostById(id: string, userId: number): Promise<Date> {
+    const post = await this.postsRepo.findOne({
+      where: { id, seller: { id: userId } },
+      relations: [this.SELLER],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found or you do not have permission to delete it');
+    }
+
+    const deletedAt = new Date();
+    await this.postsRepo.softDelete(id);
+
+    return deletedAt;
+  }
 }

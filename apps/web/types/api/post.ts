@@ -151,3 +151,8 @@ export interface PostCountResponse {
   total: number;
   byStatus: Record<PostStatus, number>;
 }
+
+export interface DeletePostResponse {
+  message: string;
+  deletedAt: string;
+}

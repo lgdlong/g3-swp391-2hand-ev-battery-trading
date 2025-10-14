@@ -11,6 +11,7 @@ import type {
   UpdatePostDto,
   GetPostsQuery,
   FlexibleField,
+  DeletePostResponse,
 } from '@/types/api/post';
 
 // Re-export types for backward compatibility
@@ -22,6 +23,7 @@ export type {
   CreateBikePostDto,
   UpdatePostDto,
   GetPostsQuery,
+  DeletePostResponse,
 };
 
 /**
@@ -191,14 +193,11 @@ export async function updatePost(id: string, payload: UpdatePostDto): Promise<Po
   return data;
 }
 
-/**
- * Delete a post by ID
- * Requires authentication token in headers
- */
-export async function deletePost(id: string): Promise<void> {
-  await api.delete(`/posts/${id}`, {
+export async function deleteMyPostById(id: string): Promise<DeletePostResponse> {
+  const { data } = await api.delete<DeletePostResponse>(`/posts/${id}/me`, {
     headers: getAuthHeaders(),
   });
+  return data;
 }
 
 /**
@@ -414,6 +413,7 @@ export async function updateBikePost(id: string, payload: UpdatePostDto): Promis
  * Delete a bike post by ID
  * Requires authentication token in headers
  */
+// TODO: Unused?
 export async function deleteBikePost(id: string): Promise<void> {
   await api.delete(`/posts/bike/${id}`, {
     headers: getAuthHeaders(),
@@ -503,6 +503,7 @@ export async function updateCarPost(id: string, payload: UpdatePostDto): Promise
  * Delete a car post by ID
  * Requires authentication token in headers
  */
+// TODO: Unused?
 export async function deleteCarPost(id: string): Promise<void> {
   await api.delete(`/posts/car/${id}`, {
     headers: getAuthHeaders(),

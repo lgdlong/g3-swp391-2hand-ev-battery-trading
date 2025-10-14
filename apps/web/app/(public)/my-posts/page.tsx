@@ -8,7 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Post, PostStatus } from '@/types/post';
-import { getMyPosts, deletePost, updatePost } from '@/lib/api/postApi';
+import { getMyPosts, updatePost, deleteMyPostById } from '@/lib/api/postApi';
 import { useAuth } from '@/lib/auth-context';
 import SearchBar from './_components/search-bar';
 import PostListItem from './_components/post-list-item';
@@ -17,7 +17,6 @@ import DeleteConfirmDialog from './_components/delete-confirm-dialog';
 import RejectReasonDialog from './_components/reject-reason-dialog';
 import EmptyState from './_components/empty-state';
 import PostListSkeleton from './_components/post-list-skeleton';
-import Pagination from './_components/pagination';
 
 export default function MyPostsPage() {
   const router = useRouter();
@@ -37,10 +36,9 @@ export default function MyPostsPage() {
     }
   }, [isLoggedIn, loading, router]);
 
-  const [activeTab, setActiveTab] = useState<PostStatus>('PENDING_REVIEW');
+  const [activeTab, setActiveTab] = useState<PostStatus>('PUBLISHED');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price-asc' | 'price-desc'>('newest');
-  const [currentPage, setCurrentPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -50,54 +48,80 @@ export default function MyPostsPage() {
     id: string;
     title: string;
   } | null>(null);
-  const itemsPerPage = 6;
 
-  const {
-    data: postsData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['myPosts', activeTab, currentPage, searchQuery, sortBy],
-    queryFn: async () => {
-      try {
-        return await getMyPosts({
-          status: activeTab,
-          page: currentPage,
-          limit: itemsPerPage,
-          q: searchQuery || undefined,
-          order: sortBy === 'newest' || sortBy === 'price-desc' ? 'DESC' : 'ASC',
-          sort:
-            sortBy === 'price-asc' || sortBy === 'price-desc'
-              ? 'priceVnd'
-              : sortBy === 'newest' || sortBy === 'oldest'
-                ? 'createdAt'
-                : undefined,
-        });
-      } catch (err) {
-        console.error('Error fetching my posts:', err);
-        // Check if it's an authentication error
-        if (err && typeof err === 'object' && 'response' in err) {
-          const response = (err as { response?: { status?: number } }).response;
-          if (response?.status === 401 || response?.status === 403) {
-            toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-            router.push('/login');
-          }
-        }
-        throw err;
-      }
-    },
-    enabled: isLoggedIn, // Only run query if user is logged in
-    retry: 1, // Only retry once
+  // Query for each status to get posts and counts
+  const draftQuery = useQuery({
+    queryKey: ['myPosts', 'DRAFT'],
+    queryFn: () => getMyPosts({ status: 'DRAFT', order: 'DESC', sort: 'createdAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
   });
 
-  // Process data
-  const getPostCounts = () => ({ DRAFT: 0, PENDING_REVIEW: 0, PUBLISHED: 0, REJECTED: 0, SOLD: 0 });
-  const counts = getPostCounts();
-  const posts = postsData || [];
-  const totalPages = 1; // For now, since we're returning array directly
+  const pendingQuery = useQuery({
+    queryKey: ['myPosts', 'PENDING_REVIEW'],
+    queryFn: () => getMyPosts({ status: 'PENDING_REVIEW', order: 'DESC', sort: 'createdAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
+  });
+
+  const publishedQuery = useQuery({
+    queryKey: ['myPosts', 'PUBLISHED'],
+    queryFn: () => getMyPosts({ status: 'PUBLISHED', order: 'DESC', sort: 'createdAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
+  });
+
+  const rejectedQuery = useQuery({
+    queryKey: ['myPosts', 'REJECTED'],
+    queryFn: () => getMyPosts({ status: 'REJECTED', order: 'DESC', sort: 'createdAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
+  });
+
+  const soldQuery = useQuery({
+    queryKey: ['myPosts', 'SOLD'],
+    queryFn: () => getMyPosts({ status: 'SOLD', order: 'DESC', sort: 'createdAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
+  });
+
+  // Get counts from array lengths
+  const counts = {
+    DRAFT: draftQuery.data?.length || 0,
+    PENDING_REVIEW: pendingQuery.data?.length || 0,
+    PUBLISHED: publishedQuery.data?.length || 0,
+    REJECTED: rejectedQuery.data?.length || 0,
+    SOLD: soldQuery.data?.length || 0,
+  };
+
+  // Get current posts based on active tab
+  const getCurrentPosts = () => {
+    switch (activeTab) {
+      case 'DRAFT':
+        return draftQuery.data || [];
+      case 'PENDING_REVIEW':
+        return pendingQuery.data || [];
+      case 'PUBLISHED':
+        return publishedQuery.data || [];
+      case 'REJECTED':
+        return rejectedQuery.data || [];
+      case 'SOLD':
+        return soldQuery.data || [];
+      default:
+        return [];
+    }
+  };
+
+  const posts = getCurrentPosts();
+  const isLoading =
+    draftQuery.isLoading ||
+    pendingQuery.isLoading ||
+    publishedQuery.isLoading ||
+    rejectedQuery.isLoading ||
+    soldQuery.isLoading;
 
   const deleteMutation = useMutation({
-    mutationFn: deletePost,
+    mutationFn: (postId: string) => deleteMyPostById(postId),
     onSuccess: () => {
       toast.success('Đã xóa tin đăng thành công');
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
@@ -122,11 +146,9 @@ export default function MyPostsPage() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as PostStatus);
-    setCurrentPage(1);
   };
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    setCurrentPage(1);
   };
   const handleDelete = (postId: string) => {
     setPostToDelete(postId);
@@ -182,23 +204,12 @@ export default function MyPostsPage() {
             />
           </div>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-3/5 grid-cols-4 mb-8 p-1 h-auto bg-background">
-              <TabsTrigger
-                value="PENDING_REVIEW"
-                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
-              >
-                Chờ duyệt
-                {counts.PENDING_REVIEW > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
-                    {counts.PENDING_REVIEW}
-                  </Badge>
-                )}
-              </TabsTrigger>
+            <TabsList className="grid w-auto grid-cols-5 mb-8 p-1 h-auto bg-background">
               <TabsTrigger
                 value="PUBLISHED"
                 className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
               >
-                Đang hiển thị
+                ĐANG HIỂN THỊ
                 {counts.PUBLISHED > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
                     {counts.PUBLISHED}
@@ -209,7 +220,7 @@ export default function MyPostsPage() {
                 value="REJECTED"
                 className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
               >
-                Bị từ chối
+                BỊ TỪ CHỐI
                 {counts.REJECTED > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
                     {counts.REJECTED}
@@ -220,39 +231,44 @@ export default function MyPostsPage() {
                 value="SOLD"
                 className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
               >
-                Đã bán
+                ĐÃ BÁN
                 {counts.SOLD > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
                     {counts.SOLD}
                   </Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger
+                value="DRAFT"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
+                TIN NHÁP
+                {counts.DRAFT > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
+                    {counts.DRAFT}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="PENDING_REVIEW"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
+                CHỜ DUYỆT
+                {counts.PENDING_REVIEW > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
+                    {counts.PENDING_REVIEW}
+                  </Badge>
+                )}
+              </TabsTrigger>
             </TabsList>
-            {(['PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'SOLD'] as PostStatus[]).map((status) => (
-              <TabsContent key={status} value={status} className="mt-0">
-                {isLoading ? (
-                  <PostListSkeleton />
-                ) : error ? (
-                  <div className="text-center py-16 space-y-4">
-                    <p className="text-destructive text-lg font-medium">
-                      Đã xảy ra lỗi khi tải dữ liệu
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {error instanceof Error
-                        ? error.message
-                        : 'Vui lòng thử lại sau hoặc liên hệ hỗ trợ'}
-                    </p>
-                    <button
-                      onClick={() => queryClient.invalidateQueries({ queryKey: ['myPosts'] })}
-                      className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                    >
-                      Thử lại
-                    </button>
-                  </div>
-                ) : posts.length === 0 ? (
-                  <EmptyState status={status} onCreateNew={handleCreateNew} />
-                ) : (
-                  <>
+            {(['PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'SOLD', 'DRAFT'] as PostStatus[]).map(
+              (status) => (
+                <TabsContent key={status} value={status} className="mt-0">
+                  {isLoading ? (
+                    <PostListSkeleton />
+                  ) : posts.length === 0 ? (
+                    <EmptyState status={status} onCreateNew={handleCreateNew} />
+                  ) : (
                     <div className="space-y-0">
                       {posts.map((post, index) => (
                         <div key={post.id} className={index !== posts.length - 1 ? 'border-b' : ''}>
@@ -267,15 +283,10 @@ export default function MyPostsPage() {
                         </div>
                       ))}
                     </div>
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </>
-                )}
-              </TabsContent>
-            ))}
+                  )}
+                </TabsContent>
+              ),
+            )}
           </Tabs>
         </div>
         <DeleteConfirmDialog
