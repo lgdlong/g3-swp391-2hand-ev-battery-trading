@@ -205,7 +205,7 @@ export async function deletePost(id: string): Promise<void> {
  * Get posts by current user
  * Requires authentication token in headers
  */
-export async function getMyPosts(query: GetPostsQuery = {}): Promise<PostsResponse> {
+export async function getMyPosts(query: GetPostsQuery = {}): Promise<Post[]> {
   const params = new URLSearchParams();
 
   if (query.q) params.append('q', query.q);
@@ -216,7 +216,7 @@ export async function getMyPosts(query: GetPostsQuery = {}): Promise<PostsRespon
   if (query.page !== undefined) params.append('page', query.page.toString());
   if (query.status) params.append('status', query.status);
 
-  const { data } = await api.get<PostsResponse>(`/posts/my?${params.toString()}`, {
+  const { data } = await api.get<Post[]>(`/posts/me?${params.toString()}`, {
     headers: getAuthHeaders(),
   });
   return data;

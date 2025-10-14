@@ -55,4 +55,25 @@ export class PostReviewService {
       .where('reviewLog.id = :id', { id })
       .getOne();
   }
+
+  findByPostId(postId: string): Promise<PostReviewLog[]> {
+    // Retrieve review logs for a specific post using repository.find with relations
+    return this.postReviewRepo.find({
+      where: { post: { id: postId } },
+      relations: ['post', 'actor'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  findOneByMyPostId(userId: string, postId: string): Promise<PostReviewLog[]> {
+    // Retrieve all review logs for a specific post of the user using QueryBuilder
+    return this.postReviewRepo
+      .createQueryBuilder('reviewLog')
+      .leftJoinAndSelect('reviewLog.post', 'post')
+      .leftJoinAndSelect('reviewLog.actor', 'actor')
+      .where('post.id = :postId', { postId })
+      .andWhere('post.seller_id = :userId', { userId })
+      .orderBy('reviewLog.createdAt', 'DESC')
+      .getMany();
+  }
 }
