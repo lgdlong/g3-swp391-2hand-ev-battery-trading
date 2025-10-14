@@ -202,7 +202,7 @@ export class PostsController {
   })
   async getAllPostsForAdmin(
     @Query() query: AdminListPostsQueryDto,
-  ): Promise<PaginatedBasePostResponseDto> {
+  ): Promise<BasePostResponseDto[]> {
     return this.postsService.getAllPostsForAdmin(query);
   }
 
