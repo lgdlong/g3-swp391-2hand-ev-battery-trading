@@ -183,11 +183,23 @@ export async function getPostDetail(id: string): Promise<Post> {
 }
 
 /**
- * Update a post by ID
+ * Update a post by ID (Admin only)
  * Requires authentication token in headers
  */
 export async function updatePost(id: string, payload: UpdatePostDto): Promise<Post> {
   const { data } = await api.patch<Post>(`/posts/${id}`, payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Update user's own post by ID
+ * Only allows updating posts in DRAFT or REJECTED status
+ * Requires authentication token in headers
+ */
+export async function updateMyPost(id: string, payload: UpdatePostDto): Promise<Post> {
+  const { data } = await api.patch<Post>(`/posts/${id}/me`, payload, {
     headers: getAuthHeaders(),
   });
   return data;
