@@ -17,6 +17,8 @@ export default function EmptyState({ status, onCreateNew }: EmptyStateProps) {
         return 'Không có tin nào bị từ chối';
       case 'SOLD':
         return 'Bạn chưa bán được sản phẩm nào';
+      case 'DRAFT':
+        return 'Bạn chưa có tin nháp nào được lưu';
       default:
         return 'Chưa có tin nào trong mục này';
     }
