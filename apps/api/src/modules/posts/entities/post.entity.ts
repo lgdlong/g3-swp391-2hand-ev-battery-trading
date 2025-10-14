@@ -119,4 +119,6 @@ export class Post {
 
   @OneToMany(() => require('./post-image.entity').PostImage, (image: PostImage) => image.post)
   images!: PostImage[];
+
+  
 }

@@ -25,6 +25,7 @@ import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
 import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
+import { PostsQueryDto } from './dto/posts-query.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PaginatedBasePostResponseDto } from './dto/paginated-post-response.dto';
 import { BikeDetailsResponseDto } from '../post-details/dto/bike/bike-details-response.dto';
@@ -203,6 +204,28 @@ export class PostsController {
     @Query() query: AdminListPostsQueryDto,
   ): Promise<PaginatedBasePostResponseDto> {
     return this.postsService.getAllPostsForAdmin(query);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lấy danh sách bài đăng của người dùng hiện tại' })
+  @ApiOkResponse({
+    description: 'Danh sách bài đăng của người dùng',
+    type: [BasePostResponseDto],
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Chưa xác thực',
+  })
+  @ApiForbiddenResponse({
+    description: 'Không có quyền truy cập',
+  })
+  async getMyPosts(
+    @User() user: AuthUser,
+    @Query() query: PostsQueryDto,
+  ): Promise<BasePostResponseDto[]> {
+    return this.postsService.getPostsByUserId(user.sub, query);
   }
 
   @Get(':id')
