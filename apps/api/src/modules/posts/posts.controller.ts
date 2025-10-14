@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -50,6 +51,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
+import { DeletePostResponseDto } from './dto/delete-post-response.dto';
 
 @ApiTags('posts')
 @ApiExtraModels(
@@ -444,5 +446,30 @@ export class PostsController {
     @Body() body?: { reason?: string },
   ): Promise<BasePostResponseDto> {
     return this.postsService.rejectPost(id, body?.reason);
+  }
+
+  //-----------------------------------------
+  //------------ DELETE ENDPOINTS -----------
+  //-----------------------------------------
+  @Delete(':id/me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @ApiOkResponse({
+    description: 'Soft delete post successfully',
+    type: DeletePostResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Post not found or no permission to delete',
+  })
+  async deleteMyPostById(
+    @Param('id') id: string,
+    @User() user: AuthUser,
+  ): Promise<DeletePostResponseDto> {
+    const deletedAt = await this.postsService.deletePostById(id, user.sub);
+
+    return {
+      message: 'Post has been soft deleted',
+      deletedAt: deletedAt.toISOString(),
+    };
   }
 }
