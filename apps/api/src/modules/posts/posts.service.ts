@@ -380,7 +380,7 @@ export class PostsService {
 
   async getAllPostsForAdmin(
     query: ListQueryDto & { status?: string; postType?: string },
-  ): Promise<PaginatedBasePostResponseDto> {
+  ): Promise<BasePostResponseDto[]> {
     const where: any = {};
 
     if (query.status) {
@@ -405,7 +405,7 @@ export class PostsService {
     }
 
     // Get total count for pagination
-    const total = await this.postsRepo.count({ where });
+    // const total = await this.postsRepo.count({ where });
 
     const rows = await this.postsRepo.find({
       where,
@@ -415,19 +415,13 @@ export class PostsService {
       skip: query.offset,
     });
 
-    const page = query.offset
-      ? Math.floor(query.offset / (query.limit || DEFAULT_PAGE_SIZE)) + 1
-      : 1;
-    const limit = query.limit || DEFAULT_PAGE_SIZE;
-    const totalPages = Math.ceil(total / limit);
+    // const page = query.offset
+    //   ? Math.floor(query.offset / (query.limit || DEFAULT_PAGE_SIZE)) + 1
+    //   : 1;
+    // const limit = query.limit || DEFAULT_PAGE_SIZE;
+    // const totalPages = Math.ceil(total / limit);
 
-    return {
-      data: PostMapper.toBasePostResponseDtoArray(rows),
-      total,
-      page,
-      limit,
-      totalPages,
-    };
+    return PostMapper.toBasePostResponseDtoArray(rows);
   }
 
   /**
