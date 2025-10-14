@@ -8,7 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Post, PostStatus } from '@/types/post';
-import { getMyPosts, deletePost, updatePost } from '@/lib/api/postApi';
+import { getMyPosts, updatePost, deleteMyPostById } from '@/lib/api/postApi';
 import { useAuth } from '@/lib/auth-context';
 import SearchBar from './_components/search-bar';
 import PostListItem from './_components/post-list-item';
@@ -121,7 +121,7 @@ export default function MyPostsPage() {
     soldQuery.isLoading;
 
   const deleteMutation = useMutation({
-    mutationFn: deletePost,
+    mutationFn: (postId: string) => deleteMyPostById(postId),
     onSuccess: () => {
       toast.success('Đã xóa tin đăng thành công');
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
