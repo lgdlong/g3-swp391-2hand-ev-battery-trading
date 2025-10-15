@@ -118,6 +118,7 @@ export class PostsService {
         addressTextCached: dto.addressTextCached ?? null,
         priceVnd: dto.priceVnd,
         isNegotiable: dto.isNegotiable ?? false,
+        status: dto.status ?? PostStatus.PENDING_REVIEW,
       });
       const savedPost = await trx.save(Post, post);
 
@@ -530,6 +531,15 @@ export class PostsService {
       if (updateDto.priceVnd !== undefined) updateFields.priceVnd = updateDto.priceVnd;
       if (updateDto.isNegotiable !== undefined) updateFields.isNegotiable = updateDto.isNegotiable;
 
+      // Handle status updates
+      if (updateDto.status !== undefined) {
+        updateFields.status = updateDto.status;
+        // Clear reviewedAt when changing to PENDING_REVIEW
+        if (updateDto.status === PostStatus.PENDING_REVIEW) {
+          updateFields.reviewedAt = null;
+        }
+      }
+
       // Handle address updates
       if (updateDto.wardCode) {
         updateFields.wardCode = updateDto.wardCode;
@@ -564,8 +574,8 @@ export class PostsService {
       if (updateDto.addressTextCached !== undefined)
         updateFields.addressTextCached = updateDto.addressTextCached;
 
-      // If status is REJECTED, change it back to DRAFT when updating
-      if (post.status === PostStatus.REJECTED) {
+      // If status is REJECTED and no new status is provided, change it back to DRAFT when updating
+      if (post.status === PostStatus.REJECTED && updateDto.status === undefined) {
         updateFields.status = PostStatus.DRAFT;
         updateFields.reviewedAt = null;
       }
