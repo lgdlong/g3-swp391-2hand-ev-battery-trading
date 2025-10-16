@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useProvinces, useDistricts } from '@/hooks/useGeo';
 import { Post } from '@/types/post';
-import { getFlexibleFieldValue } from './utils';
+import { getFlexibleFieldValue } from '../utils/utils';
 
 interface BasicData {
   title: string;

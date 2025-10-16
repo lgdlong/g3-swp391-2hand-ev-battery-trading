@@ -11,9 +11,9 @@ import { Brand, Model } from '@/types/catalog';
 import BatteryDetailsForm from '../../../../posts/create/_components/BatteryDetailsForm';
 import EVDetailsForm from '../../../../posts/create/_components/EVDetailsForm';
 import BasicInfoForm from './BasicInfoForm';
-import { useAddressState } from './useAddressState';
-import { useEVFormState } from './useEVFormState';
-import { useBatteryFormState } from './useBatteryFormState';
+import { useAddressState } from '../hooks/useAddressState';
+import { useEVFormState } from '../hooks/useEVFormState';
+import { useBatteryFormState } from '../hooks/useBatteryFormState';
 
 interface UpdatePostFormProps {
   post: Post;

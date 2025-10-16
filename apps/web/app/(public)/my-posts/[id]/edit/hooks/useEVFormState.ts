@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCarBrands, getBikeBrands, getCarModels, getBikeModels } from '@/lib/api/catalogApi';
 import { Post, CarDetail, BikeDetail } from '@/types/post';
 import { Origin } from '@/types/enums';
-import { getFlexibleFieldValue } from './utils';
+import { getFlexibleFieldValue } from '../utils/utils';
 
 export function useEVFormState(post: Post) {
   const isEVPost = post.postType === 'EV_CAR' || post.postType === 'EV_BIKE';
