@@ -553,7 +553,7 @@ export class PostsService {
           updateFields.districtNameCached = fullAddress.data.district.name;
           updateFields.wardNameCached = fullAddress.data.ward.name;
 
-          // iff th
+          // If addressTextCached is not set, build it from the fetched address components
           if (!updateFields.addressTextCached) {
             updateFields.addressTextCached = buildAddressText(
               fullAddress.data.ward.name,
