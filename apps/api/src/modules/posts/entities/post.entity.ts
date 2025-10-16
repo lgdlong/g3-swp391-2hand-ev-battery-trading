@@ -9,6 +9,7 @@ import {
   JoinColumn,
   OneToOne,
   OneToMany,
+  DeleteDateColumn,
 } from 'typeorm';
 import type { Account } from '../../accounts/entities/account.entity';
 import { PostStatus, PostType } from '../../../shared/enums/post.enum';
@@ -105,6 +106,9 @@ export class Post {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt!: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamp', nullable: true })
+  deletedAt?: Date;
 
   // ---------------------------
   // One-to-one relations

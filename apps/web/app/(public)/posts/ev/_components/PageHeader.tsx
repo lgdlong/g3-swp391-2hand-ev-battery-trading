@@ -1,3 +1,5 @@
+import { PageTitle } from "./PageTitle";
+
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
 interface PageHeaderProps {
@@ -11,10 +13,7 @@ export function PageHeader({ resultCount, isLoading, sort, onSortChange }: PageH
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 mb-2">Xe điện (EV)</h1>
-          <p className="text-muted-foreground">Khám phá các mẫu xe điện chất lượng</p>
-        </div>
+        <PageTitle />
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Sắp xếp:</span>
           <select

@@ -6,12 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Post } from '@/types/api/post';
 import { Eye, Check, X, Calendar, MapPin, User, Car, Shield } from 'lucide-react';
+import { DEFAULT_IMAGE } from '@/constants/images';
+import { RejectDialog } from './RejectDialog';
+import { useState } from 'react';
 
 interface PostCardProps {
   post: Post;
   onViewDetails: (post: Post) => void;
   onApprove: (postId: string) => void;
-  onReject: (postId: string) => void;
+  onReject: (postId: string, reason: string) => void;
   onVerify?: (postId: string) => void;
   onRejectVerification?: (postId: string) => void;
   isApproving?: boolean;
@@ -53,13 +56,13 @@ export function PostCard({
   };
 
   const META = {
-    DRAFT:          { label: 'Bản nháp', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+    DRAFT: { label: 'Bản nháp', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
     PENDING_REVIEW: { label: 'Chờ duyệt', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-    PUBLISHED:      { label: 'Đã đăng', cls: 'bg-green-50 text-green-700 border-green-200' },
-    REJECTED:       { label: 'Từ chối', cls: 'bg-red-50 text-red-700 border-red-200' },
-    PAUSED:         { label: 'Tạm dừng', cls: 'bg-orange-50 text-orange-700 border-orange-200' },
-    SOLD:           { label: 'Đã bán', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
-    ARCHIVED:       { label: 'Lưu trữ', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+    PUBLISHED: { label: 'Đã đăng', cls: 'bg-green-50 text-green-700 border-green-200' },
+    REJECTED: { label: 'Từ chối', cls: 'bg-red-50 text-red-700 border-red-200' },
+    PAUSED: { label: 'Tạm dừng', cls: 'bg-orange-50 text-orange-700 border-orange-200' },
+    SOLD: { label: 'Đã bán', cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+    ARCHIVED: { label: 'Lưu trữ', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
   } as const;
 
   const getStatusBadge = (status: string) => {
@@ -80,11 +83,7 @@ export function PostCard({
             {post.images && Array.isArray(post.images) && post.images.length > 0 ? (
               <div className="relative w-56 h-40 overflow-hidden">
                 <Image
-                  src={
-                    typeof post.images[0] === 'string'
-                      ? post.images[0]
-                      : (post.images[0] as { url: string })?.url
-                  }
+                  src={typeof post.images[0] === 'string' ? post.images[0] : DEFAULT_IMAGE}
                   alt={post.title}
                   width={224}
                   height={160}
@@ -120,9 +119,7 @@ export function PostCard({
               <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full">
                 <MapPin className="w-4 h-4 text-blue-500" />
                 <span className="font-medium">
-                  {typeof post.provinceNameCached === 'string'
-                    ? post.provinceNameCached
-                    : ''}
+                  {typeof post.provinceNameCached === 'string' ? post.provinceNameCached : ''}
                   {typeof post.districtNameCached === 'string'
                     ? `, ${post.districtNameCached}`
                     : ''}
@@ -144,13 +141,13 @@ export function PostCard({
                 <div className="text-sm  font-medium">
                   {post.carDetails && (
                     <span>
-                       Xe ô tô • {String(post.carDetails.manufacture_year || 'N/A')} •{' '}
+                      Xe ô tô • {String(post.carDetails.manufacture_year || 'N/A')} •{' '}
                       {String(post.carDetails.odo_km || 'N/A')} km
                     </span>
                   )}
                   {post.bikeDetails && (
                     <span>
-                       Xe máy • {String(post.bikeDetails.manufacture_year || 'N/A')} •{' '}
+                      Xe máy • {String(post.bikeDetails.manufacture_year || 'N/A')} •{' '}
                       {String(post.bikeDetails.odo_km || 'N/A')} km
                     </span>
                   )}
@@ -159,16 +156,14 @@ export function PostCard({
             )}
 
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-green-600">
-                {formatPrice(post.priceVnd)}
-              </div>
+              <div className="text-2xl font-bold text-green-600">{formatPrice(post.priceVnd)}</div>
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex-shrink-0 bg-gray-50 p-6 flex flex-col justify-center gap-3 min-w-[180px]">
             <Button
-              onClick={() => onViewDetails(post)}
+              onClick={() => onViewDetails?.(post)}
               variant="outline"
               size="sm"
               className="flex items-center gap-2 text-sm border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
@@ -187,16 +182,12 @@ export function PostCard({
                   <Check className="w-4 h-4" />
                   {isApproving ? 'Đang duyệt...' : 'Duyệt'}
                 </Button>
-                <Button
-                  onClick={() => onReject(post.id)}
-                  disabled={isRejecting}
-                  variant="destructive"
-                  size="sm"
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
-                >
-                  <X className="w-4 h-4" />
-                  {isRejecting ? 'Đang từ chối...' : 'Từ chối'}
-                </Button>
+                <RejectDialog
+                  onReject={async (reason: string) => {
+                    onReject(post.id, reason);
+                  }}
+                  triggerVariant="sm"
+                />
               </>
             )}
 

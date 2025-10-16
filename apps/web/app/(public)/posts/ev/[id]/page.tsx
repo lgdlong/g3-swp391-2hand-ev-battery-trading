@@ -12,6 +12,7 @@ import { formatVnd, originText, getLocation } from '@/lib/utils/format';
 import { SellerInfo, Specifications } from './_components';
 import { HeartCallApi } from '../_components/HeartCallApi';
 import { RequestVerificationButton } from '../_components/RequestVerificationButton';
+import { PostHeader } from '@/app/(public)/posts/_components';
 import { Button } from '@/components/ui/button';
 import { getPostVerificationRequest } from '@/lib/api/verificationApi';
 import { useQuery } from '@tanstack/react-query';
@@ -24,7 +25,6 @@ interface Props {
 export default function EvDetailPage({ params, searchParams }: Props) {
   const [id, setId] = useState<string>('');
   const [model, setModel] = useState<string>('all');
-  const [liked, setLiked] = useState(false);
   const [mainImage, setMainImage] = useState<string>('');
   const [showRejectionAlert, setShowRejectionAlert] = useState(false);
   const [rejectionReason, setRejectionReason] = useState<string>('');
@@ -245,6 +245,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 </div>
               </CardContent>
             </Card>
+            <PostHeader post={post} details={details} />
 
             <Specifications post={post} />
 

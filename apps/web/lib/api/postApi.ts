@@ -7,9 +7,11 @@ import type {
   CreatePostDto,
   CreateCarPostDto,
   CreateBikePostDto,
+  CreateBatteryPostDto,
   UpdatePostDto,
   GetPostsQuery,
   FlexibleField,
+  DeletePostResponse,
 } from '@/types/api/post';
 
 // Re-export types for backward compatibility
@@ -21,7 +23,28 @@ export type {
   CreateBikePostDto,
   UpdatePostDto,
   GetPostsQuery,
+  DeletePostResponse,
 };
+
+/**
+ * Count posts with optional status filter (Admin only)
+ */
+export async function countPosts(
+  status?: 'DRAFT' | 'PENDING_REVIEW' | 'REJECTED' | 'PUBLISHED' | 'PAUSED' | 'SOLD' | 'ARCHIVED',
+): Promise<{ count: number; status?: string }> {
+  const params = new URLSearchParams();
+  if (status) {
+    params.append('status', status);
+  }
+
+  const { data } = await api.get<{ count: number; status?: string }>(
+    `/posts/count?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
 
 /**
  * Create a new post
@@ -69,24 +92,12 @@ export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsRes
   if (query.postType) params.append('postType', query.postType);
 
   try {
-    const response = await api.get<Post[]>(`/posts/admin/all?${params.toString()}`, {
+    // ✅ Backend bây giờ return PaginatedBasePostResponseDto trực tiếp
+    const { data } = await api.get<PostsResponse>(`/posts/admin/all?${params.toString()}`, {
       headers: getAuthHeaders(),
     });
 
-    const allPosts = Array.isArray(response.data) ? response.data : [];
-
-    // Apply pagination
-    const page = query.page || 1;
-    const limit = query.limit || 20;
-    const offset = (page - 1) * limit;
-    const paginatedPosts = allPosts.slice(offset, offset + limit);
-
-    return {
-      data: paginatedPosts,
-      total: allPosts.length, // Đây là tổng số bài đăng với status tương ứng
-      page,
-      limit,
-    };
+    return data;
   } catch (error) {
     console.error('Error fetching admin posts:', error);
     throw error;
@@ -182,21 +193,18 @@ export async function updatePost(id: string, payload: UpdatePostDto): Promise<Po
   return data;
 }
 
-/**
- * Delete a post by ID
- * Requires authentication token in headers
- */
-export async function deletePost(id: string): Promise<void> {
-  await api.delete(`/posts/${id}`, {
+export async function deleteMyPostById(id: string): Promise<DeletePostResponse> {
+  const { data } = await api.delete<DeletePostResponse>(`/posts/${id}/me`, {
     headers: getAuthHeaders(),
   });
+  return data;
 }
 
 /**
  * Get posts by current user
  * Requires authentication token in headers
  */
-export async function getMyPosts(query: GetPostsQuery = {}): Promise<PostsResponse> {
+export async function getMyPosts(query: GetPostsQuery = {}): Promise<Post[]> {
   const params = new URLSearchParams();
 
   if (query.q) params.append('q', query.q);
@@ -207,7 +215,7 @@ export async function getMyPosts(query: GetPostsQuery = {}): Promise<PostsRespon
   if (query.page !== undefined) params.append('page', query.page.toString());
   if (query.status) params.append('status', query.status);
 
-  const { data } = await api.get<PostsResponse>(`/posts/my?${params.toString()}`, {
+  const { data } = await api.get<Post[]>(`/posts/me?${params.toString()}`, {
     headers: getAuthHeaders(),
   });
   return data;
@@ -247,7 +255,7 @@ export async function approvePost(id: string): Promise<Post> {
  * Reject a post (Admin only)
  * Requires authentication token in headers
  */
-export async function rejectPost(id: string, reason?: string): Promise<Post> {
+export async function rejectPost(id: string, reason: string): Promise<Post> {
   const { data } = await api.patch<Post>(
     `/posts/${id}/reject`,
     { reason },
@@ -406,10 +414,43 @@ export async function updateBikePost(id: string, payload: UpdatePostDto): Promis
  * Delete a bike post by ID
  * Requires authentication token in headers
  */
+// TODO: Unused?
 export async function deleteBikePost(id: string): Promise<void> {
   await api.delete(`/posts/bike/${id}`, {
     headers: getAuthHeaders(),
   });
+}
+
+// ==================== BATTERY SPECIFIC API FUNCTIONS ====================
+
+/**
+ * Get battery posts with query parameters
+ * Supports filtering, pagination, and search specifically for batteries
+ */
+export async function getBatteryPostsWithQuery(query: GetPostsQuery = {}): Promise<Post[]> {
+  const params = new URLSearchParams();
+
+  if (query.q) params.append('q', query.q);
+  if (query.offset !== undefined) params.append('offset', query.offset.toString());
+  if (query.limit !== undefined) params.append('limit', query.limit.toString());
+  if (query.order) params.append('order', query.order);
+  if (query.sort) params.append('sort', query.sort);
+  if (query.page !== undefined) params.append('page', query.page.toString());
+  if (query.status) params.append('status', query.status);
+
+  const { data } = await api.get<Post[]>(`/posts/battery?${params.toString()}`);
+  return data;
+}
+
+/**
+ * Create a new battery post
+ * Requires authentication token in headers
+ */
+export async function createBatteryPost(payload: CreateBatteryPostDto): Promise<Post> {
+  const { data } = await api.post<Post>('/posts/battery', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
 }
 
 // ==================== CAR SPECIFIC API FUNCTIONS ====================
@@ -495,6 +536,7 @@ export async function updateCarPost(id: string, payload: UpdatePostDto): Promise
  * Delete a car post by ID
  * Requires authentication token in headers
  */
+// TODO: Unused?
 export async function deleteCarPost(id: string): Promise<void> {
   await api.delete(`/posts/car/${id}`, {
     headers: getAuthHeaders(),

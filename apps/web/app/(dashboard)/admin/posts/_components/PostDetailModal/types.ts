@@ -1,15 +1,3 @@
-import { Post } from '@/types/api/post';
-
-export interface PostDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  post: Post | null;
-  onApprove: (postId: string) => void;
-  onReject: (postId: string) => void;
-  isApproving?: boolean;
-  isRejecting?: boolean;
-}
-
 export const POST_STATUS_META = {
   DRAFT: { label: 'Bản nháp', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
   PENDING_REVIEW: { label: 'Chờ duyệt', cls: 'bg-yellow-50 text-yellow-700 border-yellow-200' },

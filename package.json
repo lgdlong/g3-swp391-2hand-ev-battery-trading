@@ -9,15 +9,19 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:check": "prettier --check \"**/*.{js,ts,tsx,md,json,css,scss,yml,yaml}\"",
     "check-types": "turbo run check-types",
-    "prepare": "husky"
+    "prepare": "husky install"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "turbo": "^2.5.6",
     "typescript": "5.9.2"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.18.2",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "recharts": "^3.2.1"
   }
 }

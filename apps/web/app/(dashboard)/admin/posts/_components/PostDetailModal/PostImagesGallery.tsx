@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Car } from 'lucide-react';
 import { Post } from '@/types/api/post';
+import { DEFAULT_IMAGE } from '@/constants/images';
 
 interface PostImagesGalleryProps {
   post: Post;
@@ -35,10 +36,7 @@ export function PostImagesGallery({ post }: PostImagesGalleryProps) {
           {post.images.map((image, index: number) => {
             if (!image) return null;
 
-            const imageUrl =
-              typeof image === 'string'
-                ? image
-                : (image as { url: string })?.url || (image as { publicId: string })?.publicId;
+            const imageUrl = typeof image === 'string' ? image : DEFAULT_IMAGE;
 
             if (!imageUrl) return null;
 

@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { RejectDialog } from '../RejectDialog';
 
 interface PostDetailActionsProps {
   postId: string;
   postStatus: string;
-  onApprove: (postId: string) => void;
-  onReject: (postId: string) => void;
+  onApprove: (postId: number | string) => void;
+  onReject: (postId: number | string, reason: string) => void;
   onClose: () => void;
   isApproving?: boolean;
   isRejecting?: boolean;
@@ -40,21 +41,15 @@ export function PostDetailActions({
                 </div>
                 {isApproving ? 'Đang duyệt...' : 'Duyệt bài đăng'}
               </Button>
-              <Button
-                onClick={() => {
-                  onReject(postId);
+              <RejectDialog
+                onReject={async (reason: string) => {
+                  await onReject(postId, reason);
                   onClose();
                 }}
-                disabled={isRejecting}
-                variant="destructive"
-                size="lg"
-                className="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 border border-red-200 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-8"
-              >
-                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
-                  <X className="w-3 h-3 text-red-600" />
-                </div>
-                {isRejecting ? 'Đang từ chối...' : 'Từ chối bài đăng'}
-              </Button>
+                isRejecting={isRejecting}
+                triggerVariant="lg"
+                triggerClassName="bg-red-50 hover:bg-red-100 text-red-700 hover:text-red-800 border border-red-200 shadow-lg hover:shadow-xl transition-all duration-200"
+              />
             </>
           )}
         </div>

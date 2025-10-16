@@ -1,4 +1,4 @@
-// Review PR diff bằng Claude, xuất review.md + issues.json
+// review.js (one-shot): Review toàn bộ PR diff bằng 1 lần gọi API, xuất review.md + issues.json
 import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { fetch } from 'undici';
@@ -7,9 +7,9 @@ const CLAUDE_SONNET_4_5 = 'claude-sonnet-4-5-20250929';
 const CLAUDE_SONNET_4 = 'claude-sonnet-4-20241022';
 const THIRD_PARTY_BASE_URL = 'https://v98store.com';
 
-// const MODEL = process.env.CLAUDE_MODEL || 'claude-sonnet-4-20241022';
+// Dùng 1 model, có thể đổi qua env nếu muốn
 const MODEL = CLAUDE_SONNET_4_5 || CLAUDE_SONNET_4;
-// Support both ANTHROPIC_API_KEY (for GitHub Actions) and ANTHROPIC_AUTH_TOKEN (for local testing)
+
 const API_KEY = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN;
 const BASE_URL = process.env.ANTHROPIC_BASE_URL || THIRD_PARTY_BASE_URL;
 const API_ENDPOINT = `${BASE_URL}/v1/messages`;
@@ -22,25 +22,52 @@ if (!API_KEY) {
 console.log('Using API endpoint:', API_ENDPOINT);
 console.log('Using model:', MODEL);
 
-// Lấy diff giữa base và head của PR
+// Base/Head của PR (được set từ workflow/comment handler)
 const BASE = process.env.PR_BASE_SHA || 'origin/dev';
 const HEAD = process.env.PR_HEAD_SHA || 'HEAD';
+
+// ---- Lấy toàn bộ diff của PR (one-shot) ----
 try {
   execSync('git fetch --all --prune', { stdio: 'ignore' });
 } catch {}
-const diff = execSync(`git diff --unified=0 ${BASE}...${HEAD}`, {
-  encoding: 'utf8',
-});
 
-const files = diff
-  .split('\ndiff --git ')
-  .filter(Boolean)
-  .map((chunk, i) => (i === 0 && diff.startsWith('diff --git ') ? 'diff --git ' + chunk : chunk))
-  .filter(
-    (c) =>
-      !/\.(png|jpg|jpeg|gif|svg|ico|pdf|mp4|zip|tgz|lock|yarn|pnpm-lock|package-lock)\b/i.test(c),
+let diff = '';
+try {
+  // unified=0: chỉ giữ dòng thay đổi, giảm kích thước prompt
+  diff = execSync(`git diff --unified=0 ${BASE}...${HEAD}`, {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  });
+} catch (e) {
+  console.error('Failed to get git diff:', e.message);
+  process.exit(1);
+}
+
+// Nếu không có thay đổi thì thoát sớm
+if (!diff || diff.trim().length === 0) {
+  writeFileSync(
+    'review.md',
+    `# AI Code Review (Claude)\n\n> Base: \`${BASE}\` → Head: \`${HEAD}\`\n\n_No code changes detected in diff._\n`,
+    'utf8',
   );
+  writeFileSync('issues.json', '[]', 'utf8');
+  console.log('No diff. Wrote empty review.');
+  process.exit(0);
+}
 
+// ---- Giới hạn kích thước để tránh token limit ----
+// Quy tắc đơn giản: cắt ở ~120k ký tự (tùy backend). Bạn có thể tăng/giảm con số này.
+const MAX_PROMPT_CHARS = Number(process.env.MAX_PROMPT_CHARS || 120_000);
+let usedDiff = diff;
+if (usedDiff.length > MAX_PROMPT_CHARS) {
+  console.warn(`Diff length ${usedDiff.length} > ${MAX_PROMPT_CHARS}. Truncating...`);
+  // Cắt mềm theo ranh giới "diff --git " gần nhất để đỡ vỡ cấu trúc
+  const cut = usedDiff.slice(0, MAX_PROMPT_CHARS);
+  const lastHeader = cut.lastIndexOf('\ndiff --git ');
+  usedDiff = lastHeader > 0 ? cut.slice(0, lastHeader) : cut;
+}
+
+// ---- Prompts ----
 const systemPrompt = `
 Bạn là senior Node.js reviewer. Ưu tiên:
 1) Bảo mật (authz/authn, JWT, secrets, injection, validation, CORS, headers, rate-limit)
@@ -58,8 +85,8 @@ const userHeader = `
 Repo context:
 - Ngôn ngữ: Node.js/TypeScript/Express (giả định)
 - Frameworks: Next.js, NestJS.
-- Nhiệm vụ: Review unified git diff. Nêu rõ file:line nếu có thể.
-- Ghi chú: không review các file test, comment, doc, readme, config, ci/cd, workflow và folder /scripts.
+- Nhiệm vụ: Review **toàn bộ unified git diff của PR** (base...head). Nêu rõ file:line nếu có thể.
+- Ghi chú: bỏ qua test/comment/doc/readme/config/ci-cd/scripts khi có thể.
 
 Định dạng bắt buộc:
 ## REVIEW_MARKDOWN
@@ -83,22 +110,21 @@ Repo context:
 \`\`\`
 `;
 
-async function callClaude(content) {
+// ---- Gọi API đúng 1 lần ----
+async function callClaudeOneShot(content) {
   const body = {
     model: MODEL,
-    max_tokens: 2000,
+    max_tokens: Number(process.env.MAX_TOKENS || 5000),
     temperature: 0.2,
-    // 👉 system phải ở top-level (không dùng role:"system" trong messages)
     system: systemPrompt,
     messages: [
       {
         role: 'user',
-        content: userHeader + '\n\n### DIFF CHUNK\n```\n' + content + '\n```',
+        content: `${userHeader}\n\n### FULL PR DIFF (unified=0)\n\`\`\`\n${content}\n\`\`\``,
       },
     ],
   };
 
-  // const res = await fetch("https://api.anthropic.com/v1/messages", {
   const res = await fetch(API_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -124,7 +150,6 @@ async function callClaude(content) {
     throw new Error('Invalid JSON response from API');
   }
 
-  // Anthropic trả về mảng content blocks; lấy text của block đầu
   const text = (json.content && json.content[0] && json.content[0].text) || '';
   return text;
 }
@@ -146,47 +171,51 @@ function extractSections(text) {
       try {
         issues = JSON.parse(m[1].trim());
       } catch (e) {
-        // fallback: empty
+        // bỏ qua nếu JSON hỏng
       }
     }
   }
   return { md, issues };
 }
 
-const MAX_CHARS = 80_000;
-let reviewAll = `# AI Code Review (Claude)\n\n> Base: \`${BASE}\` → Head: \`${HEAD}\`\n\n`;
-let allIssues = [];
-
 (async () => {
-  if (!files.length) {
-    reviewAll += '_No code changes detected in diff._\n';
-  } else {
-    for (const chunk of files) {
-      const content = chunk.slice(0, MAX_CHARS);
-      if (content.trim().length < 50) continue;
-
-      try {
-        const answer = await callClaude(content);
-        const { md, issues } = extractSections(answer);
-        reviewAll += `\n---\n\n${md}\n`;
-        if (Array.isArray(issues)) {
-          for (const it of issues) {
-            if (!it || !it.title) continue;
-            it.severity = (it.severity || 'Medium').trim();
-            it.file = it.file || '';
-            it.line = Number.isInteger(it.line) ? it.line : null;
-            allIssues.push(it);
-          }
-        }
-      } catch (e) {
-        reviewAll += `\n**Error reviewing a chunk:** ${String(e)}\n`;
-      }
-    }
+  let answer;
+  try {
+    answer = await callClaudeOneShot(usedDiff);
+  } catch (e) {
+    const err = `**Error calling Claude:** ${String(e)}`;
+    writeFileSync(
+      'review.md',
+      `# AI Code Review (Claude)\n\n> Base: \`${BASE}\` → Head: \`${HEAD}\`\n\n${err}\n`,
+      'utf8',
+    );
+    writeFileSync('issues.json', '[]', 'utf8');
+    process.exit(1);
   }
 
+  const { md, issues } = extractSections(answer);
+  const header = `# AI Code Review (Claude)\n\n> Base: \`${BASE}\` → Head: \`${HEAD}\`\n\n`;
+  const reviewAll = `${header}${md || '_No content returned._'}\n`;
   writeFileSync('review.md', reviewAll, 'utf8');
-  writeFileSync('issues.json', JSON.stringify(allIssues, null, 2), 'utf8');
-  console.log(`Wrote review.md & issues.json with ${allIssues.length} findings.`);
+
+  const cleanIssues = Array.isArray(issues)
+    ? issues
+        .filter((it) => it && it.title)
+        .map((it) => ({
+          severity: String(it.severity || 'Medium').trim(),
+          title: it.title,
+          file: it.file || '',
+          line: typeof it.line === 'number' && Number.isInteger(it.line) ? it.line : null,
+          rule: it.rule || '',
+          description: it.description || '',
+          recommendation: it.recommendation || '',
+          evidence: it.evidence || '',
+          cwe: it.cwe || '',
+        }))
+    : [];
+
+  writeFileSync('issues.json', JSON.stringify(cleanIssues, null, 2), 'utf8');
+  console.log(`Wrote review.md & issues.json with ${cleanIssues.length} findings.`);
 })().catch((err) => {
   console.error(err);
   process.exit(1);

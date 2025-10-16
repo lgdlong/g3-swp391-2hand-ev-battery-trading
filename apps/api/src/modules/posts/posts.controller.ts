@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -23,10 +24,14 @@ import type { AuthUser } from '../../core/guards/roles.guard';
 import { User } from '../../core/decorators/user.decorator';
 import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
+import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
+import { PostsQueryDto } from './dto/posts-query.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
+import { PaginatedBasePostResponseDto } from './dto/paginated-post-response.dto';
 import { BikeDetailsResponseDto } from '../post-details/dto/bike/bike-details-response.dto';
 import { CarDetailsResponseDto } from '../post-details/dto/car/car-details-response.dto';
+import { BatteryDetailResponseDto } from '../post-details/dto/battery/battery-detail-response.dto';
 
 import {
   ApiBadRequestResponse,
@@ -45,9 +50,16 @@ import {
   ApiUnauthorizedResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
+import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
+import { DeletePostResponseDto } from './dto/delete-post-response.dto';
 
 @ApiTags('posts')
-@ApiExtraModels(BasePostResponseDto, CarDetailsResponseDto, BikeDetailsResponseDto)
+@ApiExtraModels(
+  BasePostResponseDto,
+  CarDetailsResponseDto,
+  BikeDetailsResponseDto,
+  BatteryDetailResponseDto,
+)
 @Controller('posts')
 export class PostsController {
   constructor(
@@ -58,6 +70,33 @@ export class PostsController {
   //-----------------------------------------
   //------------ GET ENDPOINTS --------------
   //-----------------------------------------
+
+  @Get('count')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Đếm số lượng bài đăng theo status (admin only)' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['DRAFT', 'PENDING_REVIEW', 'REJECTED', 'PUBLISHED', 'PAUSED', 'SOLD', 'ARCHIVED'],
+    description: 'Filter by post status (case-insensitive). If not provided, count all posts.',
+  })
+  @ApiOkResponse({
+    description: 'Post count',
+    schema: {
+      type: 'object',
+      properties: {
+        count: { type: 'number', example: 250 },
+        status: { type: 'string', example: 'PUBLISHED', nullable: true },
+      },
+    },
+  })
+  @ApiForbiddenResponse({ description: 'Admin access required' })
+  countPosts(@Query('status') status?: string): Promise<{ count: number; status?: string }> {
+    return this.postsService.countPosts(status);
+  }
+
   @ApiBearerAuth()
   @Get('car')
   @ApiOperation({ summary: 'Danh sách bài đăng xe ô tô điện (EV_CAR)' })
@@ -93,6 +132,24 @@ export class PostsController {
   @ApiQuery({ name: 'sort', required: false, type: String, example: 'price' })
   async getBikePosts(@Query() query: ListQueryDto): Promise<BasePostResponseDto[]> {
     return this.postsService.getBikePosts(query);
+  }
+
+  @Get('battery')
+  @ApiOperation({ summary: 'Danh sách bài đăng pin (BATTERY)' })
+  @ApiOkResponse({
+    description: 'Danh sách bài đăng pin',
+    schema: {
+      type: 'array',
+      items: { $ref: getSchemaPath(BasePostResponseDto) },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Query không hợp lệ' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'q', required: false, type: String, example: 'tesla' })
+  @ApiQuery({ name: 'sort', required: false, type: String, example: '-createdAt' })
+  async getBatteryPosts(@Query() query: ListQueryDto): Promise<BasePostResponseDto[]> {
+    return this.postsService.getBatteryPosts(query);
   }
 
   @Get('search')
@@ -142,22 +199,35 @@ export class PostsController {
   @Get('admin/all')
   @ApiOperation({ summary: 'Lấy tất cả bài đăng cho admin (cần quyền admin)' })
   @ApiOkResponse({
-    description: 'Danh sách tất cả bài đăng',
-    schema: {
-      type: 'array',
-      items: { $ref: getSchemaPath(BasePostResponseDto) },
-    },
+    description: 'Danh sách tất cả bài đăng với pagination',
+    type: PaginatedBasePostResponseDto,
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
-  @ApiQuery({ name: 'q', required: false, type: String, example: 'vinfast' })
-  @ApiQuery({ name: 'sort', required: false, type: String, example: '-createdAt' })
-  @ApiQuery({ name: 'status', required: false, type: String, example: 'PENDING_REVIEW' })
-  @ApiQuery({ name: 'postType', required: false, type: String, example: 'EV_CAR' })
   async getAllPostsForAdmin(
-    @Query() query: ListQueryDto & { status?: string; postType?: string },
+    @Query() query: AdminListPostsQueryDto,
   ): Promise<BasePostResponseDto[]> {
     return this.postsService.getAllPostsForAdmin(query);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lấy danh sách bài đăng của người dùng hiện tại' })
+  @ApiOkResponse({
+    description: 'Danh sách bài đăng của người dùng',
+    type: [BasePostResponseDto],
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Chưa xác thực',
+  })
+  @ApiForbiddenResponse({
+    description: 'Không có quyền truy cập',
+  })
+  async getMyPosts(
+    @User() user: AuthUser,
+    @Query() query: PostsQueryDto,
+  ): Promise<BasePostResponseDto[]> {
+    return this.postsService.getPostsByUserId(user.sub, query);
   }
 
   @Get(':id')
@@ -223,6 +293,28 @@ export class PostsController {
     dto.postType = PostType.EV_BIKE;
     const sellerId = user.sub;
     return this.postsService.createBikePost(dto, sellerId);
+  }
+
+  @Post('battery')
+  @ApiOperation({ summary: 'Tạo bài đăng pin' })
+  @ApiBearerAuth()
+  @ApiCreatedResponse({
+    description: 'Tạo bài đăng thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiBadRequestResponse({ description: 'Body không hợp lệ' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không đủ quyền' })
+  @ApiBody({ type: CreateBatteryPostDto })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  async createBatteryPost(
+    @Body() dto: CreateBatteryPostDto,
+    @User() user: AuthUser,
+  ): Promise<BasePostResponseDto | null> {
+    dto.postType = PostType.BATTERY;
+    const sellerId = user.sub;
+    return this.postsService.createBatteryPost(dto, sellerId);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -354,5 +446,30 @@ export class PostsController {
     @Body() body?: { reason?: string },
   ): Promise<BasePostResponseDto> {
     return this.postsService.rejectPost(id, body?.reason);
+  }
+
+  //-----------------------------------------
+  //------------ DELETE ENDPOINTS -----------
+  //-----------------------------------------
+  @Delete(':id/me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @ApiOkResponse({
+    description: 'Soft delete post successfully',
+    type: DeletePostResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Post not found or no permission to delete',
+  })
+  async deleteMyPostById(
+    @Param('id') id: string,
+    @User() user: AuthUser,
+  ): Promise<DeletePostResponseDto> {
+    const deletedAt = await this.postsService.deletePostById(id, user.sub);
+
+    return {
+      message: 'Post has been soft deleted',
+      deletedAt: deletedAt.toISOString(),
+    };
   }
 }

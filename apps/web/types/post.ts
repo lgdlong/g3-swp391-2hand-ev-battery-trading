@@ -1,5 +1,7 @@
 // types/post.ts
 
+import { Origin } from './enums';
+
 // ===== Core Enums (Backend-aligned) =====
 
 /** Post type enum matching backend */
@@ -17,16 +19,6 @@ export type PostStatus =
 
 /** Origin type for vehicles */
 export type PostOrigin = 'NOI_DIA' | 'NHAP_KHAU';
-
-// ===== Legacy type aliases (for backward compatibility) =====
-/** @deprecated Use PostType instead */
-export type PostTypeUI = PostType;
-
-/** @deprecated Use PostStatus instead */
-export type PostStatusUI = PostStatus;
-
-/** @deprecated Use PostOrigin instead */
-export type PostOriginUI = PostOrigin;
 
 // ===== Vehicle Detail Enums =====
 
@@ -49,11 +41,8 @@ export type VehicleColor =
   | 'ORANGE'
   | 'BROWN';
 
-/** Country of origin */
-export type Origin = 'VIETNAM' | 'JAPAN' | 'KOREA' | 'CHINA' | 'EUROPE' | 'USA' | 'OTHER';
-
 // Type for flexible API fields (can be string, number, object, or null)
-export type FlexibleField = string | number | object | null;
+export type FlexibleField = string | number | null | { value: string | number | null };
 
 // ===== PostImage =====
 /** Post image interface matching backend PostImageResponseDto */
@@ -125,12 +114,16 @@ export interface BikeDetail {
 // ===== BatteryDetail =====
 /** Battery details interface */
 export interface BatteryDetail {
-  brand_name: string;
-  capacity_kwh: number;
-  manufacture_year: number;
-  cycles_used: number;
-  health_percent: number;
-  compatible_models: string[];
+  brand_id: number | null;
+  voltageV: number | null;
+  capacityAh: number | null;
+  chargeTimeHours: number | null;
+  chemistry: 'LFP' | 'NMC' | 'NCA' | 'LMO' | 'LCO' | 'OTHER' | null;
+  origin: 'NOI_DIA' | 'NHAP_KHAU' | null;
+  weightKg: number | null;
+  cycleLife: number | null;
+  rangeKm: number | null;
+  compatibleNotes: string | null;
 }
 
 // ===== UI-focused interfaces =====
@@ -151,7 +144,7 @@ export interface CarDetailUI {
   charge_dc_kw?: string;
   range_km?: number;
   license_plate?: string;
-  origin?: PostOriginUI;
+  origin?: Origin;
 }
 
 /** Bike detail specifications for UI */
@@ -163,7 +156,7 @@ export interface BikeDetailUI {
   motor_power_kw?: string;
   range_km?: number;
   license_plate?: string;
-  origin?: PostOriginUI;
+  origin?: Origin;
 }
 
 /** Post image reference for UI */
@@ -177,20 +170,25 @@ export interface PostImageUI {
 /** Main post interface for UI components */
 export interface PostUI {
   id: string;
-  postType: PostTypeUI;
+  postType: PostType;
   title: string;
   description: string;
+  // wardCode: string;
   priceVnd: string;
   isNegotiable: boolean;
-  status: PostStatusUI;
+  status: PostStatus;
+
   provinceNameCached?: string;
   districtNameCached?: string;
   wardNameCached?: string;
   addressTextCached?: string;
+
   seller: SellerLite;
   carDetails?: CarDetailUI;
   bikeDetails?: BikeDetailUI;
+  batteryDetails?: BatteryDetail;
   images: PostImageUI[];
+
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;
@@ -214,20 +212,21 @@ export interface Post {
   title: string;
   description: string;
   wardCode: string;
-  provinceNameCached: FlexibleField;
-  districtNameCached: FlexibleField;
-  wardNameCached: FlexibleField;
-  addressTextCached: FlexibleField;
   priceVnd: string;
   isNegotiable: boolean;
   status: PostStatus;
-  submittedAt: FlexibleField;
-  reviewedAt: FlexibleField;
+
+  provinceNameCached?: FlexibleField;
+  districtNameCached?: FlexibleField;
+  wardNameCached?: FlexibleField;
+  addressTextCached?: FlexibleField;
+
   seller: PostSeller;
   carDetails?: CarDetail;
   bikeDetails?: BikeDetail;
   batteryDetails?: BatteryDetail;
   images: FlexibleField[];
+
   createdAt: string;
   updatedAt: string;
   // Verification fields
@@ -236,6 +235,8 @@ export interface Post {
   verifiedAt?: string;
   verificationRejectedAt?: string;
   verifiedBy?: PostSeller;
+  submittedAt: FlexibleField;
+  reviewedAt: FlexibleField;
 }
 
 // ===== Legacy/Alternative Interfaces =====
