@@ -8,13 +8,18 @@ import { toast } from 'sonner';
 import { getPostById } from '@/lib/api/postApi';
 import { useAuth } from '@/lib/auth-context';
 import UpdatePostForm from './_components/UpdatePostForm';
-import { useEffect } from 'react';
+import ImageUpload from './_components/ImageUpload';
+import { useEffect, useState } from 'react';
+import { ImageDiffPayload } from '@/types/post';
 
 export default function UpdatePostPage() {
   const params = useParams();
   const router = useRouter();
   const { isLoggedIn, loading: authLoading } = useAuth();
   const postId = params.id as string;
+
+  // State to hold image diff payload for submission
+  const [imageDiff, setImageDiff] = useState<ImageDiffPayload | null>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -99,7 +104,7 @@ export default function UpdatePostPage() {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-8">
+    <div className="container max-w-6xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-6">
         <Button onClick={() => router.push('/my-posts')} variant="ghost" className="mb-4">
@@ -112,7 +117,24 @@ export default function UpdatePostPage() {
       </div>
 
       {/* Update Form */}
-      <UpdatePostForm post={post} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Image Upload - Left Side */}
+        <div className="lg:col-span-1">
+          <ImageUpload
+            existingImages={post.images || []}
+            onImagesUpdate={(diff) => {
+              // Save the diff payload to state for form submission
+              setImageDiff(diff);
+              console.log('Image diff payload:', diff);
+            }}
+          />
+        </div>
+
+        {/* Update Form - Right Side */}
+        <div className="lg:col-span-2">
+          <UpdatePostForm post={post} imageDiff={imageDiff} />
+        </div>
+      </div>
     </div>
   );
 }

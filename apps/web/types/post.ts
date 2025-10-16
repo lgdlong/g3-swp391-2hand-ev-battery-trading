@@ -58,6 +58,20 @@ export interface PostImage {
   createdAt: string;
 }
 
+export interface ImageDiffPayload {
+  toDelete: string[]; // array of id or publicId to delete
+  toKeep: Array<{
+    id: string;
+    publicId: string;
+    position: number;
+  }>; // existing images to keep with updated position
+  toUpload: Array<{
+    file: File;
+    position: number;
+  }>; // new images to upload
+  hasMain: boolean; // whether there's a main image (position 0)
+}
+
 // ===== Seller =====
 /** Seller/user information in post context */
 export interface PostSeller {
@@ -219,7 +233,7 @@ export interface Post {
   carDetails?: CarDetail;
   bikeDetails?: BikeDetail;
   batteryDetails?: BatteryDetail;
-  images: FlexibleField[];
+  images: PostImage[];
 
   createdAt: string;
   updatedAt: string;

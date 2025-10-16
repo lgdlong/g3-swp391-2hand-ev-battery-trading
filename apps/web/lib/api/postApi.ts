@@ -521,3 +521,17 @@ export async function deleteCarPost(id: string): Promise<void> {
     headers: getAuthHeaders(),
   });
 }
+
+/**
+ * Delete an image by publicId (using upload controller)
+ * Note: This removes the image from Cloudinary storage.
+ * To remove the image reference from a post, you may also need to call the backend.
+ * @param publicId - Cloudinary public ID of the image to delete (e.g., 'uploads/abc_xyz')
+ */
+export async function deleteImage(publicId: string): Promise<void> {
+  // Encode publicId to handle special characters in URL
+  const encodedPublicId = encodeURIComponent(publicId);
+  await api.delete(`/upload/image/${encodedPublicId}`, {
+    headers: getAuthHeaders(),
+  });
+}

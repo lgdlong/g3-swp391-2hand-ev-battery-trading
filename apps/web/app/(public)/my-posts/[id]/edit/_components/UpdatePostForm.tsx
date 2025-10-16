@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Save, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { updateMyPost } from '@/lib/api/postApi';
-import { Post } from '@/types/post';
+import { updateMyPost, uploadPostImages, deleteImage } from '@/lib/api/postApi';
+import { ImageDiffPayload, Post } from '@/types/post';
 import { Brand, Model } from '@/types/catalog';
 import BatteryDetailsForm from '../../../../posts/create/_components/BatteryDetailsForm';
 import EVDetailsForm from '../../../../posts/create/_components/EVDetailsForm';
@@ -17,9 +17,10 @@ import { useBatteryFormState } from './useBatteryFormState';
 
 interface UpdatePostFormProps {
   post: Post;
+  imageDiff?: ImageDiffPayload | null;
 }
 
-export default function UpdatePostForm({ post }: UpdatePostFormProps) {
+export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -39,7 +40,7 @@ export default function UpdatePostForm({ post }: UpdatePostFormProps) {
     handleTempWardChange,
   } = useAddressState(post);
 
-  const { evFormData, setEvFormData, brands, models, loadingBrands, loadingModels, isEVPost } =
+  const { evFormData, setEvFormData, brands, models, loadingBrands, loadingModels } =
     useEVFormState(post);
 
   const { batteryFormData, setBatteryFormData } = useBatteryFormState(post);
@@ -118,6 +119,48 @@ export default function UpdatePostForm({ post }: UpdatePostFormProps) {
     if (!basicData.priceVnd || parseFloat(basicData.priceVnd) <= 0) {
       toast.error('Vui lòng nhập giá hợp lệ');
       return;
+    }
+
+    // Process image diff if there are changes
+    if (imageDiff) {
+      try {
+        // 1. Delete removed images from Cloudinary
+        if (imageDiff.toDelete.length > 0) {
+          toast.info(`Đang xoá ${imageDiff.toDelete.length} ảnh...`);
+          await Promise.all(
+            imageDiff.toDelete.map(async (publicId) => {
+              try {
+                await deleteImage(publicId);
+              } catch (error) {
+                console.error(`Failed to delete image ${publicId}:`, error);
+                // Continue even if one delete fails
+              }
+            }),
+          );
+          toast.success(`Đã xoá ${imageDiff.toDelete.length} ảnh`);
+        }
+
+        // 2. TODO: Update positions for kept images
+        // This requires a backend endpoint to reorder images
+        // Example: await updateImagePositions({ postId: post.id, images: imageDiff.toKeep });
+        if (imageDiff.toKeep.length > 0) {
+          console.log('Images to keep with positions:', imageDiff.toKeep);
+          // Backend needs to implement: PATCH /posts/:id/images/positions
+        }
+
+        // 3. Upload new images to Cloudinary
+        if (imageDiff.toUpload.length > 0) {
+          toast.info(`Đang tải lên ${imageDiff.toUpload.length} ảnh mới...`);
+          const filesToUpload = imageDiff.toUpload.map((item) => item.file);
+          await uploadPostImages(post.id, filesToUpload);
+          toast.success(`Đã tải lên ${imageDiff.toUpload.length} ảnh mới`);
+          // Note: uploadPostImages automatically links images to the post
+        }
+      } catch (error) {
+        console.error('Image processing error:', error);
+        toast.error('Có lỗi khi xử lý hình ảnh');
+        return; // Stop submission if image processing fails
+      }
     }
 
     // Prepare update data based on post type
