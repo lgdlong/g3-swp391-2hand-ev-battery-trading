@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { CreatePayoDto } from './dto/create-payo.dto';
 import { createHmac } from 'crypto';
 import axios from 'axios';
-
 @Injectable()
 export class PayosService {
 
@@ -17,6 +16,7 @@ export class PayosService {
 
   async create(createPayoDto: CreatePayoDto) {
     const signature = this.signcreate(createPayoDto);
+    console.log('Creating PayO payment request with data:', {...createPayoDto, signature});
     const res = await fetch(`${process.env.PAYOS_BASE_URL}/v2/payment-requests`, {
       method: 'POST',
       headers: {
@@ -29,19 +29,21 @@ export class PayosService {
         signature,
       }),
     });
+
     return res.json();
 
   }
 
 
-  async find(orderCode: string | number) {
+  async find(orderCode: number | string) {
     const res = await axios.get(`${process.env.PAYOS_BASE_URL}/v2/payment-requests/${orderCode}`, {
       headers: {
         'x-client-id': process.env.PAYOS_CLIENT_ID || '',
         'x-api-key': process.env.PAYOS_API_KEY || '',
       },
     });
-    return res.data.data;
+   const payosData = res.data.data;
+    return  payosData;
   }
 
 

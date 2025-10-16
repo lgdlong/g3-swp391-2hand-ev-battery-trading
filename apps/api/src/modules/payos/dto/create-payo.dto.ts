@@ -1,14 +1,20 @@
-import { IsUrl } from "class-validator";
+import { IsNumber, IsString, IsUrl } from "class-validator";
 
 export class CreatePayoDto {
-    orderCode!: string;
+    @IsNumber()
+    orderCode!: number;
+
+    @IsNumber()
     amount!: number;
+
+    @IsString()
     description!: string;
+
     @IsUrl()
     cancelUrl!: string;
+
     @IsUrl()
     returnUrl!: string;
-    signature!: string;
 
     // Thông tin khách hàng
     buyerName?: string;
