@@ -6,6 +6,7 @@ import { PostEvCarDetails } from 'src/modules/post-details/entities/post-ev-car-
 import { PostEvBikeDetails } from 'src/modules/post-details/entities/post-ev-bike-details.entity';
 import { AccountMapper } from '../../accounts/mappers';
 import { PostImageMapper } from './post-image.mapper';
+import { VerificationMapper } from '../../verifyPost/mappers/verification.mapper';
 
 export class PostMapper {
   static toBasePostResponseDto(post: Post): BasePostResponseDto {
@@ -26,6 +27,10 @@ export class PostMapper {
     dto.status = post.status;
     dto.submittedAt = post.submittedAt;
     dto.reviewedAt = post.reviewedAt;
+
+    // Map verification status using VerificationMapper
+    VerificationMapper.mapVerificationStatusToDto(post, dto);
+
     dto.createdAt = post.createdAt;
     dto.updatedAt = post.updatedAt;
 

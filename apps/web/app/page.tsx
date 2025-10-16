@@ -228,6 +228,16 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {allFeaturedPosts.map((post) => {
+              // Debug verification status
+              console.log('Homepage post verification status:', {
+                id: post.id,
+                title: post.title,
+                isVerified: post.isVerified,
+                verificationRequestedAt: post.verificationRequestedAt,
+                verifiedAt: post.verifiedAt,
+                verifiedBy: post.verifiedBy,
+              });
+
               const isCarPost = !!post.carDetails;
               const location =
                 [
@@ -306,6 +316,14 @@ export default function Home() {
                             {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                           </span>
                         </div>
+                        {/* Verification badge - góc trên bên phải */}
+                        {post.isVerified && (
+                          <div className="absolute top-3 right-3">
+                            <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow-md">
+                              ✓ Đã kiểm định
+                            </span>
+                          </div>
+                        )}
                         {/* Status badge removed */}
                       </div>
                       <div className="p-6">

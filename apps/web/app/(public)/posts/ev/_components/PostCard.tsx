@@ -13,6 +13,16 @@ interface PostCardProps {
 }
 
 export function PostCard({ item, onTitleClick }: PostCardProps) {
+  // Debug verification status
+  console.log('PostCard verification status:', {
+    id: item.id,
+    title: item.title,
+    isVerified: item.isVerified,
+    verificationRequestedAt: item.verificationRequestedAt,
+    verifiedAt: item.verifiedAt,
+    verifiedBy: item.verifiedBy,
+  });
+
   const location =
     [
       // displayValue(item.wardNameCached),
@@ -44,13 +54,21 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
               sizes="(max-width:768px) 100vw, 33vw"
               className="object-contain group-hover:scale-110 transition-transform duration-500"
             />
-            <div className="absolute left-4 top-4">
+            <div className="absolute left-4 top-4 flex flex-col gap-2">
               <Badge
                 className={`${item.carDetails ? 'bg-[#048C73]' : 'bg-[#2563EB]'} text-white border-0`}
               >
                 {item.carDetails ? 'Ô tô điện' : 'Xe máy điện'}
               </Badge>
             </div>
+            {/* Verification badge - góc trên bên phải */}
+            {item.isVerified && (
+              <div className="absolute right-4 top-4">
+                <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-md">
+                  ✓ Đã kiểm định
+                </Badge>
+              </div>
+            )}
             {/* Status badge removed */}
             {(item.carDetails?.origin === 'NOI_DIA' || item.bikeDetails?.origin === 'NOI_DIA') && (
               <div className="absolute right-4 bottom-4">

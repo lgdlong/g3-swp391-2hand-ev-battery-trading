@@ -11,6 +11,7 @@ import { PostsModule } from './modules/posts/posts.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { PostBookmarksModule } from './modules/post-bookmarks/post-bookmarks.module';
 import { AddressModule } from './modules/address/address.module';
+import { VerifyPostModule } from './modules/verifyPost/verify-post.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -57,6 +58,7 @@ import { AddressModule } from './modules/address/address.module';
     UploadModule,
     PostBookmarksModule,
     AddressModule,
+    VerifyPostModule,
   ],
   controllers: [],
   providers: [],

@@ -258,6 +258,7 @@ export async function rejectPost(id: string, reason?: string): Promise<Post> {
   return data;
 }
 
+
 /**
  * Upload images to a post
  * Requires authentication token in headers
@@ -418,10 +419,42 @@ export async function deleteBikePost(id: string): Promise<void> {
  * Requires authentication token in headers
  */
 export async function createCarPost(payload: CreateCarPostDto): Promise<Post> {
-  const { data } = await api.post<Post>('/posts/car', payload, {
-    headers: getAuthHeaders(),
-  });
-  return data;
+  try {
+    console.log('Creating car post with payload:', payload);
+    console.log('API base URL:', process.env.DEFAULT_API_BASE_URL || 'http://localhost:8000');
+
+    // Check authentication first
+    const authHeaders = getAuthHeaders();
+    console.log('Auth headers:', authHeaders);
+
+    const { data } = await api.post<Post>('/posts/car', payload, {
+      headers: authHeaders,
+    });
+
+    console.log('Car post created successfully:', data);
+    return data;
+  } catch (error: any) {
+    console.error('Error creating car post:', error);
+    console.error('Error details:', {
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      message: error?.response?.data?.message,
+      data: error?.response?.data,
+    });
+
+    // Provide more specific error messages
+    if (error?.response?.status === 401) {
+      throw new Error('Authentication required. Please login first.');
+    } else if (error?.response?.status === 400) {
+      throw new Error(error?.response?.data?.message || 'Invalid request data.');
+    } else if (error?.response?.status === 403) {
+      throw new Error('You do not have permission to create posts.');
+    } else if (!error?.response) {
+      throw new Error('Network error. Please check your connection.');
+    }
+
+    throw error;
+  }
 }
 
 /**

@@ -148,5 +148,14 @@ export function adaptPostDto(dto: PostDtoRaw): PostUI {
     updatedAt: dto.updatedAt,
     submittedAt: toStringOrUndefined(dto.submittedAt),
     reviewedAt: toStringOrUndefined(dto.reviewedAt),
+    // Verification fields
+    isVerified: dto.isVerified,
+    verificationRequestedAt: toStringOrUndefined(dto.verificationRequestedAt),
+    verifiedAt: toStringOrUndefined(dto.verifiedAt),
+    verificationRejectedAt: toStringOrUndefined(dto.verificationRejectedAt),
+    verifiedBy: dto.verifiedBy ? {
+      id: dto.verifiedBy.id || 0,
+      fullName: dto.verifiedBy.fullName || 'Admin',
+    } : undefined,
   };
 }

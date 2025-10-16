@@ -195,6 +195,12 @@ export interface PostUI {
   updatedAt: string;
   submittedAt?: string;
   reviewedAt?: string;
+  // Verification fields
+  isVerified?: boolean;
+  verificationRequestedAt?: string;
+  verifiedAt?: string;
+  verificationRejectedAt?: string;
+  verifiedBy?: SellerLite;
 }
 
 // ===== Main Post Interface =====
@@ -224,6 +230,12 @@ export interface Post {
   images: FlexibleField[];
   createdAt: string;
   updatedAt: string;
+  // Verification fields
+  isVerified?: boolean;
+  verificationRequestedAt?: string;
+  verifiedAt?: string;
+  verificationRejectedAt?: string;
+  verifiedBy?: PostSeller;
 }
 
 // ===== Legacy/Alternative Interfaces =====
