@@ -16,6 +16,7 @@ import { PostStatus, PostType } from '../../../shared/enums/post.enum';
 import type { PostEvCarDetails } from '../../post-details/entities/post-ev-car-details.entity';
 import type { PostEvBikeDetails } from '../../post-details/entities/post-ev-bike-details.entity';
 import type { PostBatteryDetails } from '../../post-details/entities/post-battery-details.entity';
+import type { PostVerificationRequest } from '../../verifyPost/entities/post-verification-request.entity';
 import { PostImage } from './post-image.entity';
 
 @Entity({ name: 'posts' })
@@ -83,6 +84,23 @@ export class Post {
   @Column({ type: 'text', nullable: true })
   rejectReason: string | null = null;
 
+  // ---------------------------
+  // Verification fields
+  // ---------------------------
+
+  @Column({ type: 'boolean', default: false, name: 'is_verified' })
+  isVerified!: boolean;
+
+  @Column({ type: 'timestamp', nullable: true, name: 'verified_at' })
+  verifiedAt: Date | null = null;
+
+  @ManyToOne(() => require('./../../accounts/entities/account.entity').Account, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'verified_by' })
+  verifiedBy: Account | null = null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 
@@ -116,6 +134,13 @@ export class Post {
     { cascade: true },
   )
   batteryDetails?: PostBatteryDetails;
+
+  @OneToOne(
+    () => require('../../verifyPost/entities/post-verification-request.entity').PostVerificationRequest,
+    (verificationRequest: PostVerificationRequest) => verificationRequest.post,
+    { cascade: true },
+  )
+  verificationRequest?: PostVerificationRequest;
 
   // ---------------------------
   // One-to-many relations
