@@ -9,13 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { formatVnd, originText, getLocation } from '@/lib/utils/format';
-import { SellerInfo, Specifications } from './_components';
+import { Specifications } from './_components';
 import { HeartCallApi } from '../_components/HeartCallApi';
 import { RequestVerificationButton } from '../_components/RequestVerificationButton';
 import { PostHeader } from '@/app/(public)/posts/_components';
 import { Button } from '@/components/ui/button';
 import { getPostVerificationRequest } from '@/lib/api/verificationApi';
 import { useQuery } from '@tanstack/react-query';
+import { SellerInfo } from './_components/SellerInfo';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -128,7 +129,8 @@ export default function EvDetailPage({ params, searchParams }: Props) {
             <div className="flex-1">
               <p className="text-red-800 font-medium">Yêu cầu kiểm định đã bị từ chối</p>
               <p className="text-red-600 text-sm mt-1">
-                Bài đăng của bạn không đáp ứng tiêu chuẩn kiểm định. Vui lòng kiểm tra lại thông tin và gửi yêu cầu mới.
+                Bài đăng của bạn không đáp ứng tiêu chuẩn kiểm định. Vui lòng kiểm tra lại thông tin
+                và gửi yêu cầu mới.
               </p>
               {rejectionReason && (
                 <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded">
