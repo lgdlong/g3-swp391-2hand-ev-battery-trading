@@ -70,7 +70,15 @@ export class VerifyPostService {
         existingRequest.requestedAt = new Date();
         existingRequest.reviewedAt = null;
         existingRequest.rejectReason = null;
+
+
         const updatedRequest = await this.verificationRepo.save(existingRequest);
+
+        // Update post verificationRequestedAt field
+        post.verificationRequestedAt = new Date();
+        post.verificationRejectedAt = null;
+        await this.postsRepo.save(post);
+
         return VerificationMapper.toResponseDto(updatedRequest);
       } else {
         throw new BadRequestException('Verification request already exists for this post');
@@ -85,6 +93,10 @@ export class VerifyPostService {
     });
 
     const savedRequest = await this.verificationRepo.save(verificationRequest);
+
+    // Update post verificationRequestedAt field
+    post.verificationRequestedAt = new Date();
+    await this.postsRepo.save(post);
 
     return VerificationMapper.toResponseDto(savedRequest);
   }
@@ -118,6 +130,7 @@ export class VerifyPostService {
     // Update post verification status
     const post = verificationRequest.post;
     post.isVerified = true;
+    post.verificationRequestedAt = null;
     post.verifiedAt = new Date();
     post.verifiedBy = { id: adminId } as Account;
     await this.postsRepo.save(post);
@@ -150,6 +163,16 @@ export class VerifyPostService {
     verificationRequest.reviewedAt = new Date();
     verificationRequest.rejectReason = dto.rejectReason;
     await this.verificationRepo.save(verificationRequest);
+
+    // Update post verification status
+    const post = await this.postsRepo.findOne({
+      where: { id: postId },
+    });
+    if (post) {
+      post.verificationRequestedAt = null;
+      post.verificationRejectedAt = new Date();
+      await this.postsRepo.save(post);
+    }
 
     return VerificationMapper.toResponseDto(verificationRequest);
   }

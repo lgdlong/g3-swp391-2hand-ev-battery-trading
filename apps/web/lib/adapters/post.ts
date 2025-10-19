@@ -176,9 +176,9 @@ export function adaptPostDto(dto: PostDtoRaw): PostUI {
     reviewedAt: toStringOrUndefined(dto.reviewedAt),
     // Verification fields
     isVerified: dto.isVerified,
-    verificationRequestedAt: toStringOrUndefined(dto.verificationRequestedAt),
-    verifiedAt: toStringOrUndefined(dto.verifiedAt),
-    verificationRejectedAt: toStringOrUndefined(dto.verificationRejectedAt),
+    verificationRequestedAt: dto.verificationRequestedAt ? new Date(dto.verificationRequestedAt).toISOString() : undefined,
+    verifiedAt: dto.verifiedAt ? new Date(dto.verifiedAt).toISOString() : undefined,
+    verificationRejectedAt: dto.verificationRejectedAt ? new Date(dto.verificationRejectedAt).toISOString() : undefined,
     verifiedBy: dto.verifiedBy ? {
       id: dto.verifiedBy.id || 0,
       fullName: dto.verifiedBy.fullName || 'Admin',

@@ -8,21 +8,13 @@ import type { Post } from '@/types/api/post';
 import { HeartCallApi } from './HeartCallApi';
 import { DEFAULT_IMAGE } from '@/constants/images';
 
+
 interface PostCardProps {
   item: Post;
   onTitleClick?: (title: string) => void;
 }
 
 export function PostCard({ item, onTitleClick }: PostCardProps) {
-  // Debug verification status
-  console.log('PostCard verification status:', {
-    id: item.id,
-    title: item.title,
-    isVerified: item.isVerified,
-    verificationRequestedAt: item.verificationRequestedAt,
-    verifiedAt: item.verifiedAt,
-    verifiedBy: item.verifiedBy,
-  });
 
   const location =
     [
@@ -33,6 +25,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
       .join(', ') ||
     displayValue(item.addressTextCached) ||
     'Không rõ';
+
 
   return (
     <Link
@@ -77,6 +70,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
               </div>
             )}
           </div>
+
 
           {/* Details */}
           <div className="p-6">

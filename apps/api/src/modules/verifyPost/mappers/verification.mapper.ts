@@ -42,7 +42,9 @@ export class VerificationMapper {
    */
   static mapVerificationStatusToDto(post: Post, dto: BasePostResponseDto): void {
     dto.isVerified = post.isVerified;
+    dto.verificationRequestedAt = post.verificationRequestedAt;
     dto.verifiedAt = post.verifiedAt;
+    dto.verificationRejectedAt = post.verificationRejectedAt;
     dto.verifiedBy = post.verifiedBy ? AccountMapper.toSafeDto(post.verifiedBy) : null;
   }
 }

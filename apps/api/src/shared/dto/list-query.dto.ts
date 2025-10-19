@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsOptional, IsPositive, IsString, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsPositive, IsString, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ListQueryDto {
@@ -20,6 +20,8 @@ export class ListQueryDto {
   @Type(() => Number)
   @IsInt()
   @IsPositive()
+  @Min(1)
+  @Max(1000)
   limit: number = 20;
 
   @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'ASC' })

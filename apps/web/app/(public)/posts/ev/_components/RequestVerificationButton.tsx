@@ -96,20 +96,31 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
     !post.isVerified &&
     !post.verificationRequestedAt;
 
+  const canRequestAgain =
+    post.status === 'PUBLISHED' &&
+    !post.isVerified &&
+    post.verificationRejectedAt &&
+    !post.verificationRequestedAt;
+
   // Debug log to verify fields are now properly mapped
   console.log('RequestVerificationButton: Post verification status', {
+    postId: post.id,
     status: post.status,
     isVerified: post.isVerified,
     verificationRequestedAt: post.verificationRequestedAt,
-    canShow: canRequestVerification,
+    verificationRejectedAt: post.verificationRejectedAt,
+    canRequestVerification,
+    canRequestAgain,
+    isOwner,
+    isLoggedIn,
   });
 
-  if (!canRequestVerification) {
+  if (!canRequestVerification && !canRequestAgain) {
     return null;
   }
 
   return (
-    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+    <div className={`mt-4 p-4 border rounded-lg ${canRequestAgain ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isRequested ? (
@@ -122,8 +133,8 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
           ) : (
             <>
               <Shield className="h-5 w-5 text-blue-600" />
-              <span className="text-blue-700 font-medium">
-                Yêu cầu kiểm định xe/pin
+              <span className={`font-medium ${canRequestAgain ? 'text-orange-700' : 'text-blue-700'}`}>
+                {canRequestAgain ? 'Gửi lại yêu cầu kiểm định' : 'Yêu cầu kiểm định xe/pin'}
               </span>
             </>
           )}
@@ -133,7 +144,7 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
           <Button
             onClick={handleRequestVerification}
             disabled={requestVerificationMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className={`text-white ${canRequestAgain ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'}`}
             size="sm"
           >
             {requestVerificationMutation.isPending ? (
@@ -148,9 +159,11 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
         )}
       </div>
 
-      <p className="text-sm text-gray-600 mt-2">
+      <p className={`text-sm mt-2 ${canRequestAgain ? 'text-orange-600' : 'text-gray-600'}`}>
         {isRequested
           ? 'Yêu cầu kiểm định của bạn đã được gửi đến admin. Chúng tôi sẽ xem xét và phản hồi trong thời gian sớm nhất.'
+          : canRequestAgain
+          ? 'Yêu cầu kiểm định trước đó đã bị từ chối. Bạn có thể gửi lại yêu cầu sau khi khắc phục các vấn đề được chỉ ra.'
           : 'Yêu cầu kiểm định để nâng uy tín hàng hóa của bạn.'
         }
       </p>

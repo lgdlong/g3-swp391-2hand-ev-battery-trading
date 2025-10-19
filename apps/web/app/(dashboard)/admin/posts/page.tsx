@@ -23,6 +23,9 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 
 export default function AdminPostsPage() {
   const [currentFilter, setCurrentFilter] = useState<AdminPostFilter>('PENDING_REVIEW');
+
+  // Debug authentication
+  console.log('AdminPostsPage - currentFilter:', currentFilter);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -49,10 +52,18 @@ export default function AdminPostsPage() {
       const status = ['VERIFICATION_PENDING', 'VERIFICATION_REJECTED'].includes(currentFilter)
         ? undefined
         : currentFilter;
+      const limit = ['VERIFICATION_PENDING', 'VERIFICATION_REJECTED'].includes(currentFilter) ? 1000 : pageSize;
+      console.log('Admin page - fetching posts with:', {
+        status,
+        page: currentPage,
+        limit,
+        order: 'DESC',
+        sort: 'createdAt',
+      });
       return getAdminPosts({
         status: status as PostStatus,
         page: currentPage,
-        limit: pageSize,
+        limit,
         order: 'DESC',
         sort: 'createdAt',
       });
@@ -60,6 +71,11 @@ export default function AdminPostsPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
+
+  // Debug logging
+  console.log('Admin page - postsData:', postsData);
+  console.log('Admin page - isLoading:', isLoading);
+  console.log('Admin page - error:', error);
 
   // Verify post mutation
   const verifyMutation = useMutation({
@@ -167,6 +183,9 @@ export default function AdminPostsPage() {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
+  // Debug verification requests
+  console.log('Admin page - verificationRequestsData:', verificationRequestsData);
+
   // Query for rejected verification requests
   const { data: rejectedVerificationRequestsData } = useQuery({
     queryKey: ['admin-rejected-verification-requests'],
@@ -188,20 +207,62 @@ export default function AdminPostsPage() {
 
   // Filter posts for verification pending and rejected
   const filteredPosts = useMemo(() => {
-    if (!postsData?.data) return [];
+    console.log('Filtering posts - postsData:', postsData);
+    console.log('Filtering posts - currentFilter:', currentFilter);
+    console.log('Filtering posts - verificationRequestsData:', verificationRequestsData);
+    console.log('Filtering posts - rejectedVerificationRequestsData:', rejectedVerificationRequestsData);
+
+    if (!postsData?.data) {
+      console.log('No postsData.data, returning empty array');
+      return [];
+    }
 
     if (currentFilter === 'VERIFICATION_PENDING') {
       // Get post IDs from pending verification requests
       const pendingPostIds = verificationRequestsData?.map(req => req.postId) || [];
-      return postsData.data.filter(post => pendingPostIds.includes(post.id));
+      console.log('VERIFICATION_PENDING - pendingPostIds:', pendingPostIds);
+      console.log('VERIFICATION_PENDING - postsData.data:', postsData.data);
+      console.log('VERIFICATION_PENDING - post.id types:', postsData.data.map(post => ({ id: post.id, type: typeof post.id })));
+      console.log('VERIFICATION_PENDING - pendingPostIds types:', pendingPostIds.map(id => ({ id, type: typeof id })));
+      console.log('VERIFICATION_PENDING - detailed comparison:');
+      postsData.data.forEach((post, index) => {
+        console.log(`Post ${index}:`, {
+          id: post.id,
+          idType: typeof post.id,
+          idValue: post.id,
+          pendingIds: pendingPostIds,
+          includesDirect: pendingPostIds.includes(post.id),
+          includesString: pendingPostIds.includes(String(post.id)),
+          includesNumber: pendingPostIds.includes(Number(post.id)),
+          stringId: String(post.id),
+          numberId: Number(post.id)
+        });
+      });
+      // Handle both string and number types
+      const filtered = postsData.data.filter(post =>
+        pendingPostIds.includes(post.id) ||
+        pendingPostIds.includes(String(post.id)) ||
+        pendingPostIds.includes(Number(post.id))
+      );
+      console.log('VERIFICATION_PENDING - filtered posts:', filtered);
+      return filtered;
     }
 
     if (currentFilter === 'VERIFICATION_REJECTED') {
       // Get post IDs from rejected verification requests
       const rejectedPostIds = rejectedVerificationRequestsData?.map(req => req.postId) || [];
-      return postsData.data.filter(post => rejectedPostIds.includes(post.id));
+      console.log('VERIFICATION_REJECTED - rejectedPostIds:', rejectedPostIds);
+      // Handle both string and number types
+      const filtered = postsData.data.filter(post =>
+        rejectedPostIds.includes(post.id) ||
+        rejectedPostIds.includes(String(post.id)) ||
+        rejectedPostIds.includes(Number(post.id))
+      );
+      console.log('VERIFICATION_REJECTED - filtered posts:', filtered);
+      return filtered;
     }
 
+    console.log('Regular filter - returning all posts:', postsData.data);
     return postsData.data;
   }, [postsData?.data, currentFilter, verificationRequestsData, rejectedVerificationRequestsData]);
 

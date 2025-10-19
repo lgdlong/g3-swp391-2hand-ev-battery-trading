@@ -92,14 +92,12 @@ export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsRes
   if (query.postType) params.append('postType', query.postType);
 
   try {
-    // ✅ Backend bây giờ return PaginatedBasePostResponseDto trực tiếp
     const { data } = await api.get<PostsResponse>(`/posts/admin/all?${params.toString()}`, {
       headers: getAuthHeaders(),
     });
 
     return data;
   } catch (error) {
-    console.error('Error fetching admin posts:', error);
     throw error;
   }
 }
@@ -274,7 +272,6 @@ export async function rejectPost(id: string, reason: string): Promise<Post> {
  * @param files - Array of File objects to upload (max 10 files)
  */
 export async function uploadPostImages(postId: string, files: File[]): Promise<FlexibleField> {
-  console.log('Uploading images for post:', postId, 'Files count:', files.length);
 
   // Validate files
   if (!files || files.length === 0) {
@@ -298,15 +295,9 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
 
   // Add each file to the FormData
   files.forEach((file, index) => {
-    console.log(`Adding file ${index}:`, file.name, file.type, file.size);
     formData.append('files', file, file.name); // Use 'files' as per Swagger doc
   });
 
-  // Debug FormData contents
-  console.log('FormData entries:');
-  for (const [key, value] of formData.entries()) {
-    console.log(key, value);
-  }
 
   try {
     // Try with native fetch first (sometimes works better with FormData)
@@ -327,24 +318,20 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
     }
 
     const data = await response.json();
-    console.log('Upload successful with fetch:', data);
     return data;
   } catch (error: unknown) {
     console.error('Upload error details:', error);
 
     // Fallback to axios if fetch fails
     try {
-      console.log('Trying axios fallback...');
       const { data } = await api.post(`/posts/${postId}/images`, formData, {
         headers: getAuthHeaders(),
       });
-      console.log('Upload successful with axios:', data);
       return data;
     } catch (axiosError: unknown) {
       console.error('Axios fallback also failed:', axiosError);
 
       // Try different field names if both methods fail
-      console.log('Trying different field names...');
       const altFormData = new FormData();
       files.forEach((file) => {
         altFormData.append('file', file, file.name); // Try 'file' instead of 'files'
@@ -354,7 +341,6 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
         const { data } = await api.post(`/posts/${postId}/images`, altFormData, {
           headers: getAuthHeaders(),
         });
-        console.log('Upload successful with alternative field name:', data);
         return data;
       } catch (finalError: unknown) {
         console.error('All upload attempts failed:', finalError);
@@ -461,18 +447,13 @@ export async function createBatteryPost(payload: CreateBatteryPostDto): Promise<
  */
 export async function createCarPost(payload: CreateCarPostDto): Promise<Post> {
   try {
-    console.log('Creating car post with payload:', payload);
-    console.log('API base URL:', process.env.DEFAULT_API_BASE_URL || 'http://localhost:8000');
-
     // Check authentication first
     const authHeaders = getAuthHeaders();
-    console.log('Auth headers:', authHeaders);
 
     const { data } = await api.post<Post>('/posts/car', payload, {
       headers: authHeaders,
     });
 
-    console.log('Car post created successfully:', data);
     return data;
   } catch (error: any) {
     console.error('Error creating car post:', error);

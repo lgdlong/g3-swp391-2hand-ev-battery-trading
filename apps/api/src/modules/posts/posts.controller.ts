@@ -199,12 +199,12 @@ export class PostsController {
   @Get('admin/all')
   @ApiOperation({ summary: 'Lấy tất cả bài đăng cho admin (cần quyền admin)' })
   @ApiOkResponse({
-    description: 'Danh sách tất cả bài đăng với pagination',
+    description: 'Danh sách tất cả bài đăng cho admin với pagination',
     type: PaginatedBasePostResponseDto,
   })
   async getAllPostsForAdmin(
     @Query() query: AdminListPostsQueryDto,
-  ): Promise<BasePostResponseDto[]> {
+  ): Promise<{ data: BasePostResponseDto[]; total: number; page: number; limit: number; totalPages: number }> {
     return this.postsService.getAllPostsForAdmin(query);
   }
 

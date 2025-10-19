@@ -8,9 +8,7 @@ import { MapPin, Shield, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
-import { formatVnd, originText, getLocation } from '@/lib/utils/format';
 import { Specifications } from './_components';
-import { HeartCallApi } from '../_components/HeartCallApi';
 import { RequestVerificationButton } from '../_components/RequestVerificationButton';
 import { PostHeader } from '@/app/(public)/posts/_components';
 import { Button } from '@/components/ui/button';
@@ -46,19 +44,14 @@ export default function EvDetailPage({ params, searchParams }: Props) {
     retry: false, // Don't retry if not found
   });
 
-  // Check if verification was rejected (user had requested but now verificationRequestedAt is null)
+  // Check if verification was rejected
   useEffect(() => {
-    if (post && !post.isVerified && !post.verificationRequestedAt) {
-      // Check if user had previously requested verification (stored in localStorage)
-      const verificationRequested = localStorage.getItem(`verification_requested_${post.id}`);
-      if (verificationRequested) {
-        setShowRejectionAlert(true);
-        // Get rejection reason from verification request
-        if (verificationRequest?.rejectReason) {
-          setRejectionReason(verificationRequest.rejectReason);
-        }
-        // Clear the flag after showing alert
-        localStorage.removeItem(`verification_requested_${post.id}`);
+    if (post && !post.isVerified && post.verificationRejectedAt && !post.verificationRequestedAt) {
+      // Show rejection alert if post was rejected
+      setShowRejectionAlert(true);
+      // Get rejection reason from verification request
+      if (verificationRequest?.rejectReason) {
+        setRejectionReason(verificationRequest.rejectReason);
       }
     }
   }, [post, verificationRequest]);
@@ -152,7 +145,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-6">
-            <Card className="overflow-hidden border-none shadow-none">
+            <Card key={`post-image-${post.id}`} className="overflow-hidden border-none shadow-none">
               <CardContent className="p-0">
                 <div className="relative h-80 w-full bg-gray-50">
                   <Image
@@ -203,7 +196,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-none">
+            <Card key={`seller-info-${post.id}`} className="border-none shadow-none">
               <CardContent className="p-6">
                 {sellerLoading ? (
                   <div className="animate-pulse space-y-3">
@@ -219,40 +212,12 @@ export default function EvDetailPage({ params, searchParams }: Props) {
           </div>
 
           <div className="lg:col-span-2 space-y-6">
-            <Card className="border-none shadow-none">
-              <CardContent className="py-2 px-6">
-                <div className="flex flex-col items-start justify-between mb-4 gap-4">
-                  <div className="flex items-center justify-between w-full">
-                    <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
-                    <HeartCallApi postId={Number(post.id)} initialBookmark={null} />
-                  </div>
-                  <div className="text-2xl font-bold text-[#048C73] mb-2">
-                    {formatVnd(post.priceVnd)}
-                  </div>
-                </div>
-                <div className="mb-6 flex items-center gap-2">
-                  {details?.origin && <Badge>{originText(details.origin)}</Badge>}
-                  {post.isVerified && (
-                    <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-md flex items-center gap-1">
-                      <Shield className="h-3 w-3" />
-                      Đã kiểm định
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{getLocation(post)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
             <PostHeader post={post} details={details} />
 
             <Specifications post={post} />
 
             {post.description && (
-              <Card className="border-none shadow-none">
+              <Card key={`post-description-${post.id}`} className="border-none shadow-none">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">Mô tả chi tiết</h2>
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
