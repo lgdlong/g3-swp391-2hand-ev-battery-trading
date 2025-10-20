@@ -15,6 +15,7 @@ import { AddressModule } from './modules/address/address.module';
 import { PostReviewModule } from './modules/post-review/post-review.module';
 import { PayosModule } from './modules/payos/payos.module';
 import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
+import { SettingsModule } from './modules/settings/settings.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -65,6 +66,7 @@ import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
     PostReviewModule,
     PayosModule,
     PostRatingModule,
+    SettingsModule,
   ],
   controllers: [],
   providers: [],
