@@ -130,7 +130,7 @@ export class PostRatingService {
     if (rating.customer.id !== userId)
       throw new ForbiddenException('You cannot delete others rating');
 
-    await this.postRatingsRepository.delete(rating.id);
+    await this.postRatingsRepository.softDelete(rating.id);
     return { message: 'Deleted successfully by id #' + id };
   }
 
