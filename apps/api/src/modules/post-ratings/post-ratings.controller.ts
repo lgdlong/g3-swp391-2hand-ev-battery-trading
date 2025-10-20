@@ -1,8 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { PostRatingService } from './post-ratings.service';
 import { CreatePostRatingDto } from './dto/create-post-rating.dto';
-import { UpdatePostRatingDto } from './dto/update-post-rating.dto';
 import { PostRatingResponseDto, PostRatingListResponseDto } from './dto/post-rating-response.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 import { CurrentUser } from 'src/core/decorators/current-user.decorator';
@@ -11,11 +27,15 @@ import type { ReqUser } from 'src/core/decorators/current-user.decorator';
 @ApiTags('Post Ratings')
 @Controller('rating')
 export class PostRatingController {
-  constructor(private readonly postRatingService: PostRatingService) { }
+  constructor(private readonly postRatingService: PostRatingService) {}
 
   @ApiOperation({ summary: 'Create a rating for a post' })
   @ApiParam({ name: 'id', description: 'Post ID', example: '123' })
-  @ApiResponse({ status: 201, description: 'Rating created successfully', type: PostRatingResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Rating created successfully',
+    type: PostRatingResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Bad request - Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
   @ApiResponse({ status: 404, description: 'Post not found' })
@@ -35,8 +55,18 @@ export class PostRatingController {
   @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page', example: 20 })
   @ApiQuery({ name: 'rating', required: false, description: 'Filter by rating (0-5)', example: 5 })
-  @ApiQuery({ name: 'sort', required: false, description: 'Sort order', enum: ['newest', 'rating_desc', 'rating_asc'], example: 'newest' })
-  @ApiResponse({ status: 200, description: 'Ratings retrieved successfully', type: PostRatingListResponseDto })
+  @ApiQuery({
+    name: 'sort',
+    required: false,
+    description: 'Sort order',
+    enum: ['newest', 'rating_desc', 'rating_asc'],
+    example: 'newest',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Ratings retrieved successfully',
+    type: PostRatingListResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Post not found' })
   @Get('/post/:id')
   findAll(
@@ -56,15 +86,17 @@ export class PostRatingController {
 
   @ApiOperation({ summary: 'Get a specific rating by ID' })
   @ApiParam({ name: 'id', description: 'Rating ID', example: '123' })
-  @ApiResponse({ status: 200, description: 'Rating retrieved successfully', type: PostRatingResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Rating retrieved successfully',
+    type: PostRatingResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
   @ApiResponse({ status: 404, description: 'Rating not found' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findOne(
-    @Param('id') id: string,
-    @CurrentUser() user: ReqUser) {
+  async findOne(@Param('id') id: string, @CurrentUser() user: ReqUser) {
     const currentUserId = user.sub;
     const review = await this.postRatingService.findOne(id, currentUserId);
     if (!review) throw new NotFoundException('Rating not found');
@@ -89,14 +121,11 @@ export class PostRatingController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  removeById(
-    @Param('id') id: string,
-    @CurrentUser() user: ReqUser
-) {
+  removeById(@Param('id') id: string, @CurrentUser() user: ReqUser) {
     return this.postRatingService.removeById(id, user.sub);
   }
 
-  @ApiOperation({ summary: 'Delete user\'s rating for a specific post' })
+  @ApiOperation({ summary: "Delete user's rating for a specific post" })
   @ApiParam({ name: 'id', description: 'Post ID', example: '123' })
   @ApiResponse({ status: 200, description: 'Rating deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
@@ -104,10 +133,7 @@ export class PostRatingController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete('/post/:id')
-  removeByPostId(
-    @Param('id') id: string,
-    @CurrentUser() user: ReqUser
-) {
+  removeByPostId(@Param('id') id: string, @CurrentUser() user: ReqUser) {
     return this.postRatingService.removeByPostId(id, user.sub);
   }
 }

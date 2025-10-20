@@ -19,9 +19,7 @@ export class PostRatingMapper {
       rating: entity.rating,
       content: entity.content ?? null,
       createdAt: entity.createdAt,
-      customer: entity.customer
-        ? AccountMapper.toSafeDto(entity.customer)
-        : null,
+      customer: entity.customer ? AccountMapper.toSafeDto(entity.customer) : null,
     };
   }
 

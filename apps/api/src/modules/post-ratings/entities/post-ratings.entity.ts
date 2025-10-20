@@ -9,7 +9,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { IsIn, IsInt, IsString, Max, Min } from 'class-validator';
+import { Max, Min } from 'class-validator';
 
 @Entity('post_ratings')
 export class PostRatings {
