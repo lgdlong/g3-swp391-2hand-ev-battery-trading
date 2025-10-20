@@ -13,7 +13,9 @@ import { UploadModule } from './modules/upload/upload.module';
 import { PostBookmarksModule } from './modules/post-bookmarks/post-bookmarks.module';
 import { AddressModule } from './modules/address/address.module';
 import { PostReviewModule } from './modules/post-review/post-review.module';
+import { PayosModule } from './modules/payos/payos.module';
 import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
+import { SettingsModule } from './modules/settings/settings.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -62,7 +64,9 @@ import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
     PostBookmarksModule,
     AddressModule,
     PostReviewModule,
+    PayosModule,
     PostRatingModule,
+    SettingsModule,
   ],
   controllers: [],
   providers: [],
