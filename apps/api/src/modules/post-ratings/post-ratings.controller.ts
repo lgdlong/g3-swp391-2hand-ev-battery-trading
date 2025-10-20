@@ -57,7 +57,10 @@ export class PostRatingController {
   @ApiOperation({ summary: 'Get a specific rating by ID' })
   @ApiParam({ name: 'id', description: 'Rating ID', example: '123' })
   @ApiResponse({ status: 200, description: 'Rating retrieved successfully', type: PostRatingResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
   @ApiResponse({ status: 404, description: 'Rating not found' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(
     @Param('id') id: string,
