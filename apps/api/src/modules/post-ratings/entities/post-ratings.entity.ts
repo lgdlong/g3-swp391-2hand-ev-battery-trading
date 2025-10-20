@@ -1,6 +1,6 @@
 import { Post } from 'src/modules/posts/entities/post.entity';
 import { Account } from 'src/modules/accounts/entities/account.entity';
-import { Column, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { IsIn, IsInt, IsString, Max, Min } from 'class-validator';
 
 
@@ -30,7 +30,7 @@ export class PostRatings {
   content!: string | null;
 
 
-  @Column({ name: 'created_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamp', nullable: true })
