@@ -1,8 +1,15 @@
 import { Post } from 'src/modules/posts/entities/post.entity';
 import { Account } from 'src/modules/accounts/entities/account.entity';
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { IsIn, IsInt, IsString, Max, Min } from 'class-validator';
-
 
 @Entity('post_ratings')
 export class PostRatings {
@@ -16,10 +23,11 @@ export class PostRatings {
   post!: Post;
 
   @ManyToOne(() => Account, (account) => account.id, {
-    onDelete: 'CASCADE',
+    onDelete: 'SET NULL', // Anonymize rating on user deletion
+    nullable: true,
   })
   @JoinColumn({ name: 'customer_id' })
-  customer!: Account;
+  customer!: Account | null;
 
   @Min(0)
   @Max(5)
@@ -29,11 +37,9 @@ export class PostRatings {
   @Column({ name: 'content', type: 'text', nullable: true })
   content!: string | null;
 
-
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
-
 }
