@@ -14,6 +14,7 @@ import { PostBookmarksModule } from './modules/post-bookmarks/post-bookmarks.mod
 import { AddressModule } from './modules/address/address.module';
 import { PostReviewModule } from './modules/post-review/post-review.module';
 import { PayosModule } from './modules/payos/payos.module';
+import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -63,6 +64,7 @@ import { PayosModule } from './modules/payos/payos.module';
     AddressModule,
     PostReviewModule,
     PayosModule,
+    PostRatingModule,
   ],
   controllers: [],
   providers: [],

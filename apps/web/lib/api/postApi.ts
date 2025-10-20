@@ -183,11 +183,23 @@ export async function getPostDetail(id: string): Promise<Post> {
 }
 
 /**
- * Update a post by ID
+ * Update a post by ID (Admin only)
  * Requires authentication token in headers
  */
 export async function updatePost(id: string, payload: UpdatePostDto): Promise<Post> {
   const { data } = await api.patch<Post>(`/posts/${id}`, payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Update user's own post by ID
+ * Only allows updating posts in DRAFT or REJECTED status
+ * Requires authentication token in headers
+ */
+export async function updateMyPost(id: string, payload: UpdatePostDto): Promise<Post> {
+  const { data } = await api.patch<Post>(`/posts/${id}/me`, payload, {
     headers: getAuthHeaders(),
   });
   return data;
@@ -506,6 +518,20 @@ export async function updateCarPost(id: string, payload: UpdatePostDto): Promise
 // TODO: Unused?
 export async function deleteCarPost(id: string): Promise<void> {
   await api.delete(`/posts/car/${id}`, {
+    headers: getAuthHeaders(),
+  });
+}
+
+/**
+ * Delete an image by publicId (using upload controller)
+ * Note: This removes the image from Cloudinary storage.
+ * To remove the image reference from a post, you may also need to call the backend.
+ * @param publicId - Cloudinary public ID of the image to delete (e.g., 'uploads/abc_xyz')
+ */
+export async function deleteImage(publicId: string): Promise<void> {
+  // Encode publicId to handle special characters in URL
+  const encodedPublicId = encodeURIComponent(publicId);
+  await api.delete(`/upload/image/${encodedPublicId}`, {
     headers: getAuthHeaders(),
   });
 }

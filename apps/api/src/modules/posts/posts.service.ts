@@ -118,6 +118,7 @@ export class PostsService {
         addressTextCached: dto.addressTextCached ?? null,
         priceVnd: dto.priceVnd,
         isNegotiable: dto.isNegotiable ?? false,
+        status: dto.status ?? PostStatus.PENDING_REVIEW,
       });
       const savedPost = await trx.save(Post, post);
 
@@ -494,5 +495,124 @@ export class PostsService {
     await this.postsRepo.softDelete(id);
 
     return deletedAt;
+  }
+
+  /**
+   * Update a post by user (only allows updating their own posts)
+   * Only allows updating posts in DRAFT or REJECTED status
+   */
+  async updateMyPostById(
+    id: string,
+    userId: number,
+    updateDto: Partial<CreateAnyPostDto>,
+  ): Promise<BasePostResponseDto> {
+    const post = await this.postsRepo.findOne({
+      where: { id, seller: { id: userId } },
+      relations: this.POST_FULL_RELATIONS,
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found or you do not have permission to update it');
+    }
+
+    // Only allow updating posts in DRAFT or REJECTED status
+    if (post.status !== PostStatus.DRAFT && post.status !== PostStatus.REJECTED) {
+      throw new BadRequestException(
+        `Cannot update post with status ${post.status}. Only DRAFT or REJECTED posts can be updated.`,
+      );
+    }
+
+    return this.postsRepo.manager.transaction(async (trx) => {
+      // Update basic post fields
+      const updateFields: Partial<Post> = {};
+
+      if (updateDto.title !== undefined) updateFields.title = updateDto.title;
+      if (updateDto.description !== undefined) updateFields.description = updateDto.description;
+      if (updateDto.priceVnd !== undefined) updateFields.priceVnd = updateDto.priceVnd;
+      if (updateDto.isNegotiable !== undefined) updateFields.isNegotiable = updateDto.isNegotiable;
+
+      // Handle status updates
+      if (updateDto.status !== undefined) {
+        updateFields.status = updateDto.status;
+        // Clear reviewedAt when changing to PENDING_REVIEW
+        if (updateDto.status === PostStatus.PENDING_REVIEW) {
+          updateFields.reviewedAt = null;
+        }
+      }
+
+      // Handle address updates
+      if (updateDto.wardCode) {
+        updateFields.wardCode = updateDto.wardCode;
+
+        // Fetch and cache address information
+        try {
+          const fullAddress = await this.addressService.getFullAddressByWardCode(
+            updateDto.wardCode,
+          );
+          updateFields.provinceNameCached = fullAddress.data.province.name;
+          updateFields.districtNameCached = fullAddress.data.district.name;
+          updateFields.wardNameCached = fullAddress.data.ward.name;
+
+          // If addressTextCached is not set, build it from the fetched address components
+          if (!updateFields.addressTextCached) {
+            updateFields.addressTextCached = buildAddressText(
+              fullAddress.data.ward.name,
+              fullAddress.data.district.name,
+              fullAddress.data.province.name,
+            );
+          }
+        } catch {
+          // If address service fails, use provided cached values
+          if (updateDto.provinceNameCached)
+            updateFields.provinceNameCached = updateDto.provinceNameCached;
+          if (updateDto.districtNameCached)
+            updateFields.districtNameCached = updateDto.districtNameCached;
+          if (updateDto.wardNameCached) updateFields.wardNameCached = updateDto.wardNameCached;
+        }
+      }
+
+      if (updateDto.addressTextCached !== undefined)
+        updateFields.addressTextCached = updateDto.addressTextCached;
+
+      // If status is REJECTED and no new status is provided, change it back to DRAFT when updating
+      if (post.status === PostStatus.REJECTED && updateDto.status === undefined) {
+        updateFields.status = PostStatus.DRAFT;
+        updateFields.reviewedAt = null;
+      }
+
+      // Update the post
+      if (Object.keys(updateFields).length > 0) {
+        await trx.update(Post, { id }, updateFields);
+      }
+
+      // Update post-specific details based on postType
+      switch (post.postType) {
+        case PostType.EV_CAR:
+          if ('carDetails' in updateDto && updateDto.carDetails) {
+            await this.carDetailsService.updateWithTrx(trx, id, updateDto.carDetails);
+          }
+          break;
+
+        case PostType.EV_BIKE:
+          if ('bikeDetails' in updateDto && updateDto.bikeDetails) {
+            await this.bikeDetailsService.updateWithTrx(trx, id, updateDto.bikeDetails);
+          }
+          break;
+
+        case PostType.BATTERY:
+          if ('batteryDetails' in updateDto && updateDto.batteryDetails) {
+            await this.batteryDetailsService.updateWithTrx(trx, id, updateDto.batteryDetails);
+          }
+          break;
+      }
+
+      // Fetch and return the updated post
+      const updatedPost = await trx.findOne(Post, {
+        where: { id },
+        relations: this.POST_FULL_RELATIONS,
+      });
+
+      return PostMapper.toBasePostResponseDto(updatedPost!);
+    });
   }
 }

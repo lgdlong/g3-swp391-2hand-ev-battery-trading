@@ -49,8 +49,8 @@ export function useCreatePost() {
         newData.seats = '2';
       }
 
-      // Clear model when brand changes to "other"
-      if (field === 'brandId' && value === 'other') {
+      // Clear model when brand changes to "other" or when brand is cleared
+      if (field === 'brandId' && (value === 'other' || value === '')) {
         newData.modelId = '';
       }
 
@@ -392,31 +392,37 @@ export function useCreatePost() {
 
   // Load models when brand changes
   useEffect(() => {
-    if (postType === 'ev' && formData.brandId && brands.length > 0) {
-      // Find the selected brand to get its info
-      const selectedBrand = brands.find((brand) => brand.id.toString() === formData.brandId);
-      if (selectedBrand) {
-        // Reset model ID when brand changes
-        setFormData((prev) => ({ ...prev, modelId: '' }));
+    if (postType === 'ev') {
+      if (formData.brandId && brands.length > 0) {
+        // Find the selected brand to get its info
+        const selectedBrand = brands.find((brand) => brand.id.toString() === formData.brandId);
+        if (selectedBrand) {
+          // Reset model ID when brand changes
+          setFormData((prev) => ({ ...prev, modelId: '' }));
 
-        setLoadingModels(true);
-        const loadModels = async () => {
-          try {
-            let modelsData: Model[] = [];
-            if (formData.vehicleType === 'xe_hoi') {
-              modelsData = await getCarModels(selectedBrand.id);
-            } else if (formData.vehicleType === 'xe_may') {
-              modelsData = await getBikeModels(selectedBrand.id);
+          setLoadingModels(true);
+          const loadModels = async () => {
+            try {
+              let modelsData: Model[] = [];
+              if (formData.vehicleType === 'xe_hoi') {
+                modelsData = await getCarModels(selectedBrand.id);
+              } else if (formData.vehicleType === 'xe_may') {
+                modelsData = await getBikeModels(selectedBrand.id);
+              }
+              setModels(modelsData);
+            } catch (error) {
+              console.error('Error loading models:', error);
+              setModels([]);
+            } finally {
+              setLoadingModels(false);
             }
-            setModels(modelsData);
-          } catch (error) {
-            console.error('Error loading models:', error);
-            setModels([]);
-          } finally {
-            setLoadingModels(false);
-          }
-        };
-        loadModels();
+          };
+          loadModels();
+        }
+      } else if (!formData.brandId || formData.brandId === '') {
+        // Clear models when brand is cleared or empty
+        setModels([]);
+        setFormData((prev) => ({ ...prev, modelId: '' }));
       }
     }
   }, [postType, formData.brandId, formData.vehicleType, brands]);
