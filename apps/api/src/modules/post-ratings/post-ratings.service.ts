@@ -138,7 +138,7 @@ export class PostRatingService {
   // Delete a rating by post id
   async removeByPostId(postId: string, userId: number) {
     const rating = await this.postRatingsRepository.findOne({
-      where: { post: { id: postId } },
+      where: { post: { id: postId }, customer: { id: userId } },
       relations: ['customer'],
     });
     if (!rating) throw new NotFoundException('Rating not found');
