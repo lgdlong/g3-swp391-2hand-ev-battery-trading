@@ -76,6 +76,23 @@ export class FeeTierService {
     return { message: 'Fee tier deleted successfully' };
   }
 
+  /**
+   * Validates that the given fee tier price range does not overlap with any existing fee tiers.
+   *
+   * This method checks for overlapping price ranges in the database. If an overlap is found,
+   * it throws a BadRequestException. Optionally, an existing tier can be excluded from the check
+   * (useful when updating an existing tier).
+   *
+   * Overlap logic:
+   * - If maxPrice is provided, checks for any tier where min_price <= maxPrice and
+   *   (max_price >= minPrice or max_price is null).
+   * - If maxPrice is null, checks for any tier where max_price is null or max_price >= minPrice.
+   *
+   * @param {number} minPrice - The minimum price of the new or updated fee tier.
+   * @param {number | null} maxPrice - The maximum price of the new or updated fee tier, or null for open-ended.
+   * @param {number} [excludeId] - Optional ID of a fee tier to exclude from the check (e.g., when updating).
+   * @throws {BadRequestException} If the price range overlaps with an existing tier.
+   */
   private async validateTierRange(minPrice: number, maxPrice: number | null, excludeId?: number) {
     const query = this.feeTierRepository.createQueryBuilder('tier');
 
