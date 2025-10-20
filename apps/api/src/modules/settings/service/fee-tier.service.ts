@@ -14,6 +14,13 @@ export class FeeTierService {
   ) {}
 
   async create(createFeeTierDto: CreateFeeTierDto) {
+    if (
+      createFeeTierDto.maxPrice !== null &&
+      createFeeTierDto.maxPrice !== undefined &&
+      createFeeTierDto.minPrice > createFeeTierDto.maxPrice
+    ) {
+      throw new BadRequestException('maxPrice must be greater than or equal to minPrice');
+    }
     // Check for overlapping tiers
     await this.validateTierRange(createFeeTierDto.minPrice, createFeeTierDto.maxPrice ?? null);
 
