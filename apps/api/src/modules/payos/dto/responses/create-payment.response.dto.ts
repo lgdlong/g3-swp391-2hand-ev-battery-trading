@@ -9,7 +9,7 @@ export class PayosPaymentLinkResponse {
 
   @ApiProperty({
     description: 'Account number for payment',
-    example: 'LOCCASS000334316',
+    example: 'LOCCASS.....4316',
   })
   accountNumber!: string;
 
@@ -65,7 +65,7 @@ export class PayosPaymentLinkResponse {
   @ApiProperty({
     description: 'QR code for payment (VietQR format)',
     example:
-      '00020101021238600010A000000727013000069704160116LOCCASS0003343160208QRIBFTTA5303704540420005802VN62150811CSZADLVCUB963046739',
+      '00020101021238600010A000000727013....69704160116LOCCASS0003343160208QRIBFTTA5303704540420005802VN62150811CSZADLVCUB963046739',
   })
   qrCode!: string;
 }
