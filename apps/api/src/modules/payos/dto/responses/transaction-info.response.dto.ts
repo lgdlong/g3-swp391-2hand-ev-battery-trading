@@ -40,7 +40,7 @@ export class PayosTransactionInfo {
   @ApiProperty({
     description: 'Transaction description',
     example:
-      'MBVCB.11399888660.5294BFTVG2CHUGL4.CSFS1XKQZ00.CT tu 1038182261 PHUNG LUU HOANG LONG toi LOCCASS000334316 DUONG QUOC THAI tai ACB GD 405823-102125 15:02:35',
+      'MBVCB.113...60.5294BFTVG2CHUGL4.CSFS1XKQZ00.CT tu 1038182261 PHUNG LUU HOANG LONG toi LOCCASS0.....4316 DUONG QUOC THAI tai ACB GD 405823-102125 15:02:35',
   })
   description!: string;
 
@@ -64,7 +64,7 @@ export class PayosTransactionInfo {
 
   @ApiProperty({
     description: 'Virtual account number',
-    example: 'LOCCASS000334316',
+    example: 'LOCCASS....34316',
   })
   virtualAccountNumber!: string;
 }
