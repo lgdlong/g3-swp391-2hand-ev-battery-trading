@@ -1,14 +1,17 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PostVerificationRequest, VerificationStatus } from './entities/post-verification-request.entity';
+import {
+  PostVerificationRequest,
+  VerificationStatus,
+} from './entities/post-verification-request.entity';
 import { Post } from '../posts/entities/post.entity';
 import { Account } from '../accounts/entities/account.entity';
 import {
   RequestVerificationDto,
   ApproveVerificationDto,
   RejectVerificationDto,
-  VerificationRequestResponseDto
+  VerificationRequestResponseDto,
 } from './dto/verification.dto';
 import { VerificationMapper } from './mappers/verification.mapper';
 import { PostStatus } from '../../shared/enums/post.enum';
@@ -31,7 +34,7 @@ export class VerifyPostService {
   async requestVerification(
     postId: string,
     userId: number,
-    dto: RequestVerificationDto
+    dto: RequestVerificationDto,
   ): Promise<VerificationRequestResponseDto> {
     const post = await this.postsRepo.findOne({
       where: { id: postId },
@@ -71,7 +74,6 @@ export class VerifyPostService {
         existingRequest.reviewedAt = null;
         existingRequest.rejectReason = null;
 
-
         const updatedRequest = await this.verificationRepo.save(existingRequest);
 
         // Update post verificationRequestedAt field
@@ -81,7 +83,7 @@ export class VerifyPostService {
 
         return VerificationMapper.toResponseDto(updatedRequest);
       } else {
-        throw new BadRequestException('Verification request already exists for this post');
+        throw new BadRequestException('Đã gửi yêu cầu kiểm định cho bài đăng này');
       }
     }
 
@@ -107,7 +109,7 @@ export class VerifyPostService {
   async approveVerification(
     postId: string,
     adminId: number,
-    dto: ApproveVerificationDto
+    dto: ApproveVerificationDto,
   ): Promise<VerificationRequestResponseDto> {
     const verificationRequest = await this.verificationRepo.findOne({
       where: { postId },
@@ -144,7 +146,7 @@ export class VerifyPostService {
   async rejectVerification(
     postId: string,
     adminId: number,
-    dto: RejectVerificationDto
+    dto: RejectVerificationDto,
   ): Promise<VerificationRequestResponseDto> {
     const verificationRequest = await this.verificationRepo.findOne({
       where: { postId },
