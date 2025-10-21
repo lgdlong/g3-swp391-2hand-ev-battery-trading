@@ -1,12 +1,12 @@
-import { IsString } from "class-validator";
+import { IsString } from 'class-validator';
 
 export class WebhookPayosDto {
- @IsString()
+  @IsString()
   code!: string;
- @IsString()
+  @IsString()
   desc!: string;
- @IsString()
+  @IsString()
   data!: any;
- @IsString()
+  @IsString()
   signature!: string;
 }
