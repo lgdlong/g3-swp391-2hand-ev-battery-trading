@@ -28,3 +28,4 @@ export interface UpdateFeeTierDto {
 export interface DeleteFeeTierResponse {
   message: string;
 }
+

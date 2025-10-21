@@ -69,12 +69,6 @@ const navigationItems = [
     badge: null,
   },
   {
-    name: 'Fee Tiers',
-    href: '/admin/feetiers',
-    icon: DollarSign,
-    badge: null,
-  },
-  {
     name: 'Settings',
     href: '/admin/settings',
     icon: Settings,

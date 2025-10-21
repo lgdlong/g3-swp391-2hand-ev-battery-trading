@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { uploadAvatar } from '@/lib/api';
+import { uploadAvatar } from '@/lib/api/accountApi';
 import { z } from 'zod';
 import { validateAvatarFile } from '@/lib/validation/file-validation';
 
