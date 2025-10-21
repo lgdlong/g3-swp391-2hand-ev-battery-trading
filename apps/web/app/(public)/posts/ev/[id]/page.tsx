@@ -30,7 +30,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
 
   const { data: post, isLoading: postLoading, error: postError } = usePost(id);
   const { data: seller, isLoading: sellerLoading } = useAccount(post?.seller.id || 0);
-
   useEffect(() => {
     if (post?.images?.[0]?.url) {
       setMainImage(post.images[0].url);

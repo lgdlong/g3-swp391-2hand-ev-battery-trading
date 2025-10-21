@@ -112,7 +112,6 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
     !post.isVerified &&
     post.verificationRequestedAt &&
     !post.verificationRejectedAt;
-
   // Debug log to verify fields are now properly mapped
   console.log('RequestVerificationButton: Post verification status', {
     postId: post.id,
@@ -140,7 +139,6 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
       </Button>
     );
   }
-
   if (!canRequestVerification && !canRequestAgain) {
     return null;
   }

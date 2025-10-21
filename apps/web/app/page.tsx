@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   Car,
   Battery,
@@ -18,8 +19,21 @@ import {
 import { getCarPostsWithQuery, getBikePostsWithQuery } from '@/lib/api/postApi';
 import { useQuery } from '@tanstack/react-query';
 import { DEFAULT_IMAGE } from '@/constants/images';
+import { useAuth } from '@/lib/auth-context';
 
 export default function Home() {
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
+
+  // Handle create post button click
+  const handleCreatePostClick = () => {
+    if (!isLoggedIn) {
+      router.push('/login');
+      return;
+    }
+    router.push('/posts/create');
+  };
+
   const categories = [
     {
       title: 'Xe điện',
@@ -132,11 +146,13 @@ export default function Home() {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
-                <Button asChild size="lg" className="bg-white text-gray-900 hover:bg-gray-100">
-                  <Link href="/posts/create" className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    Đăng tin miễn phí
-                  </Link>
+                <Button
+                  onClick={handleCreatePostClick}
+                  size="lg"
+                  className="bg-white text-gray-900 hover:bg-gray-100 flex items-center gap-2"
+                >
+                  <TrendingUp className="h-5 w-5" />
+                  Đăng tin miễn phí
                 </Button>
                 <Button
                   asChild

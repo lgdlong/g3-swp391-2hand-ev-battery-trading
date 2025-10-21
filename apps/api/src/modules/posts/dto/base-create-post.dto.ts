@@ -7,7 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PostType } from '../../../shared/enums/post.enum';
+import { PostType, PostStatus } from '../../../shared/enums/post.enum';
 
 export class BaseCreatePostDto {
   @ApiProperty({
@@ -17,6 +17,17 @@ export class BaseCreatePostDto {
   })
   @IsEnum(PostType)
   postType: PostType = PostType.EV_CAR; // cố định EV_CAR cho API này nếu không gán kiểu khác vào
+
+  @ApiPropertyOptional({
+    enum: PostStatus,
+    description:
+      'Trạng thái bài đăng - mặc định là PENDING_REVIEW để gửi duyệt, có thể chọn DRAFT để lưu nháp',
+    example: PostStatus.PENDING_REVIEW,
+    default: PostStatus.PENDING_REVIEW,
+  })
+  @IsOptional()
+  @IsEnum(PostStatus)
+  status?: PostStatus = PostStatus.PENDING_REVIEW;
 
   @ApiProperty({
     description: 'Tiêu đề bài đăng',

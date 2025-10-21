@@ -173,7 +173,7 @@ export default function MyPostsPage() {
     markAsSoldMutation.mutate(postId);
   };
   const handleEdit = (postId: string) => {
-    router.push(`/posts/${postId}/edit`);
+    router.push(`/my-posts/${postId}/edit`);
   };
   const handleCreateNew = () => {
     router.push('/posts/create');

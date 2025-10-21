@@ -25,6 +25,7 @@ import { User } from '../../core/decorators/user.decorator';
 import { CreateBikePostDto } from './dto/bike/create-post-bike.dto';
 import { CreateCarPostDto } from './dto/car/create-post-car.dto';
 import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { PostsQueryDto } from './dto/posts-query.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
@@ -401,6 +402,41 @@ export class PostsController {
   //-----------------------------------------
   //------------ PATCH ENDPOINTS ------------
   //-----------------------------------------
+
+  // api update post by id for user
+  @Patch(':id/me')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cập nhật bài đăng của người dùng hiện tại' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID của bài đăng',
+    example: '1',
+  })
+  @ApiBody({
+    description: 'Thông tin cập nhật bài đăng',
+    type: UpdatePostDto,
+  })
+  @ApiOkResponse({
+    description: 'Cập nhật bài đăng thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiBadRequestResponse({
+    description: 'Dữ liệu không hợp lệ hoặc không thể cập nhật bài đăng với trạng thái hiện tại',
+  })
+  @ApiNotFoundResponse({
+    description: 'Không tìm thấy bài đăng hoặc không có quyền cập nhật',
+  })
+  @ApiUnauthorizedResponse({ description: 'Chưa xác thực' })
+  @ApiForbiddenResponse({ description: 'Không có quyền truy cập' })
+  async updateMyPostById(
+    @Param('id') id: string,
+    @User() user: AuthUser,
+    @Body() updateDto: UpdatePostDto,
+  ): Promise<BasePostResponseDto> {
+    return this.postsService.updateMyPostById(id, user.sub, updateDto);
+  }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
