@@ -8,21 +8,13 @@ import type { Post } from '@/types/api/post';
 import { HeartCallApi } from './HeartCallApi';
 import { DEFAULT_IMAGE } from '@/constants/images';
 
+
 interface PostCardProps {
   item: Post;
   onTitleClick?: (title: string) => void;
 }
 
 export function PostCard({ item, onTitleClick }: PostCardProps) {
-  // Debug verification status
-  console.log('PostCard verification status:', {
-    id: item.id,
-    title: item.title,
-    isVerified: item.isVerified,
-    verificationRequestedAt: item.verificationRequestedAt,
-    verifiedAt: item.verifiedAt,
-    verifiedBy: item.verifiedBy,
-  });
 
   const location =
     [
@@ -33,6 +25,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
       .join(', ') ||
     displayValue(item.addressTextCached) ||
     'Không rõ';
+
 
   return (
     <Link
@@ -65,8 +58,8 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
             {/* Verification badge - góc trên bên phải */}
             {item.isVerified && (
               <div className="absolute right-4 top-4">
-                <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-md">
-                  ✓ Đã kiểm định
+                <Badge className="bg-green-500 text-white border-0 shadow-md px-2 py-1 rounded-md">
+                  <span className="text-xs font-medium">✓ Verified</span>
                 </Badge>
               </div>
             )}
@@ -77,6 +70,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
               </div>
             )}
           </div>
+
 
           {/* Details */}
           <div className="p-6">

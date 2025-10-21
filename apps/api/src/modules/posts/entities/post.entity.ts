@@ -91,8 +91,14 @@ export class Post {
   @Column({ type: 'boolean', default: false, name: 'is_verified' })
   isVerified!: boolean;
 
+  @Column({ type: 'timestamp', nullable: true, name: 'verification_requested_at' })
+  verificationRequestedAt: Date | null = null;
+
   @Column({ type: 'timestamp', nullable: true, name: 'verified_at' })
   verifiedAt: Date | null = null;
+
+  @Column({ type: 'timestamp', nullable: true, name: 'verification_rejected_at' })
+  verificationRejectedAt: Date | null = null;
 
   @ManyToOne(() => require('./../../accounts/entities/account.entity').Account, {
     nullable: true,

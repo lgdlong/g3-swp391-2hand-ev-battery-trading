@@ -320,8 +320,8 @@ export default function Home() {
                         {/* Verification badge - góc trên bên phải */}
                         {post.isVerified && (
                           <div className="absolute top-3 right-3">
-                            <span className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-2 py-1 rounded text-xs font-medium shadow-md">
-                              ✓ Đã kiểm định
+                            <span className="bg-green-500 text-white px-2 py-1 rounded-md text-xs font-medium shadow-md">
+                              ✓ Verified
                             </span>
                           </div>
                         )}

@@ -140,7 +140,21 @@ function EvPostsContent() {
         sort: sort === 'newest' ? 'createdAt' : 'priceVnd',
         status: POST_STATUS.PUBLISHED,
       };
-      return await getCarPostsWithQuery(queryParams);
+      const response = await getCarPostsWithQuery(queryParams);
+      console.log('Car posts response:', response);
+
+      // Check for duplicates
+      const postIds = response.map((post: any) => post.id);
+      const uniqueIds = [...new Set(postIds)];
+      if (postIds.length !== uniqueIds.length) {
+        console.warn('Duplicate posts detected!', {
+          total: postIds.length,
+          unique: uniqueIds.length,
+          duplicates: postIds.filter((id, index) => postIds.indexOf(id) !== index)
+        });
+      }
+
+      return response;
     },
     enabled: !shouldUseSearch, // Only fetch when not searching
     staleTime: CACHE_TIME.STALE_TIME, // 5 minutes

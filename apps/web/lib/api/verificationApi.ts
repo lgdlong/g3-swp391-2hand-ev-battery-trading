@@ -59,13 +59,17 @@ export async function rejectPostVerification(id: string, reason: string): Promis
  * Requires authentication token in headers
  */
 export async function getPendingVerificationRequests(): Promise<any[]> {
-  const { data } = await api.get(
-    `/verify-post/admin/pending`,
-    {
-      headers: getAuthHeaders(),
-    },
-  );
-  return data;
+  try {
+    const { data } = await api.get(
+      `/verify-post/admin/pending`,
+      {
+        headers: getAuthHeaders(),
+      },
+    );
+    return data;
+  } catch (error) {
+    throw error;
+  }
 }
 
 /**

@@ -6,8 +6,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { requestPostVerification } from '@/lib/api/verificationApi';
 import { useAuth } from '@/lib/auth-context';
 import { PostUI } from '@/types/post';
-import { CheckCircle, Loader2, AlertCircle, Shield } from 'lucide-react';
+import { CheckCircle, Loader2, AlertCircle, Shield, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { PaymentDialog } from '@/app/(public)/my-posts/_components/payment-dialog';
 
 interface RequestVerificationButtonProps {
   post: PostUI;
@@ -16,6 +17,7 @@ interface RequestVerificationButtonProps {
 
 export function RequestVerificationButton({ post, onSuccess }: RequestVerificationButtonProps) {
   const [isRequested, setIsRequested] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const { user, isLoggedIn } = useAuth();
   const queryClient = useQueryClient();
 
@@ -45,6 +47,7 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
 
       // Invalidate và refetch dữ liệu bài đăng
       queryClient.invalidateQueries({ queryKey: ['post', post.id] });
+      queryClient.invalidateQueries({ queryKey: ['myPosts'] });
 
       if (onSuccess) {
         onSuccess();
@@ -68,11 +71,13 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
   });
 
   const handleRequestVerification = () => {
-    if (confirm('Bạn có chắc chắn muốn gửi yêu cầu kiểm định cho xe/pin này?')) {
-      // Store flag in localStorage to track verification request
-      localStorage.setItem(`verification_requested_${post.id}`, 'true');
-      requestVerificationMutation.mutate(post.id);
-    }
+    setShowPaymentDialog(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    // Store flag in localStorage to track verification request
+    localStorage.setItem(`verification_requested_${post.id}`, 'true');
+    requestVerificationMutation.mutate(post.id);
   };
 
   // Chỉ hiển thị nút nếu:
@@ -96,65 +101,80 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
     !post.isVerified &&
     !post.verificationRequestedAt;
 
+  const canRequestAgain =
+    post.status === 'PUBLISHED' &&
+    !post.isVerified &&
+    post.verificationRejectedAt &&
+    !post.verificationRequestedAt;
+
+  const isPendingVerification =
+    post.status === 'PUBLISHED' &&
+    !post.isVerified &&
+    post.verificationRequestedAt &&
+    !post.verificationRejectedAt;
+
   // Debug log to verify fields are now properly mapped
   console.log('RequestVerificationButton: Post verification status', {
+    postId: post.id,
     status: post.status,
     isVerified: post.isVerified,
     verificationRequestedAt: post.verificationRequestedAt,
-    canShow: canRequestVerification,
+    verificationRejectedAt: post.verificationRejectedAt,
+    canRequestVerification,
+    canRequestAgain,
+    isOwner,
+    isLoggedIn,
   });
 
-  if (!canRequestVerification) {
+  // Hiển thị trạng thái "đang chờ kiểm định"
+  if (isPendingVerification) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-2 bg-yellow-50 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
+        disabled
+      >
+        <Clock className="h-4 w-4" />
+        Đang chờ kiểm định
+      </Button>
+    );
+  }
+
+  if (!canRequestVerification && !canRequestAgain) {
     return null;
   }
 
   return (
-    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {isRequested ? (
-            <>
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <span className="text-green-700 font-medium">
-                Đã gửi yêu cầu kiểm định
-              </span>
-            </>
-          ) : (
-            <>
-              <Shield className="h-5 w-5 text-blue-600" />
-              <span className="text-blue-700 font-medium">
-                Yêu cầu kiểm định xe/pin
-              </span>
-            </>
-          )}
-        </div>
-
-        {!isRequested && (
-          <Button
-            onClick={handleRequestVerification}
-            disabled={requestVerificationMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            size="sm"
-          >
-            {requestVerificationMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Đang gửi...
-              </>
-            ) : (
-              'Gửi yêu cầu'
-            )}
-          </Button>
+    <>
+      <Button
+        onClick={handleRequestVerification}
+        disabled={requestVerificationMutation.isPending}
+        className={`gap-2 text-white ${canRequestAgain ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+        size="sm"
+      >
+        {requestVerificationMutation.isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Đang gửi...
+          </>
+        ) : (
+          <>
+            <Shield className="h-4 w-4" />
+            Yêu cầu kiểm định
+          </>
         )}
-      </div>
+      </Button>
 
-      <p className="text-sm text-gray-600 mt-2">
-        {isRequested
-          ? 'Yêu cầu kiểm định của bạn đã được gửi đến admin. Chúng tôi sẽ xem xét và phản hồi trong thời gian sớm nhất.'
-          : 'Yêu cầu kiểm định để nâng uy tín hàng hóa của bạn.'
-        }
-      </p>
-    </div>
+      <PaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        postTitle={post.title}
+        postId={post.id}
+        isRetry={!!canRequestAgain}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+    </>
   );
 }
 

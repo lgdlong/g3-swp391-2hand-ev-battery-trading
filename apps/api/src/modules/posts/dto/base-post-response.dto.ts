@@ -54,8 +54,14 @@ export class BasePostResponseDto {
   @ApiProperty({ description: 'Whether the post has been verified by admin' })
   isVerified!: boolean;
 
+  @ApiProperty({ nullable: true, description: 'When verification was requested' })
+  verificationRequestedAt: Date | null = null;
+
   @ApiProperty({ nullable: true, description: 'When admin verified the post' })
   verifiedAt: Date | null = null;
+
+  @ApiProperty({ nullable: true, description: 'When verification was rejected' })
+  verificationRejectedAt: Date | null = null;
 
   @ApiProperty({ type: SafeAccountDto, nullable: true, description: 'Admin verified the post' })
   @Type(() => SafeAccountDto)
