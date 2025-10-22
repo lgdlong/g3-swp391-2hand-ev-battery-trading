@@ -77,9 +77,15 @@ export default function AdminSettingsPage() {
       {/* Tabs */}
       <Tabs defaultValue="fee-tiers" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="fee-tiers">Hoa Hồng</TabsTrigger>
-          <TabsTrigger value="refund-policy">Chính Sách Hoàn Tiền</TabsTrigger>
-          <TabsTrigger value="listing-lifecycle">Vòng Đời Bài Đăng</TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-white" value="fee-tiers">
+            Hoa Hồng
+          </TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-white" value="refund-policy">
+            Chính Sách Hoàn Tiền
+          </TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-white" value="listing-lifecycle">
+            Vòng Đời Bài Đăng
+          </TabsTrigger>
         </TabsList>
 
         {/* Fee Tiers Tab */}
