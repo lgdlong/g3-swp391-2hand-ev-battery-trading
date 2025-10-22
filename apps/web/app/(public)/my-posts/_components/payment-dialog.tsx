@@ -58,7 +58,7 @@ export function PaymentDialog({
     setIsProcessing(true);
 
     try {
-      // Simulate payment processing
+      // TODO: Implement actual payment processing logic here
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       toast.success('Thanh toán thành công!', {
