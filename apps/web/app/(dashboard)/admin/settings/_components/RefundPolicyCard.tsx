@@ -26,9 +26,9 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<RefundPolicyFormData>({
-    cancelEarlyRate: refundPolicy ? parseFloat(refundPolicy.cancelEarlyRate) : 0,
-    expiredRate: refundPolicy ? parseFloat(refundPolicy.expiredRate) : 0,
-    fraudSuspectedRate: refundPolicy ? parseFloat(refundPolicy.fraudSuspectedRate) : 0,
+    cancelEarlyRate: refundPolicy ? parseFloat(refundPolicy.cancelEarlyRate) * 100 : 0,
+    expiredRate: refundPolicy ? parseFloat(refundPolicy.expiredRate) * 100 : 0,
+    fraudSuspectedRate: refundPolicy ? parseFloat(refundPolicy.fraudSuspectedRate) * 100 : 0,
     holdDays: refundPolicy?.holdDays || 0,
     autoRefundAfterDays: refundPolicy?.autoRefundAfterDays || 0,
   });
@@ -36,7 +36,14 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
   const handleSave = async () => {
     try {
       setSaving(true);
-      await updateSingleRefundPolicy(formData);
+      // Convert percentage values back to decimal for API
+      const apiData = {
+        ...formData,
+        cancelEarlyRate: formData.cancelEarlyRate / 100,
+        expiredRate: formData.expiredRate / 100,
+        fraudSuspectedRate: formData.fraudSuspectedRate / 100,
+      };
+      await updateSingleRefundPolicy(apiData);
       toast.success('Cập nhật chính sách hoàn tiền thành công');
       setEditing(false);
       onUpdate();
@@ -51,9 +58,9 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
   const handleCancel = () => {
     if (refundPolicy) {
       setFormData({
-        cancelEarlyRate: parseFloat(refundPolicy.cancelEarlyRate),
-        expiredRate: parseFloat(refundPolicy.expiredRate),
-        fraudSuspectedRate: parseFloat(refundPolicy.fraudSuspectedRate),
+        cancelEarlyRate: parseFloat(refundPolicy.cancelEarlyRate) * 100,
+        expiredRate: parseFloat(refundPolicy.expiredRate) * 100,
+        fraudSuspectedRate: parseFloat(refundPolicy.fraudSuspectedRate) * 100,
         holdDays: refundPolicy.holdDays,
         autoRefundAfterDays: refundPolicy.autoRefundAfterDays,
       });
@@ -63,7 +70,7 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
 
   return (
     <Card className="shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+      <CardHeader className="flex flex-row items-center justify-between border-b">
         <div>
           <CardTitle className="text-xl">Chính Sách Hoàn Tiền</CardTitle>
           <CardDescription className="mt-1">
@@ -84,11 +91,13 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
                   <Percent className="h-4 w-4 text-blue-600" />
-                  Tỷ Lệ Hủy Sớm (%)
+                  Tỷ Lệ Hoàn Tiền Khi Hủy Sớm (%)
                 </Label>
                 <Input
                   type="number"
                   step="0.1"
+                  min="0"
+                  max="100"
                   value={formData.cancelEarlyRate}
                   onChange={(e) =>
                     setFormData({ ...formData, cancelEarlyRate: parseFloat(e.target.value) })
@@ -99,11 +108,13 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
                   <Calendar className="h-4 w-4 text-orange-600" />
-                  Tỷ Lệ Hết Hạn (%)
+                  Tỷ Lệ Hoàn Tiền Khi Tin Hết Hạn (%)
                 </Label>
                 <Input
                   type="number"
                   step="0.1"
+                  min="0"
+                  max="100"
                   value={formData.expiredRate}
                   onChange={(e) =>
                     setFormData({ ...formData, expiredRate: parseFloat(e.target.value) })
@@ -114,11 +125,13 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
                   <AlertCircle className="h-4 w-4 text-red-600" />
-                  Tỷ Lệ Gian Lận (%)
+                  Tỷ Lệ Hoàn Tiền Khi Gian Lận Giao Dịch (%)
                 </Label>
                 <Input
                   type="number"
                   step="0.1"
+                  min="0"
+                  max="100"
                   value={formData.fraudSuspectedRate}
                   onChange={(e) =>
                     setFormData({ ...formData, fraudSuspectedRate: parseFloat(e.target.value) })
@@ -133,6 +146,7 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
                 </Label>
                 <Input
                   type="number"
+                  min="0"
                   value={formData.holdDays}
                   onChange={(e) => setFormData({ ...formData, holdDays: parseInt(e.target.value) })}
                   className="h-11"
@@ -145,6 +159,7 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
                 </Label>
                 <Input
                   type="number"
+                  min="0"
                   value={formData.autoRefundAfterDays}
                   onChange={(e) =>
                     setFormData({ ...formData, autoRefundAfterDays: parseInt(e.target.value) })
@@ -169,7 +184,9 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
             <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
               <div className="flex items-center gap-2 mb-2">
                 <Percent className="h-5 w-5 text-blue-600" />
-                <Label className="text-sm text-gray-600 font-medium">Tỷ Lệ Hủy Sớm</Label>
+                <Label className="text-sm text-gray-600 font-medium">
+                  Tỷ Lệ Hoàn Tiền Khi Hủy Sớm
+                </Label>
               </div>
               <p className="text-3xl font-bold text-blue-900">
                 {(parseFloat(refundPolicy?.cancelEarlyRate || '0') * 100).toFixed(1)}%
@@ -179,7 +196,9 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
             <div className="p-4 rounded-lg bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="h-5 w-5 text-orange-600" />
-                <Label className="text-sm text-gray-600 font-medium">Tỷ Lệ Hết Hạn</Label>
+                <Label className="text-sm text-gray-600 font-medium">
+                  Tỷ Lệ Hoàn Tiền Khi Tin Hết Hạn
+                </Label>
               </div>
               <p className="text-3xl font-bold text-orange-900">
                 {(parseFloat(refundPolicy?.expiredRate || '0') * 100).toFixed(1)}%
@@ -189,7 +208,9 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
             <div className="p-4 rounded-lg bg-gradient-to-br from-red-50 to-red-100 border border-red-200">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="h-5 w-5 text-red-600" />
-                <Label className="text-sm text-gray-600 font-medium">Tỷ Lệ Gian Lận</Label>
+                <Label className="text-sm text-gray-600 font-medium">
+                  Tỷ Lệ Hoàn Tiền Khi Gian Lận Giao Dịch
+                </Label>
               </div>
               <p className="text-3xl font-bold text-red-900">
                 {(parseFloat(refundPolicy?.fraudSuspectedRate || '0') * 100).toFixed(1)}%
