@@ -10,7 +10,7 @@ interface FeeTierTableProps {
   feeTiers: FeeTier[];
 }
 
-type SortField = 'minPrice' | 'maxPrice' | 'depositRate';
+type SortField = 'minPrice' | 'maxPrice' | 'depositRate' | 'updatedAt';
 type SortDirection = 'asc' | 'desc';
 
 export function FeeTierTable({ feeTiers }: FeeTierTableProps) {
@@ -23,6 +23,16 @@ export function FeeTierTable({ feeTiers }: FeeTierTableProps) {
       style: 'currency',
       currency: 'VND',
     }).format(num);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(dateString));
   };
 
   const handleSort = (field: SortField) => {
@@ -59,6 +69,10 @@ export function FeeTierTable({ feeTiers }: FeeTierTableProps) {
       case 'depositRate':
         aValue = parseFloat(a.depositRate);
         bValue = parseFloat(b.depositRate);
+        break;
+      case 'updatedAt':
+        aValue = new Date(a.updatedAt).getTime();
+        bValue = new Date(b.updatedAt).getTime();
         break;
       default:
         return 0;
@@ -110,6 +124,15 @@ export function FeeTierTable({ feeTiers }: FeeTierTableProps) {
                   </button>
                 </th>
                 <th className="text-left p-3 font-medium">Trạng Thái</th>
+                <th className="text-left p-3 font-medium">
+                  <button
+                    onClick={() => handleSort('updatedAt')}
+                    className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                  >
+                    Cập Nhật Lần Cuối
+                    {getSortIcon('updatedAt')}
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -139,11 +162,12 @@ export function FeeTierTable({ feeTiers }: FeeTierTableProps) {
                       {tier.active ? 'Hoạt Động' : 'Không Hoạt Động'}
                     </Badge>
                   </td>
+                  <td className="p-3 text-sm text-gray-600">{formatDate(tier.updatedAt)}</td>
                 </tr>
               ))}
               {feeTiers.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-gray-500">
+                  <td colSpan={5} className="p-8 text-center text-gray-500">
                     Chưa có hoa hồng nào.
                   </td>
                 </tr>
