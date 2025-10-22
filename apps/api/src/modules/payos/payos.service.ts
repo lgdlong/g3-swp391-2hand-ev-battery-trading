@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
-  CancelPaymentDto,
   CreatePayosDto,
+  PayosCancelPaymentResponse,
   PayosCreatePaymentResponse,
   PayosGetPaymentResponse,
 } from './dto';
@@ -54,7 +54,7 @@ export class PayosService {
     return res.data;
   }
 
-  async cancel(orderCode: number, reason?: string): Promise<CancelPaymentDto> {
+  async cancel(orderCode: number, reason?: string): Promise<PayosCancelPaymentResponse> {
     const res = await axios.post(
       `${this.payosBaseUrl}/v2/payment-requests/${orderCode}/cancel`,
       {
