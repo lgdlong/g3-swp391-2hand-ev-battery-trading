@@ -236,6 +236,20 @@ export function RefundPolicyCard({ refundPolicy, onUpdate }: RefundPolicyCardPro
                 {refundPolicy?.autoRefundAfterDays || 0} <span className="text-lg">ngày</span>
               </p>
             </div>
+
+            <div className="p-4 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 lg:col-span-1 md:col-span-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-5 w-5 text-blue-600" />
+                <Label className="text-sm text-gray-600 font-medium">Cập Nhật Lần Cuối</Label>
+              </div>
+              <p className="text-xl font-semibold text-blue-900">
+                {new Date(refundPolicy?.updatedAt || '').toLocaleDateString('vi-VN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            </div>
           </div>
         )}
       </CardContent>
