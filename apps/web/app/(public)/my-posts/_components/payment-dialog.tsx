@@ -87,7 +87,7 @@ export function PaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-blue-600" />
@@ -98,7 +98,7 @@ export function PaymentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Service Info */}
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center gap-3">
@@ -117,27 +117,23 @@ export function PaymentDialog({
           </div>
 
           {/* Benefits */}
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">Lợi ích khi kiểm định:</h4>
-            <div className="space-y-2">
+          <div className="space-y-2">
+            <h4 className="font-medium text-gray-900">Lợi ích:</h4>
+            <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span>Tin đăng được đánh dấu "Verified"</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Hiển thị ưu tiên trong kết quả tìm kiếm</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Tăng độ tin cậy với người mua</span>
+                <span>Hiển thị ưu tiên trong tìm kiếm</span>
               </div>
             </div>
           </div>
 
           {/* Payment Methods */}
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">Chọn phương thức thanh toán:</h4>
+          <div className="space-y-2">
+            <h4 className="font-medium text-gray-900">Phương thức thanh toán:</h4>
             <div className="space-y-2">
               {paymentMethods.map((method) => (
                 <button
@@ -181,12 +177,11 @@ export function PaymentDialog({
           </div>
 
           {/* Warning */}
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-start gap-2">
               <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
               <div className="text-sm text-yellow-800">
-                <p className="font-medium mb-1">Lưu ý quan trọng:</p>
-                <p>Phí kiểm định không hoàn lại. Nếu bài đăng không đạt tiêu chuẩn, bạn có thể chỉnh sửa và gửi lại yêu cầu kiểm định.</p>
+                <p>Phí kiểm định không hoàn lại. Có thể chỉnh sửa và gửi lại nếu không đạt.</p>
               </div>
             </div>
           </div>
