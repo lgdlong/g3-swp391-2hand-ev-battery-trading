@@ -8,6 +8,7 @@ import {
   Index,
 } from 'typeorm';
 import type { Account } from '../../accounts/entities/account.entity';
+import type { ServiceType } from '../../service-types/entities/service-type.entity';
 import { PaymentStatus } from '../../../shared/enums/payment-status.enum';
 
 @Entity({ name: 'payment_orders' })
@@ -18,6 +19,12 @@ export class PaymentOrder {
 
   @Column({ name: 'account_id', type: 'int', nullable: false })
   accountId!: number;
+
+  @Column({ name: 'service_type_id', type: 'int', nullable: false })
+  serviceTypeId!: number;
+
+  @Column({ name: 'order_code', type: 'varchar', length: 50, nullable: true })
+  orderCode: string | null = null;
 
   @Column({ type: 'decimal', precision: 14, scale: 2, nullable: false })
   amount!: string;
@@ -48,4 +55,8 @@ export class PaymentOrder {
   @ManyToOne(() => require('../../accounts/entities/account.entity').Account)
   @JoinColumn({ name: 'account_id' })
   account!: Account;
+
+  @ManyToOne(() => require('../../service-types/entities/service-type.entity').ServiceType)
+  @JoinColumn({ name: 'service_type_id' })
+  serviceType!: ServiceType;
 }

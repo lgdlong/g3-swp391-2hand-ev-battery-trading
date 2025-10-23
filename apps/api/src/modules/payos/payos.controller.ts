@@ -131,7 +131,7 @@ export class PayosController {
     description: 'Invalid webhook payload or signature verification failed',
   })
   webhook(@Body() webhookPayosDto: WebhookPayosDto, @Res() res: Response) {
-    // this.payosService.handleWebhook(webhookPayosDto);
-    return res.status(200).send('Webhook received');
+    this.payosService.handleWebhook(webhookPayosDto);
+    // return res.status(200).send('Webhook received');
   }
 }

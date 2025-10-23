@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import type { Wallet } from './wallet.entity';
-import { WalletTransactionType } from '../../../shared/enums/wallet-transaction-type.enum';
+import type { ServiceType } from '../../service-types/entities/service-type.entity';
 
 @Entity({ name: 'wallet_transactions' })
 export class WalletTransaction {
@@ -20,13 +20,8 @@ export class WalletTransaction {
   @Column({ type: 'decimal', precision: 15, scale: 2, nullable: false })
   amount!: string;
 
-  @Column({
-    name: 'transaction_type',
-    type: 'enum',
-    enum: WalletTransactionType,
-    nullable: false,
-  })
-  transactionType!: WalletTransactionType;
+  @Column({ name: 'service_type_id', type: 'int', nullable: false })
+  serviceTypeId!: number;
 
   @Column({ type: 'text', nullable: true })
   description: string | null = null;
@@ -41,4 +36,8 @@ export class WalletTransaction {
   @ManyToOne(() => require('./wallet.entity').Wallet)
   @JoinColumn({ name: 'wallet_user_id' })
   wallet!: Wallet;
+
+  @ManyToOne(() => require('../../service-types/entities/service-type.entity').ServiceType)
+  @JoinColumn({ name: 'service_type_id' })
+  serviceType!: ServiceType;
 }

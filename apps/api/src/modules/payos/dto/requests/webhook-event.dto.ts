@@ -1,5 +1,7 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { WebhookPayosDataDto } from './webhook-data.dto';
 
 export class WebhookPayosDto {
   @ApiProperty({
@@ -20,27 +22,12 @@ export class WebhookPayosDto {
 
   @ApiProperty({
     description: 'Webhook data payload from PayOS',
-    example: {
-      orderCode: 123456789,
-      amount: 50000,
-      description: 'Payment for EV Battery',
-      accountNumber: '12345678',
-      reference: 'REF123',
-      transactionDateTime: '2024-01-01T10:00:00.000Z',
-      currency: 'VND',
-      paymentLinkId: 'payment-link-id',
-      code: '00',
-      desc: 'Thành công',
-      counterAccountBankId: null,
-      counterAccountBankName: null,
-      counterAccountName: null,
-      counterAccountNumber: null,
-      virtualAccountName: null,
-      virtualAccountNumber: null,
-    },
+    type: WebhookPayosDataDto,
   })
+  @ValidateNested()
+  @Type(() => WebhookPayosDataDto)
   @IsNotEmpty()
-  data!: any;
+  data!: WebhookPayosDataDto;
 
   @ApiProperty({
     description: 'Security signature for webhook verification',
