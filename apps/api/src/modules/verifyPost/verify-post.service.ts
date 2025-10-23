@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -15,6 +20,7 @@ import {
 import { VerificationRequestResponseDto } from './dto/verification-request-response.dto';
 import { VerificationMapper } from './mappers/verification.mapper';
 import { PostStatus } from '../../shared/enums/post.enum';
+import { AccountRole } from '../../shared/enums/account-role.enum';
 
 @Injectable()
 export class VerifyPostService {
@@ -151,14 +157,28 @@ export class VerifyPostService {
 
   /**
    * Get verification request by post ID
+   * Authorization: Only post owner or admin can view the verification request
    */
-  async getVerificationRequest(postId: string): Promise<VerificationRequestResponseDto | null> {
+  async getVerificationRequest(
+    postId: string,
+    userId: number,
+    userRole: AccountRole,
+  ): Promise<VerificationRequestResponseDto | null> {
     const verificationRequest = await this.verificationRepo.findOne({
       where: { postId },
+      relations: ['post', 'post.seller'],
     });
 
     if (!verificationRequest) {
       return null;
+    }
+
+    // Check authorization: user must be post owner or admin
+    const isAdmin = userRole === AccountRole.ADMIN;
+    const isPostOwner = verificationRequest.post.seller.id === userId;
+
+    if (!isAdmin && !isPostOwner) {
+      throw new ForbiddenException('You do not have permission to view this verification request');
     }
 
     return VerificationMapper.toResponseDto(verificationRequest);
