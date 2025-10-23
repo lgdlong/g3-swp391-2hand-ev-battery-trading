@@ -55,7 +55,7 @@ export function PostLifecycleCard({ postLifecycle, onUpdate }: PostLifecycleCard
 
   return (
     <Card className="shadow-lg">
-      <CardHeader className="flex flex-row items-center justify-between border-b bg-gradient-to-r from-purple-50 to-pink-50">
+      <CardHeader className="flex flex-row items-center justify-between border-b">
         <div>
           <CardTitle className="text-xl">Vòng Đời Bài Đăng</CardTitle>
           <CardDescription className="mt-1">
