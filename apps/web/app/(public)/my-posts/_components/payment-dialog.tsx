@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -45,7 +51,6 @@ export function PaymentDialog({
   // const currentCoins = userProfile?.coins || 0; // Use this when backend is ready
   const hasEnoughCoins = currentCoins >= verificationFee;
 
-
   const handlePayment = async () => {
     if (!hasEnoughCoins) {
       toast.error('Không đủ coin', {
@@ -59,7 +64,7 @@ export function PaymentDialog({
 
     try {
       // Simulate coin payment processing
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       toast.success('Thanh toán thành công!', {
         description: `Đã trừ ${verificationFee} coins. Yêu cầu kiểm định đã được gửi đến admin.`,
@@ -77,7 +82,6 @@ export function PaymentDialog({
       setIsProcessing(false);
     }
   };
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -132,7 +136,7 @@ export function PaymentDialog({
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Tin đăng được đánh dấu "Verified"</span>
+                <span>Tin đăng được đánh dấu Đã kiểm định</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <CheckCircle className="h-4 w-4 text-green-500" />
@@ -144,7 +148,6 @@ export function PaymentDialog({
               </div>
             </div>
           </div>
-
 
           <Separator />
 
@@ -173,8 +176,13 @@ export function PaymentDialog({
                 <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
                 <div className="text-sm text-red-800">
                   <p className="font-medium">Không đủ coin!</p>
-                  <p>Bạn cần {verificationFee} coins để kiểm định. Hiện tại bạn có {currentCoins} coins.</p>
-                  <p className="mt-1 text-xs">Hãy mua thêm coin hoặc kiếm coin từ các hoạt động khác.</p>
+                  <p>
+                    Bạn cần {verificationFee} coins để kiểm định. Hiện tại bạn có {currentCoins}{' '}
+                    coins.
+                  </p>
+                  <p className="mt-1 text-xs">
+                    Hãy mua thêm coin hoặc kiếm coin từ các hoạt động khác.
+                  </p>
                 </div>
               </div>
             </div>
