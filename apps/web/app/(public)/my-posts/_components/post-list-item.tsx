@@ -1,8 +1,9 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Edit, Trash2, Eye, Package } from 'lucide-react';
+import { Edit, Trash2, Eye, Package, AlertCircle } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
+import { RequestVerificationButton } from '@/app/(public)/posts/ev/_components/RequestVerificationButton';
 
 interface PostListItemProps {
   post: Post;
@@ -11,6 +12,7 @@ interface PostListItemProps {
   onView?: (post: Post) => void;
   onMarkAsSold?: (postId: string) => void;
   onViewRejectReason?: (postId: string, postTitle: string) => void;
+  onViewVerificationRejectReason?: (postId: string, postTitle: string) => void;
 }
 
 const formatPrice = (priceVnd: string): string => {
@@ -91,6 +93,7 @@ export default function PostListItem({
   onView,
   onMarkAsSold,
   onViewRejectReason,
+  onViewVerificationRejectReason,
 }: PostListItemProps) {
   // Get the first image URL
   const firstImageUrl =
@@ -111,15 +114,49 @@ export default function PostListItem({
       ? (post.districtNameCached as { value?: string })?.value
       : (post.districtNameCached as string);
 
-  return (
-    <div className="flex gap-4 py-4 transition-colors hover:bg-muted/50">
-      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
-        <img src={firstImageUrl} alt={post.title} className="h-full w-full object-cover" />
-      </div>
+  // Check if verification was rejected
+  const isVerificationRejected =
+    post.status === 'PUBLISHED' &&
+    post.verificationRequest?.status === 'REJECTED';
 
-      <div className="flex flex-1 flex-col justify-between gap-2 min-w-0">
-        {/* Title and Status Badge */}
-        <div className="flex items-start justify-between gap-3">
+  // Debug log for verification rejection
+  console.log('PostListItem Debug:', {
+    postId: post.id,
+    status: post.status,
+    verificationRequest: post.verificationRequest,
+    isVerificationRejected,
+  });
+
+  return (
+    <div className="transition-colors hover:bg-muted/50">
+      <div className="flex gap-4 py-4">
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
+          <img src={firstImageUrl} alt={post.title} className="h-full w-full object-cover" />
+        </div>
+
+        <div className="flex flex-1 flex-col justify-between gap-2 min-w-0">
+          {/* Verification Rejection Alert - inside the post box */}
+          {isVerificationRejected && (
+            <div className="mb-2 p-3 border border-orange-200 bg-orange-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-orange-600" />
+                <span className="font-medium text-orange-800 text-sm">
+                  Yêu cầu kiểm định đã bị từ chối
+                </span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto text-orange-600 hover:text-orange-800 ml-2 text-xs"
+                  onClick={() => onViewVerificationRejectReason?.(post.id, post.title)}
+                >
+                  Xem lý do
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Title and Status Badge */}
+          <div className="flex items-start justify-between gap-3">
           <h3 className="font-medium text-base line-clamp-2 flex-1">{post.title}</h3>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -214,6 +251,11 @@ export default function PostListItem({
             </Tooltip>
           )}
 
+          {/* Verification Button - visible for PUBLISHED posts */}
+          {post.status === 'PUBLISHED' && (
+            <RequestVerificationButton post={post as any} />
+          )}
+
           {/* View reject reason */}
           {post.status === 'REJECTED' && (
             <Tooltip>
@@ -248,6 +290,7 @@ export default function PostListItem({
             </Tooltip>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

@@ -5,31 +5,38 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Post } from '@/types/api/post';
-import { Eye, Check, Calendar, MapPin, User, Car } from 'lucide-react';
+import { Eye, Check, X, Calendar, MapPin, User, Car, Shield } from 'lucide-react';
 import { DEFAULT_IMAGE } from '@/constants/images';
 import { RejectDialog } from './RejectDialog';
 import { useState } from 'react';
 
 interface PostCardProps {
   post: Post;
-  onApprove: (postId: number | string) => Promise<void>;
-  onReject: (postId: number | string, reason: string) => Promise<void>;
-  onViewDetails?: (post: Post) => void;
+  onViewDetails: (post: Post) => void;
+  onApprove: (postId: string) => void;
+  onReject: (postId: string, reason: string) => void;
+  onVerify?: (postId: string) => void;
+  onRejectVerification?: (postId: string) => void;
+  isApproving?: boolean;
+  isRejecting?: boolean;
+  isVerifying?: boolean;
+  isRejectingVerification?: boolean;
+  currentFilter?: string; // Thêm prop để biết đang ở filter nào
 }
 
-export default function PostCard({ post, onApprove, onReject, onViewDetails }: PostCardProps) {
-  const [isApproving, setIsApproving] = useState(false);
-
-  const handleApprove = async () => {
-    setIsApproving(true);
-    try {
-      await onApprove(Number(post.id));
-    } catch (error) {
-      console.error('Failed to approve post:', error);
-    } finally {
-      setIsApproving(false);
-    }
-  };
+export function PostCard({
+  post,
+  onViewDetails,
+  onApprove,
+  onReject,
+  onVerify,
+  onRejectVerification,
+  isApproving = false,
+  isRejecting = false,
+  isVerifying = false,
+  isRejectingVerification = false,
+  currentFilter,
+}: PostCardProps) {
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
     return new Intl.NumberFormat('vi-VN', {
@@ -168,29 +175,43 @@ export default function PostCard({ post, onApprove, onReject, onViewDetails }: P
             {post.status === 'PENDING_REVIEW' && (
               <>
                 <Button
-                  onClick={handleApprove}
+                  onClick={() => onApprove(post.id)}
                   disabled={isApproving}
                   className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
                 >
                   <Check className="w-4 h-4" />
                   {isApproving ? 'Đang duyệt...' : 'Duyệt'}
                 </Button>
-                {/* <Button
-                  onClick={() => onReject(post.id)}
-                  disabled={isRejecting}
-                  variant="destructive"
-                  size="sm"
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
-                >
-                  <X className="w-4 h-4" />
-                  {isRejecting ? 'Đang từ chối...' : 'Từ chối'}
-                </Button> */}
                 <RejectDialog
                   onReject={async (reason: string) => {
-                    await onReject(Number(post.id), reason);
+                    onReject(post.id, reason);
                   }}
                   triggerVariant="sm"
                 />
+              </>
+            )}
+
+            {/* Verification buttons - hiển thị khi đang ở filter VERIFICATION_PENDING hoặc VERIFICATION_REJECTED */}
+            {currentFilter === 'VERIFICATION_PENDING' && onVerify && onRejectVerification && (
+              <>
+                <Button
+                  onClick={() => onVerify(post.id)}
+                  disabled={isVerifying}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+                >
+                  <Shield className="w-4 h-4" />
+                  {isVerifying ? 'Đang xử lý...' : 'Đạt yêu cầu'}
+                </Button>
+                <Button
+                  onClick={() => onRejectVerification(post.id)}
+                  disabled={isRejectingVerification}
+                  variant="destructive"
+                  size="sm"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
+                >
+                  <X className="w-4 h-4" />
+                  {isRejectingVerification ? 'Đang xử lý...' : 'Không đạt yêu cầu'}
+                </Button>
               </>
             )}
           </div>

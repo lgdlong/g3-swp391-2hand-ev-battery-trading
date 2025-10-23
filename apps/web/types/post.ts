@@ -207,6 +207,13 @@ export interface PostUI {
   updatedAt: string;
   submittedAt?: string;
   reviewedAt?: string;
+  // Verification data from relation
+  verificationRequest?: {
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    requestedAt: string;
+    reviewedAt?: string;
+    rejectReason?: string;
+  };
 }
 
 // ===== Main Post Interface =====
@@ -239,6 +246,13 @@ export interface Post {
   updatedAt: string;
   submittedAt: FlexibleField;
   reviewedAt: FlexibleField;
+  // Verification data from relation
+  verificationRequest?: {
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    requestedAt: string;
+    reviewedAt?: string;
+    rejectReason?: string;
+  };
 }
 
 // ===== Legacy/Alternative Interfaces =====

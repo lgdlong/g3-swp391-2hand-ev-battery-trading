@@ -7,6 +7,7 @@ import { CarDetailsResponseDto } from '../../post-details/dto/car/car-details-re
 import { BikeDetailsResponseDto } from '../../post-details/dto/bike/bike-details-response.dto';
 import { PostImageResponseDto } from './post-image-response.dto';
 import { BatteryDetailResponseDto } from 'src/modules/post-details/dto/battery/battery-detail-response.dto';
+import { VerificationRequestResponseDto } from 'src/modules/verifyPost/dto/verification-request-response.dto';
 
 export class BasePostResponseDto {
   @ApiProperty()
@@ -70,6 +71,10 @@ export class BasePostResponseDto {
   @ApiProperty({ type: () => [PostImageResponseDto], required: false })
   @Type(() => PostImageResponseDto)
   images?: PostImageResponseDto[];
+
+  @ApiProperty({ type: () => VerificationRequestResponseDto, required: false })
+  @Type(() => VerificationRequestResponseDto)
+  verificationRequest?: VerificationRequestResponseDto;
 
   @ApiProperty()
   createdAt!: Date;
