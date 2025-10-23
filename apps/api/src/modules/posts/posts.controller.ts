@@ -203,9 +203,13 @@ export class PostsController {
     description: 'Danh sách tất cả bài đăng cho admin với pagination',
     type: PaginatedBasePostResponseDto,
   })
-  async getAllPostsForAdmin(
-    @Query() query: AdminListPostsQueryDto,
-  ): Promise<{ data: BasePostResponseDto[]; total: number; page: number; limit: number; totalPages: number }> {
+  async getAllPostsForAdmin(@Query() query: AdminListPostsQueryDto): Promise<{
+    data: BasePostResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     return this.postsService.getAllPostsForAdmin(query);
   }
 
