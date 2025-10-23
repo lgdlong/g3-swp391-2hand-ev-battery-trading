@@ -7,7 +7,9 @@ import { BasePostResponseDto } from '../../posts/dto/base-post-response.dto';
 import { AccountMapper } from '../../accounts/mappers';
 
 export class VerificationMapper {
-  static toResponseDto(verificationRequest: PostVerificationRequest): VerificationRequestResponseDto {
+  static toResponseDto(
+    verificationRequest: PostVerificationRequest,
+  ): VerificationRequestResponseDto {
     return {
       postId: verificationRequest.postId,
       requestedBy: verificationRequest.requestedBy,
@@ -20,11 +22,16 @@ export class VerificationMapper {
     };
   }
 
-  static toResponseDtoList(verificationRequests: PostVerificationRequest[]): VerificationRequestResponseDto[] {
+  static toResponseDtoList(
+    verificationRequests: PostVerificationRequest[],
+  ): VerificationRequestResponseDto[] {
     return verificationRequests.map(this.toResponseDto);
   }
 
-  static toPostWithVerificationDto(post: Post, verificationRequest?: PostVerificationRequest): PostWithVerificationDto {
+  static toPostWithVerificationDto(
+    post: Post,
+    verificationRequest?: PostVerificationRequest,
+  ): PostWithVerificationDto {
     const basePostDto = PostMapper.toBasePostResponseDto(post);
 
     const postWithVerification = new PostWithVerificationDto();

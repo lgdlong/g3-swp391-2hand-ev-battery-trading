@@ -7,13 +7,7 @@ import { Post } from '../posts/entities/post.entity';
 import { Account } from '../accounts/entities/account.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      PostVerificationRequest,
-      Post,
-      Account,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([PostVerificationRequest, Post, Account])],
   controllers: [VerifyPostController],
   providers: [VerifyPostService],
   exports: [VerifyPostService],

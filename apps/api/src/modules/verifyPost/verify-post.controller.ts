@@ -1,17 +1,7 @@
-import {
-  Controller,
-  Post,
-  Patch,
-  Get,
-  Param,
-  Body,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Post, Patch, Get, Param, Body, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
   ApiParam,
   ApiOkResponse,
@@ -111,11 +101,13 @@ export class VerifyPostController {
   })
   @ApiNotFoundResponse({ description: 'Không tìm thấy yêu cầu kiểm định' })
   @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không có quyền xem yêu cầu kiểm định này' })
   @Get(':postId')
   async getVerificationRequest(
     @Param('postId') postId: string,
+    @Request() req: any,
   ): Promise<VerificationRequestResponseDto | null> {
-    return this.verifyPostService.getVerificationRequest(postId);
+    return this.verifyPostService.getVerificationRequest(postId, req.user.sub, req.user.role);
   }
 
   @ApiBearerAuth()
@@ -156,9 +148,7 @@ export class VerifyPostController {
   })
   @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
   @Get('user/my-requests')
-  async getMyVerificationRequests(
-    @Request() req: any,
-  ): Promise<VerificationRequestResponseDto[]> {
+  async getMyVerificationRequests(@Request() req: any): Promise<VerificationRequestResponseDto[]> {
     return this.verifyPostService.getVerificationRequestsByUser(req.user.sub);
   }
 
@@ -171,10 +161,12 @@ export class VerifyPostController {
   })
   @ApiNotFoundResponse({ description: 'Không tìm thấy yêu cầu kiểm định' })
   @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không có quyền xem yêu cầu kiểm định này' })
   @Get('post/:postId')
   async getVerificationRequestByPostId(
     @Param('postId') postId: string,
+    @Request() req: any,
   ): Promise<VerificationRequestResponseDto | null> {
-    return this.verifyPostService.getVerificationRequest(postId);
+    return this.verifyPostService.getVerificationRequest(postId, req.user.sub, req.user.role);
   }
 }

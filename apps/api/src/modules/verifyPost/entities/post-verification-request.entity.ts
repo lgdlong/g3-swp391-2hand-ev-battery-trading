@@ -32,7 +32,7 @@ export class PostVerificationRequest {
 
   @ManyToOne(() => require('../../accounts/entities/account.entity').Account, {
     nullable: true,
-    onDelete: 'SET NULL'
+    onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'requested_by' })
   requester!: Account;
