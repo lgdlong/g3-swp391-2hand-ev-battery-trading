@@ -38,12 +38,14 @@ export class PostsService {
   private readonly BATTERY_DETAILS = 'batteryDetails';
   private readonly SELLER = 'seller';
   private readonly IMAGES = 'images';
+  private readonly VERIFICATION_REQUEST = 'verificationRequest';
   private readonly POST_FULL_RELATIONS = [
     this.CAR_DETAILS,
     this.BIKE_DETAILS,
     this.BATTERY_DETAILS,
     this.SELLER,
     this.IMAGES,
+    this.VERIFICATION_REQUEST,
   ];
 
   constructor(
@@ -185,7 +187,7 @@ export class PostsService {
         postType: PostType.EV_CAR,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES],
+      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -206,7 +208,7 @@ export class PostsService {
         postType: PostType.EV_BIKE,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES],
+      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -266,7 +268,7 @@ export class PostsService {
         postType: PostType.BATTERY,
         status: DISPLAYABLE_POST_STATUS,
       },
-      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES],
+      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -381,12 +383,13 @@ export class PostsService {
 
   async getAllPostsForAdmin(
     query: ListQueryDto & { status?: string; postType?: string },
-  ): Promise<BasePostResponseDto[]> {
+  ): Promise<{ data: BasePostResponseDto[]; total: number; page: number; limit: number; totalPages: number }> {
     const where: any = {};
 
     if (query.status) {
       //  Chỉ cho phép admin status
       const allowedAdminStatuses = [
+        'DRAFT',
         'PENDING_REVIEW',
         'PUBLISHED',
         'REJECTED',
@@ -406,23 +409,29 @@ export class PostsService {
     }
 
     // Get total count for pagination
-    // const total = await this.postsRepo.count({ where });
+    const total = await this.postsRepo.count({ where });
 
     const rows = await this.postsRepo.find({
       where,
       relations: this.POST_FULL_RELATIONS,
-      order: { createdAt: query.order || 'DESC' },
+      order: { createdAt: query.order === 'ASC' ? 'ASC' : 'DESC' },
       take: query.limit,
       skip: query.offset,
     });
 
-    // const page = query.offset
-    //   ? Math.floor(query.offset / (query.limit || DEFAULT_PAGE_SIZE)) + 1
-    //   : 1;
-    // const limit = query.limit || DEFAULT_PAGE_SIZE;
-    // const totalPages = Math.ceil(total / limit);
+    const page = query.offset
+      ? Math.floor(query.offset / (query.limit || 20)) + 1
+      : 1;
+    const limit = query.limit || 20;
+    const totalPages = Math.ceil(total / limit);
 
-    return PostMapper.toBasePostResponseDtoArray(rows);
+    return {
+      data: PostMapper.toBasePostResponseDtoArray(rows),
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   /**

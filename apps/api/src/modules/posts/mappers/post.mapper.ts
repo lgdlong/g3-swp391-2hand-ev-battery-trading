@@ -28,6 +28,7 @@ export class PostMapper {
     dto.status = post.status;
     dto.submittedAt = post.submittedAt;
     dto.reviewedAt = post.reviewedAt;
+
     dto.createdAt = post.createdAt;
     dto.updatedAt = post.updatedAt;
 
@@ -54,6 +55,20 @@ export class PostMapper {
     // Map images if available
     if (post.images) {
       dto.images = PostImageMapper.toResponseDtoArray(post.images);
+    }
+
+    // Map verification request if available
+    if (post.verificationRequest) {
+      dto.verificationRequest = {
+        postId: post.verificationRequest.postId,
+        requestedBy: post.verificationRequest.requestedBy,
+        requestedAt: post.verificationRequest.requestedAt,
+        status: post.verificationRequest.status,
+        reviewedAt: post.verificationRequest.reviewedAt || undefined,
+        rejectReason: post.verificationRequest.rejectReason || undefined,
+        createdAt: post.verificationRequest.createdAt,
+        updatedAt: post.verificationRequest.updatedAt,
+      };
     }
 
     return dto;

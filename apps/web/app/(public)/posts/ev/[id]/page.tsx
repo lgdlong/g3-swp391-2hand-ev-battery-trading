@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
+import { BadgeCheckIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
-import { SellerInfo, PostHeader } from '@/app/(public)/posts/_components';
 import { Specifications } from './_components';
-import { Button } from '@/components/ui/button';
+import { PostHeader } from '@/app/(public)/posts/_components';
+import { SellerInfo } from './_components/SellerInfo';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -28,7 +30,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
 
   const { data: post, isLoading: postLoading, error: postError } = usePost(id);
   const { data: seller, isLoading: sellerLoading } = useAccount(post?.seller.id || 0);
-
   useEffect(() => {
     if (post?.images?.[0]?.url) {
       setMainImage(post.images[0].url);
@@ -90,7 +91,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
       <div className="container mx-auto py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1 space-y-6">
-            <Card className="overflow-hidden border-none shadow-none">
+            <Card key={`post-image-${post.id}`} className="overflow-hidden border-none shadow-none">
               <CardContent className="p-0">
                 <div className="relative h-80 w-full bg-gray-50">
                   <Image
@@ -100,12 +101,21 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                     sizes="(max-width:768px) 100vw, 33vw"
                     className="object-contain p-8"
                   />
-                  <div className="absolute top-4 left-4">
+                  <div className="absolute top-4 left-4 flex flex-col gap-2">
                     <Badge
                       className={`${isCarPost ? 'bg-[#048C73]' : 'bg-[#2563EB]'} text-white border-0`}
                     >
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
+                    {post.verificationRequest?.status === 'APPROVED' && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-blue-500 text-white dark:bg-blue-600"
+                      >
+                        <BadgeCheckIcon />
+                        Đã kiểm định
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 {post.images?.length > 1 && (
@@ -135,7 +145,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-none">
+            <Card key={`seller-info-${post.id}`} className="border-none shadow-none">
               <CardContent className="p-6">
                 {sellerLoading ? (
                   <div className="animate-pulse space-y-3">
@@ -156,7 +166,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
             <Specifications post={post} />
 
             {post.description && (
-              <Card className="border-none shadow-none">
+              <Card key={`post-description-${post.id}`} className="border-none shadow-none">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">Mô tả chi tiết</h2>
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
