@@ -117,16 +117,13 @@ export default function PostListItem({
   // Check if verification was rejected
   const isVerificationRejected =
     post.status === 'PUBLISHED' &&
-    !post.isVerified &&
-    post.verificationRejectedAt;
+    post.verificationRequest?.status === 'REJECTED';
 
   // Debug log for verification rejection
   console.log('PostListItem Debug:', {
     postId: post.id,
     status: post.status,
-    isVerified: post.isVerified,
-    verificationRejectedAt: post.verificationRejectedAt,
-    verificationRequestedAt: post.verificationRequestedAt,
+    verificationRequest: post.verificationRequest,
     isVerificationRejected,
   });
 

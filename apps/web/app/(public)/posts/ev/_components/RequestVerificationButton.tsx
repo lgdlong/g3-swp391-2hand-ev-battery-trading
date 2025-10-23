@@ -31,8 +31,7 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
       console.log('Requesting verification for post:', {
         postId,
         postStatus: post.status,
-        isVerified: post.isVerified,
-        verificationRequestedAt: post.verificationRequestedAt,
+        verificationRequest: post.verificationRequest,
         userId: user?.id,
         sellerId: post.seller.id,
       });
@@ -98,27 +97,22 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
 
   const canRequestVerification =
     post.status === 'PUBLISHED' &&
-    !post.isVerified &&
-    !post.verificationRequestedAt;
+    post.verificationRequest?.status !== 'APPROVED' &&
+    !post.verificationRequest;
 
   const canRequestAgain =
     post.status === 'PUBLISHED' &&
-    !post.isVerified &&
-    post.verificationRejectedAt &&
-    !post.verificationRequestedAt;
+    post.verificationRequest?.status !== 'APPROVED' &&
+    post.verificationRequest?.status === 'REJECTED';
 
   const isPendingVerification =
     post.status === 'PUBLISHED' &&
-    !post.isVerified &&
-    post.verificationRequestedAt &&
-    !post.verificationRejectedAt;
+    post.verificationRequest?.status === 'PENDING';
   // Debug log to verify fields are now properly mapped
   console.log('RequestVerificationButton: Post verification status', {
     postId: post.id,
     status: post.status,
-    isVerified: post.isVerified,
-    verificationRequestedAt: post.verificationRequestedAt,
-    verificationRejectedAt: post.verificationRejectedAt,
+    verificationRequest: post.verificationRequest,
     canRequestVerification,
     canRequestAgain,
     isOwner,

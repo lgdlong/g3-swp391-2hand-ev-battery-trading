@@ -107,7 +107,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                     >
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
-                    {post.isVerified && (
+                    {post.verificationRequest?.status === 'APPROVED' && (
                       <Badge className="bg-green-500 text-white border-0 shadow-md flex items-center gap-1 px-2 py-1 rounded-md">
                         <Check className="h-3 w-3" />
                         <span className="text-xs font-medium">Verified</span>

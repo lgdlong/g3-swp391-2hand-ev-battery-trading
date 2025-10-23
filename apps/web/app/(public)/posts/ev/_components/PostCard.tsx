@@ -56,7 +56,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
               </Badge>
             </div>
             {/* Verification badge - góc trên bên phải */}
-            {item.isVerified && (
+            {item.verificationRequest?.status === 'APPROVED' && (
               <div className="absolute right-4 top-4">
                 <Badge className="bg-green-500 text-white border-0 shadow-md px-2 py-1 rounded-md">
                   <span className="text-xs font-medium">✓ Verified</span>

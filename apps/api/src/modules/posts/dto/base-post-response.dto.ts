@@ -7,6 +7,7 @@ import { CarDetailsResponseDto } from '../../post-details/dto/car/car-details-re
 import { BikeDetailsResponseDto } from '../../post-details/dto/bike/bike-details-response.dto';
 import { PostImageResponseDto } from './post-image-response.dto';
 import { BatteryDetailResponseDto } from 'src/modules/post-details/dto/battery/battery-detail-response.dto';
+import { VerificationRequestResponseDto } from 'src/modules/verifyPost/dto/verification-request-response.dto';
 
 export class BasePostResponseDto {
   @ApiProperty()
@@ -51,22 +52,6 @@ export class BasePostResponseDto {
   @ApiProperty({ nullable: true })
   reviewedAt: Date | null = null;
 
-  @ApiProperty({ description: 'Whether the post has been verified by admin' })
-  isVerified!: boolean;
-
-  @ApiProperty({ nullable: true, description: 'When verification was requested' })
-  verificationRequestedAt: Date | null = null;
-
-  @ApiProperty({ nullable: true, description: 'When admin verified the post' })
-  verifiedAt: Date | null = null;
-
-  @ApiProperty({ nullable: true, description: 'When verification was rejected' })
-  verificationRejectedAt: Date | null = null;
-
-  @ApiProperty({ type: SafeAccountDto, nullable: true, description: 'Admin verified the post' })
-  @Type(() => SafeAccountDto)
-  verifiedBy: SafeAccountDto | null = null;
-
   @ApiProperty({ type: SafeAccountDto })
   @Type(() => SafeAccountDto)
   seller!: SafeAccountDto;
@@ -86,6 +71,10 @@ export class BasePostResponseDto {
   @ApiProperty({ type: () => [PostImageResponseDto], required: false })
   @Type(() => PostImageResponseDto)
   images?: PostImageResponseDto[];
+
+  @ApiProperty({ type: () => VerificationRequestResponseDto, required: false })
+  @Type(() => VerificationRequestResponseDto)
+  verificationRequest?: VerificationRequestResponseDto;
 
   @ApiProperty()
   createdAt!: Date;

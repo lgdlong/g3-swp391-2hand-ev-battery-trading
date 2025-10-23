@@ -23,6 +23,7 @@ export interface Account {
   avatarUrl: string | null;
   status: AccountStatus;
   role: AccountRole;
+  coins: number;
   createdAt: string; // hoặc Date, nhưng API thường trả ISO string
   updatedAt: string;
 }

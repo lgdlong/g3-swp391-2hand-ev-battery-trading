@@ -38,12 +38,14 @@ export class PostsService {
   private readonly BATTERY_DETAILS = 'batteryDetails';
   private readonly SELLER = 'seller';
   private readonly IMAGES = 'images';
+  private readonly VERIFICATION_REQUEST = 'verificationRequest';
   private readonly POST_FULL_RELATIONS = [
     this.CAR_DETAILS,
     this.BIKE_DETAILS,
     this.BATTERY_DETAILS,
     this.SELLER,
     this.IMAGES,
+    this.VERIFICATION_REQUEST,
   ];
 
   constructor(
@@ -185,7 +187,7 @@ export class PostsService {
         postType: PostType.EV_CAR,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES],
+      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -206,7 +208,7 @@ export class PostsService {
         postType: PostType.EV_BIKE,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES],
+      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -266,7 +268,7 @@ export class PostsService {
         postType: PostType.BATTERY,
         status: DISPLAYABLE_POST_STATUS,
       },
-      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES],
+      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,

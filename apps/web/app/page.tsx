@@ -249,10 +249,7 @@ export default function Home() {
               console.log('Homepage post verification status:', {
                 id: post.id,
                 title: post.title,
-                isVerified: post.isVerified,
-                verificationRequestedAt: post.verificationRequestedAt,
-                verifiedAt: post.verifiedAt,
-                verifiedBy: post.verifiedBy,
+                verificationRequest: post.verificationRequest,
               });
 
               const isCarPost = !!post.carDetails;
@@ -334,7 +331,7 @@ export default function Home() {
                           </span>
                         </div>
                         {/* Verification badge - góc trên bên phải */}
-                        {post.isVerified && (
+                        {post.verificationRequest?.status === 'APPROVED' && (
                           <div className="absolute top-3 right-3">
                             <span className="bg-green-500 text-white px-2 py-1 rounded-md text-xs font-medium shadow-md">
                               ✓ Verified

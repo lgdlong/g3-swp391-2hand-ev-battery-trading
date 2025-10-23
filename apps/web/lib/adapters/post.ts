@@ -174,14 +174,12 @@ export function adaptPostDto(dto: PostDtoRaw): PostUI {
     updatedAt: dto.updatedAt,
     submittedAt: toStringOrUndefined(dto.submittedAt),
     reviewedAt: toStringOrUndefined(dto.reviewedAt),
-    // Verification fields
-    isVerified: dto.isVerified,
-    verificationRequestedAt: dto.verificationRequestedAt ? new Date(dto.verificationRequestedAt).toISOString() : undefined,
-    verifiedAt: dto.verifiedAt ? new Date(dto.verifiedAt).toISOString() : undefined,
-    verificationRejectedAt: dto.verificationRejectedAt ? new Date(dto.verificationRejectedAt).toISOString() : undefined,
-    verifiedBy: dto.verifiedBy ? {
-      id: dto.verifiedBy.id || 0,
-      fullName: dto.verifiedBy.fullName || 'Admin',
+    // Verification data from relation
+    verificationRequest: dto.verificationRequest ? {
+      status: dto.verificationRequest.status as 'PENDING' | 'APPROVED' | 'REJECTED',
+      requestedAt: dto.verificationRequest.requestedAt,
+      reviewedAt: dto.verificationRequest.reviewedAt ? new Date(dto.verificationRequest.reviewedAt).toISOString() : undefined,
+      rejectReason: dto.verificationRequest.rejectReason || undefined,
     } : undefined,
   };
 }

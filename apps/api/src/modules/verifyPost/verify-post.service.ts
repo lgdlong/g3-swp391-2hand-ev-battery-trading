@@ -11,8 +11,8 @@ import {
   RequestVerificationDto,
   ApproveVerificationDto,
   RejectVerificationDto,
-  VerificationRequestResponseDto,
 } from './dto/verification.dto';
+import { VerificationRequestResponseDto } from './dto/verification-request-response.dto';
 import { VerificationMapper } from './mappers/verification.mapper';
 import { PostStatus } from '../../shared/enums/post.enum';
 
@@ -55,11 +55,6 @@ export class VerifyPostService {
       throw new BadRequestException('Only published posts can request verification');
     }
 
-    // Check if already verified
-    if (post.isVerified) {
-      throw new BadRequestException('This post is already verified');
-    }
-
     // Check if verification request already exists
     const existingRequest = await this.verificationRepo.findOne({
       where: { postId },
@@ -76,12 +71,9 @@ export class VerifyPostService {
 
         const updatedRequest = await this.verificationRepo.save(existingRequest);
 
-        // Update post verificationRequestedAt field
-        post.verificationRequestedAt = new Date();
-        post.verificationRejectedAt = null;
-        await this.postsRepo.save(post);
-
         return VerificationMapper.toResponseDto(updatedRequest);
+      } else if (existingRequest.status === VerificationStatus.APPROVED) {
+        throw new BadRequestException('This post is already verified');
       } else {
         throw new BadRequestException('Đã gửi yêu cầu kiểm định cho bài đăng này');
       }
@@ -95,10 +87,6 @@ export class VerifyPostService {
     });
 
     const savedRequest = await this.verificationRepo.save(verificationRequest);
-
-    // Update post verificationRequestedAt field
-    post.verificationRequestedAt = new Date();
-    await this.postsRepo.save(post);
 
     return VerificationMapper.toResponseDto(savedRequest);
   }
@@ -129,14 +117,6 @@ export class VerifyPostService {
     verificationRequest.reviewedAt = new Date();
     await this.verificationRepo.save(verificationRequest);
 
-    // Update post verification status
-    const post = verificationRequest.post;
-    post.isVerified = true;
-    post.verificationRequestedAt = null;
-    post.verifiedAt = new Date();
-    post.verifiedBy = { id: adminId } as Account;
-    await this.postsRepo.save(post);
-
     return VerificationMapper.toResponseDto(verificationRequest);
   }
 
@@ -165,16 +145,6 @@ export class VerifyPostService {
     verificationRequest.reviewedAt = new Date();
     verificationRequest.rejectReason = dto.rejectReason;
     await this.verificationRepo.save(verificationRequest);
-
-    // Update post verification status
-    const post = await this.postsRepo.findOne({
-      where: { id: postId },
-    });
-    if (post) {
-      post.verificationRequestedAt = null;
-      post.verificationRejectedAt = new Date();
-      await this.postsRepo.save(post);
-    }
 
     return VerificationMapper.toResponseDto(verificationRequest);
   }

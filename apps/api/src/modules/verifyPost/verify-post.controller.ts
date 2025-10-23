@@ -25,8 +25,8 @@ import {
   RequestVerificationDto,
   ApproveVerificationDto,
   RejectVerificationDto,
-  VerificationRequestResponseDto
 } from './dto/verification.dto';
+import { VerificationRequestResponseDto } from './dto/verification-request-response.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
 import { Roles } from '../../core/decorators/roles.decorator';

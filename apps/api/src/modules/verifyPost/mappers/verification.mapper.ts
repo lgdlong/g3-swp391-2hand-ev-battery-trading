@@ -1,5 +1,6 @@
 import { PostVerificationRequest } from '../entities/post-verification-request.entity';
-import { VerificationRequestResponseDto, PostWithVerificationDto } from '../dto/verification.dto';
+import { VerificationRequestResponseDto } from '../dto/verification-request-response.dto';
+import { PostWithVerificationDto } from '../dto/verification.dto';
 import { Post } from '../../posts/entities/post.entity';
 import { PostMapper } from '../../posts/mappers/post.mapper';
 import { BasePostResponseDto } from '../../posts/dto/base-post-response.dto';
@@ -38,13 +39,14 @@ export class VerificationMapper {
 
   /**
    * Map verification status fields from Post entity to BasePostResponseDto
-   * This method handles the final verification status (isVerified, verifiedAt, verifiedBy)
+   * This method handles the final verification status via verificationRequest relation
+   * Note: Verification data is now handled through the verificationRequest relation
    */
   static mapVerificationStatusToDto(post: Post, dto: BasePostResponseDto): void {
-    dto.isVerified = post.isVerified;
-    dto.verificationRequestedAt = post.verificationRequestedAt;
-    dto.verifiedAt = post.verifiedAt;
-    dto.verificationRejectedAt = post.verificationRejectedAt;
-    dto.verifiedBy = post.verifiedBy ? AccountMapper.toSafeDto(post.verifiedBy) : null;
+    // Verification data is now in dto.verificationRequest
+    // No need to map old fields (isVerified, verifiedAt, etc.) as they've been removed
+    if (post.verificationRequest) {
+      dto.verificationRequest = this.toResponseDto(post.verificationRequest);
+    }
   }
 }
