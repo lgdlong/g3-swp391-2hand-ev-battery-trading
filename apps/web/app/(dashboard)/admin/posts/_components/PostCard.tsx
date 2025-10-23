@@ -35,7 +35,7 @@ export function PostCard({
   isRejecting = false,
   isVerifying = false,
   isRejectingVerification = false,
-  currentFilter
+  currentFilter,
 }: PostCardProps) {
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -200,7 +200,7 @@ export function PostCard({
                   className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
                 >
                   <Shield className="w-4 h-4" />
-                  {isVerifying ? 'Đang kiểm định...' : 'Chấp nhận kiểm định'}
+                  {isVerifying ? 'Đang xử lý...' : 'Đạt yêu cầu'}
                 </Button>
                 <Button
                   onClick={() => onRejectVerification(post.id)}
@@ -210,7 +210,7 @@ export function PostCard({
                   className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium"
                 >
                   <X className="w-4 h-4" />
-                  {isRejectingVerification ? 'Đang từ chối...' : 'Từ chối kiểm định'}
+                  {isRejectingVerification ? 'Đang xử lý...' : 'Không đạt yêu cầu'}
                 </Button>
               </>
             )}
