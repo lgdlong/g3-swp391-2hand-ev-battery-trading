@@ -1,171 +1,236 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Save, Globe, Bell, Shield, Palette } from 'lucide-react';
+'use client';
 
-export default function SettingsPage() {
-  return (
-    <>
-      <main className="flex-1 p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">Settings</h2>
-            <p className="text-muted-foreground">
-              Manage your application settings and preferences
-            </p>
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
+import {
+  getAllFeeTiers,
+  createFeeTier,
+  updateFeeTier,
+  deleteFeeTier,
+  type FeeTier,
+} from '@/lib/api/feeTiersApi';
+import { getSingleRefundPolicy, type RefundPolicy } from '@/lib/api/refundPolicy';
+import { getSinglePostLifecycle, type PostLifecycle } from '@/lib/api/postLifecycleApi';
+import {
+  FeeTierStatsCards,
+  FeeTierTable,
+  FeeTierDialog,
+  FeeTierActions,
+  RefundPolicyCard,
+  PostLifecycleCard,
+} from './_components';
+import type { FeeTierFormData } from './_components/FeeTierDialog';
+
+export default function AdminSettingsPage() {
+  const [feeTiers, setFeeTiers] = useState<FeeTier[]>([]);
+  const [refundPolicy, setRefundPolicy] = useState<RefundPolicy | null>(null);
+  const [postLifecycle, setPostLifecycle] = useState<PostLifecycle | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingTier, setEditingTier] = useState<FeeTier | null>(null);
+  const [deletingTierId, setDeletingTierId] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      const [feeTiersData, refundData, lifecycleData] = await Promise.all([
+        getAllFeeTiers(),
+        getSingleRefundPolicy(),
+        getSinglePostLifecycle(),
+      ]);
+
+      // Sort fee tiers by minPrice ascending
+      const sortedFeeTiers = feeTiersData.sort(
+        (a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice),
+      );
+
+      setFeeTiers(sortedFeeTiers);
+      setRefundPolicy(refundData);
+      setPostLifecycle(lifecycleData);
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      toast.error('Không thể tải cài đặt');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenAddDialog = () => {
+    setEditingTier(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (tier: FeeTier) => {
+    setEditingTier(tier);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingTier(null);
+  };
+
+  const handleSubmit = async (formData: FeeTierFormData) => {
+    // Validation
+    if (!formData.minPrice || !formData.depositRate) {
+      toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
+      return;
+    }
+
+    const minPrice = parseFloat(formData.minPrice);
+    const maxPrice = formData.maxPrice ? parseFloat(formData.maxPrice) : null;
+    const depositRate = parseFloat(formData.depositRate) / 100;
+
+    if (isNaN(minPrice) || minPrice < 0) {
+      toast.error('Giá tối thiểu không hợp lệ');
+      return;
+    }
+
+    if (maxPrice !== null && (isNaN(maxPrice) || maxPrice <= minPrice)) {
+      toast.error('Giá tối đa phải lớn hơn giá tối thiểu');
+      return;
+    }
+
+    if (isNaN(depositRate) || depositRate < 0 || depositRate > 1) {
+      toast.error('Tỷ lệ đặt cọc phải từ 0 đến 100%');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const payload = {
+        minPrice,
+        maxPrice: maxPrice ?? 0,
+        depositRate,
+        active: formData.active,
+      };
+
+      if (editingTier) {
+        await updateFeeTier(editingTier.id, payload);
+        toast.success('Cập nhật hoa hồng thành công');
+      } else {
+        await createFeeTier(payload);
+        toast.success('Tạo hoa hồng thành công');
+      }
+
+      await fetchAllData();
+      handleCloseDialog();
+    } catch (err: unknown) {
+      console.error('Error saving fee tier:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Không thể lưu hoa hồng';
+      toast.error(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingTierId) return;
+
+    try {
+      await deleteFeeTier(deletingTierId);
+      toast.success('Xóa hoa hồng thành công');
+      await fetchAllData();
+      setDeletingTierId(null);
+    } catch (err: unknown) {
+      console.error('Error deleting fee tier:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Không thể xóa hoa hồng';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleDeleteTier = (tierId: number) => {
+    setDeletingTierId(tierId);
+  };
+
+  const handleCancelDelete = () => {
+    setDeletingTierId(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Cài Đặt Hệ Thống</h1>
+          <p className="text-gray-600 mt-2">Quản lý cài đặt hệ thống và chính sách</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+            <p className="text-gray-600 mt-2">Đang tải cài đặt...</p>
           </div>
-          <Button className="gap-2">
-            <Save className="w-4 h-4" />
-            Save Changes
-          </Button>
         </div>
+      </div>
+    );
+  }
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <Globe className="w-5 h-5 text-primary" />
-                General Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="siteName" className="text-foreground">
-                  Site Name
-                </Label>
-                <Input
-                  id="siteName"
-                  defaultValue="My Admin Panel"
-                  className="bg-background border-border"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="siteUrl" className="text-foreground">
-                  Site URL
-                </Label>
-                <Input
-                  id="siteUrl"
-                  defaultValue="https://example.com"
-                  className="bg-background border-border"
-                />
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="font-medium text-foreground">Maintenance Mode</p>
-                  <p className="text-sm text-muted-foreground">Put site in maintenance mode</p>
-                </div>
-                <Switch />
-              </div>
-            </CardContent>
-          </Card>
+  return (
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Cài Đặt Hệ Thống</h1>
+        <p className="text-gray-600 mt-2">
+          Quản lý hoa hồng, chính sách hoàn tiền và vòng đời bài đăng
+        </p>
+      </div>
 
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <Bell className="w-5 h-5 text-primary" />
-                Notifications
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="font-medium text-foreground">Email Notifications</p>
-                  <p className="text-sm text-muted-foreground">Receive email updates</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="font-medium text-foreground">Push Notifications</p>
-                  <p className="text-sm text-muted-foreground">Browser push notifications</p>
-                </div>
-                <Switch />
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="font-medium text-foreground">Weekly Reports</p>
-                  <p className="text-sm text-muted-foreground">Weekly analytics reports</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-            </CardContent>
-          </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="fee-tiers" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger className="data-[state=active]:bg-white" value="fee-tiers">
+            Hoa Hồng
+          </TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-white" value="refund-policy">
+            Chính Sách Hoàn Tiền
+          </TabsTrigger>
+          <TabsTrigger className="data-[state=active]:bg-white" value="listing-lifecycle">
+            Vòng Đời Bài Đăng
+          </TabsTrigger>
+        </TabsList>
 
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <Shield className="w-5 h-5 text-primary" />
-                Security
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="font-medium text-foreground">Two-Factor Auth</p>
-                  <p className="text-sm text-muted-foreground">Enable 2FA for admin accounts</p>
-                </div>
-                <Switch />
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="font-medium text-foreground">Session Timeout</p>
-                  <p className="text-sm text-muted-foreground">Auto logout after inactivity</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="sessionDuration" className="text-foreground">
-                  Session Duration (minutes)
-                </Label>
-                <Input
-                  id="sessionDuration"
-                  type="number"
-                  defaultValue="30"
-                  className="bg-background border-border"
-                />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Fee Tiers Tab */}
+        <TabsContent value="fee-tiers" className="space-y-4">
+          <FeeTierStatsCards feeTiers={feeTiers} />
+          <FeeTierTable
+            feeTiers={feeTiers}
+            onAddTier={handleOpenAddDialog}
+            onEditTier={handleOpenEditDialog}
+            onDeleteTier={handleDeleteTier}
+          />
+        </TabsContent>
 
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-foreground">
-                <Palette className="w-5 h-5 text-primary" />
-                Appearance
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="font-medium text-foreground">Dark Mode</p>
-                  <p className="text-sm text-muted-foreground">Use dark theme</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="font-medium text-foreground">Compact Mode</p>
-                  <p className="text-sm text-muted-foreground">Reduce spacing and padding</p>
-                </div>
-                <Switch />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="itemsPerPage" className="text-foreground">
-                  Items Per Page
-                </Label>
-                <Input
-                  id="itemsPerPage"
-                  type="number"
-                  defaultValue="25"
-                  className="bg-background border-border"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </>
+        {/* Refund Policy Tab */}
+        <TabsContent value="refund-policy" className="space-y-4">
+          <RefundPolicyCard refundPolicy={refundPolicy} onUpdate={fetchAllData} />
+        </TabsContent>
+
+        {/* Listing Lifecycle Tab */}
+        <TabsContent value="listing-lifecycle" className="space-y-4">
+          <PostLifecycleCard postLifecycle={postLifecycle} onUpdate={fetchAllData} />
+        </TabsContent>
+      </Tabs>
+
+      {/* Fee Tier Add/Edit Dialog */}
+      <FeeTierDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        editingTier={editingTier}
+        onSubmit={handleSubmit}
+        submitting={submitting}
+      />
+
+      {/* Fee Tier Delete Confirmation */}
+      <FeeTierActions
+        deletingTierId={deletingTierId}
+        onConfirmDelete={handleDelete}
+        onCancelDelete={handleCancelDelete}
+      />
+    </div>
   );
 }

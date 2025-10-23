@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { getPostById, getAccountById } from '@/lib/api';
+import { getPostById } from '@/lib/api/postApi';
+import { getAccountById } from '@/lib/api/accountApi';
 import { adaptPostDto } from '@/lib/adapters/post';
 import { adaptAccountDto } from '@/lib/adapters/account';
 
