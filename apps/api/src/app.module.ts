@@ -16,6 +16,8 @@ import { PostReviewModule } from './modules/post-review/post-review.module';
 import { PayosModule } from './modules/payos/payos.module';
 import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { WalletsModule } from './modules/wallets/wallets.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -67,6 +69,8 @@ import { SettingsModule } from './modules/settings/settings.module';
     PayosModule,
     PostRatingModule,
     SettingsModule,
+    WalletsModule,
+    TransactionsModule,
   ],
   controllers: [],
   providers: [],
