@@ -26,6 +26,9 @@ export class WalletTransaction {
   @Column({ type: 'text', nullable: true })
   description: string | null = null;
 
+  @Column({ name: 'related_entity_type', type: 'varchar', length: 50, nullable: true })
+  relatedEntityType: string | null = null;
+
   @Column({ name: 'related_entity_id', type: 'varchar', length: 50, nullable: true })
   relatedEntityId: string | null = null;
 

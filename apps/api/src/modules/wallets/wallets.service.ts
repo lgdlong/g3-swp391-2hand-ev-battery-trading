@@ -8,6 +8,8 @@ import { PaymentOrder } from '../payos/entities/payment-order.entity';
 import { PaymentStatus } from '../../shared/enums/payment-status.enum';
 import { CreateTopupDto } from './dto/create-topup.dto';
 import { CreatePayosDto } from '../payos/dto';
+import { WalletTransactionMapper } from './mappers/wallet-transaction.mapper';
+import { WalletTransactionResponseDto } from './dto/wallet-transaction-response.dto';
 
 @Injectable()
 export class WalletsService {
@@ -148,6 +150,7 @@ export class WalletsService {
         amount,
         serviceTypeId: serviceType.id,
         description: description || 'Nạp tiền vào ví',
+        relatedEntityType: 'payment_orders',
         relatedEntityId: paymentOrderId,
       });
       await transactionRepo.save(transaction);
@@ -170,6 +173,7 @@ export class WalletsService {
    * @param amount - Amount to deduct
    * @param serviceTypeCode - Service type code (e.g., 'POST_PAYMENT')
    * @param description - Transaction description
+   * @param relatedEntityType - Related entity table name (e.g., 'posts', 'payment_orders')
    * @param relatedEntityId - Related entity ID
    * @returns Object with updated wallet and transaction
    */
@@ -178,6 +182,7 @@ export class WalletsService {
     amount: string,
     serviceTypeCode: string,
     description?: string,
+    relatedEntityType?: string,
     relatedEntityId?: string,
   ): Promise<{ wallet: Wallet; transaction: WalletTransaction }> {
     // Use transaction to ensure atomicity
@@ -211,6 +216,7 @@ export class WalletsService {
         amount: `-${amount}`,
         serviceTypeId: serviceType.id,
         description,
+        relatedEntityType,
         relatedEntityId,
       });
       await transactionRepo.save(transaction);
@@ -229,16 +235,22 @@ export class WalletsService {
    * @param userId - User account ID
    * @param limit - Number of transactions to return
    * @param offset - Number of transactions to skip
-   * @returns Array of wallet transactions
+   * @returns Array of wallet transaction DTOs
    */
-  async getTransactions(userId: number, limit = 20, offset = 0): Promise<WalletTransaction[]> {
-    return this.walletTransactionRepo.find({
+  async getTransactions(
+    userId: number,
+    limit = 20,
+    offset = 0,
+  ): Promise<WalletTransactionResponseDto[]> {
+    const transactions = await this.walletTransactionRepo.find({
       where: { walletUserId: userId },
       relations: ['serviceType'],
       order: { createdAt: 'DESC' },
       take: limit,
       skip: offset,
     });
+
+    return WalletTransactionMapper.toResponseDtoArray(transactions);
   }
 
   /**

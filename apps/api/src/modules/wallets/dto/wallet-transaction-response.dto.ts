@@ -20,6 +20,9 @@ export class WalletTransactionResponseDto {
   @ApiProperty({ example: 'Nạp tiền vào ví', required: false })
   description?: string | null;
 
+  @ApiProperty({ example: 'payment_orders', required: false })
+  relatedEntityType?: string | null;
+
   @ApiProperty({ example: '123456789', required: false })
   relatedEntityId?: string | null;
 
