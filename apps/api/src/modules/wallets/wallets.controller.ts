@@ -24,6 +24,8 @@ import {
   TopUpResponseDto,
   WalletResponseDto,
   WalletTransactionResponseDto,
+  DeductWalletDto,
+  DeductResponseDto,
 } from './dto';
 import { CreateTopupDto } from './dto/create-topup.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
@@ -73,6 +75,49 @@ export class WalletsController {
   ): Promise<WalletResponseDto> {
     const wallet = await this.walletsService.initWalletIfNotExists(userId);
     return wallet;
+  }
+
+  // @Post('update-balance/:userId')
+  // @UseGuards(RolesGuard)
+  // @Roles(AccountRole.ADMIN)
+  // async updateBalance(
+  //   @Param('userId', new ParseIntPipe({ errorHttpStatusCode: 400 })) userId: number,
+  //   @Body() dto: TopUpWalletDto,
+  // ): Promise<TopUpResponseDto> {
+  //   const result = await this.walletsService.updateWalletBalance(
+  //     userId,
+  //     dto.amount.toString(),
+  //   );
+  //   return result;
+  // }
+
+
+  @Post('deduct/:userId')
+  @UseGuards(RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiOperation({
+    summary: 'Deduct money from wallet (Admin only)',
+    description: 'Admin deducts funds from user wallet. Checks balance before deduction.',
+  })
+  @ApiParam({ name: 'userId', description: 'User ID', type: Number })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Deduction completed successfully',
+    type: DeductResponseDto,
+  })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data or insufficient balance' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Wallet not found' })
+  async deductWallet(
+    @Param('userId', new ParseIntPipe({ errorHttpStatusCode: 400 })) userId: number,
+    @Body() dto: DeductWalletDto,
+  ): Promise<DeductResponseDto> {
+    const result = await this.walletsService.deductWallet(
+      userId,
+      dto.amount.toString(),
+      dto.description,
+      dto.paymentOrderId,
+    );
+    return result;
   }
 
   // Purpose: Direct wallet topup (manual/internal)
