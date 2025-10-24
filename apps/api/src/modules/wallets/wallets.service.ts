@@ -10,6 +10,7 @@ import { CreateTopupDto } from './dto/create-topup.dto';
 import { CreatePayosDto } from '../payos/dto';
 import { WalletTransactionMapper } from './mappers/wallet-transaction.mapper';
 import { WalletTransactionResponseDto } from './dto/wallet-transaction-response.dto';
+import { ensureWalletInTx } from 'src/shared/helpers/wallet.helper';
 
 @Injectable()
 export class WalletsService {
@@ -90,24 +91,36 @@ export class WalletsService {
    * @param amount - Amount to add (positive) or subtract (negative)
    * @returns Updated wallet
    */
-  private async updateWalletBalance(userId: number, amount: string): Promise<Wallet> {
-    const wallet = await this.walletRepo.findOne({ where: { userId } });
+  //   async updateWalletBalance(userId: number, amount: string, description?: string, relatedEntityId?: string): Promise<{ wallet: Wallet; transaction: WalletTransaction }> {
+  //   return this.dataSource.transaction(async (manager) => {
+  //     //const walletRepo = manager.getRepository(Wallet);
+  //     const transactionRepo = manager.getRepository(WalletTransaction);
 
-    if (!wallet) {
-      throw new NotFoundException(`Wallet not found for user ${userId}`);
-    }
+  //    const wallet = await ensureWalletInTx(manager, userId);
 
-    const currentBalance = parseFloat(wallet.balance);
-    const amountToAdd = parseFloat(amount);
-    const newBalance = currentBalance + amountToAdd;
+  //     const currentBalance = parseFloat(wallet.balance);
+  //     const delta = parseInt(amount, 10);
+  //     const newBalance = currentBalance + delta;
 
-    if (newBalance < 0) {
-      throw new Error('Insufficient balance');
-    }
+  //     if (newBalance < 0) {
+  //       throw new Error('Insufficient balance');
+  //     }
 
-    wallet.balance = newBalance.toFixed(2);
-    return this.walletRepo.save(wallet);
-  }
+  //     const serviceType = await this.serviceTypesService.findByCode('ADJUSTMENT');
+  //     const transaction = transactionRepo.create({
+  //       walletUserId: userId,
+  //       amount: delta.toString(),
+  //       serviceTypeId: serviceType?.id,
+  //       description: description || (delta >= 0 ? 'Admin credit' : 'Admin debit'),
+  //       relatedEntityId,
+  //     });
+  //     await transactionRepo.save(transaction);
+
+  //     wallet.balance = newBalance.toFixed(2);
+  //     await this.walletRepo.save(wallet);
+  //     return { wallet, transaction };
+  //   });
+  // }
 
   /**
    * Top up wallet - Creates transaction and updates balance atomically
@@ -129,14 +142,7 @@ export class WalletsService {
       const transactionRepo = manager.getRepository(WalletTransaction);
 
       // Initialize wallet if not exists
-      let wallet = await walletRepo.findOne({ where: { userId } });
-      if (!wallet) {
-        wallet = walletRepo.create({
-          userId,
-          balance: '0',
-        });
-        await walletRepo.save(wallet);
-      }
+      const wallet = await ensureWalletInTx(manager, userId);
 
       // Get service type for wallet topup
       const serviceType = await this.serviceTypesService.findByCode('WALLET_TOPUP');
@@ -191,10 +197,7 @@ export class WalletsService {
       const transactionRepo = manager.getRepository(WalletTransaction);
 
       // Get wallet
-      const wallet = await walletRepo.findOne({ where: { userId } });
-      if (!wallet) {
-        throw new NotFoundException(`Wallet not found for user ${userId}`);
-      }
+      const wallet = await ensureWalletInTx(manager, userId);
 
       // Check balance
       const currentBalance = parseFloat(wallet.balance);
@@ -335,5 +338,63 @@ export class WalletsService {
         paymentOrder.id,
       );
     }
+  }
+
+  /**
+   * Admin deduct from wallet - Creates transaction and updates balance atomically
+   * @param userId - User account ID
+   * @param amount - Amount to deduct
+   * @param description - Transaction description
+   * @param paymentOrderId - Related payment order ID
+   * @returns Object with updated wallet and transaction
+   */
+  async deductWallet(
+    userId: number,
+    amount: string,
+    description?: string,
+    paymentOrderId?: string,
+  ): Promise<{ wallet: Wallet; transaction: WalletTransaction }> {
+    // Use transaction to ensure atomicity
+    return this.dataSource.transaction(async (manager) => {
+      const walletRepo = manager.getRepository(Wallet);
+      const transactionRepo = manager.getRepository(WalletTransaction);
+
+      // Get wallet - throw error if not exists
+      const wallet = await walletRepo.findOne({ where: { userId } });
+      if (!wallet) {
+        throw new NotFoundException(`Wallet not found for user ${userId}`);
+      }
+
+      // Check balance
+      const currentBalance = parseFloat(wallet.balance);
+      const amountToDeduct = parseFloat(amount);
+
+      if (currentBalance < amountToDeduct) {
+        throw new Error('Insufficient balance');
+      }
+
+      // Get service type for deduction
+      const serviceType = await this.serviceTypesService.findByCode('ADJUSTMENT');
+      if (!serviceType) {
+        throw new NotFoundException('ADJUSTMENT service type not found');
+      }
+
+      // Create wallet transaction (store as negative for deduction)
+      const transaction = transactionRepo.create({
+        walletUserId: userId,
+        amount: `-${amount}`,
+        serviceTypeId: serviceType.id,
+        description: description || 'Admin trừ tiền từ ví',
+        relatedEntityId: paymentOrderId,
+      });
+      await transactionRepo.save(transaction);
+
+      // Update wallet balance
+      const newBalance = currentBalance - amountToDeduct;
+      wallet.balance = newBalance.toFixed(2);
+      await walletRepo.save(wallet);
+
+      return { wallet, transaction };
+    });
   }
 }
