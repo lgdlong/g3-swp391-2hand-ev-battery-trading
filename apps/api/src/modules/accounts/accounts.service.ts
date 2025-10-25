@@ -3,6 +3,8 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -23,6 +25,7 @@ import { NotFoundException } from '@nestjs/common/exceptions/not-found.exception
 import { AccountStatus } from 'src/shared/enums/account-status.enum';
 import { AccountRole } from 'src/shared/enums/account-role.enum';
 import { UploadService } from '../upload/upload.service';
+import { WalletsService } from '../wallets/wallets.service';
 
 @Injectable()
 export class AccountsService {
@@ -31,6 +34,8 @@ export class AccountsService {
     private readonly repo: Repository<Account>,
     private readonly configService: ConfigService,
     private readonly uploadService: UploadService,
+    @Inject(forwardRef(() => WalletsService))
+    private readonly walletsService: WalletsService,
   ) {}
 
   async create(dto: CreateAccountDto): Promise<CreateAccountResponseDto> {
@@ -69,6 +74,14 @@ export class AccountsService {
 
     // 4) Save vào db và trả về account đã save
     const accountAfterSave: Account = await this.repo.save(account);
+
+    // 4.5) Create wallet for the new account
+    try {
+      await this.walletsService.initWalletIfNotExists(accountAfterSave.id);
+    } catch (error) {
+      // Log the error but don't fail account creation
+      console.error('Failed to create wallet for account:', accountAfterSave.id, error);
+    }
 
     // 5) Tạo một đối tượng summary chỉ show dữ liệu cần thiết
     // Chú ý: không trả về passwordHashed
@@ -209,6 +222,10 @@ export class AccountsService {
     avatarUrl?: string | null;
     rawPasswordIfNew?: string;
   }): Promise<SafeAccountDto> {
+    // 0) Check if account already exists to detect new account creation
+    const existingAccount = await this.repo.findOne({ where: { email: input.email } });
+    const isNewAccount = !existingAccount;
+
     // 1) INSERT ... ON CONFLICT/ DUPLICATE KEY DO NOTHING
     await this.repo
       .createQueryBuilder()
@@ -230,6 +247,15 @@ export class AccountsService {
     // 2) Load lại
     let acc = await this.repo.findOne({ where: { email: input.email } });
     if (!acc) throw new Error('Upsert failed: account not found');
+
+    // 2.5) Create wallet for new OAuth accounts
+    if (isNewAccount) {
+      try {
+        await this.walletsService.initWalletIfNotExists(acc.id);
+      } catch (error) {
+        console.error('Failed to create wallet for OAuth account:', acc.id, error);
+      }
+    }
 
     // 3) Patch mềm: chỉ cập nhật khi đang trống
     const patch: Partial<Account> = {};
