@@ -6,9 +6,15 @@ import { Account } from './entities/account.entity';
 import { ConfigService } from '@nestjs/config';
 import { AuthModule } from '../auth/auth.module';
 import { UploadModule } from '../upload/upload.module';
+import { WalletsModule } from '../wallets/wallets.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Account]), forwardRef(() => AuthModule), UploadModule],
+  imports: [
+    TypeOrmModule.forFeature([Account]),
+    forwardRef(() => AuthModule),
+    UploadModule,
+    forwardRef(() => WalletsModule),
+  ],
   exports: [TypeOrmModule, AccountsService],
   controllers: [AccountsController],
   providers: [AccountsService, ConfigService],
