@@ -20,8 +20,6 @@ import {
 import { WalletsService } from './wallets.service';
 import { PayosService } from '../payos/payos.service';
 import {
-  TopUpWalletDto,
-  TopUpResponseDto,
   WalletResponseDto,
   WalletTransactionResponseDto,
   DeductWalletDto,
@@ -91,7 +89,6 @@ export class WalletsController {
   //   return result;
   // }
 
-
   @Post('deduct/:userId')
   @UseGuards(RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -105,7 +102,10 @@ export class WalletsController {
     description: 'Deduction completed successfully',
     type: DeductResponseDto,
   })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data or insufficient balance' })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or insufficient balance',
+  })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Wallet not found' })
   async deductWallet(
     @Param('userId', new ParseIntPipe({ errorHttpStatusCode: 400 })) userId: number,
