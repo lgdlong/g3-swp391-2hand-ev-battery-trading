@@ -1,12 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -48,7 +43,11 @@ export function PaymentDialog({
   const totalAmount = verificationFee;
 
   // Fetch wallet balance from database
-  const { data: wallet, isLoading: isLoadingWallet, refetch: refetchWallet } = useQuery({
+  const {
+    data: wallet,
+    isLoading: isLoadingWallet,
+    refetch: refetchWallet,
+  } = useQuery({
     queryKey: ['wallet', 'me'],
     queryFn: getMyWallet,
     enabled: !!user && open,
@@ -105,7 +104,8 @@ export function PaymentDialog({
       onPaymentSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || 'Vui lòng thử lại sau.';
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'Vui lòng thử lại sau.';
       toast.error('Thanh toán thất bại', {
         description: errorMessage,
         duration: 5000,
@@ -131,12 +131,7 @@ export function PaymentDialog({
           <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
             {postImage ? (
               <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
-                <Image
-                  src={postImage}
-                  alt={postTitle}
-                  fill
-                  className="object-cover"
-                />
+                <Image src={postImage} alt={postTitle} fill className="object-cover" />
               </div>
             ) : (
               <div className="w-24 h-24 flex-shrink-0 rounded-lg bg-gray-200 flex items-center justify-center">
@@ -181,39 +176,56 @@ export function PaymentDialog({
                   <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
                     <Coins className="h-5 w-5 text-white" />
                   </div>
-                    <div className="text-left">
-                      <p className="font-semibold">Coin</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-gray-600">
-                          Số dư: {isLoadingWallet ? '...' : formatCurrency(currentCoins)} ₫
-                        </p>
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            refetchWallet();
-                          }}
-                          className="text-blue-600 hover:text-blue-700 cursor-pointer"
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                        </span>
-                      </div>
+                  <div className="text-left">
+                    <p className="font-semibold">Coin</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-zinc-600">
+                        Số dư:{' '}
+                        <strong className="text-red-600 font-bold">
+                          {isLoadingWallet ? '...' : formatCurrency(currentCoins)} ₫
+                        </strong>
+                      </p>
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          refetchWallet();
+                        }}
+                        className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                      </span>
                     </div>
+                  </div>
                 </div>
-                {selectedMethod === 'coin' && (
+                {selectedMethod === 'coin' && hasEnoughCoins && (
                   <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                     <CheckCircle className="h-4 w-4 text-white" />
                   </div>
                 )}
+                {selectedMethod === 'coin' && !hasEnoughCoins && !isLoadingWallet && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Navigate to top-up page or open top-up modal
+                      toast.info('Chức năng nạp coin sẽ sớm được cập nhật');
+                    }}
+                  >
+                    Nạp thêm
+                  </Button>
+                )}
               </button>
 
-              {selectedMethod === 'coin' && !hasEnoughCoins && !isLoadingWallet && (
+              {/* {selectedMethod === 'coin' && !hasEnoughCoins && !isLoadingWallet && (
                 <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                  <p className="font-medium">⚠️ Số dư không đủ!</p>
+                  <p className="font-medium">Số dư không đủ!</p>
                   <p className="text-xs mt-1">
                     Bạn cần nạp thêm {formatCurrency(totalAmount - currentCoins)} ₫ để thanh toán.
                   </p>
                 </div>
-              )}
+              )} */}
 
               {/* Chuyển khoản ngân hàng */}
               {/* <button
@@ -273,10 +285,12 @@ export function PaymentDialog({
               selectedMethod === 'coin' && hasEnoughCoins
                 ? 'bg-green-600 hover:bg-green-700'
                 : selectedMethod !== 'coin'
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-gray-400 cursor-not-allowed'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-gray-400 cursor-not-allowed'
             }`}
-            disabled={isProcessing || (selectedMethod === 'coin' && !hasEnoughCoins) || isLoadingWallet}
+            disabled={
+              isProcessing || (selectedMethod === 'coin' && !hasEnoughCoins) || isLoadingWallet
+            }
           >
             {isProcessing ? (
               <>
