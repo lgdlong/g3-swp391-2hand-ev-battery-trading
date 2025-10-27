@@ -216,7 +216,7 @@ export function PaymentDialog({
               )}
 
               {/* Chuyển khoản ngân hàng */}
-              <button
+              {/* <button
                 onClick={() => setSelectedMethod('bank')}
                 className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
                   selectedMethod === 'bank'
@@ -237,10 +237,10 @@ export function PaymentDialog({
                     <CheckCircle className="h-4 w-4 text-white" />
                   </div>
                 )}
-              </button>
+              </button> */}
 
               {/* Ví MoMo */}
-              <button
+              {/* <button
                 onClick={() => setSelectedMethod('momo')}
                 className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
                   selectedMethod === 'momo'
@@ -262,7 +262,7 @@ export function PaymentDialog({
                     <CheckCircle className="h-4 w-4 text-white" />
                   </div>
                 )}
-              </button>
+              </button> */}
             </div>
           </div>
 
