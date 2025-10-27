@@ -165,6 +165,7 @@ export function PaymentDialog({
             <div className="space-y-3">
               {/* (Coin) */}
               <button
+                type="button"
                 onClick={() => setSelectedMethod('coin')}
                 className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
                   selectedMethod === 'coin'
