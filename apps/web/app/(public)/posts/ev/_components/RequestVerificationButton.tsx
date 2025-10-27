@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { requestPostVerification } from '@/lib/api/verificationApi';
 import { useAuth } from '@/lib/auth-context';
 import { PostUI } from '@/types/post';
-import { CheckCircle, Loader2, AlertCircle, Shield, Clock } from 'lucide-react';
+import { Loader2, Shield, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentDialog } from '@/app/(public)/my-posts/_components/payment-dialog';
 
@@ -16,7 +16,6 @@ interface RequestVerificationButtonProps {
 }
 
 export function RequestVerificationButton({ post, onSuccess }: RequestVerificationButtonProps) {
-  const [isRequested, setIsRequested] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const { user, isLoggedIn } = useAuth();
   const queryClient = useQueryClient();
@@ -38,7 +37,6 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
       return requestPostVerification(postId);
     },
     onSuccess: () => {
-      setIsRequested(true);
       toast.success('Yêu cầu kiểm định đã được gửi thành công!', {
         description: 'Admin sẽ xem xét và phản hồi trong thời gian sớm nhất.',
         duration: 5000,
@@ -47,6 +45,12 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
       // Invalidate và refetch dữ liệu bài đăng
       queryClient.invalidateQueries({ queryKey: ['post', post.id] });
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+      // Invalidate public posts pages to show verification status
+      queryClient.invalidateQueries({ queryKey: ['carPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['bikePosts'] });
+      queryClient.invalidateQueries({ queryKey: ['batteryPosts'] });
+      // Invalidate wallet to update balance
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
 
       if (onSuccess) {
         onSuccess();
@@ -74,9 +78,8 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
   };
 
   const handlePaymentSuccess = () => {
-    // Store flag in localStorage to track verification request
-    localStorage.setItem(`verification_requested_${post.id}`, 'true');
-    requestVerificationMutation.mutate(post.id);
+    // Payment dialog already calls backend API
+    // Just close and show success message
   };
 
   // Chỉ hiển thị nút nếu:
@@ -163,6 +166,7 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
         onOpenChange={setShowPaymentDialog}
         postTitle={post.title}
         postId={post.id}
+        postImage={post.images?.[0]?.url}
         isRetry={!!canRequestAgain}
         onPaymentSuccess={handlePaymentSuccess}
       />

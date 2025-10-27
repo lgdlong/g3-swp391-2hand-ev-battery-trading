@@ -1,61 +1,84 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Coins, Shield, CheckCircle, AlertCircle, Loader2, Wallet } from 'lucide-react';
+import { Coins, Shield, Loader2, RefreshCw, CheckCircle, Building2, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
-import { useQuery } from '@tanstack/react-query';
-import { getCurrentUser } from '@/lib/api/accountApi';
+import { getMyWallet } from '@/lib/api/walletApi';
+import { requestPostVerification } from '@/lib/api/verificationApi';
+import Image from 'next/image';
 
 interface PaymentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   postTitle: string;
   postId: string;
+  postImage?: string;
   isRetry?: boolean;
   onPaymentSuccess: () => void;
 }
+
+type PaymentMethod = 'coin' | 'bank' | 'momo';
 
 export function PaymentDialog({
   open,
   onOpenChange,
   postTitle,
   postId,
+  postImage,
   isRetry = false,
   onPaymentSuccess,
 }: PaymentDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('coin');
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const verificationFee = 10; // 10 coins
+  const verificationFee = 50000; // 50,000 VND
+  const totalAmount = verificationFee;
 
-  // Fetch user profile to get current coin balance
-  const { data: userProfile, isLoading: isLoadingProfile } = useQuery({
-    queryKey: ['userProfile', user?.id],
-    queryFn: () => getCurrentUser(),
-    enabled: !!user?.id && open,
+  // Fetch wallet balance from database
+  const { data: wallet, isLoading: isLoadingWallet, refetch: refetchWallet } = useQuery({
+    queryKey: ['wallet', 'me'],
+    queryFn: getMyWallet,
+    enabled: !!user && open,
   });
 
-  // TODO: Remove this mock data when backend coins system is ready
-  const currentCoins = 200; // Mock 200 coins for testing
-  // const currentCoins = userProfile?.coins || 0; // Use this when backend is ready
-  const hasEnoughCoins = currentCoins >= verificationFee;
+  // Get current coin balance from wallet (database)
+  const currentCoins = wallet ? parseFloat(wallet.balance) : 0;
+  const hasEnoughCoins = currentCoins >= totalAmount;
 
   const handlePayment = async () => {
-    if (!hasEnoughCoins) {
+    if (selectedMethod === 'coin' && !hasEnoughCoins) {
       toast.error('Không đủ coin', {
-        description: `Bạn cần ${verificationFee} coins để kiểm định. Hiện tại bạn có ${currentCoins} coins.`,
+        description: `Bạn cần ${new Intl.NumberFormat('vi-VN').format(totalAmount)} ₫ để kiểm định. Hiện tại bạn có ${new Intl.NumberFormat('vi-VN').format(currentCoins)} ₫.`,
         duration: 5000,
+      });
+      return;
+    }
+
+    if (selectedMethod === 'bank') {
+      toast.info('Chức năng đang phát triển', {
+        description: 'Phương thức chuyển khoản ngân hàng sẽ sớm được cập nhật.',
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (selectedMethod === 'momo') {
+      toast.info('Chức năng đang phát triển', {
+        description: 'Phương thức ví MoMo sẽ sớm được cập nhật.',
+        duration: 3000,
       });
       return;
     }
@@ -63,19 +86,28 @@ export function PaymentDialog({
     setIsProcessing(true);
 
     try {
-      // Simulate coin payment processing
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Call backend API to process payment and create verification request
+      await requestPostVerification(postId);
 
       toast.success('Thanh toán thành công!', {
-        description: `Đã trừ ${verificationFee} coins. Yêu cầu kiểm định đã được gửi đến admin.`,
+        description: `Đã trừ ${new Intl.NumberFormat('vi-VN').format(totalAmount)} ₫. Yêu cầu kiểm định đã được gửi đến admin.`,
         duration: 5000,
       });
 
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['carPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['bikePosts'] });
+      queryClient.invalidateQueries({ queryKey: ['batteryPosts'] });
+
       onPaymentSuccess();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Vui lòng thử lại sau.';
       toast.error('Thanh toán thất bại', {
-        description: 'Vui lòng thử lại sau.',
+        description: errorMessage,
         duration: 5000,
       });
     } finally {
@@ -83,149 +115,178 @@ export function PaymentDialog({
     }
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN').format(amount);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-yellow-600" />
-            Thanh toán bằng Coin
-          </DialogTitle>
-          <DialogDescription>
-            Tin đăng: <span className="font-medium text-foreground">{postTitle}</span>
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="border-b pb-4">
+          <DialogTitle className="text-xl font-bold">Dịch vụ</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
-          {/* Service Info */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-full">
-                <Shield className="h-5 w-5 text-blue-600" />
+        <div className="space-y-4">
+          {/* Product Info */}
+          <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+            {postImage ? (
+              <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
+                <Image
+                  src={postImage}
+                  alt={postTitle}
+                  fill
+                  className="object-cover"
+                />
               </div>
-              <div>
-                <h3 className="font-semibold text-blue-900">
-                  {isRetry ? 'Kiểm định lại' : 'Kiểm định lần đầu'}
-                </h3>
-                <p className="text-sm text-blue-700">
-                  Admin sẽ kiểm tra và xác minh thông tin bài đăng của bạn
-                </p>
+            ) : (
+              <div className="w-24 h-24 flex-shrink-0 rounded-lg bg-gray-200 flex items-center justify-center">
+                <Shield className="h-10 w-10 text-gray-400" />
               </div>
-            </div>
-          </div>
-
-          {/* Coin Balance */}
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center justify-between">
+            )}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 line-clamp-2 mb-1">{postTitle}</h3>
               <div className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-yellow-600" />
-                <span className="font-medium text-yellow-900">Số dư Coin:</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Coins className="h-4 w-4 text-yellow-600" />
-                <span className="font-bold text-yellow-900">
-                  {isLoadingProfile ? '...' : currentCoins}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Benefits */}
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-900">Lợi ích:</h4>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Tin đăng được đánh dấu Đã kiểm định</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Hiển thị ưu tiên trong tìm kiếm</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>Tăng độ tin cậy với người mua</span>
+                <Badge variant="outline" className="text-xs">
+                  {isRetry ? 'Kiểm định lại' : 'Đẩy tin 1 ngày'}
+                </Badge>
+                <span className="text-red-600 font-bold">{formatCurrency(verificationFee)} ₫</span>
               </div>
             </div>
           </div>
 
           <Separator />
 
-          {/* Payment Summary */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Phí kiểm định:</span>
-              <div className="flex items-center gap-1">
-                <Coins className="h-4 w-4 text-yellow-600" />
-                <span className="font-semibold text-gray-900">{verificationFee}</span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center text-lg font-bold">
-              <span>Tổng cộng:</span>
-              <div className="flex items-center gap-1">
-                <Coins className="h-5 w-5 text-yellow-600" />
-                <span className="text-yellow-600">{verificationFee} coins</span>
-              </div>
+          {/* Price Summary */}
+          <div className="space-y-2 bg-white border rounded-lg p-4">
+            <div className="flex justify-between text-base font-bold">
+              <span>Tổng tiền thanh toán</span>
+              <span className="text-lg text-red-600">{formatCurrency(totalAmount)} ₫</span>
             </div>
           </div>
 
-          {/* Insufficient Coins Warning */}
-          {!hasEnoughCoins && !isLoadingProfile && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
-                <div className="text-sm text-red-800">
-                  <p className="font-medium">Không đủ coin!</p>
-                  <p>
-                    Bạn cần {verificationFee} coins để kiểm định. Hiện tại bạn có {currentCoins}{' '}
-                    coins.
-                  </p>
-                  <p className="mt-1 text-xs">
-                    Hãy mua thêm coin hoặc kiếm coin từ các hoạt động khác.
+          {/* Payment Methods */}
+          <div>
+            <h3 className="font-semibold mb-3">Chọn hình thức thanh toán</h3>
+            <div className="space-y-3">
+              {/* (Coin) */}
+              <button
+                onClick={() => setSelectedMethod('coin')}
+                className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
+                  selectedMethod === 'coin'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
+                    <Coins className="h-5 w-5 text-white" />
+                  </div>
+                    <div className="text-left">
+                      <p className="font-semibold">Coin</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-600">
+                          Số dư: {isLoadingWallet ? '...' : formatCurrency(currentCoins)} ₫
+                        </p>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            refetchWallet();
+                          }}
+                          className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </div>
+                </div>
+                {selectedMethod === 'coin' && (
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-white" />
+                  </div>
+                )}
+              </button>
+
+              {selectedMethod === 'coin' && !hasEnoughCoins && !isLoadingWallet && (
+                <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  <p className="font-medium">⚠️ Số dư không đủ!</p>
+                  <p className="text-xs mt-1">
+                    Bạn cần nạp thêm {formatCurrency(totalAmount - currentCoins)} ₫ để thanh toán.
                   </p>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* General Warning */}
-          <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-              <div className="text-sm text-yellow-800">
-                <p>Phí kiểm định không hoàn lại. Có thể chỉnh sửa và gửi lại nếu không đạt.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-              disabled={isProcessing}
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={handlePayment}
-              className={`flex-1 ${hasEnoughCoins ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-400 cursor-not-allowed'}`}
-              disabled={isProcessing || !hasEnoughCoins || isLoadingProfile}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : (
-                <>
-                  <Coins className="h-4 w-4 mr-2" />
-                  {hasEnoughCoins ? `Thanh toán ${verificationFee} coins` : 'Không đủ coin'}
-                </>
               )}
-            </Button>
+
+              {/* Chuyển khoản ngân hàng */}
+              <button
+                onClick={() => setSelectedMethod('bank')}
+                className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
+                  selectedMethod === 'bank'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                    <Building2 className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold">Chuyển khoản ngân hàng</p>
+                  </div>
+                </div>
+                {selectedMethod === 'bank' && (
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-white" />
+                  </div>
+                )}
+              </button>
+
+              {/* Ví MoMo */}
+              <button
+                onClick={() => setSelectedMethod('momo')}
+                className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
+                  selectedMethod === 'momo'
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center">
+                    <Wallet className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold">Ví MoMo</p>
+                    <p className="text-sm text-gray-600">Hướng dẫn tải và thanh toán</p>
+                  </div>
+                </div>
+                {selectedMethod === 'momo' && (
+                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                    <CheckCircle className="h-4 w-4 text-white" />
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
+
+          {/* Payment Button */}
+          <Button
+            onClick={handlePayment}
+            className={`w-full h-14 text-lg font-semibold ${
+              selectedMethod === 'coin' && hasEnoughCoins
+                ? 'bg-green-600 hover:bg-green-700'
+                : selectedMethod !== 'coin'
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-gray-400 cursor-not-allowed'
+            }`}
+            disabled={isProcessing || (selectedMethod === 'coin' && !hasEnoughCoins) || isLoadingWallet}
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Đang xử lý...
+              </>
+            ) : (
+              `${formatCurrency(totalAmount)} ₫ - THANH TOÁN`
+            )}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

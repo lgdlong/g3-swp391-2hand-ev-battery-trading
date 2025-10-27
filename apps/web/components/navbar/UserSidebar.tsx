@@ -2,10 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { User, Bookmark, Bell, Settings, LogOut } from 'lucide-react';
+import { User, Bookmark, Bell, Settings, LogOut, Wallet } from 'lucide-react';
 import { Account } from '@/types/account';
 import Image from 'next/image';
 import { isValidAvatarUrl } from '@/lib/validation/file-validation';
+import { useQuery } from '@tanstack/react-query';
+import { getMyWallet } from '@/lib/api/walletApi';
 
 interface UserSidebarProps {
   isOpen: boolean;
@@ -15,7 +17,19 @@ interface UserSidebarProps {
 }
 
 export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProps) {
+  // Fetch wallet data
+  const { data: wallet } = useQuery({
+    queryKey: ['wallet', 'me'],
+    queryFn: getMyWallet,
+    enabled: isOpen && !!user,
+  });
+
   if (!isOpen) return null;
+
+  const formatBalance = (balance: string) => {
+    const num = parseFloat(balance);
+    return new Intl.NumberFormat('vi-VN').format(num);
+  };
 
   const menuItems = [
     { label: 'Hồ sơ', href: '/profile', icon: User },
@@ -52,6 +66,21 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
             <div>
               <p className="font-medium text-gray-900">{user?.fullName || 'Account'}</p>
               <p className="text-sm text-gray-500 capitalize">{user?.role || 'User'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Wallet Section */}
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-amber-50 to-yellow-50 border-b border-amber-100">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center">
+              <Wallet className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <p className="text-xs text-amber-700 font-medium">Số dư coin</p>
+              <p className="text-sm font-bold text-amber-900">
+                {wallet ? `${formatBalance(wallet.balance)} ₫` : 'Đang tải...'}
+              </p>
             </div>
           </div>
         </div>

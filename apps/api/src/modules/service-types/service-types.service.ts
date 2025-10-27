@@ -15,6 +15,26 @@ export class ServiceTypesService {
     return this.serviceTypeRepo.findOne({ where: { code, isActive: true } });
   }
 
+  /**
+   * Find or create service type by code
+   * Auto-creates if not exists with default name and description
+   */
+  async findOrCreateByCode(code: string, name?: string, description?: string): Promise<ServiceType> {
+    let serviceType = await this.serviceTypeRepo.findOne({ where: { code } });
+
+    if (!serviceType) {
+      serviceType = this.serviceTypeRepo.create({
+        code,
+        name: name || code,
+        description: description || `Service type: ${code}`,
+        isActive: true,
+      });
+      await this.serviceTypeRepo.save(serviceType);
+    }
+
+    return serviceType;
+  }
+
   async findAll(): Promise<ServiceType[]> {
     return this.serviceTypeRepo.find({ order: { createdAt: 'DESC' } });
   }

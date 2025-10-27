@@ -86,6 +86,10 @@ export default function AdminPostsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-posts-count'] });
       queryClient.invalidateQueries({ queryKey: ['admin-verification-requests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-rejected-verification-requests'] });
+      // Invalidate public posts pages
+      queryClient.invalidateQueries({ queryKey: ['carPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['bikePosts'] });
+      queryClient.invalidateQueries({ queryKey: ['batteryPosts'] });
       toast.success('Duyệt bài viết thành công!');
     },
     onError: (error) => {
@@ -120,6 +124,10 @@ export default function AdminPostsPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-posts-count'] });
       queryClient.invalidateQueries({ queryKey: ['admin-verification-requests'] });
       queryClient.invalidateQueries({ queryKey: ['admin-rejected-verification-requests'] });
+      // Invalidate public posts pages
+      queryClient.invalidateQueries({ queryKey: ['carPosts'] });
+      queryClient.invalidateQueries({ queryKey: ['bikePosts'] });
+      queryClient.invalidateQueries({ queryKey: ['batteryPosts'] });
       toast.success('Từ chối kiểm định thành công!');
     },
     onError: (error: any) => {
@@ -359,6 +367,10 @@ export default function AdminPostsPage() {
         queryClient.invalidateQueries({ queryKey: ['admin-posts-count'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-verification-requests'] }),
         queryClient.invalidateQueries({ queryKey: ['admin-rejected-verification-requests'] }),
+        // Invalidate public posts pages
+        queryClient.invalidateQueries({ queryKey: ['carPosts'] }),
+        queryClient.invalidateQueries({ queryKey: ['bikePosts'] }),
+        queryClient.invalidateQueries({ queryKey: ['batteryPosts'] }),
         refetch(),
       ]);
 
