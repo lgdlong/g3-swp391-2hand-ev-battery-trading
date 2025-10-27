@@ -17,7 +17,8 @@ import {
   Settings,
   Menu,
   X,
-  LogOut
+  LogOut,
+  DollarSign,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -29,50 +30,50 @@ const navigationItems = [
     name: 'Dashboard',
     href: '/admin',
     icon: LayoutDashboard,
-    badge: null
+    badge: null,
   },
   {
     name: 'Users',
     href: '/admin/accounts',
     icon: Users,
-    badge: null
+    badge: null,
   },
   {
     name: 'Posts',
     href: '/admin/posts',
     icon: FileText,
-    badge: null
+    badge: null,
   },
   {
     name: 'Analytics',
     href: '/admin/analytics',
     icon: BarChart3,
-    badge: null
+    badge: null,
   },
   {
     name: 'Database',
     href: '/admin/database',
     icon: Database,
-    badge: null
+    badge: null,
   },
   {
     name: 'Security',
     href: '/admin/security',
     icon: Shield,
-    badge: null
+    badge: null,
   },
   {
     name: 'Notifications',
     href: '/admin/notifications',
     icon: Bell,
-    badge: null
+    badge: null,
   },
   {
     name: 'Settings',
     href: '/admin/settings',
     icon: Settings,
-    badge: null
-  }
+    badge: null,
+  },
 ];
 
 export function AdminSidebar({ className }: SidebarProps) {
@@ -113,7 +114,7 @@ export function AdminSidebar({ className }: SidebarProps) {
           'fixed left-0 top-0 h-full w-64 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out z-50',
           'lg:translate-x-0',
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
-          className
+          className,
         )}
       >
         <div className="flex flex-col h-full">
@@ -144,9 +145,7 @@ export function AdminSidebar({ className }: SidebarProps) {
                   className={cn(
                     'flex items-center justify-between px-4 py-3 rounded-lg transition-colors duration-200',
                     'hover:bg-gray-800',
-                    isActive
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-300 hover:text-white'
+                    isActive ? 'bg-gray-800 text-white' : 'text-gray-300 hover:text-white',
                   )}
                 >
                   <div className="flex items-center space-x-3">
@@ -173,12 +172,8 @@ export function AdminSidebar({ className }: SidebarProps) {
                 </span>
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-white">
-                  {user?.fullName || 'Admin User'}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {user?.email || 'admin@admin.com'}
-                </p>
+                <p className="text-sm font-medium text-white">{user?.fullName || 'Admin User'}</p>
+                <p className="text-xs text-gray-400">{user?.email || 'admin@admin.com'}</p>
               </div>
             </div>
 
