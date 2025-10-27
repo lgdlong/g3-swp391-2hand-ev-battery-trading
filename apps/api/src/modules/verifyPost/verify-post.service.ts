@@ -52,6 +52,33 @@ export class VerifyPostService {
   }
 
   /**
+   * Deduct verification fee from user's wallet
+   * @param userId - User ID
+   * @param postId - Post ID
+   * @throws BadRequestException if insufficient balance
+   * @private
+   */
+  private async deductVerificationFee(userId: number, postId: string): Promise<void> {
+    try {
+      await this.walletsService.deduct(
+        userId,
+        VERIFICATION_FEE.toString(),
+        'POST_VERIFICATION',
+        `Phí kiểm định bài đăng #${postId}`,
+        'post_verification_requests',
+        postId,
+      );
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Insufficient balance')) {
+        throw new BadRequestException(
+          `Số dư không đủ. Cần ${VERIFICATION_FEE.toLocaleString('vi-VN')} ₫ để yêu cầu kiểm định.`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Request verification for a post (User/Seller only)
    * Only published posts can request verification
    * Requires payment from user's wallet
@@ -89,23 +116,7 @@ export class VerifyPostService {
       // Allow new request only if previous request was rejected
       if (existingRequest.status === VerificationStatus.REJECTED) {
         // Deduct verification fee from wallet
-        try {
-          await this.walletsService.deduct(
-            userId,
-            VERIFICATION_FEE.toString(),
-            'POST_VERIFICATION',
-            `Phí kiểm định bài đăng #${postId}`,
-            'post_verification_requests',
-            postId,
-          );
-        } catch (error) {
-          if (error instanceof Error && error.message.includes('Insufficient balance')) {
-            throw new BadRequestException(
-              `Số dư không đủ. Cần ${VERIFICATION_FEE.toLocaleString('vi-VN')} ₫ để yêu cầu kiểm định.`,
-            );
-          }
-          throw error;
-        }
+        await this.deductVerificationFee(userId, postId);
 
         // Update existing rejected request to pending
         existingRequest.status = VerificationStatus.PENDING;
@@ -124,23 +135,7 @@ export class VerifyPostService {
     }
 
     // Deduct verification fee from wallet BEFORE creating request
-    try {
-      await this.walletsService.deduct(
-        userId,
-        VERIFICATION_FEE.toString(),
-        'POST_VERIFICATION',
-        `Phí kiểm định bài đăng #${postId}`,
-        'post_verification_requests',
-        postId,
-      );
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('Insufficient balance')) {
-        throw new BadRequestException(
-          `Số dư không đủ. Cần ${VERIFICATION_FEE.toLocaleString('vi-VN')} ₫ để yêu cầu kiểm định.`,
-        );
-      }
-      throw error;
-    }
+    await this.deductVerificationFee(userId, postId);
 
     // Create verification request
     const verificationRequest = this.verificationRepo.create({
