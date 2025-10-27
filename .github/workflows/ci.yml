@@ -1,0 +1,90 @@
+name: CI - Build Only
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build All Packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 🛒 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: 📦 Install dependencies
+        # CI không cần husky hoặc prepare script
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: ⚡ Build (with Turbo cache)
+        run: pnpm turbo run build --filter=...[HEAD^1]
+
+      - name: ✅ Verify build output
+        run: |
+          echo "✅ Build completed successfully!"
+          ls -la apps/web/.next || echo "⚠️ Web build output not found"
+          ls -la apps/api/dist || echo "⚠️ API build output not found"
+
+  comment:
+    name: Post PR Build Status
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: 💬 Post build status comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildStatus = '${{ needs.build.result }}';
+            const emoji = buildStatus === 'success' ? '✅' : '❌';
+            const message =
+              buildStatus === 'success'
+                ? '✨ Build completed successfully!'
+                : '⚠️ Build failed. Please fix before merging.';
+
+            const comment = `## CI Build Status ${emoji}
+
+            | Check | Status |
+            |-------|--------|
+            | Build | ${emoji} ${buildStatus.toUpperCase()} |
+
+            ${message}
+
+            ---
+            *Last updated: ${new Date().toUTCString()}*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
