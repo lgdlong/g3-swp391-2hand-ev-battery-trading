@@ -18,7 +18,7 @@ interface UserSidebarProps {
 
 export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProps) {
   // Fetch wallet data
-  const { data: wallet } = useQuery({
+  const { data: wallet, isLoading: isLoadingWallet } = useQuery({
     queryKey: ['wallet', 'me'],
     queryFn: getMyWallet,
     enabled: isOpen && !!user,
@@ -79,7 +79,11 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
             <div>
               <p className="text-xs text-amber-700 font-medium">Số dư coin</p>
               <p className="text-sm font-bold text-amber-900">
-                {wallet ? `${formatBalance(wallet.balance)} ₫` : 'Đang tải...'}
+                {isLoadingWallet
+                  ? 'Đang tải...'
+                  : wallet
+                    ? `${formatBalance(wallet.balance)} ₫`
+                    : '0 ₫'}
               </p>
             </div>
           </div>
