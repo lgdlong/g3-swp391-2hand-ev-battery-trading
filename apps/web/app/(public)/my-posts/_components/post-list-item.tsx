@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Edit, Trash2, Eye, Package, AlertCircle } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
 import { RequestVerificationButton } from '@/app/(public)/posts/ev/_components/RequestVerificationButton';
+import { VerificationBadge } from '@/components/VerificationBadge';
 
 interface PostListItemProps {
   post: Post;
@@ -157,12 +158,12 @@ export default function PostListItem({
           {/* Title and Status Badge */}
           <div className="flex items-start justify-between gap-3">
             <h3 className="font-medium text-base line-clamp-2 flex-1">{post.title}</h3>
+            {post.verificationRequest?.status === 'APPROVED' && <VerificationBadge />}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Badge variant={getStatusBadgeVariant(post.status)} className="shrink-0">
                   {getStatusLabel(post.status)}
                 </Badge>
-                {/* todo */}
               </TooltipTrigger>
               <TooltipContent>
                 <p>{getStatusTooltip(post.status)}</p>
