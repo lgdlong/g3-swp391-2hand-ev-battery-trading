@@ -1,17 +1,7 @@
-import {
-  Controller,
-  Post,
-  Patch,
-  Get,
-  Param,
-  Body,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Post, Patch, Get, Param, Body, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
   ApiParam,
   ApiOkResponse,
@@ -31,6 +21,8 @@ import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
 import { Roles } from '../../core/decorators/roles.decorator';
 import { AccountRole } from '../../shared/enums/account-role.enum';
+import { CurrentUser } from '../../core/decorators/current-user.decorator';
+import type { ReqUser } from '../../core/decorators/current-user.decorator';
 
 @ApiTags('Post Verification')
 @Controller('verify-post')
@@ -53,9 +45,9 @@ export class VerifyPostController {
   async requestVerification(
     @Param('postId') postId: string,
     @Body() dto: RequestVerificationDto,
-    @Request() req: any,
+    @CurrentUser() user: ReqUser,
   ): Promise<VerificationRequestResponseDto> {
-    return this.verifyPostService.requestVerification(postId, req.user.sub, dto);
+    return this.verifyPostService.requestVerification(postId, user.sub, dto);
   }
 
   @ApiBearerAuth()
@@ -75,9 +67,9 @@ export class VerifyPostController {
   async approveVerification(
     @Param('postId') postId: string,
     @Body() dto: ApproveVerificationDto,
-    @Request() req: any,
+    @CurrentUser() user: ReqUser,
   ): Promise<VerificationRequestResponseDto> {
-    return this.verifyPostService.approveVerification(postId, req.user.sub, dto);
+    return this.verifyPostService.approveVerification(postId, user.sub, dto);
   }
 
   @ApiBearerAuth()
@@ -97,9 +89,9 @@ export class VerifyPostController {
   async rejectVerification(
     @Param('postId') postId: string,
     @Body() dto: RejectVerificationDto,
-    @Request() req: any,
+    @CurrentUser() user: ReqUser,
   ): Promise<VerificationRequestResponseDto> {
-    return this.verifyPostService.rejectVerification(postId, req.user.sub, dto);
+    return this.verifyPostService.rejectVerification(postId, user.sub, dto);
   }
 
   @ApiBearerAuth()
@@ -111,11 +103,17 @@ export class VerifyPostController {
   })
   @ApiNotFoundResponse({ description: 'Không tìm thấy yêu cầu kiểm định' })
   @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không có quyền xem yêu cầu kiểm định này' })
   @Get(':postId')
   async getVerificationRequest(
     @Param('postId') postId: string,
+    @CurrentUser() user: ReqUser,
   ): Promise<VerificationRequestResponseDto | null> {
-    return this.verifyPostService.getVerificationRequest(postId);
+    return this.verifyPostService.getVerificationRequest(
+      postId,
+      user.sub,
+      user.role as AccountRole,
+    );
   }
 
   @ApiBearerAuth()
@@ -157,9 +155,9 @@ export class VerifyPostController {
   @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
   @Get('user/my-requests')
   async getMyVerificationRequests(
-    @Request() req: any,
+    @CurrentUser() user: ReqUser,
   ): Promise<VerificationRequestResponseDto[]> {
-    return this.verifyPostService.getVerificationRequestsByUser(req.user.sub);
+    return this.verifyPostService.getVerificationRequestsByUser(user.sub);
   }
 
   @ApiBearerAuth()
@@ -171,10 +169,16 @@ export class VerifyPostController {
   })
   @ApiNotFoundResponse({ description: 'Không tìm thấy yêu cầu kiểm định' })
   @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không có quyền xem yêu cầu kiểm định này' })
   @Get('post/:postId')
   async getVerificationRequestByPostId(
     @Param('postId') postId: string,
+    @CurrentUser() user: ReqUser,
   ): Promise<VerificationRequestResponseDto | null> {
-    return this.verifyPostService.getVerificationRequest(postId);
+    return this.verifyPostService.getVerificationRequest(
+      postId,
+      user.sub,
+      user.role as AccountRole,
+    );
   }
 }
