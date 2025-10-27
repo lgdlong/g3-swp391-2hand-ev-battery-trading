@@ -2,11 +2,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { BadgeCheckIcon, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { displayValue, formatVnd } from './utils';
 import type { Post } from '@/types/api/post';
 import { HeartCallApi } from './HeartCallApi';
 import { DEFAULT_IMAGE } from '@/constants/images';
+import { VerificationBadge } from '@/components/VerificationBadge';
 
 interface PostCardProps {
   item: Post;
@@ -54,15 +55,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
             </div>
             {/* Verification badge - góc trên bên phải */}
             {item.verificationRequest?.status === 'APPROVED' && (
-              <div className="absolute right-4 top-4">
-                {/* <Badge className="bg-green-500 text-white border-0 shadow-md px-2 py-1 rounded-md">
-                  <span className="text-xs font-medium">✓ Verified</span>
-                </Badge> */}
-                <Badge variant="secondary" className="bg-blue-500 text-white dark:bg-blue-600">
-                  <BadgeCheckIcon />
-                  Đã kiểm định
-                </Badge>
-              </div>
+              <VerificationBadge className="absolute top-3 right-3" />
             )}
             {/* Status badge removed */}
             {(item.carDetails?.origin === 'NOI_DIA' || item.bikeDetails?.origin === 'NOI_DIA') && (
