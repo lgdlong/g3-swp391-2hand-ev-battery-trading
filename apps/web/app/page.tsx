@@ -15,13 +15,12 @@ import {
   Users,
   ArrowRight,
   CheckCircle,
-  BadgeCheckIcon,
 } from 'lucide-react';
 import { getCarPostsWithQuery, getBikePostsWithQuery } from '@/lib/api/postApi';
 import { useQuery } from '@tanstack/react-query';
 import { DEFAULT_IMAGE } from '@/constants/images';
 import { useAuth } from '@/lib/auth-context';
-import { Badge } from '@/components/ui/badge';
+import { VerificationBadge } from '@/components/VerificationBadge';
 
 export default function Home() {
   const router = useRouter();
@@ -334,13 +333,7 @@ export default function Home() {
                         </div>
                         {/* Verification badge - góc trên bên phải */}
                         {post.verificationRequest?.status === 'APPROVED' && (
-                          <Badge
-                            variant="secondary"
-                            className="bg-blue-500 text-white dark:bg-blue-600"
-                          >
-                            <BadgeCheckIcon />
-                            Đã kiểm định
-                          </Badge>
+                          <VerificationBadge className="absolute top-3 right-3" />
                         )}
                         {/* Status badge removed */}
                       </div>

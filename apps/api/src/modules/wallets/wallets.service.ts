@@ -144,11 +144,12 @@ export class WalletsService {
       // Initialize wallet if not exists
       const wallet = await ensureWalletInTx(manager, userId);
 
-      // Get service type for wallet topup
-      const serviceType = await this.serviceTypesService.findByCode('WALLET_TOPUP');
-      if (!serviceType) {
-        throw new NotFoundException('WALLET_TOPUP service type not found');
-      }
+      // Get service type for wallet topup (auto-create if not exists)
+      const serviceType = await this.serviceTypesService.findOrCreateByCode(
+        'WALLET_TOPUP',
+        this.getServiceTypeName('WALLET_TOPUP'),
+        this.getServiceTypeDescription('WALLET_TOPUP'),
+      );
 
       // Create wallet transaction
       const transaction = transactionRepo.create({
@@ -207,11 +208,12 @@ export class WalletsService {
         throw new Error('Insufficient balance');
       }
 
-      // Get service type
-      const serviceType = await this.serviceTypesService.findByCode(serviceTypeCode);
-      if (!serviceType) {
-        throw new NotFoundException(`Service type with code '${serviceTypeCode}' not found`);
-      }
+      // Get service type (auto-create if not exists)
+      const serviceType = await this.serviceTypesService.findOrCreateByCode(
+        serviceTypeCode,
+        this.getServiceTypeName(serviceTypeCode),
+        this.getServiceTypeDescription(serviceTypeCode),
+      );
 
       // Create wallet transaction (store as negative for debit)
       const transaction = transactionRepo.create({
@@ -231,6 +233,32 @@ export class WalletsService {
 
       return { wallet, transaction };
     });
+  }
+
+  /**
+   * Get service type name by code
+   */
+  private getServiceTypeName(code: string): string {
+    const names: Record<string, string> = {
+      'WALLET_TOPUP': 'Nạp tiền vào ví',
+      'POST_VERIFICATION': 'Phí kiểm định bài đăng',
+      'POST_PAYMENT': 'Thanh toán đăng bài',
+      'ADJUSTMENT': 'Điều chỉnh số dư',
+    };
+    return names[code] || code;
+  }
+
+  /**
+   * Get service type description by code
+   */
+  private getServiceTypeDescription(code: string): string {
+    const descriptions: Record<string, string> = {
+      'WALLET_TOPUP': 'Nạp tiền vào ví qua PayOS',
+      'POST_VERIFICATION': 'Thanh toán phí để yêu cầu kiểm định bài đăng',
+      'POST_PAYMENT': 'Thanh toán phí để đăng bài tin',
+      'ADJUSTMENT': 'Admin điều chỉnh số dư ví của user',
+    };
+    return descriptions[code] || `Service type: ${code}`;
   }
 
   /**
@@ -266,11 +294,12 @@ export class WalletsService {
     userId: number,
     createTopupDto: CreateTopupDto,
   ): Promise<{ paymentOrder: PaymentOrder; payosRequest: CreatePayosDto }> {
-    // Get WALLET_TOPUP service type
-    const serviceType = await this.serviceTypesService.findByCode('WALLET_TOPUP');
-    if (!serviceType) {
-      throw new NotFoundException('WALLET_TOPUP service type not found');
-    }
+    // Get WALLET_TOPUP service type (auto-create if not exists)
+    const serviceType = await this.serviceTypesService.findOrCreateByCode(
+      'WALLET_TOPUP',
+      this.getServiceTypeName('WALLET_TOPUP'),
+      this.getServiceTypeDescription('WALLET_TOPUP'),
+    );
 
     // Create payment order record first to get the ID
     const paymentOrder = this.paymentOrderRepo.create({
@@ -373,11 +402,12 @@ export class WalletsService {
         throw new Error('Insufficient balance');
       }
 
-      // Get service type for deduction
-      const serviceType = await this.serviceTypesService.findByCode('ADJUSTMENT');
-      if (!serviceType) {
-        throw new NotFoundException('ADJUSTMENT service type not found');
-      }
+      // Get service type for deduction (auto-create if not exists)
+      const serviceType = await this.serviceTypesService.findOrCreateByCode(
+        'ADJUSTMENT',
+        this.getServiceTypeName('ADJUSTMENT'),
+        this.getServiceTypeDescription('ADJUSTMENT'),
+      );
 
       // Create wallet transaction (store as negative for deduction)
       const transaction = transactionRepo.create({
