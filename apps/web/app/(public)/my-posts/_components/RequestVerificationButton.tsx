@@ -65,7 +65,8 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
         data: error?.response?.data,
       });
 
-      const errorMessage = error?.response?.data?.message || error?.message || 'Vui lòng thử lại sau.';
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'Vui lòng thử lại sau.';
       toast.error('Không thể gửi yêu cầu kiểm định', {
         description: errorMessage,
         duration: 7000,
@@ -78,8 +79,7 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
   };
 
   const handlePaymentSuccess = () => {
-    // Payment dialog already calls backend API
-    // Just close and show success message
+    toast.success('Yêu cầu kiểm định đã được gửi.');
   };
 
   // Chỉ hiển thị nút nếu:
@@ -109,8 +109,7 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
     post.verificationRequest?.status === 'REJECTED';
 
   const isPendingVerification =
-    post.status === 'PUBLISHED' &&
-    post.verificationRequest?.status === 'PENDING';
+    post.status === 'PUBLISHED' && post.verificationRequest?.status === 'PENDING';
   // Debug log to verify fields are now properly mapped
   console.log('RequestVerificationButton: Post verification status', {
     postId: post.id,
@@ -173,5 +172,3 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
     </>
   );
 }
-
-

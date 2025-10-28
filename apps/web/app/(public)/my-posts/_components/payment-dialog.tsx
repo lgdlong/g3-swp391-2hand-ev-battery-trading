@@ -66,21 +66,21 @@ export function PaymentDialog({
       return;
     }
 
-    if (selectedMethod === 'bank') {
-      toast.info('Chức năng đang phát triển', {
-        description: 'Phương thức chuyển khoản ngân hàng sẽ sớm được cập nhật.',
-        duration: 3000,
-      });
-      return;
-    }
+    // if (selectedMethod === 'bank') {
+    //   toast.info('Chức năng đang phát triển', {
+    //     description: 'Phương thức chuyển khoản ngân hàng sẽ sớm được cập nhật.',
+    //     duration: 3000,
+    //   });
+    //   return;
+    // }
 
-    if (selectedMethod === 'momo') {
-      toast.info('Chức năng đang phát triển', {
-        description: 'Phương thức ví MoMo sẽ sớm được cập nhật.',
-        duration: 3000,
-      });
-      return;
-    }
+    // if (selectedMethod === 'momo') {
+    //   toast.info('Chức năng đang phát triển', {
+    //     description: 'Phương thức ví MoMo sẽ sớm được cập nhật.',
+    //     duration: 3000,
+    //   });
+    //   return;
+    // }
 
     setIsProcessing(true);
 
@@ -89,7 +89,7 @@ export function PaymentDialog({
       await requestPostVerification(postId);
 
       toast.success('Thanh toán thành công!', {
-        description: `Đã trừ ${new Intl.NumberFormat('vi-VN').format(totalAmount)} ₫. Yêu cầu kiểm định đã được gửi đến admin.`,
+        description: `Đã trừ ${new Intl.NumberFormat('vi-VN').format(totalAmount)} ₫.`,
         duration: 5000,
       });
 

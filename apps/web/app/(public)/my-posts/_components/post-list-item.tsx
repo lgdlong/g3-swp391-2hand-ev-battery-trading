@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Edit, Trash2, Eye, Package, AlertCircle } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
-import { RequestVerificationButton } from '@/app/(public)/posts/ev/_components/RequestVerificationButton';
 import { VerificationBadge } from '@/components/VerificationBadge';
+import { RequestVerificationButton } from './RequestVerificationButton';
 
 interface PostListItemProps {
   post: Post;
