@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, QueryFailedError } from 'typeorm';
 import { ServiceType } from './entities/service-type.entity';
 import { CreateServiceTypeDto, UpdateServiceTypeDto } from './dto';
 
@@ -18,21 +18,48 @@ export class ServiceTypesService {
   /**
    * Find or create service type by code
    * Auto-creates if not exists with default name and description
+   * Uses transaction to prevent race conditions
    */
-  async findOrCreateByCode(code: string, name?: string, description?: string): Promise<ServiceType> {
-    let serviceType = await this.serviceTypeRepo.findOne({ where: { code } });
-
-    if (!serviceType) {
-      serviceType = this.serviceTypeRepo.create({
-        code,
-        name: name || code,
-        description: description || `Service type: ${code}`,
-        isActive: true,
+  async findOrCreateByCode(
+    code: string,
+    name?: string,
+    description?: string,
+  ): Promise<ServiceType> {
+    return await this.serviceTypeRepo.manager.transaction(async (transactionalEntityManager) => {
+      // First, try to find the service type within the transaction
+      let serviceType = await transactionalEntityManager.findOne(ServiceType, {
+        where: { code },
+        lock: { mode: 'pessimistic_write' },
       });
-      await this.serviceTypeRepo.save(serviceType);
-    }
 
-    return serviceType;
+      if (!serviceType) {
+        try {
+          // Create new service type within the transaction
+          serviceType = transactionalEntityManager.create(ServiceType, {
+            code,
+            name: name || code,
+            description: description || `Service type: ${code}`,
+            isActive: true,
+          });
+          await transactionalEntityManager.save(serviceType);
+        } catch (error) {
+          // If creation fails due to unique constraint, try to find again
+          // This handles the race condition where another transaction created it
+          if (error instanceof QueryFailedError && error.message.includes('duplicate key')) {
+            serviceType = await transactionalEntityManager.findOne(ServiceType, {
+              where: { code },
+            });
+            if (!serviceType) {
+              throw error; // Re-throw if still not found
+            }
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      return serviceType;
+    });
   }
 
   async findAll(): Promise<ServiceType[]> {
