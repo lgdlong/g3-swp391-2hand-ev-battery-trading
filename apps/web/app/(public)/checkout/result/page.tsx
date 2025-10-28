@@ -11,8 +11,8 @@ function CheckoutResultContent() {
   const walletTransId = searchParams.get('id') || '5ZDX4D';
 
   // Validate transaction ID
-  const transactionId = parseInt(walletTransId);
-  const isValidId = !isNaN(transactionId) && transactionId > 0;
+  const transactionId = walletTransId ? parseInt(walletTransId, 10) : 0;
+  const isValidId = !!walletTransId && !isNaN(transactionId) && transactionId > 0;
 
   // Fetch transaction details
   const {
