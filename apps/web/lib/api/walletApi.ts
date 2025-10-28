@@ -53,7 +53,10 @@ export async function createTopupPayment(payload: CreateTopupDto): Promise<any> 
 /**
  * Get current user's wallet transactions
  */
-export async function getMyTransactions(limit: number = 20, offset: number = 0): Promise<WalletTransaction[]> {
+export async function getMyTransactions(
+  limit: number = 20,
+  offset: number = 0,
+): Promise<WalletTransaction[]> {
   const params = new URLSearchParams();
   params.append('limit', limit.toString());
   params.append('offset', offset.toString());
@@ -67,4 +70,9 @@ export async function getMyTransactions(limit: number = 20, offset: number = 0):
   return data;
 }
 
-
+export async function getTransactionById(id: number): Promise<WalletTransaction> {
+  const { data } = await api.get<WalletTransaction>(`/wallets/transactions/me/${id}`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}

@@ -240,10 +240,10 @@ export class WalletsService {
    */
   private getServiceTypeName(code: string): string {
     const names: Record<string, string> = {
-      'WALLET_TOPUP': 'Nạp tiền vào ví',
-      'POST_VERIFICATION': 'Phí kiểm định bài đăng',
-      'POST_PAYMENT': 'Thanh toán đăng bài',
-      'ADJUSTMENT': 'Điều chỉnh số dư',
+      WALLET_TOPUP: 'Nạp tiền vào ví',
+      POST_VERIFICATION: 'Phí kiểm định bài đăng',
+      POST_PAYMENT: 'Thanh toán đăng bài',
+      ADJUSTMENT: 'Điều chỉnh số dư',
     };
     return names[code] || code;
   }
@@ -253,10 +253,10 @@ export class WalletsService {
    */
   private getServiceTypeDescription(code: string): string {
     const descriptions: Record<string, string> = {
-      'WALLET_TOPUP': 'Nạp tiền vào ví qua PayOS',
-      'POST_VERIFICATION': 'Thanh toán phí để yêu cầu kiểm định bài đăng',
-      'POST_PAYMENT': 'Thanh toán phí để đăng bài tin',
-      'ADJUSTMENT': 'Admin điều chỉnh số dư ví của user',
+      WALLET_TOPUP: 'Nạp tiền vào ví qua PayOS',
+      POST_VERIFICATION: 'Thanh toán phí để yêu cầu kiểm định bài đăng',
+      POST_PAYMENT: 'Thanh toán phí để đăng bài tin',
+      ADJUSTMENT: 'Admin điều chỉnh số dư ví của user',
     };
     return descriptions[code] || `Service type: ${code}`;
   }
@@ -282,6 +282,35 @@ export class WalletsService {
     });
 
     return WalletTransactionMapper.toResponseDtoArray(transactions);
+  }
+
+  /**
+   * Get wallet transaction by ID
+   * @param transactionId - Transaction ID
+   * @param userId - User ID (optional, for access control)
+   * @returns Wallet transaction details
+   */
+  async getTransactionById(
+    transactionId: number,
+    userId?: number,
+  ): Promise<WalletTransactionResponseDto> {
+    const whereCondition: any = { id: transactionId };
+
+    // If userId is provided, ensure user can only access their own transactions
+    if (userId) {
+      whereCondition.walletUserId = userId;
+    }
+
+    const transaction = await this.walletTransactionRepo.findOne({
+      where: whereCondition,
+      relations: ['serviceType'],
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Transaction not found');
+    }
+
+    return WalletTransactionMapper.toResponseDto(transaction);
   }
 
   /**
