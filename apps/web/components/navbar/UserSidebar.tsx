@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Bookmark, Bell, Settings, LogOut, Wallet, Plus } from 'lucide-react';
+import { User, Bookmark, Bell, Settings, LogOut, Wallet, Plus, Clock } from 'lucide-react';
 import { Account } from '@/types/account';
 import Image from 'next/image';
 import { isValidAvatarUrl } from '@/lib/validation/file-validation';
@@ -44,6 +44,7 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
   const menuItems = [
     { label: 'Hồ sơ', href: '/profile', icon: User },
     { label: 'Bookmarks', href: '/bookmarks', icon: Bookmark },
+    { label: 'Lịch sử giao dịch', href: '/wallet', icon: Clock },
     { label: 'Thông báo', href: '/notifications', icon: Bell },
     { label: 'Cài đặt', href: '/settings', icon: Settings },
   ];
@@ -91,37 +92,39 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
             </div>
 
             {/* Wallet Section */}
-            <Link
-              href="/wallet"
-              onClick={onClose}
-              className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#048C73]/5 to-[#048C73]/10 hover:bg-[#048C73]/15 border-b border-gray-100 transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#048C73] flex items-center justify-center">
-                  <Wallet className="h-4 w-4 text-white" />
+            <div className="bg-gradient-to-r from-[#048C73]/5 to-[#048C73]/10 border-b border-gray-100">
+              <Link
+                href="/wallet"
+                onClick={onClose}
+                className="flex items-center justify-between px-4 py-3 hover:bg-[#048C73]/15 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#048C73] flex items-center justify-center">
+                    <Wallet className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#048C73] font-medium">Số dư coin</p>
+                    <p className="text-sm font-bold text-[#048C73]">
+                      {isLoadingWallet
+                        ? 'Đang tải...'
+                        : wallet
+                          ? `${formatBalance(wallet.balance)} ₫`
+                          : '0 ₫'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-[#048C73] font-medium">Số dư coin</p>
-                  <p className="text-sm font-bold text-[#048C73]">
-                    {isLoadingWallet
-                      ? 'Đang tải...'
-                      : wallet
-                        ? `${formatBalance(wallet.balance)} ₫`
-                        : '0 ₫'}
-                  </p>
-                </div>
-              </div>
-            </Link>
-
-            {/* Menu Items */}
-            <div className="py-2">
+              </Link>
               <button
                 onClick={handleTopupClick}
-                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full"
+                className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#048C73]/15 transition-colors w-full"
               >
                 <Plus className="h-4 w-4 text-gray-500" />
                 <span>Nạp coin</span>
               </button>
+            </div>
+
+            {/* Menu Items */}
+            <div className="py-2">
               {menuItems.map((item) => (
                 <Link
                   key={item.label}

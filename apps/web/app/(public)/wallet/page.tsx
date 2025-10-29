@@ -101,52 +101,9 @@ export default function WalletPage() {
       </section>
 
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Balance Card */}
-        <Card className="mb-8 border-2 border-[#048C73]/20 shadow-xl bg-gradient-to-br from-white via-[#048C73]/5 to-[#048C73]/10">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-[#048C73] rounded-xl">
-                <Wallet className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl text-gray-900">Số dư khả dụng</CardTitle>
-                <CardDescription className="text-gray-600 mt-1">
-                  Dùng để thanh toán khi yêu cầu kiểm định bài đăng
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {walletLoading ? (
-              <Skeleton className="h-20 w-full" />
-            ) : (
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                  <p className="text-5xl md:text-6xl font-bold text-[#048C73] mb-2">
-                    {wallet ? `${formatBalance(wallet.balance)}` : '0'}
-                    <span className="text-3xl md:text-4xl ml-2">₫</span>
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Cập nhật lần cuối:{' '}
-                    {wallet ? new Date(wallet.updatedAt).toLocaleString('vi-VN') : 'N/A'}
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setIsTopupModalOpen(true)}
-                  size="lg"
-                  className="bg-[#048C73] hover:bg-[#037060] text-white shadow-lg"
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Nạp coin ngay
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Transaction History Section */}
         <Card className="border-2 border-gray-200 shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-[#048C73]/5 to-[#048C73]/10 border-b">
+          <CardHeader className="bg-gradient-to-r border-b">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-[#048C73] rounded-lg">
