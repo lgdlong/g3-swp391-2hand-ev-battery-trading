@@ -14,6 +14,7 @@ import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { validate } from 'class-validator';
 import { plainToClass } from 'class-transformer';
+import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 /**
  * Chat Gateway - WebSocket handler for real-time messaging
@@ -37,25 +38,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatService: ChatService,
   ) {}
 
-  /**
-   * Handle new WebSocket connection
-   * Authenticate user and join them to their conversation rooms
-   */
   async handleConnection(client: Socket) {
     try {
-      // Extract JWT token from handshake auth
-      const token = client.handshake.auth?.token;
-      if (!token) {
-        throw new UnauthorizedException('JWT token required');
-      }
+      // Get access token from headers
+      const token = client.handshake.headers.access_token;
+
+      if (!token) throw new UnauthorizedException('JWT token required');
+
+      if (Array.isArray(token)) throw new UnauthorizedException('Invalid token format');
 
       // Verify and decode JWT
-      const payload = await this.jwtService.verifyAsync(token);
+      const payload: JwtPayload = await this.jwtService.verifyAsync(token);
       const userId = payload.sub;
 
-      if (!userId) {
-        throw new UnauthorizedException('Invalid token payload');
-      }
+      if (!userId) throw new UnauthorizedException('Invalid token payload');
 
       // Store user info in socket
       client.data.userId = userId;
@@ -78,18 +74,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  /**
-   * Handle WebSocket disconnection
-   */
   handleDisconnect(client: Socket) {
     const userId = client.data?.userId;
     this.logger.log(`User ${userId || 'unknown'} disconnected from chat`);
   }
 
-  /**
-   * FR-CHAT-M3: Handle sending messages
-   * Listen for 'sendMessage' events and broadcast to conversation participants
-   */
   @SubscribeMessage('sendMessage')
   async handleSendMessage(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
     try {
