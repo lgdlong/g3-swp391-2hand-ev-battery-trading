@@ -24,6 +24,11 @@ const nextConfig = {
         hostname: 'avatar.iran.liara.run',
         pathname: '/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        pathname: '/**',
+      },
     ],
   },
   // Security headers including CSP
