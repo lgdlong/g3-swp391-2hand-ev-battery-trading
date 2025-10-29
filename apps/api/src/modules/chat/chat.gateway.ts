@@ -98,6 +98,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
+      // Verify access to conversation before sending message
+      const hasAccess = await this.chatService.verifyConversationAccess(
+        sendMessageDto.conversationId,
+        userId,
+      );
+
+      if (!hasAccess) {
+        client.emit('error', { message: 'Access denied to conversation' });
+        return;
+      }
+
       // Send message through service
       const message = await this.chatService.sendMessage(sendMessageDto, userId);
 
