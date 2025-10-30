@@ -36,8 +36,8 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
   };
 
   const handleTopup = async () => {
-    if (amount < 10000) {
-      toast.error('Số tiền nạp tối thiểu là 10.000 ₫');
+    if (amount < 2000) {
+      toast.error('Số tiền nạp tối thiểu là 2.000 ₫');
       return;
     }
 
