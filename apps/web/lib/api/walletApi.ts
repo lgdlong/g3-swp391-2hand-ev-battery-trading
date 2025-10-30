@@ -43,7 +43,9 @@ export async function getMyWallet(): Promise<Wallet> {
 /**
  * Create topup payment link via PayOS
  */
-export async function createTopupPayment(payload: CreateTopupDto): Promise<any> {
+export async function createTopupPayment(
+  payload: CreateTopupDto,
+): Promise<{ data?: { checkoutUrl?: string } }> {
   const { data } = await api.post('/wallets/topup/payment', payload, {
     headers: getAuthHeaders(),
   });
@@ -74,5 +76,15 @@ export async function getTransactionById(id: number): Promise<WalletTransaction>
   const { data } = await api.get<WalletTransaction>(`/wallets/transactions/me/${id}`, {
     headers: getAuthHeaders(),
   });
+  return data;
+}
+
+export async function getTransactionByOrderCode(orderCode: string): Promise<WalletTransaction> {
+  const { data } = await api.get<WalletTransaction>(
+    `/wallets/transactions/orderCode/${orderCode}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
   return data;
 }

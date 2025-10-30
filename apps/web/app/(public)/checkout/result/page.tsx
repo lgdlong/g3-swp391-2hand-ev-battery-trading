@@ -3,26 +3,32 @@
 import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getTransactionById, type WalletTransaction } from '@/lib/api/walletApi';
+import { getTransactionByOrderCode, type WalletTransaction } from '@/lib/api/walletApi';
 
 function CheckoutResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const walletTransId = searchParams.get('id') || '5ZDX4D';
+  const orderCode = searchParams.get('orderCode');
+  const paymentStatus = searchParams.get('status');
+  const paymentCode = searchParams.get('code');
+  const cancelFlag = searchParams.get('cancel');
 
-  // Validate transaction ID
-  const transactionId = walletTransId ? parseInt(walletTransId, 10) : 0;
-  const isValidId = !!walletTransId && !isNaN(transactionId) && transactionId > 0;
+  // Validate orderCode
+  const isValidOrderCode = !!orderCode && orderCode.trim().length > 0;
 
-  // Fetch transaction details
+  // Determine if payment was successful based on URL params
+  const isPaymentSuccessful =
+    paymentStatus === 'PAID' && paymentCode === '00' && cancelFlag === 'false';
+
+  // Fetch transaction details by orderCode
   const {
     data: transaction,
     isLoading,
     error,
   } = useQuery<WalletTransaction>({
-    queryKey: ['transaction', transactionId],
-    queryFn: () => getTransactionById(transactionId),
-    enabled: isValidId,
+    queryKey: ['transaction', 'orderCode', orderCode],
+    queryFn: () => getTransactionByOrderCode(orderCode!),
+    enabled: isValidOrderCode,
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -46,7 +52,7 @@ function CheckoutResultContent() {
   }
 
   // Show error state
-  if (!isValidId || error || (!isLoading && !transaction)) {
+  if (!isValidOrderCode || error || (!isLoading && !transaction)) {
     return (
       <div className="min-h-screen bg-gray-100 py-8 px-4">
         <div className="max-w-3xl mx-auto space-y-6">
@@ -57,9 +63,9 @@ function CheckoutResultContent() {
           </div>
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <p className="text-gray-600">
-              {!isValidId
-                ? `ID giao dịch &quot;${walletTransId}&quot; không hợp lệ.`
-                : `Giao dịch với ID &quot;${walletTransId}&quot; không tồn tại hoặc bạn không có quyền truy cập.`}
+              {!isValidOrderCode
+                ? `Mã đơn hàng &quot;${orderCode || 'không có'}&quot; không hợp lệ.`
+                : `Giao dịch với mã đơn hàng &quot;${orderCode}&quot; không tồn tại hoặc bạn không có quyền truy cập.`}
             </p>
             <button
               onClick={() => router.back()}
@@ -92,7 +98,17 @@ function CheckoutResultContent() {
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Tiêu đề chính */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2 text-green-600">Thanh toán thành công</h1>
+          <h1
+            className={`text-3xl font-bold mb-2 ${isPaymentSuccessful ? 'text-green-600' : 'text-orange-600'}`}
+          >
+            {isPaymentSuccessful ? 'Thanh toán thành công' : 'Trạng thái thanh toán'}
+          </h1>
+          {paymentStatus && (
+            <p className="text-sm text-gray-600">
+              Trạng thái: <span className="font-medium">{paymentStatus}</span>
+              {paymentCode && ` (Mã: ${paymentCode})`}
+            </p>
+          )}
         </div>
 
         {/* Khối Chi tiết đơn hàng */}
@@ -101,6 +117,11 @@ function CheckoutResultContent() {
             <h2 className="text-lg font-bold">Chi tiết đơn hàng</h2>
           </div>
           <div className="p-5 space-y-3">
+            {orderCode && (
+              <div className="text-gray-600">
+                Mã đơn hàng: <strong className="text-black">{orderCode}</strong>
+              </div>
+            )}
             <div className="text-gray-600">
               Mã giao dịch: <strong className="text-black">{transaction.id}</strong>
             </div>
@@ -164,7 +185,7 @@ function CheckoutResultContent() {
         {/* Các nút hành động */}
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <button
-            onClick={() => router.push('/wallet/transactions')}
+            onClick={() => router.push(`/wallet/transactions/${transaction.id}`)}
             className="flex-1 py-3 px-6 border border-orange-500 text-orange-500 rounded-md font-medium uppercase hover:bg-orange-50 transition-colors"
           >
             CHI TIẾT GIAO DỊCH
