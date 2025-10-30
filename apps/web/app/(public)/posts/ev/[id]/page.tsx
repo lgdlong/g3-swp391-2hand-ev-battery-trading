@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheckIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FilterButtons } from '@/components/breadcrumb-filter';
@@ -12,6 +11,7 @@ import { usePost, useAccount } from '../_queries';
 import { Specifications } from './_components';
 import { PostHeader } from '@/app/(public)/posts/_components';
 import { SellerInfo } from './_components/SellerInfo';
+import { VerificationBadge } from '@/components/VerificationBadge';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -108,13 +108,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
                     {post.verificationRequest?.status === 'APPROVED' && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-blue-500 text-white dark:bg-blue-600"
-                      >
-                        <BadgeCheckIcon />
-                        Đã kiểm định
-                      </Badge>
+                      <VerificationBadge />
                     )}
                   </div>
                 </div>

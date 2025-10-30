@@ -217,4 +217,40 @@ export class WalletsController {
   ): Promise<WalletTransactionResponseDto[]> {
     return this.walletsService.getTransactions(userId);
   }
+
+  @Get('transactions/me/:transactionId')
+  @ApiOperation({ summary: 'Get my wallet transaction by ID' })
+  @ApiParam({ name: 'transactionId', description: 'Transaction ID', type: Number })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Transaction retrieved successfully',
+    type: WalletTransactionResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Transaction not found or access denied',
+  })
+  async getMyTransaction(
+    @CurrentUser() user: ReqUser,
+    @Param('transactionId', new ParseIntPipe({ errorHttpStatusCode: 400 })) transactionId: number,
+  ): Promise<WalletTransactionResponseDto> {
+    return this.walletsService.getTransactionById(transactionId, user.sub);
+  }
+
+  @Get('transactions/admin/:transactionId')
+  @UseGuards(RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiOperation({ summary: 'Get wallet transaction by ID (Admin only)' })
+  @ApiParam({ name: 'transactionId', description: 'Transaction ID', type: Number })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Transaction retrieved successfully',
+    type: WalletTransactionResponseDto,
+  })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Transaction not found' })
+  async getTransactionById(
+    @Param('transactionId', new ParseIntPipe({ errorHttpStatusCode: 400 })) transactionId: number,
+  ): Promise<WalletTransactionResponseDto> {
+    return this.walletsService.getTransactionById(transactionId);
+  }
 }
