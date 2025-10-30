@@ -237,6 +237,25 @@ export class WalletsController {
     return this.walletsService.getTransactionById(transactionId, user.sub);
   }
 
+  @Get('transactions/orderCode/:orderCode')
+  @ApiOperation({ summary: 'Get my wallet transaction by orderCode' })
+  @ApiParam({ name: 'orderCode', description: 'Payment orderCode from PayOS', type: String })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Transaction retrieved successfully',
+    type: WalletTransactionResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Transaction not found or access denied',
+  })
+  async getMyTransactionByOrderCode(
+    @CurrentUser() user: ReqUser,
+    @Param('orderCode') orderCode: string,
+  ): Promise<WalletTransactionResponseDto> {
+    return this.walletsService.getTransactionByOrderCode(orderCode, user.sub);
+  }
+
   @Get('transactions/admin/:transactionId')
   @UseGuards(RolesGuard)
   @Roles(AccountRole.ADMIN)

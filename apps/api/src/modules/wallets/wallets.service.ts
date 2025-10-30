@@ -456,4 +456,32 @@ export class WalletsService {
       return { wallet, transaction };
     });
   }
+
+  /**
+   * Get wallet transaction by orderCode
+   * @param orderCode - Payment order code from PayOS
+   * @param userId - User ID to verify ownership
+   * @returns Wallet transaction
+   */
+  async getTransactionByOrderCode(orderCode: string, userId?: number): Promise<WalletTransaction> {
+    const queryBuilder = this.walletTransactionRepo
+      .createQueryBuilder('transaction')
+      .leftJoinAndSelect('transaction.serviceType', 'serviceType')
+      .where('transaction.relatedEntityId = :orderCode', { orderCode });
+
+    // If userId is provided, add ownership check
+    if (userId) {
+      queryBuilder.andWhere('transaction.walletUserId = :userId', { userId });
+    }
+
+    const transaction = await queryBuilder.getOne();
+
+    if (!transaction) {
+      throw new NotFoundException(
+        `Transaction with orderCode ${orderCode} not found${userId ? ' or access denied' : ''}`,
+      );
+    }
+
+    return transaction;
+  }
 }
