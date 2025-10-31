@@ -1,11 +1,8 @@
 import { cn } from '@/lib/utils';
+import { Message } from '@/types/chat';
 
 interface MessageBubbleProps {
-  message: {
-    id: string;
-    sender: string;
-    text: string;
-  };
+  message: Message;
   isCurrentUser: boolean;
 }
 
@@ -18,7 +15,7 @@ export default function MessageBubble({ message, isCurrentUser }: MessageBubbleP
           isCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-gray-100 text-gray-900',
         )}
       >
-        <p className="text-sm">{message.text}</p>
+        <p className="text-sm">{message.content}</p>
       </div>
     </div>
   );

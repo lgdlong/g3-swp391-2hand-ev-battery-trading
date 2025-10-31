@@ -1,32 +1,21 @@
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Conversation } from '@/types/chat';
 import ChatItem from './ChatItem';
 
-interface ChatData {
-  id: string;
-  sellerName: string;
-  sellerAvatar: string;
-  lastMessage: string;
-  lastMessageTime: string;
-  product: {
-    image: string;
-    title: string;
-    price: string;
-  };
-  messages: Array<{
-    id: string;
-    sender: string;
-    text: string;
-  }>;
-}
-
 interface SidebarProps {
-  chats: ChatData[];
+  conversations: Conversation[];
   activeChatId: string | null;
   onChatSelect: (id: string) => void;
+  currentUserId?: number;
 }
 
-export default function Sidebar({ chats, activeChatId, onChatSelect }: SidebarProps) {
+export default function Sidebar({
+  conversations,
+  activeChatId,
+  onChatSelect,
+  currentUserId,
+}: SidebarProps) {
   return (
     <div className="w-96 border-r border-gray-200 bg-white flex flex-col h-full">
       {/* Header */}
@@ -38,18 +27,31 @@ export default function Sidebar({ chats, activeChatId, onChatSelect }: SidebarPr
       {/* Chat List */}
       <ScrollArea className="flex-1">
         <div className="divide-y divide-gray-200">
-          {chats.map((chat) => (
-            <ChatItem
-              key={chat.id}
-              id={chat.id}
-              sellerName={chat.sellerName}
-              sellerAvatar={chat.sellerAvatar}
-              lastMessage={chat.lastMessage}
-              lastMessageTime={chat.lastMessageTime}
-              isActive={activeChatId === chat.id}
-              onClick={onChatSelect}
-            />
-          ))}
+          {conversations.map((conversation) => {
+            // Determine other user (seller or buyer)
+            const otherUser =
+              currentUserId === conversation.sellerId ? conversation.buyer : conversation.seller;
+
+            return (
+              <ChatItem
+                key={conversation.id}
+                id={conversation.id}
+                sellerName={otherUser.fullName}
+                sellerAvatar={otherUser.avatarUrl || ''}
+                lastMessage={conversation.lastMessage?.content || 'Chưa có tin nhắn'}
+                lastMessageTime={
+                  conversation.lastMessage?.createdAt
+                    ? new Date(conversation.lastMessage.createdAt).toLocaleTimeString('vi-VN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : ''
+                }
+                isActive={activeChatId === conversation.id}
+                onClick={onChatSelect}
+              />
+            );
+          })}
         </div>
       </ScrollArea>
     </div>

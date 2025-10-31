@@ -100,44 +100,23 @@ export default function ChatPage() {
     );
   }
 
-  // Transform conversations for Sidebar component
-  const transformedChats = conversations.map((conv) => ({
-    id: conv.id,
-    sellerName: user?.id === conv.sellerId ? conv.buyer.fullName : conv.seller.fullName,
-    sellerAvatar: 'https://placehold.co/100x100/EFEFEF/AAAAAA?text=User',
-    lastMessage: conv.lastMessage?.content || 'Chưa có tin nhắn',
-    lastMessageTime: conv.lastMessage?.createdAt
-      ? new Date(conv.lastMessage.createdAt).toLocaleTimeString('vi-VN', {
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      : '',
-    product: {
-      image: conv.post.images?.[0] || 'https://placehold.co/600x400/EFEFEF/AAAAAA?text=Product',
-      title: conv.post.title,
-      price: new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(conv.post.price),
-    },
-    messages:
-      messagesData?.messages?.map((msg) => ({
-        id: msg.id,
-        sender: msg.senderId === user?.id ? 'user' : 'seller',
-        text: msg.content,
-      })) || [],
-  }));
-
-  const activeTransformedChat = transformedChats.find((chat) => chat.id === activeChatId) || null;
+  const activeConversation = conversations.find((conv) => conv.id === activeChatId) || null;
+  const messages = messagesData?.messages || [];
 
   return (
     <div className="h-[calc(100vh-4rem)] flex bg-gray-50">
       <Sidebar
-        chats={transformedChats}
+        conversations={conversations}
         activeChatId={activeChatId}
         onChatSelect={handleChatSelect}
+        currentUserId={user.id}
       />
-      <ChatWindow chat={activeTransformedChat} onSendMessage={handleSendMessage} />
+      <ChatWindow
+        conversation={activeConversation}
+        messages={messages}
+        currentUserId={user.id}
+        onSendMessage={handleSendMessage}
+      />
     </div>
   );
 }
