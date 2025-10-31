@@ -45,7 +45,7 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
 
       // Navigate to chat page with conversation ID
       router.push(`/chat/${conversation.id}`);
-      toast.success('Đang chuyển đến trang chat...');
+      toast.success('Đang chuyển đến cuộc trò chuyện...');
     } catch (error) {
       console.error('Error creating conversation:', error);
       toast.error('Có lỗi xảy ra khi tạo cuộc trò chuyện');
