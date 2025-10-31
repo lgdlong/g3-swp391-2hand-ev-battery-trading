@@ -102,7 +102,7 @@ export class ChatService {
       .leftJoinAndSelect(
         'conversation.messages',
         'lastMessage',
-        'lastMessage.createdAt = (SELECT MAX(m.createdAt) FROM messages m WHERE m.conversation_id = conversation.id)',
+        'lastMessage.created_at = (SELECT MAX(m.created_at) FROM messages m WHERE m.conversation_id = conversation.id)',
       )
       .leftJoinAndSelect('lastMessage.sender', 'messageSender')
       .where('conversation.buyerId = :userId OR conversation.sellerId = :userId', {
@@ -195,8 +195,7 @@ export class ChatService {
   }
 
   /**
-   * Verify if user has access to a conversation
-   * Used by WebSocket gateway for authorization
+   * Verify access to conversation before allowing operations
    */
   async verifyConversationAccess(conversationId: string, userId: number): Promise<boolean> {
     const conversation = await this.conversationRepo.findOne({

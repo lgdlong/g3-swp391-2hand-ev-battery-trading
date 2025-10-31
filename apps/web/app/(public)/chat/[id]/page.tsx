@@ -1,122 +1,143 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatWindow from '@/components/chat/ChatWindow';
-
-// Mock data
-const mockChats = [
-  {
-    id: 'chat1',
-    sellerName: 'Ms Phương Thảo Vinfast',
-    sellerAvatar:
-      'https://lh3.googleusercontent.com/a/ACg8ocIRVcncypNY0pxX-3uuJ3ml3ru50UN1T87ISG3ds6X6bZ3dRdsg9A=s96-c',
-    lastMessage: 'Dạ xe này bên em còn ạ...',
-    lastMessageTime: '5 phút trước',
-    product: {
-      image:
-        'https://lh3.googleusercontent.com/a/ACg8ocIRVcncypNY0pxX-3uuJ3ml3ru50UN1T87ISG3ds6X6bZ3dRdsg9A=s96-c',
-      title: 'VF5 TRẢ TRƯỚC 0 ĐỒNG, VINCLUB 10TR, GIẢM GIÁ XE4%',
-      price: '495.000.000 đ',
-    },
-    messages: [
-      { id: 'm1', sender: 'user', text: 'Xe này còn không ạ?' },
-      {
-        id: 'm2',
-        sender: 'seller',
-        text: 'Dạ xe này bên em còn ạ. Anh chị có muốn xem thêm thông tin chi tiết không?',
-      },
-      { id: 'm3', sender: 'user', text: 'Vâng, em muốn biết thêm về tình trạng pin ạ' },
-      {
-        id: 'm4',
-        sender: 'seller',
-        text: 'Pin xe còn rất tốt, dung lượng còn 85%. Em có thể gửi anh chị báo cáo chi tiết về pin được ạ',
-      },
-    ],
-  },
-  {
-    id: 'chat2',
-    sellerName: 'Anh Minh Toyota',
-    sellerAvatar: 'https://placehold.co/100x100/EFEFEF/AAAAAA?text=User2',
-    lastMessage: 'Xe Camry này tình trạng rất tốt...',
-    lastMessageTime: '1 giờ trước',
-    product: {
-      image: 'https://placehold.co/600x400/EFEFEF/AAAAAA?text=Camry',
-      title: 'Toyota Camry 2022 - Pin lai tốt',
-      price: '850.000.000 đ',
-    },
-    messages: [
-      { id: 'm5', sender: 'user', text: 'Xe Camry này tình trạng như thế nào ạ?' },
-      {
-        id: 'm6',
-        sender: 'seller',
-        text: 'Xe Camry này tình trạng rất tốt, đi được 2 năm, pin lai vẫn hoạt động bình thường',
-      },
-    ],
-  },
-  {
-    id: 'chat3',
-    sellerName: 'Chị Lan BMW',
-    sellerAvatar: 'https://placehold.co/100x100/EFEFEF/AAAAAA?text=User3',
-    lastMessage: 'BMW i3 này đã qua sử dụng nhưng...',
-    lastMessageTime: '3 giờ trước',
-    product: {
-      image: 'https://placehold.co/600x400/EFEFEF/AAAAAA?text=BMWi3',
-      title: 'BMW i3 2021 - Xe điện cao cấp',
-      price: '1.200.000.000 đ',
-    },
-    messages: [
-      { id: 'm7', sender: 'user', text: 'BMW i3 này còn bảo hành không ạ?' },
-      {
-        id: 'm8',
-        sender: 'seller',
-        text: 'BMW i3 này đã qua sử dụng nhưng vẫn còn bảo hành pin từ hãng đến 2025 ạ',
-      },
-    ],
-  },
-];
+import { useConversations, useConversationMessages } from '@/hooks/useChat';
+import { useAuth } from '@/lib/auth-context';
+import { useChatWebSocket } from '@/hooks/useChatWebSocket';
 
 export default function ChatPage() {
   const params = useParams();
+  const router = useRouter();
   const chatId = params.id as string;
+  const { user, isLoggedIn, loading } = useAuth();
 
-  const [activeChatId, setActiveChatId] = useState<string | null>(chatId || 'chat1');
-  const [chats, setChats] = useState(mockChats);
+  const [activeChatId, setActiveChatId] = useState<string | null>(chatId || null);
 
-  const activeChat = chats.find((chat) => chat.id === activeChatId) || null;
+  // React Query hooks - only enabled when user is logged in
+  const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
+  const { data: messagesData } = useConversationMessages(
+    activeChatId || '',
+    { limit: 50 },
+    !!activeChatId && !!isLoggedIn,
+  );
 
+  // WebSocket integration
+  const {
+    sendMessage: wsSendMessage,
+    joinConversation,
+    leaveConversation,
+    isConnected,
+  } = useChatWebSocket();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !isLoggedIn) {
+      router.push('/login');
+      return;
+    }
+  }, [isLoggedIn, loading, router]);
+
+  // Handle chat selection
   const handleChatSelect = (chatId: string) => {
+    // Leave previous conversation
+    if (activeChatId) {
+      leaveConversation({ conversationId: activeChatId });
+    }
+
     setActiveChatId(chatId);
   };
 
+  // Handle sending message
   const handleSendMessage = (message: string) => {
-    if (!activeChatId) return;
+    if (!activeChatId || !isConnected) return;
 
-    const newMessage = {
-      id: `m${Date.now()}`,
-      sender: 'user',
-      text: message,
-    };
-
-    setChats((prevChats) =>
-      prevChats.map((chat) =>
-        chat.id === activeChatId
-          ? {
-              ...chat,
-              messages: [...chat.messages, newMessage],
-              lastMessage: message,
-              lastMessageTime: 'Vừa xong',
-            }
-          : chat,
-      ),
-    );
+    // Send via WebSocket
+    wsSendMessage({
+      conversationId: activeChatId,
+      content: message,
+    });
   };
+
+  // Join conversation when activeChatId changes
+  useEffect(() => {
+    if (!activeChatId || !isConnected) return;
+
+    // Join conversation room
+    joinConversation({ conversationId: activeChatId });
+
+    return () => {
+      leaveConversation({ conversationId: activeChatId });
+    };
+  }, [activeChatId, isConnected, joinConversation, leaveConversation]);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Don't render chat if user data is not available
+  if (!user) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Loading states
+  if (conversationsLoading) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Transform conversations for Sidebar component
+  const transformedChats = conversations.map((conv) => ({
+    id: conv.id,
+    sellerName: user?.id === conv.sellerId ? conv.buyer.fullName : conv.seller.fullName,
+    sellerAvatar: 'https://placehold.co/100x100/EFEFEF/AAAAAA?text=User',
+    lastMessage: conv.lastMessage?.content || 'Chưa có tin nhắn',
+    lastMessageTime: conv.lastMessage?.createdAt
+      ? new Date(conv.lastMessage.createdAt).toLocaleTimeString('vi-VN', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '',
+    product: {
+      image: conv.post.images?.[0] || 'https://placehold.co/600x400/EFEFEF/AAAAAA?text=Product',
+      title: conv.post.title,
+      price: new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(conv.post.price),
+    },
+    messages:
+      messagesData?.messages?.map((msg) => ({
+        id: msg.id,
+        sender: msg.senderId === user?.id ? 'user' : 'seller',
+        text: msg.content,
+      })) || [],
+  }));
+
+  const activeTransformedChat = transformedChats.find((chat) => chat.id === activeChatId) || null;
 
   return (
     <div className="h-[calc(100vh-4rem)] flex bg-gray-50">
-      <Sidebar chats={chats} activeChatId={activeChatId} onChatSelect={handleChatSelect} />
-      <ChatWindow chat={activeChat} onSendMessage={handleSendMessage} />
+      <Sidebar
+        chats={transformedChats}
+        activeChatId={activeChatId}
+        onChatSelect={handleChatSelect}
+      />
+      <ChatWindow chat={activeTransformedChat} onSendMessage={handleSendMessage} />
     </div>
   );
 }
