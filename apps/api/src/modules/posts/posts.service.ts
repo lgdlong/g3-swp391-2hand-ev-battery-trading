@@ -624,4 +624,27 @@ export class PostsService {
       return PostMapper.toBasePostResponseDto(updatedPost!);
     });
   }
+
+  /**
+   * Recall a post by the owner - mark it as ARCHIVED
+   */
+  async recallMyPostById(id: string, userId: number): Promise<BasePostResponseDto> {
+    const post = await this.postsRepo.findOne({
+      where: { id, seller: { id: userId } },
+      relations: this.POST_FULL_RELATIONS,
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found or you do not have permission to recall it');
+    }
+
+    if (post.status === PostStatus.ARCHIVED) {
+      throw new BadRequestException('Post already archived');
+    }
+
+    post.status = PostStatus.ARCHIVED;
+    await this.postsRepo.save(post);
+
+    return PostMapper.toBasePostResponseDto(post);
+  }
 }
