@@ -154,8 +154,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
           <div className="lg:col-span-2 space-y-6">
             <PostHeader post={post} details={details} />
 
-            <Specifications post={post} />
-
             {post.description && (
               <Card key={`post-description-${post.id}`} className="border-none shadow-none">
                 <CardContent className="p-6">
@@ -166,6 +164,8 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 </CardContent>
               </Card>
             )}
+
+            <Specifications post={post} />
           </div>
         </div>
       </div>
