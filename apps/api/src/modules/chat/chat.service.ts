@@ -11,6 +11,8 @@ import { Message } from './entities/message.entity';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { Post } from '../posts/entities/post.entity';
+import { ConversationResponseDto } from './dto/conversation-response.dto';
+import { mapConversationToDto } from './mappers/chat.mapper';
 
 /**
  * Chat Service - Handles all chat-related business logic
@@ -34,7 +36,7 @@ export class ChatService {
   async createOrGetConversation(
     createConversationDto: CreateConversationDto,
     buyerId: number,
-  ): Promise<Conversation> {
+  ): Promise<ConversationResponseDto> {
     const { postId } = createConversationDto;
 
     // Find the post to get seller info
@@ -60,11 +62,11 @@ export class ChatService {
         postId,
         buyerId,
       },
-      relations: ['post', 'buyer', 'seller'],
+      relations: ['post', 'post.images', 'post.seller', 'buyer', 'seller'],
     });
 
     if (conversation) {
-      return conversation;
+      return mapConversationToDto(conversation);
     }
 
     // Create new conversation
@@ -79,24 +81,26 @@ export class ChatService {
     // Fetch with relations
     const result = await this.conversationRepo.findOne({
       where: { id: savedConversation.id },
-      relations: ['post', 'buyer', 'seller'],
+      relations: ['post', 'post.images', 'post.seller', 'buyer', 'seller'],
     });
 
     if (!result) {
       throw new NotFoundException('Failed to create conversation');
     }
 
-    return result;
+    return mapConversationToDto(result);
   }
 
   /**
    * FR-CHAT-M2: Get all conversations for a user
    * Returns conversations where user is either buyer or seller
    */
-  async getUserConversations(userId: number): Promise<Conversation[]> {
-    return await this.conversationRepo
+  async getUserConversations(userId: number): Promise<ConversationResponseDto[]> {
+    const conversations = await this.conversationRepo
       .createQueryBuilder('conversation')
       .leftJoinAndSelect('conversation.post', 'post')
+      .leftJoinAndSelect('post.images', 'images')
+      .leftJoinAndSelect('post.seller', 'postSeller')
       .leftJoinAndSelect('conversation.buyer', 'buyer')
       .leftJoinAndSelect('conversation.seller', 'seller')
       .leftJoinAndSelect(
@@ -110,6 +114,8 @@ export class ChatService {
       })
       .orderBy('conversation.updatedAt', 'DESC')
       .getMany();
+
+    return conversations.map(mapConversationToDto);
   }
 
   /**
