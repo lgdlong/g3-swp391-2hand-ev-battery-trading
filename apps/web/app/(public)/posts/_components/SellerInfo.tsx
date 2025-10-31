@@ -86,13 +86,12 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       </div>
 
       <div className="space-y-2">
-        <button className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-medium transition-colors">
-          <MessageCircle className="h-4 w-4 inline mr-2" />
+        <button className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-bold transition-colors">
           Liên hệ người bán
         </button>
         {account.phone ? (
-          <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-medium transition-colors">
-            Gọi {account.phone}
+          <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors">
+            {account.phone}
           </button>
         ) : (
           <button
