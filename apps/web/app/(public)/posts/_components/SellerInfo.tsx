@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Calendar, User, Clock, MessageCircle, Phone } from 'lucide-react';
+import { Calendar, MapPin, User, MessageCircle, Phone } from 'lucide-react';
 import { relativeTime } from '@/lib/utils/format';
 import type { PostUI } from '@/types/post';
 import type { AccountUI } from '@/types/account';
@@ -75,6 +75,10 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
             <span className="text-gray-400">Không rõ</span>
           </div>
         )}
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4" />
+          <span>{String(post.provinceNameCached) || 'Không rõ'}</span>
+        </div>
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           <span>Tham gia {relativeTime(account.createdAt)}</span>

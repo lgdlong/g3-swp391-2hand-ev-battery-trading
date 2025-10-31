@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { Specifications } from './_components';
-import { PostHeader } from '@/app/(public)/posts/_components';
-import { SellerInfo } from './_components/SellerInfo';
+import { PostHeader, SellerInfo } from '@/app/(public)/posts/_components';
 import { VerificationBadge } from '@/components/VerificationBadge';
 
 interface Props {
@@ -107,9 +106,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                     >
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
-                    {post.verificationRequest?.status === 'APPROVED' && (
-                      <VerificationBadge />
-                    )}
+                    {post.verificationRequest?.status === 'APPROVED' && <VerificationBadge />}
                   </div>
                 </div>
                 {post.images?.length > 1 && (
