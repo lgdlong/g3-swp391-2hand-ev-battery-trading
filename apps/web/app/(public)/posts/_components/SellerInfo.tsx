@@ -1,9 +1,13 @@
 import Image from 'next/image';
-import { Calendar, MapPin, User, MessageCircle, Phone } from 'lucide-react';
+import { Calendar, MapPin, User, Phone } from 'lucide-react';
 import { relativeTime } from '@/lib/utils/format';
 import type { PostUI } from '@/types/post';
 import type { AccountUI } from '@/types/account';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/lib/auth-context';
+import { useCreateConversation } from '@/hooks/useChat';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface SellerInfoProps {
   account: AccountUI | undefined;
@@ -15,6 +19,39 @@ interface SellerInfoProps {
  * Seller Information Component
  */
 export function SellerInfo({ account, post }: SellerInfoProps) {
+  const { user, isLoggedIn } = useAuth();
+  const router = useRouter();
+  const createConversationMutation = useCreateConversation();
+
+  const handleContactSeller = async () => {
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      toast.error('Vui lòng đăng nhập để liên hệ người bán');
+      router.push('/login');
+      return;
+    }
+
+    // Check if user is trying to contact themselves
+    if (user?.id === account?.id) {
+      toast.error('Bạn không thể liên hệ với chính mình');
+      return;
+    }
+
+    try {
+      // Create or get existing conversation
+      const conversation = await createConversationMutation.mutateAsync({
+        postId: post.id,
+      });
+
+      // Navigate to chat page with conversation ID
+      router.push(`/chat/${conversation.id}`);
+      toast.success('Đang chuyển đến trang chat...');
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      toast.error('Có lỗi xảy ra khi tạo cuộc trò chuyện');
+    }
+  };
+
   if (!account) {
     return (
       <div className="text-center text-gray-500">
@@ -86,8 +123,14 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       </div>
 
       <div className="space-y-2">
-        <button className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-bold transition-colors">
-          Liên hệ người bán
+        <button
+          onClick={handleContactSeller}
+          disabled={createConversationMutation.isPending}
+          className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {createConversationMutation.isPending
+            ? 'Đang tạo cuộc trò chuyện...'
+            : 'Liên hệ người bán'}
         </button>
         {account.phone ? (
           <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors">
