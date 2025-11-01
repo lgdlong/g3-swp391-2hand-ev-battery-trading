@@ -21,6 +21,7 @@ export default function ChatComposer({ onSendMessage }: ChatComposerProps) {
 
   const handleSend = () => {
     if (message.trim()) {
+      console.log('[DEBUG] Sending message:', message.trim());
       onSendMessage(message.trim());
       setMessage('');
     }

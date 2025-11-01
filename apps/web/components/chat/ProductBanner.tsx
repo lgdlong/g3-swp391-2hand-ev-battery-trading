@@ -22,6 +22,7 @@ export default function ProductBanner({ post }: ProductBannerProps) {
               src={firstImage?.url || 'https://placehold.co/600x400/EFEFEF/AAAAAA?text=Product'}
               alt={post.title}
               fill
+              sizes="48px"
               className="object-cover rounded-md"
             />
           </div>

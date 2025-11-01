@@ -45,7 +45,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
               "img-src 'self' data: https: blob:", // Allow images from https sources
               "font-src 'self' data:",
-              "connect-src 'self' http://localhost:8000 https:", // API connections
+              "connect-src 'self' http://localhost:8000 ws://localhost:8000 https: wss:", // API + WebSocket connections
               "frame-src 'none'", // Prevent clickjacking
               "object-src 'none'", // Block plugins
               "base-uri 'self'", // Prevent base tag injection

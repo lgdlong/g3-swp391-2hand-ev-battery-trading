@@ -17,12 +17,26 @@ export default function ChatPage() {
   const [activeChatId, setActiveChatId] = useState<string | null>(chatId || null);
 
   // React Query hooks - only enabled when user is logged in
-  const { data: conversations = [], isLoading: conversationsLoading } = useConversations();
-  const { data: messagesData } = useConversationMessages(
+  const {
+    data: conversations = [],
+    isLoading: conversationsLoading,
+    error: conversationsError,
+  } = useConversations();
+  const { data: messagesData, error: messagesError } = useConversationMessages(
     activeChatId || '',
     { limit: 50 },
     !!activeChatId && !!isLoggedIn,
   );
+
+  // Log any API errors
+  useEffect(() => {
+    if (conversationsError) {
+      console.error('❌ Error loading conversations:', conversationsError);
+    }
+    if (messagesError) {
+      console.error('❌ Error loading messages:', messagesError);
+    }
+  }, [conversationsError, messagesError]);
 
   // WebSocket integration
   const {
@@ -32,7 +46,33 @@ export default function ChatPage() {
     isConnected,
   } = useChatWebSocket();
 
-  // Redirect to login if not authenticated
+  // Handle case where requested conversation doesn't exist
+  useEffect(() => {
+    if (!conversationsLoading && conversations.length > 0 && activeChatId) {
+      const conversationExists = conversations.some((conv) => conv.id === activeChatId);
+      if (!conversationExists) {
+        console.warn(
+          `❌ Conversation ${activeChatId} not found, redirecting to first available conversation`,
+        );
+        // Redirect to first available conversation
+        const firstConversation = conversations[0];
+        if (firstConversation) {
+          router.replace(`/chat/${firstConversation.id}`);
+        }
+      }
+    }
+  }, [conversations, conversationsLoading, activeChatId, router]);
+
+  // Redirect to first conversation if no specific chat is selected
+  useEffect(() => {
+    if (!conversationsLoading && conversations.length > 0 && !activeChatId) {
+      console.log('📝 No active chat selected, redirecting to first conversation');
+      const firstConversation = conversations[0];
+      if (firstConversation) {
+        router.replace(`/chat/${firstConversation.id}`);
+      }
+    }
+  }, [conversations, conversationsLoading, activeChatId, router]);
   useEffect(() => {
     if (!loading && !isLoggedIn) {
       router.push('/login');
@@ -52,7 +92,14 @@ export default function ChatPage() {
 
   // Handle sending message
   const handleSendMessage = (message: string) => {
-    if (!activeChatId || !isConnected) return;
+    console.log('[DEBUG] Sending message to conversation:', activeChatId);
+    console.log('[DEBUG] Message content:', message);
+    console.log('[DEBUG] WebSocket connected status:', isConnected);
+
+    if (!activeChatId || !isConnected) {
+      console.warn('❌ Cannot send message: No active chat or WebSocket not connected');
+      return;
+    }
 
     // Send via WebSocket
     wsSendMessage({

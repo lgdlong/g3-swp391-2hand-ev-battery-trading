@@ -145,7 +145,7 @@ export class ChatService {
     const [messages, total] = await this.messageRepo.findAndCount({
       where: { conversationId },
       relations: ['sender'],
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'ASC' }, // ✅ Oldest messages first (proper chat order)
       skip: (page - 1) * limit,
       take: limit,
     });
