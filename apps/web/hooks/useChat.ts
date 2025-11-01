@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { chatApi } from '@/lib/api/chatApi';
 import type { Conversation, MessagesResponse, PaginationParams } from '@/types/chat';
-import { ACCESS_TOKEN_KEY } from '@/config/constants';
+import { useAuth } from '@/lib/auth-context';
 
 // Query Keys
 export const chatKeys = {
@@ -13,11 +13,13 @@ export const chatKeys = {
 
 // Hooks for Conversations
 export const useConversations = () => {
+  const { isLoggedIn } = useAuth();
+
   return useQuery({
     queryKey: chatKeys.conversations(),
     queryFn: chatApi.getConversations,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!localStorage.getItem(ACCESS_TOKEN_KEY),
+    enabled: isLoggedIn,
   });
 };
 
