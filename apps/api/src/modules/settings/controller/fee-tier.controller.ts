@@ -32,7 +32,6 @@ export class FeeTierController {
   }
 
   @Get()
-  @Roles(AccountRole.ADMIN)
   @ApiOperation({ summary: 'Get all fee tiers' })
   @ApiResponse({
     status: 200,
