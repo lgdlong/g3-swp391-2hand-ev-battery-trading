@@ -6,18 +6,21 @@ import { CurrentUser } from '../../core/decorators/current-user.decorator';
 import type { ReqUser } from '../../core/decorators/current-user.decorator';
 import { RefundRequestDto } from './dto/refund-request.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
+import { Roles } from 'src/core/decorators/roles.decorator';
+import { AccountRole } from 'src/shared/enums/account-role.enum';
+import { RolesGuard } from 'src/core/guards/roles.guard';
 
 
-@UseGuards(JwtAuthGuard)
 @Controller('refunds')
 export class RefundsController {
   constructor(private readonly refundsService: RefundsService) {}
 
+
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
   @Post()
-  async handleRefund(@Body() dto: RefundRequestDto, @CurrentUser() user: ReqUser) {
-    if (user.role == null) {
-      throw new UnauthorizedException('User role is missing');
-    }
-    return this.refundsService.handleRefund(dto, { id: user.sub, role: user.role });
+  async handleRefund(@Body() dto: RefundRequestDto) {
+    return this.refundsService.handleRefund(dto);
   }
 }

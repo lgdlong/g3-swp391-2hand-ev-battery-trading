@@ -6,6 +6,7 @@ import { RefundRequestDto, RefundScenario } from './dto/refund-request.dto';
 import { PaymentOrder } from '../payos/entities/payment-order.entity';
 import { WalletsService } from '../wallets/wallets.service';
 import { PaymentStatus } from 'src/shared/enums/payment-status.enum';
+import { ReqUser } from 'src/core/decorators/current-user.decorator';
 // Nếu có Post entity và muốn auto archive bài thì import thêm:
 // import { Post } from '../posts/entities/post.entity';
 // import { PostStatus } from 'src/shared/enums/post-status.enum';
@@ -44,7 +45,7 @@ export class RefundsService {
     }
   }
 
-  async handleRefund(dto: RefundRequestDto, admin: { id: number; role: string }) {
+  async handleRefund(dto: RefundRequestDto) {
     // 1) Locate payment order
     const po = await this.poRepo.findOne({
       where: dto.orderCode ? { orderCode: dto.orderCode } : { id: String(dto.paymentOrderId!) },
