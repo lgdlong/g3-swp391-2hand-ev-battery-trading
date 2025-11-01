@@ -12,8 +12,8 @@ import { UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
-import { validate } from 'class-validator';
-import { plainToClass } from 'class-transformer';
+import { JoinConversationDto } from './dto/join-conversation.dto';
+import { LeaveConversationDto } from './dto/leave-conversation.dto';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 /**
@@ -41,7 +41,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: Socket) {
     try {
       // Get access token from headers
-      const token = client.handshake.headers.access_token;
+      const token = client.handshake.auth.token as string | undefined;
 
       if (!token) throw new UnauthorizedException('JWT token required');
 
@@ -68,33 +68,29 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       this.logger.log(`User ${userId} connected to chat`);
     } catch (error) {
-      this.logger.error(`Connection failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Connection failed: ${errorMessage}`);
       client.emit('error', { message: 'Authentication failed' });
       client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
-    const userId = client.data?.userId;
-    this.logger.log(`User ${userId || 'unknown'} disconnected from chat`);
+    const userId = client.data?.userId as number | undefined;
+    if (userId) {
+      this.logger.log(`User ${userId} disconnected from chat`);
+    }
   }
 
   @SubscribeMessage('sendMessage')
-  async handleSendMessage(@ConnectedSocket() client: Socket, @MessageBody() payload: any) {
+  async handleSendMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() sendMessageDto: SendMessageDto,
+  ) {
     try {
-      const userId = client.data?.userId;
+      const userId = client.data?.userId as number | undefined;
       if (!userId) {
         client.emit('error', { message: 'Not authenticated' });
-        return;
-      }
-
-      // Validate payload
-      const sendMessageDto = plainToClass(SendMessageDto, payload);
-      const errors = await validate(sendMessageDto);
-
-      if (errors.length > 0) {
-        const errorMessages = errors.map((error) => Object.values(error.constraints || {})).flat();
-        client.emit('error', { message: 'Validation failed', errors: errorMessages });
         return;
       }
 
@@ -130,8 +126,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         `Message sent by user ${userId} in conversation ${sendMessageDto.conversationId}`,
       );
     } catch (error) {
-      this.logger.error(`Send message failed: ${error.message}`);
-      client.emit('error', { message: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Send message failed';
+      this.logger.error(`Send message failed: ${errorMessage}`);
+      client.emit('error', { message: errorMessage });
     }
   }
 
@@ -142,16 +139,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('joinConversation')
   async handleJoinConversation(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { conversationId: string },
+    @MessageBody() joinConversationDto: JoinConversationDto,
   ) {
     try {
-      const userId = client.data?.userId;
+      const userId = client.data?.userId as number | undefined;
       if (!userId) {
         client.emit('error', { message: 'Not authenticated' });
         return;
       }
 
-      const { conversationId } = payload;
+      const { conversationId } = joinConversationDto;
       if (!conversationId) {
         client.emit('error', { message: 'Conversation ID required' });
         return;
@@ -172,8 +169,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('joinedConversation', { conversationId });
       this.logger.log(`User ${userId} joined conversation ${conversationId}`);
     } catch (error) {
-      this.logger.error(`Join conversation failed: ${error.message}`);
-      client.emit('error', { message: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Join conversation failed';
+      this.logger.error(`Join conversation failed: ${errorMessage}`);
+      client.emit('error', { message: errorMessage });
     }
   }
 
@@ -183,11 +181,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('leaveConversation')
   async handleLeaveConversation(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { conversationId: string },
+    @MessageBody() leaveConversationDto: LeaveConversationDto,
   ) {
     try {
-      const userId = client.data?.userId;
-      const { conversationId } = payload;
+      const userId = client.data?.userId as number | undefined;
+      const { conversationId } = leaveConversationDto;
 
       if (conversationId) {
         const roomName = `conversation:${conversationId}`;
@@ -196,8 +194,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.logger.log(`User ${userId} left conversation ${conversationId}`);
       }
     } catch (error) {
-      this.logger.error(`Leave conversation failed: ${error.message}`);
-      client.emit('error', { message: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Leave conversation failed';
+      this.logger.error(`Leave conversation failed: ${errorMessage}`);
+      client.emit('error', { message: errorMessage });
     }
   }
 }

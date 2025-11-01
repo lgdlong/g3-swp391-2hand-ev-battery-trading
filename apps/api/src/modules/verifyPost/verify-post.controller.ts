@@ -181,4 +181,11 @@ export class VerifyPostController {
       user.role as AccountRole,
     );
   }
+
+  @ApiOperation({ summary: 'Lấy phí kiểm định' })
+  @ApiOkResponse({ description: 'Phí kiểm định (VND)', schema: { type: 'object', properties: { fee: { type: 'number', example: 50000 } } } })
+  @Get('fee')
+  getVerificationFee(): { fee: number } {
+    return { fee: this.verifyPostService.getVerificationFee() };
+  }
 }

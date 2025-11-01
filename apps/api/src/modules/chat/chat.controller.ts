@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, Param, Query, UseGuards, HttpStatus } from
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ChatService } from './chat.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { ConversationResponseDto } from './dto/conversation-response.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { User } from '../../core/decorators/user.decorator';
 import type { AuthUser } from '../../core/guards/roles.guard';
@@ -29,10 +30,12 @@ export class ChatController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Existing conversation returned',
+    type: ConversationResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'New conversation created',
+    type: ConversationResponseDto,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
@@ -70,6 +73,7 @@ export class ChatController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Conversations retrieved successfully',
+    type: [ConversationResponseDto],
   })
   async getUserConversations(@User() user: AuthUser) {
     const conversations = await this.chatService.getUserConversations(user.sub);

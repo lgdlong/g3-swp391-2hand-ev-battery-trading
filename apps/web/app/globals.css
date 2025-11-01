@@ -151,3 +151,11 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}

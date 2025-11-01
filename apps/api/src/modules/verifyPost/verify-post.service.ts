@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,6 +23,11 @@ import { VerificationRequestResponseDto } from './dto/verification-request-respo
 import { VerificationMapper } from './mappers/verification.mapper';
 import { PostStatus } from '../../shared/enums/post.enum';
 import { AccountRole } from '../../shared/enums/account-role.enum';
+import { WalletsService } from '../wallets/wallets.service';
+import { PostLifecycleService } from '../settings/service/post-lifecycle.service';
+
+// Fixed verification fee (in VND)
+const VERIFICATION_FEE = 50000; // 50,000 VND
 
 @Injectable()
 export class VerifyPostService {
@@ -31,11 +38,50 @@ export class VerifyPostService {
     private postsRepo: Repository<Post>,
     @InjectRepository(Account)
     private accountsRepo: Repository<Account>,
+    @Inject(forwardRef(() => WalletsService))
+    private readonly walletsService: WalletsService,
+    private readonly postLifecycleService: PostLifecycleService,
   ) {}
+
+  /**
+   * Get verification fee
+   * @returns Verification fee in VND
+   */
+  getVerificationFee(): number {
+    return VERIFICATION_FEE;
+  }
+
+  /**
+   * Deduct verification fee from user's wallet
+   * @param userId - User ID
+   * @param postId - Post ID
+   * @throws BadRequestException if insufficient balance
+   * @private
+   */
+  private async deductVerificationFee(userId: number, postId: string): Promise<void> {
+    try {
+      await this.walletsService.deduct(
+        userId,
+        VERIFICATION_FEE.toString(),
+        'POST_VERIFICATION',
+        `Phí kiểm định bài đăng #${postId}`,
+        'post_verification_requests',
+        postId,
+      );
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Insufficient balance')) {
+        throw new BadRequestException(
+          `Số dư không đủ. Cần ${VERIFICATION_FEE.toLocaleString('vi-VN')} ₫ để yêu cầu kiểm định.`,
+        );
+      }
+      throw error;
+    }
+  }
 
   /**
    * Request verification for a post (User/Seller only)
    * Only published posts can request verification
+   * Requires payment from user's wallet
    */
   async requestVerification(
     postId: string,
@@ -69,6 +115,9 @@ export class VerifyPostService {
     if (existingRequest) {
       // Allow new request only if previous request was rejected
       if (existingRequest.status === VerificationStatus.REJECTED) {
+        // Deduct verification fee from wallet
+        await this.deductVerificationFee(userId, postId);
+
         // Update existing rejected request to pending
         existingRequest.status = VerificationStatus.PENDING;
         existingRequest.requestedAt = new Date();
@@ -84,6 +133,9 @@ export class VerifyPostService {
         throw new BadRequestException('Đã gửi yêu cầu kiểm định cho bài đăng này');
       }
     }
+
+    // Deduct verification fee from wallet BEFORE creating request
+    await this.deductVerificationFee(userId, postId);
 
     // Create verification request
     const verificationRequest = this.verificationRepo.create({

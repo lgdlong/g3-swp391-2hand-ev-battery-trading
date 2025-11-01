@@ -140,9 +140,6 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
             {/* Header */}
             <PostHeader post={post} details={undefined} />
 
-            {/* Battery Specifications */}
-            <Specifications post={post} />
-
             {/* Description */}
             {post.description && (
               <Card className="shadow-lg">
@@ -154,6 +151,9 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
                 </CardContent>
               </Card>
             )}
+
+            {/* Battery Specifications */}
+            <Specifications post={post} />
           </div>
         </div>
       </div>
