@@ -29,7 +29,6 @@ export class PostLifecycleController {
   }
 
   @Get()
-  @Roles(AccountRole.ADMIN)
   @ApiOperation({ summary: 'Get all post lifecycle configurations' })
   @ApiResponse({
     status: 200,

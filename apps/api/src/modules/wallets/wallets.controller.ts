@@ -91,10 +91,9 @@ export class WalletsController {
 
   @Post('deduct/:userId')
   @UseGuards(RolesGuard)
-  @Roles(AccountRole.ADMIN)
   @ApiOperation({
-    summary: 'Deduct money from wallet (Admin only)',
-    description: 'Admin deducts funds from user wallet. Checks balance before deduction.',
+    summary: 'Deduct money from wallet',
+    description: 'Users deduct funds from their wallet. Checks balance before deduction.',
   })
   @ApiParam({ name: 'userId', description: 'User ID', type: Number })
   @ApiResponse({
