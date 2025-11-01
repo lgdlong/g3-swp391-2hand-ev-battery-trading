@@ -3,14 +3,7 @@ import {
   IsOptional, IsString, MaxLength, IsBoolean, IsEnum, IsInt, Min, ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-
-export enum RefundScenario {
-  CANCEL_EARLY = 'CANCEL_EARLY',         // Hủy sớm (100%)
-  EXPIRED = 'EXPIRED',                   // Hết hạn (80%?)
-  HIGH_INTERACTION = 'HIGH_INTERACTION', // Hủy sau tương tác cao (50%?)
-  FRAUD_SUSPECTED = 'FRAUD_SUSPECTED',   // Giữ/hold
-  MANUAL = 'MANUAL',                     // Admin nhập rate tay
-}
+import { RefundScenario } from '../../../shared/enums/refund-scenario.enum';
 
 export class RefundRequestDto {
   // Ưu tiên orderCode vì dễ map PayOS
@@ -39,7 +32,7 @@ export class RefundRequestDto {
   scenario!: RefundScenario;
 
   // Nếu MANUAL có thể cho phép override rate (0..100)
-  @ValidateIf(o => o.scenario === RefundScenario.MANUAL)
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)

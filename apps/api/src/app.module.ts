@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import databaseConfig from './config/database.config';
 import { envValidationSchema } from './config/validation';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
@@ -32,6 +33,7 @@ import { RefundsModule } from './modules/refunds/refunds.module';
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       validationSchema: envValidationSchema,
     }),
+    ScheduleModule.forRoot(), // Enable cron jobs
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
