@@ -21,7 +21,6 @@ export default function Sidebar({
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <h1 className="text-2xl font-bold mb-4">Chat</h1>
-        <Input placeholder="Nhập để tìm kiếm..." className="w-full" />
       </div>
 
       {/* Chat List */}

@@ -57,9 +57,9 @@ export default function ChatWindow({
     currentUserId === conversation.sellerId ? conversation.buyer : conversation.seller;
 
   return (
-    <div className="flex-1 flex flex-col bg-white h-full">
+    <div className="flex-1 flex flex-col bg-[#f7f7f7] h-full">
       {/* Chat Header */}
-      <div className="border-b border-gray-200 p-4 flex-shrink-0">
+      <div className="border-b border-gray-200 bg-white p-4 mb-2 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
