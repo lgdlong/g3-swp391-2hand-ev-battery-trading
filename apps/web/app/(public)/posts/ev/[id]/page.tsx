@@ -4,14 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheckIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { Specifications } from './_components';
-import { PostHeader } from '@/app/(public)/posts/_components';
-import { SellerInfo } from './_components/SellerInfo';
+import { PostHeader, SellerInfo } from '@/app/(public)/posts/_components';
+import { VerificationBadge } from '@/components/VerificationBadge';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -107,15 +106,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                     >
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
-                    {post.verificationRequest?.status === 'APPROVED' && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-blue-500 text-white dark:bg-blue-600"
-                      >
-                        <BadgeCheckIcon />
-                        Đã kiểm định
-                      </Badge>
-                    )}
+                    {post.verificationRequest?.status === 'APPROVED' && <VerificationBadge />}
                   </div>
                 </div>
                 {post.images?.length > 1 && (
@@ -163,8 +154,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
           <div className="lg:col-span-2 space-y-6">
             <PostHeader post={post} details={details} />
 
-            <Specifications post={post} />
-
             {post.description && (
               <Card key={`post-description-${post.id}`} className="border-none shadow-none">
                 <CardContent className="p-6">
@@ -175,6 +164,8 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 </CardContent>
               </Card>
             )}
+
+            <Specifications post={post} />
           </div>
         </div>
       </div>

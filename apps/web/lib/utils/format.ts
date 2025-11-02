@@ -59,6 +59,41 @@ export function formatDistanceToNow(date: Date): string {
 }
 
 /**
+ * Formats message time for chat bubbles
+ * @param date Date object
+ * @returns Formatted time string (e.g., "10:30" for today, "08:59 23/4/2024" for older)
+ */
+export function formatMessageTime(date: Date): string {
+  const now = new Date();
+  const messageDate = new Date(date);
+
+  // Check if the message is from today
+  const isToday = now.toDateString() === messageDate.toDateString();
+
+  if (isToday) {
+    // Show only time for today's messages (e.g., "10:30")
+    return messageDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  } else {
+    // Show time and date for older messages (e.g., "08:59 23/4/2024")
+    const time = messageDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const dateStr = messageDate.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+    });
+    return `${time} ${dateStr}`;
+  }
+}
+
+/**
  * Returns the Vietnamese text for post origin
  * @param origin Origin code
  * @returns Vietnamese text
