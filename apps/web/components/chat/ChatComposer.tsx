@@ -36,12 +36,12 @@ export default function ChatComposer({ onSendMessage }: ChatComposerProps) {
 
   return (
     <div className="border-t border-gray-200 p-4 bg-white">
-      <div className="flex items-center gap-2">
+      {/* <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm">
           <Paperclip className="h-4 w-4" />
           <span className="ml-1 text-sm">Đính kèm</span>
         </Button>
-      </div>
+      </div> */}
 
       <div className="flex items-end gap-2 mt-2">
         <Textarea
