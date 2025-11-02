@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, MapPin, Send } from '@/components/ui/icons';
+import { Paperclip, Send } from '@/components/ui/icons';
 
 interface ChatComposerProps {
   onSendMessage: (message: string) => void;
@@ -40,10 +40,6 @@ export default function ChatComposer({ onSendMessage }: ChatComposerProps) {
         <Button variant="ghost" size="sm">
           <Paperclip className="h-4 w-4" />
           <span className="ml-1 text-sm">Đính kèm</span>
-        </Button>
-        <Button variant="ghost" size="sm">
-          <MapPin className="h-4 w-4" />
-          <span className="ml-1 text-sm">Địa chỉ</span>
         </Button>
       </div>
 
