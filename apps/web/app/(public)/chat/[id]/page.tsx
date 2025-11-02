@@ -26,7 +26,8 @@ export default function ChatPage() {
   const chatId = params.id as string;
   const { user, isLoggedIn, loading } = useAuth();
 
-  const [activeChatId, setActiveChatId] = useState<string | null>(chatId || null);
+  // Use chatId from URL as the active chat ID
+  const activeChatId = chatId;
 
   // ✨ NEW: State for real-time messages from WebSocket
   const [newMessages, setNewMessages] = useState<Message[]>([]);
@@ -139,11 +140,12 @@ export default function ChatPage() {
   // Handle chat selection
   const handleChatSelect = (chatId: string) => {
     // Leave previous conversation
-    if (activeChatId) {
+    if (activeChatId && activeChatId !== chatId) {
       leaveConversation({ conversationId: activeChatId });
     }
 
-    setActiveChatId(chatId);
+    // Navigate to the new conversation URL (this will update the dynamic param)
+    router.push(`/chat/${chatId}`);
   };
 
   // Handle sending message
