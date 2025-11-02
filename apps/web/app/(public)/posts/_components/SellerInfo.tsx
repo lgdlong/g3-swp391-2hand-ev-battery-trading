@@ -122,29 +122,32 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <button
-          onClick={handleContactSeller}
-          disabled={createConversationMutation.isPending}
-          className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {createConversationMutation.isPending
-            ? 'Đang tạo cuộc trò chuyện...'
-            : 'Liên hệ người bán'}
-        </button>
-        {account.phone ? (
-          <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors">
-            {account.phone}
-          </button>
-        ) : (
+      {/* Only show contact buttons if the logged-in user is not the post owner */}
+      {user?.id !== account?.id && (
+        <div className="space-y-2">
           <button
-            disabled
-            className="w-full border border-gray-300 text-gray-400 py-2 px-4 rounded-lg font-medium cursor-not-allowed"
+            onClick={handleContactSeller}
+            disabled={createConversationMutation.isPending}
+            className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Không có số điện thoại
+            {createConversationMutation.isPending
+              ? 'Đang tạo cuộc trò chuyện...'
+              : 'Liên hệ người bán'}
           </button>
-        )}
-      </div>
+          {account.phone ? (
+            <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors">
+              {account.phone}
+            </button>
+          ) : (
+            <button
+              disabled
+              className="w-full border border-gray-300 text-gray-400 py-2 px-4 rounded-lg font-medium cursor-not-allowed"
+            >
+              Không có số điện thoại
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
