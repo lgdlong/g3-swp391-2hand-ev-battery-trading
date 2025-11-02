@@ -169,7 +169,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
             <span className="text-[#048C73] font-medium cursor-pointer hover:underline">
               Điều khoản sử dụng
             </span>{' '}
-            của Chợ Tốt
+            của
           </div>
         </div>
 

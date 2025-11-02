@@ -189,7 +189,7 @@ export default function WalletPage() {
                               className={`text-xl font-bold ${transactionType.color} whitespace-nowrap`}
                             >
                               {parseFloat(transaction.amount) > 0 ? '+' : '-'}{' '}
-                              {formatAmount(transaction.amount)} ₫
+                              {formatAmount(transaction.amount)} Coin
                             </p>
                           </div>
                           <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-[#048C73] transition-colors flex-shrink-0" />
