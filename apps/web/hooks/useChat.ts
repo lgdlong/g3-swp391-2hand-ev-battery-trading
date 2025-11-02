@@ -29,9 +29,17 @@ export const useCreateConversation = () => {
   return useMutation({
     mutationFn: chatApi.createOrGetConversation,
     onSuccess: (data) => {
-      // Update conversations cache
+      // Instead of manually updating cache, invalidate to trigger a fresh fetch
+      // This ensures all conversations are loaded, not just the newly created one
+      queryClient.invalidateQueries({ queryKey: chatKeys.conversations() });
+
+      // Optionally, we can still optimistically update the cache for better UX
+      // but ensure we don't lose existing conversations
       queryClient.setQueryData(chatKeys.conversations(), (old: Conversation[] | undefined) => {
-        if (!old) return [data];
+        // If no existing data, let the invalidation handle the fetch
+        if (!old || old.length === 0) return old;
+
+        // If we have existing data, add the new conversation if it doesn't exist
         const exists = old.find((conv) => conv.id === data.id);
         return exists ? old : [data, ...old];
       });
