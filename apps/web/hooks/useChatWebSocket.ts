@@ -89,18 +89,32 @@ export const useChatWebSocket = () => {
       }
 
       // Update conversations cache only (keep this part for sidebar updates)
+      // ✨ IMPROVED: Move-to-top logic for better UX and performance
       queryClient.setQueryData(chatKeys.conversations(), (old: Conversation[] | undefined) => {
-        if (!old) return old;
+        if (!old) return [];
 
-        return old.map((conv) => {
+        let updatedConversation: Conversation | undefined;
+
+        // Lọc ra các cuộc hội thoại khác
+        const otherConversations = old.filter((conv) => {
           if (conv.id === conversationId) {
-            return {
+            updatedConversation = {
               ...conv,
               lastMessage: newMessage,
+              updatedAt: newMessage.createdAt, // Cập nhật thời gian
             };
+            return false; // Loại nó ra khỏi danh sách
           }
-          return conv;
+          return true; // Giữ lại
         });
+
+        // Nếu tìm thấy, đưa nó lên đầu mảng
+        if (updatedConversation) {
+          return [updatedConversation, ...otherConversations];
+        }
+
+        // Nếu không tìm thấy (lỗi hiếm), trả về y cũ
+        return old;
       });
     },
     [queryClient, messageCallback],
@@ -115,18 +129,7 @@ export const useChatWebSocket = () => {
     console.log('🔌 Synchronizing connection state immediately:', currentConnectionState);
     setIsConnected(currentConnectionState);
 
-    // 🚀 Cải tiến: Periodic sync to handle edge cases
-    const syncInterval = setInterval(() => {
-      const realTimeState = chatWebSocketService.isConnected;
-      setIsConnected((prevState) => {
-        if (prevState !== realTimeState) {
-          console.log('🔌 Connection state drift detected, syncing:', realTimeState);
-        }
-        return realTimeState;
-      });
-    }, 1000); // Check every second
-
-    // 🐛 Sửa lỗi: Lắng nghe sự kiện connect/disconnect để cập nhật state
+    //  Sửa lỗi: Lắng nghe sự kiện connect/disconnect để cập nhật state
     const cleanupConnect = chatWebSocketService.onConnect(() => {
       console.log('🔌 WebSocket connected - updating state');
       setIsConnected(true);
@@ -151,7 +154,6 @@ export const useChatWebSocket = () => {
     // ⚠️ Sửa lỗi: Dùng cleanup cụ thể, không dùng removeAllListeners()
     return () => {
       console.log('🔌 Cleaning up WebSocket event listeners');
-      clearInterval(syncInterval);
       cleanupConnect();
       cleanupDisconnect();
       cleanupNewMessage();
