@@ -49,7 +49,8 @@ export const useConversationMessages = (
     queryKey: [...chatKeys.messages(conversationId), params],
     queryFn: () => chatApi.getConversationMessages(conversationId, params),
     enabled: enabled && !!conversationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0, // Always consider data potentially stale for real-time updates
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   });
 };
 

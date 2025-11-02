@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,6 +21,24 @@ export default function ChatWindow({
   currentUserId,
   onSendMessage,
 }: ChatWindowProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Scroll to bottom when messages change (new message received or sent)
+  useEffect(() => {
+    if (messages.length > 0) {
+      console.log(
+        `📨 Messages updated: ${messages.length} messages in conversation ${conversation?.id}`,
+      );
+      scrollToBottom();
+    }
+  }, [messages, conversation?.id]);
+
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -64,7 +83,7 @@ export default function ChatWindow({
       </div>
 
       {/* Chat Messages */}
-      <ScrollArea className="flex-1 min-h-0 px-4">
+      <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollAreaRef}>
         <div className="py-4">
           {messages.map((message) => (
             <MessageBubble
@@ -73,6 +92,8 @@ export default function ChatWindow({
               isCurrentUser={message.senderId === currentUserId}
             />
           ))}
+          {/* Invisible element to scroll to */}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 

@@ -1,9 +1,24 @@
+/**
+ * 🚀 REFACTORED: Simplified WebSocket hook with callback approach
+ *
+ * Key Changes:
+ * 1. Removed complex cache updating logic for messages
+ * 2. Added onNewMessage callback mechanism for external components
+ * 3. Only updates conversations cache for sidebar updates
+ * 4. Cleaner separation of concerns
+ */
+
 import { useEffect, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { chatWebSocketService, type NewMessageEvent } from '@/lib/websocket/chat';
+import {
+  chatWebSocketService,
+  type NewMessageEvent,
+  type SendMessagePayload,
+  type JoinConversationPayload,
+} from '@/lib/websocket/chat';
 import { chatKeys } from './useChat';
 import { useAuth } from '@/lib/auth-context';
-import type { Conversation, MessagesResponse } from '@/types/chat';
+import type { Conversation, Message } from '@/types/chat';
 import { ACCESS_TOKEN_KEY } from '@/config/constants';
 
 // Simplified WebSocket hook for basic chat functionality
@@ -13,6 +28,9 @@ export const useChatWebSocket = () => {
 
   // 🐛 Sửa lỗi: Dùng state để theo dõi trạng thái kết nối
   const [isConnected, setIsConnected] = useState(chatWebSocketService.isConnected);
+
+  // ✨ NEW: Store message callback for external components
+  const [messageCallback, setMessageCallback] = useState<((message: Message) => void) | null>(null);
 
   // Connect to WebSocket when user is authenticated
   useEffect(() => {
@@ -48,68 +66,44 @@ export const useChatWebSocket = () => {
     };
   }, [isLoggedIn]); // Depend on auth state
 
-  // 🚀 Cải tiến: Logic "move-to-top"
   const handleNewMessage = useCallback(
     (message: NewMessageEvent) => {
       const { conversationId } = message;
+      console.log(`🚀 WebSocket received new message:`, {
+        conversationId,
+        content: message.content,
+      });
 
-      // Update messages cache
-      queryClient.setQueryData(
-        [...chatKeys.messages(conversationId)],
-        (old: MessagesResponse | undefined) => {
-          if (!old) return old;
-          const exists = old.messages.find((m) => m.id === message.id);
-          if (exists) return old;
+      const newMessage = {
+        id: message.id,
+        content: message.content,
+        senderId: message.senderId,
+        conversationId: message.conversationId,
+        createdAt: new Date(message.createdAt),
+        sender: message.sender,
+      };
 
-          const newMessage = {
-            id: message.id,
-            content: message.content,
-            senderId: message.senderId,
-            conversationId: message.conversationId,
-            createdAt: new Date(message.createdAt),
-            sender: message.sender,
-          };
+      // ✨ NEW: Call external callback instead of updating cache
+      if (messageCallback) {
+        messageCallback(newMessage);
+      }
 
-          return {
-            ...old,
-            messages: [...old.messages, newMessage],
-            total: old.total + 1,
-          };
-        },
-      );
-
-      // Update conversations cache (with move-to-top)
+      // Update conversations cache only (keep this part for sidebar updates)
       queryClient.setQueryData(chatKeys.conversations(), (old: Conversation[] | undefined) => {
         if (!old) return old;
 
-        let updatedConversation: Conversation | undefined;
-        const otherConversations = old.filter((conv) => {
+        return old.map((conv) => {
           if (conv.id === conversationId) {
-            updatedConversation = {
+            return {
               ...conv,
-              lastMessage: {
-                id: message.id,
-                content: message.content,
-                senderId: message.senderId,
-                conversationId: message.conversationId,
-                createdAt: new Date(message.createdAt),
-                sender: message.sender,
-              },
-              updatedAt: new Date(message.createdAt), // Cập nhật thời gian
+              lastMessage: newMessage,
             };
-            return false;
           }
-          return true;
+          return conv;
         });
-
-        if (updatedConversation) {
-          // Di chuyển conversation có tin nhắn mới lên đầu
-          return [updatedConversation, ...otherConversations];
-        }
-        return old;
       });
     },
-    [queryClient],
+    [queryClient, messageCallback],
   );
 
   // Set up event listeners
@@ -165,11 +159,33 @@ export const useChatWebSocket = () => {
   }, [handleNewMessage]);
 
   // Return WebSocket service methods for components to use
+  const onNewMessage = useCallback((callback: (message: Message) => void) => {
+    setMessageCallback(() => callback);
+    return () => setMessageCallback(null); // Return cleanup function
+  }, []);
+
+  const sendMessage = useCallback(
+    (payload: SendMessagePayload) => chatWebSocketService.sendMessage(payload),
+    [],
+  );
+
+  const joinConversation = useCallback(
+    (payload: JoinConversationPayload) => chatWebSocketService.joinConversation(payload),
+    [],
+  );
+
+  const leaveConversation = useCallback(
+    (payload: JoinConversationPayload) => chatWebSocketService.leaveConversation(payload),
+    [],
+  );
+
   const hookState = {
-    sendMessage: chatWebSocketService.sendMessage.bind(chatWebSocketService),
-    joinConversation: chatWebSocketService.joinConversation.bind(chatWebSocketService),
-    leaveConversation: chatWebSocketService.leaveConversation.bind(chatWebSocketService),
+    sendMessage,
+    joinConversation,
+    leaveConversation,
     isConnected: isConnected, // Trả về state thay vì thuộc tính tĩnh
+    // ✨ NEW: Provide callback mechanism for listening to new messages
+    onNewMessage,
   };
 
   // Debug log for troubleshooting

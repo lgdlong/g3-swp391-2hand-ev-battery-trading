@@ -1,12 +1,24 @@
+/**
+ * 🚀 REFACTORED: Chat UI with Separated State Approach
+ *
+ * Key Changes:
+ * 1. Uses useInfiniteConversationMessages for old messages (React Query)
+ * 2. Uses newMessages state for real-time WebSocket messages
+ * 3. Merges both sources in allMessages useMemo
+ * 4. WebSocket only updates local state, not React Query cache
+ * 5. Auto-resets newMessages when activeChatId changes
+ */
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatWindow from '@/components/chat/ChatWindow';
-import { useConversations, useConversationMessages } from '@/hooks/useChat';
+import { useConversations, useInfiniteConversationMessages } from '@/hooks/useChat';
 import { useAuth } from '@/lib/auth-context';
 import { useChatWebSocket } from '@/hooks/useChatWebSocket';
+import type { Message } from '@/types/chat';
 
 export default function ChatPage() {
   const params = useParams();
@@ -16,15 +28,20 @@ export default function ChatPage() {
 
   const [activeChatId, setActiveChatId] = useState<string | null>(chatId || null);
 
+  // ✨ NEW: State for real-time messages from WebSocket
+  const [newMessages, setNewMessages] = useState<Message[]>([]);
+
   // React Query hooks - only enabled when user is logged in
   const {
     data: conversations = [],
     isLoading: conversationsLoading,
     error: conversationsError,
   } = useConversations();
-  const { data: messagesData, error: messagesError } = useConversationMessages(
+
+  // ✨ CHANGED: Use infinite query instead of regular query
+  const { data: infiniteMessagesData, error: messagesError } = useInfiniteConversationMessages(
     activeChatId || '',
-    { limit: 50 },
+    50, // limit
     !!activeChatId && !!isLoggedIn,
   );
 
@@ -44,7 +61,46 @@ export default function ChatPage() {
     joinConversation,
     leaveConversation,
     isConnected,
+    onNewMessage, // ✨ NEW: Get callback to listen for new messages
   } = useChatWebSocket();
+
+  // ✨ NEW: Listen for WebSocket messages and update state only
+  useEffect(() => {
+    if (!onNewMessage) return;
+
+    const handleNewMessage = (message: Message) => {
+      console.log('🚀 Received new message via WebSocket:', message);
+
+      // Only update local state, don't touch React Query cache
+      setNewMessages((prev) => [...prev, message]);
+    };
+
+    // Set up the listener
+    const cleanup = onNewMessage(handleNewMessage);
+
+    return cleanup;
+  }, [onNewMessage]);
+
+  // ✨ NEW: Reset newMessages when activeChatId changes
+  useEffect(() => {
+    console.log('🔄 Active chat changed, resetting new messages state');
+    setNewMessages([]);
+  }, [activeChatId]);
+
+  // ✨ NEW: Merge old messages (from React Query) with new messages (from state)
+  const allMessages = useMemo(() => {
+    // Get old messages from infinite query and flatten them
+    // Backend already returns messages in chronological order (ASC), so no need to reverse
+    const oldMessages = infiniteMessagesData?.pages?.flatMap((page) => page.messages || []) || [];
+
+    // Filter new messages to avoid duplicates
+    const uniqueNewMessages = newMessages.filter(
+      (newMsg) => !oldMessages.some((oldMsg) => oldMsg.id === newMsg.id),
+    );
+
+    // Combine: old messages + unique new messages (both already in chronological order)
+    return [...oldMessages, ...uniqueNewMessages];
+  }, [infiniteMessagesData, newMessages]);
 
   // Handle case where requested conversation doesn't exist
   useEffect(() => {
@@ -148,7 +204,6 @@ export default function ChatPage() {
   }
 
   const activeConversation = conversations.find((conv) => conv.id === activeChatId) || null;
-  const messages = messagesData?.messages || [];
 
   return (
     <div className="h-[calc(100vh-4rem)] flex bg-gray-50">
@@ -160,7 +215,7 @@ export default function ChatPage() {
       />
       <ChatWindow
         conversation={activeConversation}
-        messages={messages}
+        messages={allMessages}
         currentUserId={user.id}
         onSendMessage={handleSendMessage}
       />
