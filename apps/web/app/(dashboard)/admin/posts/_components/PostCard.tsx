@@ -172,7 +172,7 @@ export function PostCard({
               Xem chi tiết
             </Button>
 
-            {post.status === 'PENDING_REVIEW' && (
+            {/* {post.status === 'PENDING_REVIEW' && (
               <>
                 <Button
                   onClick={() => onApprove(post.id)}
@@ -189,7 +189,7 @@ export function PostCard({
                   triggerVariant="sm"
                 />
               </>
-            )}
+            )} */}
 
             {/* Verification buttons - hiển thị khi đang ở filter VERIFICATION_PENDING hoặc VERIFICATION_REJECTED */}
             {currentFilter === 'VERIFICATION_PENDING' && onVerify && onRejectVerification && (
