@@ -5,10 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Post } from '@/types/api/post';
-import { Eye, Check, X, Calendar, MapPin, User, Car, Shield } from 'lucide-react';
+import { Eye, X, Calendar, MapPin, User, Car, Shield } from 'lucide-react';
 import { DEFAULT_IMAGE } from '@/constants/images';
-import { RejectDialog } from './RejectDialog';
-import { useState } from 'react';
 
 interface PostCardProps {
   post: Post;
@@ -27,12 +25,12 @@ interface PostCardProps {
 export function PostCard({
   post,
   onViewDetails,
-  onApprove,
-  onReject,
+  // onApprove,
+  // onReject,
   onVerify,
   onRejectVerification,
-  isApproving = false,
-  isRejecting = false,
+  // isApproving = false,
+  // isRejecting = false,
   isVerifying = false,
   isRejectingVerification = false,
   currentFilter,
