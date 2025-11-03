@@ -215,27 +215,33 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
             </div>
 
             {/* Remaining Balance */}
-            <div className="bg-gradient-to-r from-green-500/10 to-green-500/5 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">Số dư còn lại sau khi trừ</p>
-                  <p
-                    className={`text-xl font-bold ${
-                      remainingBalance < 0 ? 'text-red-600' : 'text-green-600'
-                    }`}
-                  >
-                    {formatVND(Math.max(0, remainingBalance))} Coin
-                  </p>
+            {remainingBalance >= 0 && (
+              <div className="bg-gradient-to-r from-green-500/10 to-green-500/5 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Số dư còn lại sau khi trừ</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {formatVND(remainingBalance)} Coin
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Warning if insufficient balance */}
             {remainingBalance < 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-600">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center justify-between gap-3">
+                <p className="text-sm text-red-600 flex-1">
                   ⚠️ Số dư ví không đủ để đặt cọc. Vui lòng nạp thêm coin.
                 </p>
+                <Button
+                  onClick={() => setIsTopupModalOpen(true)}
+                  disabled={isLoading || isLoadingData}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 text-sm font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Nạp coin
+                </Button>
               </div>
             )}
 
@@ -250,40 +256,24 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t bg-gray-50 rounded-b-2xl">
-          <div>
-            <p className="text-xs text-gray-500 mb-1">TỔNG CỌC</p>
-            <p className="text-2xl font-bold text-amber-600">{formatVND(depositCoin)} Coin</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {remainingBalance < 0 && (
-              <Button
-                onClick={() => setIsTopupModalOpen(true)}
-                disabled={isLoading || isLoadingData}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-6 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Nạp coin
-              </Button>
+        <div className="flex items-center justify-end p-6 border-t bg-gray-50 rounded-b-2xl">
+          <Button
+            onClick={handleDeposit}
+            disabled={isLoading || isLoadingData || remainingBalance < 0}
+            className="bg-[#048C73] hover:bg-[#037060] text-white px-8 py-6 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Đang xử lý...
+              </>
+            ) : (
+              <>
+                <Coins className="h-5 w-5 mr-2" />
+                Đặt cọc
+              </>
             )}
-            <Button
-              onClick={handleDeposit}
-              disabled={isLoading || isLoadingData || remainingBalance < 0}
-              className="bg-[#048C73] hover:bg-[#037060] text-white px-8 py-6 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : (
-                <>
-                  <Coins className="h-5 w-5 mr-2" />
-                  Đặt cọc
-                </>
-              )}
-            </Button>
-          </div>
+          </Button>
         </div>
       </div>
 
