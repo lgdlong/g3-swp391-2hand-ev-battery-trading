@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Coins, Loader2, Wallet } from 'lucide-react';
+import { X, Coins, Loader2, Wallet, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { deductWallet, getMyWallet, Wallet as WalletType } from '@/lib/api/walletApi';
 import { getAllFeeTiers, FeeTier } from '@/lib/api/feeTiersApi';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
+import { TopupModal } from '@/components/TopupModal';
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
   const [feeTier, setFeeTier] = useState<FeeTier | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
 
   // Load wallet and fee tier data when modal opens
   useEffect(() => {
@@ -63,6 +65,21 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
 
     loadData();
   }, [isOpen, priceVnd, onClose]);
+
+  // Reload wallet data when TopupModal closes (in case user topped up)
+  useEffect(() => {
+    if (!isTopupModalOpen && isOpen) {
+      const reloadWallet = async () => {
+        try {
+          const walletData = await getMyWallet();
+          setWallet(walletData);
+        } catch (error) {
+          console.error('Error reloading wallet:', error);
+        }
+      };
+      reloadWallet();
+    }
+  }, [isTopupModalOpen, isOpen]);
 
   if (!isOpen) return null;
 
@@ -238,25 +255,40 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
             <p className="text-xs text-gray-500 mb-1">TỔNG CỌC</p>
             <p className="text-2xl font-bold text-amber-600">{formatVND(depositCoin)} Coin</p>
           </div>
-          <Button
-            onClick={handleDeposit}
-            disabled={isLoading || isLoadingData || remainingBalance < 0}
-            className="bg-[#048C73] hover:bg-[#037060] text-white px-8 py-6 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Đang xử lý...
-              </>
-            ) : (
-              <>
-                <Coins className="h-5 w-5 mr-2" />
-                Đặt cọc
-              </>
+          <div className="flex items-center gap-3">
+            {remainingBalance < 0 && (
+              <Button
+                onClick={() => setIsTopupModalOpen(true)}
+                disabled={isLoading || isLoadingData}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-6 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Nạp coin
+              </Button>
             )}
-          </Button>
+            <Button
+              onClick={handleDeposit}
+              disabled={isLoading || isLoadingData || remainingBalance < 0}
+              className="bg-[#048C73] hover:bg-[#037060] text-white px-8 py-6 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <Coins className="h-5 w-5 mr-2" />
+                  Đặt cọc
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Topup Modal */}
+      <TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
     </div>
   );
 }
