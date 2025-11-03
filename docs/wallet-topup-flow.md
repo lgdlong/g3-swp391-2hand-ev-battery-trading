@@ -504,9 +504,9 @@ All webhook requests are logged for audit trail:
 stateDiagram-v2
     [*] --> PENDING: Create Payment Order
     
-    PENDING --> COMPLETED: Webhook: code="00"
-    PENDING --> FAILED: Webhook: code!="00"
-    PENDING --> CANCELLED: User cancels payment
+    PENDING --> COMPLETED: Webhook Success (code 00)
+    PENDING --> FAILED: Webhook Failed
+    PENDING --> CANCELLED: User Cancellation
     
     COMPLETED --> WalletTopup: Process Wallet Update
     WalletTopup --> [*]: Transaction Recorded
@@ -523,9 +523,9 @@ stateDiagram-v2
     
     note right of FAILED
         Webhook logs:
-        - Error details
-        - Failed reason
-        - No wallet update
+        Error details
+        Failed reason
+        No wallet update
     end note
 ```
 
