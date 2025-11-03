@@ -25,143 +25,45 @@ The wallet topup feature enables users to add funds to their digital wallet usin
 ```mermaid
 sequenceDiagram
     autonumber
-    participant User as 👤 User (Browser)
-    participant Frontend as 🖥️ Next.js Frontend
-    participant WalletAPI as 🔧 WalletsController
-    participant WalletSvc as 💼 WalletsService
-    participant PayOSSvc as 💳 PayosService
-    participant DB as 🗄️ PostgreSQL Database
-    participant PayOS as 🏦 PayOS Gateway
-    participant Webhook as 🔔 PayOS Webhook
+    participant User as User
+    participant Frontend as Frontend
+    participant Backend as Backend API
+    participant DB as Database
+    participant PayOS as PayOS Gateway
 
-    %% Step 1-3: User initiates topup
-    User->>Frontend: Click "Nạp thêm coin"
-    activate Frontend
-    Frontend->>User: Display TopupModal
-    User->>Frontend: Enter amount (e.g., 100,000 VND)
-    Note over User,Frontend: User can select preset amounts<br/>or enter custom amount
+    %% User initiates topup
+    User->>Frontend: Click "Nạp coin" & enter amount
+    Frontend->>Backend: POST /wallets/topup/payment
+    Note over Backend: Create PaymentOrder<br/>status: PENDING
+    Backend->>DB: Save PaymentOrder
+    Backend->>PayOS: Create payment link
+    PayOS-->>Backend: Return checkoutUrl & QR code
+    Backend-->>Frontend: Payment link created
+    Frontend->>User: Redirect to PayOS
 
-    %% Step 4-10: Create payment order
-    Frontend->>WalletAPI: POST /wallets/topup/payment<br/>{amount: 100000, returnUrl, cancelUrl}
-    activate WalletAPI
-    WalletAPI->>WalletSvc: createTopupPayment(userId, dto)
-    activate WalletSvc
-    
-    WalletSvc->>DB: Get/Create ServiceType<br/>("WALLET_TOPUP")
-    DB-->>WalletSvc: ServiceType data
-    
-    WalletSvc->>DB: Create PaymentOrder<br/>status: PENDING<br/>amount: 100000<br/>serviceType: WALLET_TOPUP
-    DB-->>WalletSvc: PaymentOrder (ID: "123456")
-    Note over DB: payment_orders table<br/>- id: "123456"<br/>- status: PENDING<br/>- amount: "100000.00"<br/>- service_type_id: WALLET_TOPUP<br/>- account_id: userId
+    %% User completes payment
+    User->>PayOS: Complete payment (scan QR/enter card)
+    Note over User,PayOS: User pays via<br/>banking app or card
 
-    %% Step 11-15: Create PayOS payment link
-    WalletSvc->>PayOSSvc: create(CreatePayosDto)
-    activate PayOSSvc
-    Note over PayOSSvc: Generate HMAC-SHA256 signature<br/>orderCode = PaymentOrder.id (123456)
+    %% PayOS webhook
+    PayOS->>Backend: POST /payos/webhook (payment success)
+    Note over Backend: Verify webhook signature
+    Backend->>DB: Log webhook & update PaymentOrder
+    Note over DB: status: PENDING → COMPLETED
     
-    PayOSSvc->>PayOS: POST /v2/payment-requests<br/>{orderCode: 123456, amount: 100000,<br/>signature, returnUrl, cancelUrl}
-    activate PayOS
-    PayOS-->>PayOSSvc: {paymentLinkId, checkoutUrl, qrCode}
-    deactivate PayOS
-    
-    PayOSSvc-->>WalletSvc: PayOS Response
-    deactivate PayOSSvc
-    
-    WalletSvc->>DB: Update PaymentOrder<br/>paymentRef = paymentLinkId<br/>orderCode = "123456"
-    DB-->>WalletSvc: Updated
-    
-    WalletSvc-->>WalletAPI: {paymentOrder, payosResponse}
-    deactivate WalletSvc
-    WalletAPI-->>Frontend: {checkoutUrl, qrCode}
-    deactivate WalletAPI
-    
-    %% Step 16-18: Redirect to PayOS
-    Frontend->>User: Redirect to PayOS checkout page
-    deactivate Frontend
-    User->>PayOS: Access checkout page<br/>(QR code or web form)
-    activate PayOS
-    Note over User,PayOS: User completes payment:<br/>- Scan QR with banking app<br/>- Enter card details<br/>- Confirm transaction
+    Backend->>DB: Start Transaction
+    Backend->>DB: Create WalletTransaction (TOP_UP)
+    Backend->>DB: Update Wallet balance (+100,000)
+    Backend->>DB: Commit Transaction
+    Backend-->>PayOS: 200 OK
 
-    %% Step 19-25: PayOS sends webhook
-    PayOS->>Webhook: POST /payos/webhook<br/>{code: "00", data: {orderCode: 123456,<br/>amount: 100000, paymentLinkId}}
-    deactivate PayOS
-    activate Webhook
-    Webhook->>PayOSSvc: handleWebhook(webhookDto)
-    activate PayOSSvc
-    
-    PayOSSvc->>DB: Create PayosWebhookLog<br/>status: RECEIVED<br/>payload: webhookDto
-    DB-->>PayOSSvc: Webhook log saved
-    Note over DB: payos_webhook_logs table<br/>- order_code: "123456"<br/>- amount: "100000"<br/>- processing_status: RECEIVED<br/>- transaction_status: "00"
-    
-    PayOSSvc->>DB: Find PaymentOrder by orderCode<br/>JOIN serviceType
-    DB-->>PayOSSvc: PaymentOrder + ServiceType
-    
-    alt Payment Successful (code = "00")
-        PayOSSvc->>DB: Update PaymentOrder<br/>status: COMPLETED<br/>paidAt: NOW()
-        DB-->>PayOSSvc: Updated
-        
-        alt ServiceType = "WALLET_TOPUP"
-            PayOSSvc->>WalletSvc: processCompletedPayment(paymentOrderId)
-            activate WalletSvc
-            
-            WalletSvc->>DB: Start Transaction
-            activate DB
-            
-            WalletSvc->>DB: Get/Create Wallet for user
-            DB-->>WalletSvc: Wallet entity
-            
-            WalletSvc->>DB: Create WalletTransaction<br/>type: TOP_UP<br/>amount: 100000<br/>relatedEntityId: paymentOrderId
-            DB-->>WalletSvc: Transaction saved
-            Note over DB: wallet_transactions table<br/>- wallet_user_id: userId<br/>- amount: "100000.00"<br/>- service_type_id: WALLET_TOPUP<br/>- related_entity_type: payment_orders<br/>- related_entity_id: "123456"
-            
-            WalletSvc->>DB: Update Wallet balance<br/>newBalance = currentBalance + 100000
-            DB-->>WalletSvc: Balance updated
-            Note over DB: wallets table<br/>- user_id: userId<br/>- balance: previousBalance + 100000
-            
-            WalletSvc->>DB: Commit Transaction
-            deactivate DB
-            
-            WalletSvc-->>PayOSSvc: Wallet topup completed
-            deactivate WalletSvc
-        end
-        
-        PayOSSvc->>DB: Update WebhookLog<br/>processingStatus: PROCESSED<br/>notes: "Payment completed successfully"
-        DB-->>PayOSSvc: Updated
-    else Payment Failed
-        PayOSSvc->>DB: Update PaymentOrder<br/>status: FAILED
-        DB-->>PayOSSvc: Updated
-        
-        PayOSSvc->>DB: Update WebhookLog<br/>processingStatus: PROCESSED<br/>notes: "Payment failed: {desc}"
-        DB-->>PayOSSvc: Updated
-    end
-    
-    PayOSSvc-->>Webhook: Webhook processed
-    deactivate PayOSSvc
-    Webhook-->>PayOS: 200 OK
-    deactivate Webhook
-
-    %% Step 26-30: User returns to site
-    PayOS->>Frontend: Redirect to returnUrl<br/>?orderCode=123456&status=PAID&code=00
-    activate Frontend
-    
-    Frontend->>User: Display /checkout/result page
-    Frontend->>WalletAPI: GET /wallets/transactions/by-order-code/123456
-    activate WalletAPI
-    WalletAPI->>WalletSvc: getTransactionByOrderCode(orderCode)
-    activate WalletSvc
-    
-    WalletSvc->>DB: Find WalletTransaction<br/>WHERE relatedEntityId = orderCode
-    DB-->>WalletSvc: WalletTransaction + Wallet data
-    
-    WalletSvc-->>WalletAPI: Transaction DTO
-    deactivate WalletSvc
-    WalletAPI-->>Frontend: Transaction details<br/>{amount, status, balance, timestamp}
-    deactivate WalletAPI
-    
-    Frontend->>User: Show success message<br/>"Nạp coin thành công"<br/>Display: amount, new balance, transaction ID
-    deactivate Frontend
-    
-    Note over User,Frontend: User can:<br/>- View transaction details<br/>- Return to wallet page<br/>- Topup more
+    %% User returns
+    PayOS->>Frontend: Redirect to success page
+    Frontend->>Backend: GET transaction details
+    Backend->>DB: Query WalletTransaction
+    DB-->>Backend: Transaction data
+    Backend-->>Frontend: Transaction details
+    Frontend->>User: Show success + new balance
 ```
 
 ---
