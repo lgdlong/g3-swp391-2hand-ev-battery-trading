@@ -185,7 +185,7 @@ export default function PostListItem({
               {provinceName}
               {districtName && `, ${districtName}`}
             </p>
-            <p className="text-xs text-muted-foreground">Đăng: {formatDate(post.createdAt)}</p>
+            <p className="text-xs text-muted-foreground">Cập nhật: {formatDate(post.updatedAt)}</p>
           </div>
 
           {/* Action Buttons */}
