@@ -5,7 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { getAdminPosts, rejectPost } from '@/lib/api/postApi';
-import { verifyPost, rejectPostVerification, getPendingVerificationRequests, getRejectedVerificationRequests } from '@/lib/api/verificationApi';
+import {
+  verifyPost,
+  rejectPostVerification,
+  getPendingVerificationRequests,
+  getRejectedVerificationRequests,
+} from '@/lib/api/verificationApi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Post, PostsResponse, PostStatus } from '@/types/api/post';
 
@@ -67,7 +72,9 @@ export default function AdminPostsPage() {
       const status = ['VERIFICATION_PENDING', 'VERIFICATION_REJECTED'].includes(currentFilter)
         ? undefined
         : currentFilter;
-      const limit = ['VERIFICATION_PENDING', 'VERIFICATION_REJECTED'].includes(currentFilter) ? 1000 : pageSize;
+      const limit = ['VERIFICATION_PENDING', 'VERIFICATION_REJECTED'].includes(currentFilter)
+        ? 1000
+        : pageSize;
       console.log('Admin page - fetching posts with:', {
         status,
         page: 1,
@@ -236,7 +243,10 @@ export default function AdminPostsPage() {
     console.log('Filtering posts - postsData:', postsData);
     console.log('Filtering posts - currentFilter:', currentFilter);
     console.log('Filtering posts - verificationRequestsData:', verificationRequestsData);
-    console.log('Filtering posts - rejectedVerificationRequestsData:', rejectedVerificationRequestsData);
+    console.log(
+      'Filtering posts - rejectedVerificationRequestsData:',
+      rejectedVerificationRequestsData,
+    );
 
     if (!postsData?.data) {
       console.log('No postsData.data, returning empty array');
@@ -245,11 +255,17 @@ export default function AdminPostsPage() {
 
     if (currentFilter === 'VERIFICATION_PENDING') {
       // Get post IDs from pending verification requests
-      const pendingPostIds = verificationRequestsData?.map(req => req.postId) || [];
+      const pendingPostIds = verificationRequestsData?.map((req) => req.postId) || [];
       console.log('VERIFICATION_PENDING - pendingPostIds:', pendingPostIds);
       console.log('VERIFICATION_PENDING - postsData.data:', postsData.data);
-      console.log('VERIFICATION_PENDING - post.id types:', postsData.data.map(post => ({ id: post.id, type: typeof post.id })));
-      console.log('VERIFICATION_PENDING - pendingPostIds types:', pendingPostIds.map(id => ({ id, type: typeof id })));
+      console.log(
+        'VERIFICATION_PENDING - post.id types:',
+        postsData.data.map((post) => ({ id: post.id, type: typeof post.id })),
+      );
+      console.log(
+        'VERIFICATION_PENDING - pendingPostIds types:',
+        pendingPostIds.map((id) => ({ id, type: typeof id })),
+      );
       console.log('VERIFICATION_PENDING - detailed comparison:');
       postsData.data.forEach((post, index) => {
         console.log(`Post ${index}:`, {
@@ -261,14 +277,15 @@ export default function AdminPostsPage() {
           includesString: pendingPostIds.includes(String(post.id)),
           includesNumber: pendingPostIds.includes(Number(post.id)),
           stringId: String(post.id),
-          numberId: Number(post.id)
+          numberId: Number(post.id),
         });
       });
       // Handle both string and number types
-      const filtered = postsData.data.filter(post =>
-        pendingPostIds.includes(post.id) ||
-        pendingPostIds.includes(String(post.id)) ||
-        pendingPostIds.includes(Number(post.id))
+      const filtered = postsData.data.filter(
+        (post) =>
+          pendingPostIds.includes(post.id) ||
+          pendingPostIds.includes(String(post.id)) ||
+          pendingPostIds.includes(Number(post.id)),
       );
       console.log('VERIFICATION_PENDING - filtered posts:', filtered);
       return filtered;
@@ -276,13 +293,14 @@ export default function AdminPostsPage() {
 
     if (currentFilter === 'VERIFICATION_REJECTED') {
       // Get post IDs from rejected verification requests
-      const rejectedPostIds = rejectedVerificationRequestsData?.map(req => req.postId) || [];
+      const rejectedPostIds = rejectedVerificationRequestsData?.map((req) => req.postId) || [];
       console.log('VERIFICATION_REJECTED - rejectedPostIds:', rejectedPostIds);
       // Handle both string and number types
-      const filtered = postsData.data.filter(post =>
-        rejectedPostIds.includes(post.id) ||
-        rejectedPostIds.includes(String(post.id)) ||
-        rejectedPostIds.includes(Number(post.id))
+      const filtered = postsData.data.filter(
+        (post) =>
+          rejectedPostIds.includes(post.id) ||
+          rejectedPostIds.includes(String(post.id)) ||
+          rejectedPostIds.includes(Number(post.id)),
       );
       console.log('VERIFICATION_REJECTED - filtered posts:', filtered);
       return filtered;
@@ -344,7 +362,7 @@ export default function AdminPostsPage() {
   // Handle page size change
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
-    
+
     // Save to localStorage for persistence
     if (typeof window !== 'undefined') {
       localStorage.setItem('admin-posts-page-size', newPageSize.toString());

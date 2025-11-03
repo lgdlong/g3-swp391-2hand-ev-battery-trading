@@ -1,4 +1,10 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface PaginationProps {
   totalItems: number;
@@ -8,12 +14,12 @@ interface PaginationProps {
   showPageSizeSelector?: boolean;
 }
 
-export default function Pagination({ 
+export default function Pagination({
   totalItems,
   itemsPerPage,
   onPageSizeChange,
   isLoading = false,
-  showPageSizeSelector = true
+  showPageSizeSelector = true,
 }: PaginationProps) {
   if (!showPageSizeSelector || !onPageSizeChange) return null;
 
@@ -24,7 +30,7 @@ export default function Pagination({
       <div className="text-sm text-gray-600">
         Hiển thị {Math.min(itemsPerPage, totalItems)} trên {totalItems} bài viết
       </div>
-      
+
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-600">Hiển thị:</span>
         <Select

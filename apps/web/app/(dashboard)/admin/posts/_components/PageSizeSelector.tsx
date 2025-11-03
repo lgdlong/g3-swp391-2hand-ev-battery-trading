@@ -1,4 +1,10 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface PageSizeSelectorProps {
   totalItems: number;
@@ -7,11 +13,11 @@ interface PageSizeSelectorProps {
   isLoading?: boolean;
 }
 
-export default function PageSizeSelector({ 
+export default function PageSizeSelector({
   totalItems,
   itemsPerPage,
   onPageSizeChange,
-  isLoading = false
+  isLoading = false,
 }: PageSizeSelectorProps) {
   const pageSizeOptions = [5, 10, 20, 50, 100];
 
@@ -20,7 +26,7 @@ export default function PageSizeSelector({
       <div className="text-sm text-gray-600">
         Hiển thị {Math.min(itemsPerPage, totalItems)} trên {totalItems} bài viết
       </div>
-      
+
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-600">Hiển thị:</span>
         <Select
