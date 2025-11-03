@@ -5,10 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Post } from '@/types/api/post';
-import { Eye, Check, X, Calendar, MapPin, User, Car, Shield } from 'lucide-react';
+import { Eye, X, Calendar, MapPin, User, Car, Shield } from 'lucide-react';
 import { DEFAULT_IMAGE } from '@/constants/images';
-import { RejectDialog } from './RejectDialog';
-import { useState } from 'react';
 
 interface PostCardProps {
   post: Post;
@@ -27,12 +25,12 @@ interface PostCardProps {
 export function PostCard({
   post,
   onViewDetails,
-  onApprove,
-  onReject,
+  // onApprove,
+  // onReject,
   onVerify,
   onRejectVerification,
-  isApproving = false,
-  isRejecting = false,
+  // isApproving = false,
+  // isRejecting = false,
   isVerifying = false,
   isRejectingVerification = false,
   currentFilter,
@@ -74,6 +72,13 @@ export function PostCard({
     );
   };
 
+  const getPostsFirstImage = (post: Post) => {
+    if (post.images && Array.isArray(post.images) && post.images.length > 0 && post.images[0]) {
+      return post.images[0].url || DEFAULT_IMAGE;
+    }
+    return DEFAULT_IMAGE;
+  };
+
   return (
     <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white overflow-hidden group">
       <CardContent className="p-0">
@@ -83,7 +88,7 @@ export function PostCard({
             {post.images && Array.isArray(post.images) && post.images.length > 0 ? (
               <div className="relative w-56 h-40 overflow-hidden">
                 <Image
-                  src={typeof post.images[0] === 'string' ? post.images[0] : DEFAULT_IMAGE}
+                  src={getPostsFirstImage(post)}
                   alt={post.title}
                   width={224}
                   height={160}
@@ -156,7 +161,7 @@ export function PostCard({
             )}
 
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-green-600">{formatPrice(post.priceVnd)}</div>
+              <div className="text-2xl font-bold text-red-600">{formatPrice(post.priceVnd)}</div>
             </div>
           </div>
 
@@ -172,7 +177,7 @@ export function PostCard({
               Xem chi tiết
             </Button>
 
-            {post.status === 'PENDING_REVIEW' && (
+            {/* {post.status === 'PENDING_REVIEW' && (
               <>
                 <Button
                   onClick={() => onApprove(post.id)}
@@ -189,7 +194,7 @@ export function PostCard({
                   triggerVariant="sm"
                 />
               </>
-            )}
+            )} */}
 
             {/* Verification buttons - hiển thị khi đang ở filter VERIFICATION_PENDING hoặc VERIFICATION_REJECTED */}
             {currentFilter === 'VERIFICATION_PENDING' && onVerify && onRejectVerification && (

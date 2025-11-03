@@ -4,8 +4,13 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
-import { getAdminPosts, approvePost, rejectPost } from '@/lib/api/postApi';
-import { verifyPost, rejectPostVerification, getPendingVerificationRequests, getRejectedVerificationRequests } from '@/lib/api/verificationApi';
+import { getAdminPosts, rejectPost } from '@/lib/api/postApi';
+import {
+  verifyPost,
+  rejectPostVerification,
+  getPendingVerificationRequests,
+  getRejectedVerificationRequests,
+} from '@/lib/api/verificationApi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Post, PostsResponse, PostStatus } from '@/types/api/post';
 
@@ -15,11 +20,20 @@ import {
   FilterButtons,
   PostCard,
   PostDetailModal,
+  PageSizeSelector,
 } from './_components';
 import type { AdminPostFilter } from './_components/FilterButtons';
 import { useModeration } from '@/hooks/useModeration';
 import { toast } from 'sonner';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
+
+// Error interface for API errors
+interface ApiError {
+  code?: string;
+  response?: {
+    status?: number;
+  };
+}
 
 export default function AdminPostsPage() {
   const [currentFilter, setCurrentFilter] = useState<AdminPostFilter>('PENDING_REVIEW');
@@ -29,15 +43,21 @@ export default function AdminPostsPage() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(() => {
+    // Get page size from localStorage or default to 10
+    if (typeof window !== 'undefined') {
+      const savedPageSize = localStorage.getItem('admin-posts-page-size');
+      return savedPageSize ? parseInt(savedPageSize) : 10;
+    }
+    return 10;
+  });
   const [pendingApproveId, setPendingApproveId] = useState<string | null>(null);
   const [pendingRejectData, setPendingRejectData] = useState<{
     postId: string;
     reason: string;
   } | null>(null);
   const queryClient = useQueryClient();
-  const { approve, reject, isApproving, isRejecting } = useModeration(currentFilter, currentPage);
+  const { approve, reject, isApproving, isRejecting } = useModeration(currentFilter, 1);
 
   // Fetch posts based on current filter
   const {
@@ -46,23 +66,25 @@ export default function AdminPostsPage() {
     error,
     refetch,
   } = useQuery<PostsResponse>({
-    queryKey: ['admin-posts', currentFilter, currentPage],
+    queryKey: ['admin-posts', currentFilter, pageSize],
     queryFn: () => {
       // For verification filters, we fetch all posts (no status filter)
       const status = ['VERIFICATION_PENDING', 'VERIFICATION_REJECTED'].includes(currentFilter)
         ? undefined
         : currentFilter;
-      const limit = ['VERIFICATION_PENDING', 'VERIFICATION_REJECTED'].includes(currentFilter) ? 1000 : pageSize;
+      const limit = ['VERIFICATION_PENDING', 'VERIFICATION_REJECTED'].includes(currentFilter)
+        ? 1000
+        : pageSize;
       console.log('Admin page - fetching posts with:', {
         status,
-        page: currentPage,
+        page: 1,
         limit,
         order: 'DESC',
         sort: 'createdAt',
       });
       return getAdminPosts({
         status: status as PostStatus,
-        page: currentPage,
+        page: 1,
         limit,
         order: 'DESC',
         sort: 'createdAt',
@@ -130,11 +152,14 @@ export default function AdminPostsPage() {
       queryClient.invalidateQueries({ queryKey: ['batteryPosts'] });
       toast.success('Từ chối kiểm định thành công!');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Error rejecting verification:', error);
 
+      // Type assertion for error handling
+      const err = error as ApiError;
+
       // Check if it's an authentication error
-      if (error?.code === 'TOKEN_EXPIRED' || error?.response?.status === 401) {
+      if (err?.code === 'TOKEN_EXPIRED' || err?.response?.status === 401) {
         toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
         // Redirect to login
         window.location.href = '/login';
@@ -142,7 +167,7 @@ export default function AdminPostsPage() {
       }
 
       // Check if it's a permission error
-      if (error?.response?.status === 403) {
+      if (err?.response?.status === 403) {
         toast.error('Bạn không có quyền thực hiện hành động này.');
         return;
       }
@@ -218,7 +243,10 @@ export default function AdminPostsPage() {
     console.log('Filtering posts - postsData:', postsData);
     console.log('Filtering posts - currentFilter:', currentFilter);
     console.log('Filtering posts - verificationRequestsData:', verificationRequestsData);
-    console.log('Filtering posts - rejectedVerificationRequestsData:', rejectedVerificationRequestsData);
+    console.log(
+      'Filtering posts - rejectedVerificationRequestsData:',
+      rejectedVerificationRequestsData,
+    );
 
     if (!postsData?.data) {
       console.log('No postsData.data, returning empty array');
@@ -227,11 +255,17 @@ export default function AdminPostsPage() {
 
     if (currentFilter === 'VERIFICATION_PENDING') {
       // Get post IDs from pending verification requests
-      const pendingPostIds = verificationRequestsData?.map(req => req.postId) || [];
+      const pendingPostIds = verificationRequestsData?.map((req) => req.postId) || [];
       console.log('VERIFICATION_PENDING - pendingPostIds:', pendingPostIds);
       console.log('VERIFICATION_PENDING - postsData.data:', postsData.data);
-      console.log('VERIFICATION_PENDING - post.id types:', postsData.data.map(post => ({ id: post.id, type: typeof post.id })));
-      console.log('VERIFICATION_PENDING - pendingPostIds types:', pendingPostIds.map(id => ({ id, type: typeof id })));
+      console.log(
+        'VERIFICATION_PENDING - post.id types:',
+        postsData.data.map((post) => ({ id: post.id, type: typeof post.id })),
+      );
+      console.log(
+        'VERIFICATION_PENDING - pendingPostIds types:',
+        pendingPostIds.map((id) => ({ id, type: typeof id })),
+      );
       console.log('VERIFICATION_PENDING - detailed comparison:');
       postsData.data.forEach((post, index) => {
         console.log(`Post ${index}:`, {
@@ -243,14 +277,15 @@ export default function AdminPostsPage() {
           includesString: pendingPostIds.includes(String(post.id)),
           includesNumber: pendingPostIds.includes(Number(post.id)),
           stringId: String(post.id),
-          numberId: Number(post.id)
+          numberId: Number(post.id),
         });
       });
       // Handle both string and number types
-      const filtered = postsData.data.filter(post =>
-        pendingPostIds.includes(post.id) ||
-        pendingPostIds.includes(String(post.id)) ||
-        pendingPostIds.includes(Number(post.id))
+      const filtered = postsData.data.filter(
+        (post) =>
+          pendingPostIds.includes(post.id) ||
+          pendingPostIds.includes(String(post.id)) ||
+          pendingPostIds.includes(Number(post.id)),
       );
       console.log('VERIFICATION_PENDING - filtered posts:', filtered);
       return filtered;
@@ -258,13 +293,14 @@ export default function AdminPostsPage() {
 
     if (currentFilter === 'VERIFICATION_REJECTED') {
       // Get post IDs from rejected verification requests
-      const rejectedPostIds = rejectedVerificationRequestsData?.map(req => req.postId) || [];
+      const rejectedPostIds = rejectedVerificationRequestsData?.map((req) => req.postId) || [];
       console.log('VERIFICATION_REJECTED - rejectedPostIds:', rejectedPostIds);
       // Handle both string and number types
-      const filtered = postsData.data.filter(post =>
-        rejectedPostIds.includes(post.id) ||
-        rejectedPostIds.includes(String(post.id)) ||
-        rejectedPostIds.includes(Number(post.id))
+      const filtered = postsData.data.filter(
+        (post) =>
+          rejectedPostIds.includes(post.id) ||
+          rejectedPostIds.includes(String(post.id)) ||
+          rejectedPostIds.includes(Number(post.id)),
       );
       console.log('VERIFICATION_REJECTED - filtered posts:', filtered);
       return filtered;
@@ -272,7 +308,7 @@ export default function AdminPostsPage() {
 
     console.log('Regular filter - returning all posts:', postsData.data);
     return postsData.data;
-  }, [postsData?.data, currentFilter, verificationRequestsData, rejectedVerificationRequestsData]);
+  }, [postsData, currentFilter, verificationRequestsData, rejectedVerificationRequestsData]);
 
   const handleApprove = async (postId: number | string) => {
     setPendingApproveId(String(postId));
@@ -323,43 +359,19 @@ export default function AdminPostsPage() {
     setSelectedPost(null);
   };
 
-  // Pagination functions
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-  };
+  // Handle page size change
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
 
-  const goToFirstPage = () => {
-    setCurrentPage(1);
-  };
-
-  const goToLastPage = () => {
-    if (postsData) {
-      const totalPages = Math.ceil(postsData.total / pageSize);
-      setCurrentPage(totalPages);
-    }
-  };
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const goToNextPage = () => {
-    if (postsData) {
-      const totalPages = Math.ceil(postsData.total / pageSize);
-      if (currentPage < totalPages) {
-        setCurrentPage(currentPage + 1);
-      }
+    // Save to localStorage for persistence
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin-posts-page-size', newPageSize.toString());
     }
   };
 
   const handleRefresh = async () => {
     try {
       setIsRefreshing(true);
-
-      // Reset to first page when refreshing
-      setCurrentPage(1);
 
       // Invalidate và refetch tất cả queries để cập nhật dữ liệu mới
       await Promise.all([
@@ -424,7 +436,6 @@ export default function AdminPostsPage() {
               currentFilter={currentFilter}
               onFilterChange={(filter) => {
                 setCurrentFilter(filter);
-                setCurrentPage(1);
               }}
               counts={{
                 draftCount,
@@ -474,6 +485,14 @@ export default function AdminPostsPage() {
                     currentFilter={currentFilter}
                   />
                 ))}
+
+                {/* Page Size Selector - show for all filters */}
+                <PageSizeSelector
+                  totalItems={postsData?.total || 0}
+                  itemsPerPage={pageSize}
+                  onPageSizeChange={handlePageSizeChange}
+                  isLoading={isLoading}
+                />
               </div>
             )}
           </CardContent>

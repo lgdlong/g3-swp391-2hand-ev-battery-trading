@@ -47,11 +47,7 @@ export default function TransactionDetailPage() {
   });
 
   const formatAmount = (amount: string) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0,
-    }).format(Math.abs(parseFloat(amount)));
+    return new Intl.NumberFormat('vi-VN').format(Math.abs(parseFloat(amount))) + ' Coin';
   };
 
   const formatDate = (dateString: string) => {
