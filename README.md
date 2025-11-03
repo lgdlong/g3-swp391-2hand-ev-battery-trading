@@ -66,7 +66,6 @@ g3-swp391-2hand-ev-battery-trading/
 ├── apps/                    # Main applications
 │   ├── api/                # NestJS Backend API
 │   ├── web/                # Next.js Frontend
-│   ├── docs/               # Documentation site
 │   └── db/                 # Database scripts & dumps
 ├── packages/               # Shared packages
 │   ├── eslint-config/      # Shared ESLint configurations
@@ -80,7 +79,6 @@ g3-swp391-2hand-ev-battery-trading/
 
 - **`apps/api`**: Backend API được xây dựng với NestJS, chứa các module authentication, accounts, và business logic
 - **`apps/web`**: Frontend application với Next.js, UI components và client-side logic
-- **`apps/docs`**: Documentation site cho dự án
 - **`apps/db`**: Database migration scripts, dump files và database setup
 
 ## Cài đặt và chạy dự án
@@ -128,7 +126,6 @@ pnpm dev
 # Hoặc chạy từng service riêng biệt
 pnpm dev --filter=api     # Backend API (port 8000)
 pnpm dev --filter=web     # Frontend (port 3000)
-pnpm dev --filter=docs    # Documentation (port 3001)
 ```
 
 ### 6. Build for production
