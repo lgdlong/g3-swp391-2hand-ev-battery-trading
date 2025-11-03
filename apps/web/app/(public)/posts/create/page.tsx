@@ -10,6 +10,7 @@ import {
   FormActions,
 } from './_components';
 import { useCreatePost } from './_hooks/useCreatePost';
+import { DepositModal } from '@/components/DepositModal';
 
 export default function CreatePostPage() {
   const {
@@ -28,10 +29,13 @@ export default function CreatePostPage() {
     formData,
     provinceCode,
     districtCode,
+    isDepositModalOpen,
+    pendingPostData,
 
     // Actions
     handleInputChange,
     handleSubmit,
+    handleCreatePostAfterDeposit,
     handleImageUpload,
     handleFileSelect,
     removeImage,
@@ -43,6 +47,7 @@ export default function CreatePostPage() {
     handleDistrictChange,
     handleWardChange,
     handleAddressTextChange,
+    setIsDepositModalOpen,
 
     // Helpers
     formatNumberWithCommas,
@@ -114,6 +119,16 @@ export default function CreatePostPage() {
           />
         )}
       </div>
+
+      {/* Deposit Modal */}
+      {pendingPostData && (
+        <DepositModal
+          isOpen={isDepositModalOpen}
+          onClose={() => setIsDepositModalOpen(false)}
+          priceVnd={parseFloat(pendingPostData.priceVnd)}
+          onSuccess={handleCreatePostAfterDeposit}
+        />
+      )}
     </div>
   );
 }

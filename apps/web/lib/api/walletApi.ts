@@ -30,6 +30,12 @@ export interface CreateTopupDto {
   cancelUrl?: string;
 }
 
+export interface DeductWalletDto {
+  amount: number;
+  description: string;
+  paymentOrderId: string;
+}
+
 /**
  * Get current user's wallet
  */
@@ -47,6 +53,19 @@ export async function createTopupPayment(
   payload: CreateTopupDto,
 ): Promise<{ data?: { checkoutUrl?: string } }> {
   const { data } = await api.post('/wallets/topup/payment', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Deduct money from user wallet
+ * Requires admin authentication
+ * @param userId - User ID to deduct from
+ * @param payload - Deduction details (amount, description, paymentOrderId)
+ */
+export async function deductWallet(userId: number, payload: DeductWalletDto): Promise<Wallet> {
+  const { data } = await api.post<Wallet>(`/wallets/deduct/${userId}`, payload, {
     headers: getAuthHeaders(),
   });
   return data;
