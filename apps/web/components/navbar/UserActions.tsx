@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { User, Bookmark, Bell, ChevronDown } from 'lucide-react';
+import { User, Bookmark, Bell, ChevronDown, MessageCircle } from 'lucide-react';
 import { Account } from '@/types/account';
 import { isValidAvatarUrl } from '@/lib/validation/file-validation';
 
@@ -33,14 +33,22 @@ export function UserActions({
               asChild
               variant="ghost"
               size="sm"
-              className="text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors duration-200 group relative rounded-xl p-2"
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 group relative rounded-full p-2"
             >
               <Link href="/bookmarks" className="flex items-center">
-                <Bookmark className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-                {/* Notification badge */}
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-                  <span className="text-xs text-white font-bold">3</span>
-                </div>
+                <Bookmark className="h-6 w-6" />
+              </Link>
+            </Button>
+
+            {/* Message Button (center) */}
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 group relative rounded-full p-2"
+            >
+              <Link href="/chat" className="flex items-center">
+                <MessageCircle className="h-6 w-6" />
               </Link>
             </Button>
 
@@ -49,14 +57,10 @@ export function UserActions({
               asChild
               variant="ghost"
               size="sm"
-              className="text-gray-600 hover:text-gray-900 hover:bg-[#7EF2DD] transition-colors duration-200 group relative rounded-xl p-2"
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 group relative rounded-full p-2"
             >
               <Link href="#" className="flex items-center">
-                <Bell className="h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
-                {/* Notification badge */}
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-                  <span className="text-xs text-white font-bold">5</span>
-                </div>
+                <Bell className="h-6 w-6" />
               </Link>
             </Button>
           </div>

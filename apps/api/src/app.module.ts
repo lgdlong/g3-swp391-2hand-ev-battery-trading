@@ -20,6 +20,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { ServiceTypesModule } from './modules/service-types/service-types.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { ChatModule } from './modules/chat/chat.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -75,6 +76,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     ServiceTypesModule,
     WalletsModule,
     TransactionsModule,
+    ChatModule,
   ],
   controllers: [],
   providers: [],
