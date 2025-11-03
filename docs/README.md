@@ -4,10 +4,32 @@ This directory contains comprehensive documentation for the 2nd-hand EV Battery 
 
 ## 📚 Available Documentation
 
-### Payment & Wallet System
+## 📚 Documentation Index
 
-#### [Wallet Topup Flow](./wallet-topup-flow.md)
-Complete documentation for the wallet topup feature including:
+### Payment & Wallet Features
+- [**Wallet Topup Flow**](./wallet-topup-flow.md) - Complete guide for wallet topup via PayOS integration
+
+### Post Management Features
+- [**Post Creation Flow**](./post-creation-flow.md) - 2-stage post creation workflow (form submission + image upload)
+- **Complete flow diagram** showing post creation, publishing, and verification payment
+- **Simplified payment diagram** for wallet deduction
+- Database schema with 5 key tables
+- API endpoint specifications with examples
+- Frontend payment component documentation
+- Balance validation and error handling
+- Payment status state diagrams
+- Testing scenarios for various edge cases
+
+**Key Features Covered:**
+- User creates post (DRAFT → PUBLISHED)
+- Request verification with 50,000 VND fee
+- Wallet balance validation
+- Transaction atomicity and rollback
+- Success/failure handling
+- Insufficient balance flow
+
+---
+
 - **Detailed sequence diagram** (30+ steps) showing the entire payment flow
 - Database schema with table structures
 - API endpoint specifications with request/response examples
@@ -149,10 +171,10 @@ Include language identifiers:
   - Transaction history
   - Admin operations
 
-- [ ] **Post Payment Flow** (`post-payment-flow.md`)
-  - Post listing fees
-  - Deposit handling
-  - Refund process
+- [✅] **Post Creation & Payment Flow** (`post-creation-payment-flow.md`)
+  - Post creation and publishing
+  - Verification payment (50,000 VND)
+  - Wallet balance deduction
 
 - [ ] **Authentication System** (`authentication-flow.md`)
   - JWT strategy
@@ -178,9 +200,10 @@ Include language identifiers:
 
 ## 📊 Documentation Metrics
 
-| Document | Completeness | Last Updated |
-|----------|--------------|--------------|
-| [Wallet Topup Flow](./wallet-topup-flow.md) | ✅ 100% | Nov 3, 2025 |
+| Documentation | Diagrams | Completeness | Last Updated |
+|--------------|----------|--------------|--------------|
+| [Wallet Topup Flow](./wallet-topup-flow.md) | ✅ Sequence (Complete + Simplified), State | 100% | 2025-11-04 |
+| [Post Creation Flow](./post-creation-flow.md) | ✅ Sequence (Complete + Simplified), State | 100% | 2025-11-04 |
 
 **Legend:**
 - ✅ Complete and reviewed
