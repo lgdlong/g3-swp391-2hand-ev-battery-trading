@@ -214,6 +214,20 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
               </div>
             </div>
 
+            {/* Amount Needed to Top Up */}
+            {remainingBalance < 0 && (
+              <div className="bg-gradient-to-r from-red-500/10 to-red-500/5 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Số dư cần phải nạp</p>
+                    <p className="text-xl font-bold text-red-600">
+                      {formatVND(Math.abs(remainingBalance))} Coin
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Remaining Balance */}
             {remainingBalance >= 0 && (
               <div className="bg-gradient-to-r from-green-500/10 to-green-500/5 rounded-xl p-4">
@@ -278,7 +292,11 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
       </div>
 
       {/* Topup Modal */}
-      <TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
+      <TopupModal
+        isOpen={isTopupModalOpen}
+        onClose={() => setIsTopupModalOpen(false)}
+        initialAmount={remainingBalance < 0 ? Math.abs(remainingBalance) : undefined}
+      />
     </div>
   );
 }
