@@ -36,7 +36,8 @@ export function PostImagesGallery({ post }: PostImagesGalleryProps) {
           {post.images.map((image, index: number) => {
             if (!image) return null;
 
-            const imageUrl = typeof image === 'string' ? image : DEFAULT_IMAGE;
+            // Extract URL from image object or use as string if it's already a string
+            const imageUrl = typeof image === 'string' ? image : image?.url || DEFAULT_IMAGE;
 
             if (!imageUrl) return null;
 

@@ -88,6 +88,7 @@ export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsRes
   if (query.limit !== undefined) params.append('limit', query.limit.toString());
   if (query.page !== undefined) params.append('page', query.page.toString());
   if (query.sort) params.append('sort', query.sort);
+  if (query.order) params.append('order', query.order);
   if (query.status && query.status !== 'ALL') params.append('status', query.status);
   if (query.postType) params.append('postType', query.postType);
 
@@ -276,7 +277,6 @@ export async function rejectPost(id: string, reason: string): Promise<Post> {
   return data;
 }
 
-
 /**
  * Upload images to a post
  * Requires authentication token in headers
@@ -284,7 +284,6 @@ export async function rejectPost(id: string, reason: string): Promise<Post> {
  * @param files - Array of File objects to upload (max 10 files)
  */
 export async function uploadPostImages(postId: string, files: File[]): Promise<FlexibleField> {
-
   // Validate files
   if (!files || files.length === 0) {
     throw new Error('No files provided for upload');
@@ -309,7 +308,6 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
   files.forEach((file, index) => {
     formData.append('files', file, file.name); // Use 'files' as per Swagger doc
   });
-
 
   try {
     // Try with native fetch first (sometimes works better with FormData)
