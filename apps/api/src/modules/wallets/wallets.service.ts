@@ -195,11 +195,11 @@ export class WalletsService {
       // Initialize wallet if not exists
       const wallet = await ensureWalletInTx(manager, userId);
 
-      // Get service type for refund (ID = 3)
+      // Get service type for refund (ID = 3 - DEPOSIT_REFUND)
       const serviceType = await this.serviceTypesService.findOrCreateByCode(
-        'REFUND',
-        'Hoàn tiền',
-        'Hoàn tiền phí đăng bài',
+        'DEPOSIT_REFUND',
+        'Hoàn tiền đặt cọc',
+        'Refund deposit payment',
       );
 
       // Create wallet transaction
