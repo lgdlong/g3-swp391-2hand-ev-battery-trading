@@ -8,27 +8,30 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { PaymentOrder } from '../../payos/entities/payment-order.entity';
 import { Account } from '../../accounts/entities/account.entity';
 import { WalletTransaction } from '../../wallets/entities/wallet-transaction.entity';
+import { Post } from '../../posts/entities/post.entity';
 import { RefundScenario } from '../../../shared/enums/refund-scenario.enum';
 import { RefundStatus } from '../../../shared/enums/refund-status.enum';
 
+/**
+ * Refund entity - Tracking refunds cho post deposits
+ * Auto refund bởi cron job
+ */
 @Entity('refunds')
 export class Refund {
   /** ID tự tăng (PK) */
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id!: string;
 
-  /** Liên kết tới PaymentOrder */
-  @ManyToOne(() => PaymentOrder, { eager: false, nullable: false })
-  @JoinColumn({ name: 'payment_order_id' })
-  paymentOrder!: PaymentOrder;
+  /** Liên kết tới Post (bài đăng được refund) */
+  @ManyToOne(() => Post, { eager: false, nullable: false })
+  @JoinColumn({ name: 'post_id' })
+  post!: Post;
 
-  @IsInt()
-  @Min(1)
-  @Column({ name: 'payment_order_id', type: 'bigint' })
-  paymentOrderId!: string;
+  @IsString()
+  @Column({ name: 'post_id', type: 'bigint' })
+  postId!: string;
 
   /** Người nhận tiền hoàn (FK → accounts.id) */
   @ManyToOne(() => Account, { eager: false, nullable: false })
@@ -37,10 +40,10 @@ export class Refund {
 
   @IsInt()
   @Min(1)
-  @Column({ name: 'account_id', type: 'bigint' })
-  accountId!: string;
+  @Column({ name: 'account_id', type: 'int' })
+  accountId!: number;
 
-  /** Loại tình huống refund (CANCEL_EARLY, EXPIRED, HIGH_INTERACTION, FRAUD_SUSPECTED) */
+  /** Loại tình huống refund (CANCEL_EARLY, CANCEL_LATE, EXPIRED, FRAUD_SUSPECTED) */
   @Column({ name: 'scenario', type: 'enum', enum: RefundScenario })
   scenario!: RefundScenario;
 
@@ -50,19 +53,19 @@ export class Refund {
   @Column({ name: 'policy_rate_percent', type: 'smallint' })
   policyRatePercent!: number;
 
-  /** Số tiền gốc của order (VND, nguyên) */
+  /** Số tiền gốc (deposit đã trả - VND) */
   @IsNumber()
   @Min(0)
-  @Column({ name: 'amount_original', type: 'numeric', precision: 20, scale: 0 })
+  @Column({ name: 'amount_original', type: 'numeric', precision: 14, scale: 2 })
   amountOriginal!: string;
 
-  /** Số tiền được hoàn thực tế (VND, nguyên) */
+  /** Số tiền được hoàn thực tế (VND) */
   @IsNumber()
   @Min(0)
-  @Column({ name: 'amount_refund', type: 'numeric', precision: 20, scale: 0 })
+  @Column({ name: 'amount_refund', type: 'numeric', precision: 14, scale: 2 })
   amountRefund!: string;
 
-  /** Trạng thái refund (PENDING, REFUNDED, FAILED) */
+  /** Trạng thái refund (PENDING, REFUNDED, FAILED, REJECTED) */
   @Column({
     name: 'status',
     type: 'enum',
@@ -71,7 +74,7 @@ export class Refund {
   })
   status!: RefundStatus;
 
-  /** Lý do hoàn tiền (từ admin hoặc hệ thống) */
+  /** Lý do hoàn tiền hoặc lỗi */
   @IsOptional()
   @IsString()
   @Column({ name: 'reason', type: 'varchar', length: 255, nullable: true })
@@ -89,18 +92,8 @@ export class Refund {
 
   @IsOptional()
   @IsInt()
-  @Column({ name: 'wallet_transaction_id', type: 'bigint', nullable: true })
-  walletTransactionId?: string | null;
-
-  /** Admin thực hiện refund (nếu có) */
-  @ManyToOne(() => Account, { eager: false, nullable: true })
-  @JoinColumn({ name: 'performed_by_admin_id' })
-  performedByAdmin?: Account | null;
-
-  @IsOptional()
-  @IsInt()
-  @Column({ name: 'performed_by_admin_id', type: 'bigint', nullable: true })
-  performedByAdminId?: string | null;
+  @Column({ name: 'wallet_transaction_id', type: 'int', nullable: true })
+  walletTransactionId?: number | null;
 
   /** Thời điểm refund thành công */
   @IsOptional()

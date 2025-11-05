@@ -1,17 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { RefundsService } from './refunds.service';
 import { RefundsCronService } from './refunds-cron.service';
-import { CreateRefundDto } from './dto/create-refund.dto';
-import { UpdateRefundDto } from './dto/update-refund.dto';
-import { CurrentUser } from '../../core/decorators/current-user.decorator';
-import type { ReqUser } from '../../core/decorators/current-user.decorator';
-import { RefundRequestDto } from './dto/refund-request.dto';
 import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
 import { Roles } from 'src/core/decorators/roles.decorator';
 import { AccountRole } from 'src/shared/enums/account-role.enum';
 import { RolesGuard } from 'src/core/guards/roles.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ManualRefundDto } from './dto/manual-refund.dto';
 import { AdminDecideRefundDto } from './dto/admin-decide-refund.dto';
+import { CurrentUser } from '../../core/decorators/current-user.decorator';
+import type { ReqUser } from '../../core/decorators/current-user.decorator';
 
 @ApiTags('Refunds')
 @ApiBearerAuth()
@@ -23,74 +21,82 @@ export class RefundsController {
   ) {}
 
   /**
-   * Xử lý refund request (auto hoặc tạo pending cho admin)
-   * Dùng cho cả dry-run và thực thi
+   * Lấy danh sách refunds (từ cron)
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
-  @Post()
+  @Get()
   @ApiOperation({
-    summary: 'Process refund request',
-    description: `
-      Xử lý yêu cầu hoàn tiền theo các chính sách:
-      - EXPIRED (hết hạn không gian lận): 80% auto refund
-      - CANCEL_EARLY (hủy sớm): 100% auto refund  
-      - HIGH_INTERACTION (hủy sau tương tác cao): 50% (có thể cần admin review)
-      - FRAUD_SUSPECTED (gian lận): Hold 3-5 ngày → admin quyết định
-      
-      Set dryRun=true để xem preview trước khi thực hiện.
-    `,
+    summary: 'Get all refunds',
+    description: 'Lấy tất cả refunds đã được tạo bởi cron job',
   })
-  @ApiResponse({ status: 200, description: 'Refund processed or created for admin review' })
-  async handleRefund(@Body() dto: RefundRequestDto, @CurrentUser() user: ReqUser) {
-    return this.refundsService.handleRefund(dto, user);
+  @ApiResponse({ status: 200, description: 'List of all refunds' })
+  async getAllRefunds() {
+    return this.refundsService.getAllRefunds();
   }
 
   /**
-   * Lấy danh sách refund requests cần admin review
+   * Lấy danh sách refund requests đang pending
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Get('pending')
   @ApiOperation({
     summary: 'Get pending refund requests',
-    description: 'Lấy danh sách các refund request đang chờ admin review (FRAUD_SUSPECTED, HIGH_INTERACTION)',
+    description: 'Lấy danh sách các refund đang chờ xử lý (status: PENDING)',
   })
-  @ApiResponse({ status: 200, description: 'List of pending refund requests' })
+  @ApiResponse({ status: 200, description: 'List of pending refunds' })
   async getPendingRefunds() {
     return this.refundsService.getPendingRefundsForAdmin();
   }
 
   /**
-   * Lấy chi tiết refund request
+   * � Manual refund - Admin refund 1 post cụ thể
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
-  @Get(':refundId')
+  @Post('manual')
   @ApiOperation({
-    summary: 'Get refund detail',
-    description: 'Lấy chi tiết refund request bao gồm payment order, account info',
+    summary: '[ADMIN] Manual refund for specific post',
+    description: `
+      Admin tự refund deposit cho 1 post cụ thể.
+      
+      Có thể:
+      - Tự động tính scenario dựa vào reviewedAt
+      - Hoặc admin chọn scenario + custom rate
+      - DryRun=true để xem preview trước khi refund
+      
+      Use cases:
+      - User yêu cầu đặc biệt
+      - Sửa lỗi cron
+      - Refund ngoài policy
+    `,
   })
-  @ApiResponse({ status: 200, description: 'Refund detail' })
-  async getRefundDetail(@Param('refundId') refundId: string) {
-    return this.refundsService.getRefundDetail(refundId);
+  @ApiResponse({ status: 200, description: 'Manual refund completed' })
+  async manualRefund(
+    @Body() dto: ManualRefundDto,
+    @CurrentUser() adminUser: ReqUser,
+  ) {
+    return this.refundsService.manualRefund(dto, adminUser);
   }
 
   /**
-   * Admin approve/reject refund request
-   * Chỉ dùng cho các request ở trạng thái PENDING
+   * ✅❌ Admin approve/reject pending refund
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
   @Post(':refundId/decide')
   @ApiOperation({
-    summary: 'Admin decide refund (approve/reject)',
+    summary: '[ADMIN] Approve or reject pending refund',
     description: `
-      Admin quyết định approve hoặc reject refund request.
-      - approve: Thực hiện refund vào ví user
-      - reject: Giữ tiền, không hoàn
+      Admin review và quyết định approve/reject refund đang PENDING.
       
-      Chỉ áp dụng cho refund ở trạng thái PENDING và đã hết hold period (3-5 ngày).
+      - approve: Thực hiện refund vào ví user
+      - reject: Không refund, giữ tiền
+      
+      Thường dùng cho các case:
+      - Cron tạo PENDING (scenario FRAUD_SUSPECTED)
+      - Manual refund tạo PENDING để review
     `,
   })
   @ApiResponse({ status: 200, description: 'Refund decision processed' })
@@ -108,7 +114,7 @@ export class RefundsController {
   }
 
   /**
-   * 🔥 Manual trigger cho cron job (Admin only - For testing)
+   * �🔥 Manual trigger cho cron job (Admin only - For testing)
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -117,9 +123,12 @@ export class RefundsController {
     summary: '[ADMIN] Manually trigger expired posts refund check',
     description: `
       Endpoint này để test cron job manually.
-      Sẽ quét và refund tất cả posts hết hạn (> 30 ngày) chưa được refund.
+      Sẽ quét và refund tất cả posts:
+      - CANCEL_EARLY (< 7 ngày): 100%
+      - CANCEL_LATE (7-30 ngày): 70%
+      - EXPIRED (> 30 ngày): 50%
       
-      🚨 Chỉ dùng để test! Production sẽ tự động chạy mỗi 12h đêm.
+      🚨 Chỉ dùng để test! Production sẽ tự động chạy mỗi ngày lúc 00:00.
     `,
   })
   @ApiResponse({
