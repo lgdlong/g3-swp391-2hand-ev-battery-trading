@@ -121,14 +121,22 @@ export class RefundsService {
 
     // 5. Lấy rate (từ custom hoặc policy)
     const policy = await this.getPolicy();
-    const rate = dto.customRate ?? this.getRateByScenario(scenario, policy);
+    const rateFromPolicy = dto.customRate ?? this.getRateByScenario(scenario, policy);
+    // Ensure rate is integer (DB column is smallint)
+    const rate = Math.round(Number(rateFromPolicy));
 
     // 6. Tính refund amount
     const amountOriginal = Number(postPayment.amountPaid);
     const amountRefund = Math.floor(amountOriginal * (rate / 100));
 
-    // 7. Dry run - chỉ preview
-    if (dto.dryRun) {
+        // 7. Dry run - chỉ preview
+    // Handle both boolean and string "true"/"false"
+    const isDryRun = dto.dryRun === true || dto.dryRun === 'true' as any;
+    console.log('[REFUND] dto.dryRun received:', dto.dryRun, 'type:', typeof dto.dryRun);
+    console.log('[REFUND] isDryRun:', isDryRun);
+    
+    if (isDryRun) {
+      console.log('[REFUND] DRY RUN MODE - Not saving to DB');
       return {
         success: true,
         dryRun: true,
@@ -144,6 +152,7 @@ export class RefundsService {
     }
 
     // 8. Thực hiện refund
+    console.log('[REFUND] EXECUTING REAL REFUND - Saving to DB');
     return this.dataSource.transaction(async (manager) => {
       // Tạo refund record
       const refund = this.refundRepo.create({
@@ -175,6 +184,7 @@ export class RefundsService {
 
         return {
           success: true,
+          dryRun: false,
           refundId: refund.id,
           postId: dto.postId,
           walletTransactionId: refund.walletTransactionId,
