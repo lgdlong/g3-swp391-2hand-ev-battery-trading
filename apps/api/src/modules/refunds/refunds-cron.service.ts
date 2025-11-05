@@ -1,13 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
-import { PaymentOrder } from '../payos/entities/payment-order.entity';
+import { Repository } from 'typeorm';
 import { Post } from '../posts/entities/post.entity';
-import { RefundsService } from './refunds.service';
-import { PaymentStatus } from '../../shared/enums/payment-status.enum';
+import { PostPayment } from '../transactions/entities/post-payment.entity';
+import { WalletsService } from '../wallets/wallets.service';
 import { PostStatus } from '../../shared/enums/post.enum';
-import { RefundScenario } from '../../shared/enums/refund-scenario.enum';
 
 /**
  * Cron Job Service để tự động xử lý refund cho các post hết hạn
@@ -18,20 +16,20 @@ export class RefundsCronService {
   private readonly logger = new Logger(RefundsCronService.name);
 
   constructor(
-    @InjectRepository(PaymentOrder)
-    private readonly paymentOrderRepo: Repository<PaymentOrder>,
-
     @InjectRepository(Post)
     private readonly postRepo: Repository<Post>,
 
-    private readonly refundsService: RefundsService,
+    @InjectRepository(PostPayment)
+    private readonly postPaymentRepo: Repository<PostPayment>,
+
+    private readonly walletsService: WalletsService,
   ) {}
 
   /**
    * Cron job chạy mỗi ngày lúc 00:00 (12h đêm)
    * Quét và refund các post hết hạn
    */
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+  @Cron(CronExpression.EVERY_MINUTE, {
     name: 'auto-refund-expired-posts',
     timeZone: 'Asia/Ho_Chi_Minh',
   })
@@ -83,95 +81,130 @@ export class RefundsCronService {
   }
 
   /**
-   * Tìm các posts đã hết hạn và cần refund
+   * Tìm các posts cần refund
    * Điều kiện:
-   * - Post có createdAt > 30 days (giả sử post hết hạn sau 30 ngày)
-   * - Post status = PUBLISHED (đang hiển thị)
-   * - Có payment order với status = COMPLETED
-   * - Chưa có refund record cho payment order đó
+   * - Post có reviewedAt >= 7 days
+   * - Post status = PUBLISHED (hết hạn tự động) hoặc ARCHIVED (user hủy)
    * 
-   * TODO: Thay thế logic này bằng field expiresAt nếu Post entity có field đó
+   * Logic refund:
+   * - ARCHIVED + < 7 ngày: 100% (hủy sớm)
+   * - ARCHIVED + 7-30 ngày: 70% (hủy trễ)
+   * - PUBLISHED + > 30 ngày: 50% (hết hạn tự động)
    */
   private async findExpiredPostsNeedingRefund(): Promise<Post[]> {
     const now = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30); // Posts cũ hơn 30 ngày
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); // 7 ngày trước
 
-    // Subquery để tìm payment orders đã có refund
-    const refundedPaymentIds = await this.paymentOrderRepo
-      .createQueryBuilder('po')
-      .leftJoin('refunds', 'r', 'r.payment_order_id = po.id')
-      .where('r.id IS NOT NULL')
-      .select('po.id')
-      .getRawMany()
-      .then((results) => results.map((r) => r.id));
-
-    // Tìm posts hết hạn (created > 30 days ago)
-    const queryBuilder = this.postRepo
+    // Tìm posts đã qua 7 ngày từ khi được duyệt
+    const posts = await this.postRepo
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.seller', 'seller')
-      .innerJoin(
-        PaymentOrder,
-        'payment',
-        'payment.payable_id = post.id AND payment.payable_type = :payableType',
-        { payableType: 'POST' },
-      )
-      .where('post.created_at < :thirtyDaysAgo', { thirtyDaysAgo })
-      .andWhere('post.status = :status', { status: PostStatus.PUBLISHED })
-      .andWhere('payment.status = :paymentStatus', {
-        paymentStatus: PaymentStatus.COMPLETED,
-      });
+      .where('post.reviewedAt IS NOT NULL') // Chỉ lấy posts đã được duyệt
+      .andWhere('post.reviewedAt < :sevenDaysAgo', { sevenDaysAgo }) // Đã duyệt >= 7 ngày
+      .andWhere('post.status IN (:...statuses)', { 
+        statuses: [PostStatus.PUBLISHED, PostStatus.ARCHIVED] // Cả PUBLISHED (hết hạn) và ARCHIVED (user hủy)
+      })
+      .getMany();
 
-    // Loại trừ các payment đã có refund
-    if (refundedPaymentIds.length > 0) {
-      queryBuilder.andWhere('payment.id NOT IN (:...refundedIds)', {
-        refundedIds: refundedPaymentIds,
-      });
-    }
-
-    return queryBuilder.getMany();
+    return posts;
   }
 
   /**
-   * Xử lý refund cho 1 post hết hạn
+   * Xử lý refund cho 1 post
+   * Logic dựa vào post_payments:
+   *   - Tìm payment record trong post_payments với post_id
+   *   - Lấy amount_paid và account_id
+   *   
+   * Refund rate:
+   *   - ARCHIVED + < 7 ngày: 100% (hủy sớm)
+   *   - ARCHIVED + 7-30 ngày: 70% (hủy trễ)
+   *   - PUBLISHED + > 30 ngày: 50% (hết hạn tự động)
    */
   private async processRefundForExpiredPost(post: Post): Promise<void> {
-    // Tìm payment order của post
-    const paymentOrder = await this.paymentOrderRepo.findOne({
+    // Tìm payment record trong post_payments
+    const postPayment = await this.postPaymentRepo.findOne({
       where: {
-        payableId: String(post.id),
-        payableType: 'POST',
-        status: PaymentStatus.COMPLETED,
+        postId: post.id,
       },
+      relations: ['account'],
     });
 
-    if (!paymentOrder) {
-      throw new Error(`Payment order not found for post ${post.id}`);
+    if (!postPayment) {
+      this.logger.warn(
+        `⚠️ Post ${post.id} has no payment record in post_payments, skipping refund`,
+      );
+      return;
     }
 
-    // Gọi refund service với scenario EXPIRED (80% refund)
-    const refundResult = await this.refundsService.handleRefund(
-      {
-        paymentOrderId: Number(paymentOrder.id),
-        scenario: RefundScenario.EXPIRED,
-        reason: `Auto refund: Post expired (created at ${post.createdAt.toISOString()})`,
-        dryRun: false,
-      },
-      {
-        sub: 0, // System user
-        email: 'system@auto-refund',
-        role: 'ADMIN',
-      },
+    this.logger.log(
+      `💰 Found payment: ${postPayment.amountPaid} VND for post ${post.id} by account ${postPayment.accountId}`,
     );
 
-    this.logger.debug(
-      `Refund result for post ${post.id}:`,
-      JSON.stringify(refundResult),
+    // Tính số ngày từ khi post được duyệt
+    const reviewedAt = new Date(post.reviewedAt!);
+    const now = new Date();
+    const daysSinceReviewed = Math.floor(
+      (now.getTime() - reviewedAt.getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    // Optional: Cập nhật post status thành EXPIRED nếu cần
-    // post.status = PostStatus.EXPIRED;
-    // await this.postRepo.save(post);
+    // Xác định tỷ lệ refund dựa trên status và số ngày
+    let refundRate: number;
+    let scenario: string;
+
+    if (post.status === PostStatus.ARCHIVED) {
+      // User chủ động hủy (ARCHIVED)
+      if (daysSinceReviewed < 7) {
+        refundRate = 1.0;
+        scenario = 'CANCEL_EARLY';
+      } else if (daysSinceReviewed < 30) {
+        refundRate = 0.7;
+        scenario = 'CANCEL_LATE';
+      } else {
+        refundRate = 0.7;
+        scenario = 'CANCEL_LATE';
+      }
+    } else if (post.status === PostStatus.PUBLISHED) {
+      // Hết hạn tự động (PUBLISHED + > 30 ngày)
+      if (daysSinceReviewed >= 30) {
+        refundRate = 0.5;
+        scenario = 'EXPIRED';
+      } else {
+        this.logger.warn(
+          `⚠️ Post ${post.id} is PUBLISHED but not expired yet (${daysSinceReviewed} days), skipping`,
+        );
+        return;
+      }
+    } else {
+      this.logger.warn(
+        `⚠️ Post ${post.id} has invalid status ${post.status}, skipping`,
+      );
+      return;
+    }
+
+    // Tính số tiền refund từ post_payments.amount_paid
+    const amountPaid = parseFloat(postPayment.amountPaid);
+    const amountRefund = Math.floor(amountPaid * refundRate);
+    const refundPercent = Math.floor(refundRate * 100);
+
+    this.logger.log(
+      `Processing refund for post ${post.id}: ${post.status}, ${daysSinceReviewed} days → ${scenario} (${refundPercent}%)`,
+    );
+    this.logger.log(
+      `  Amount paid: ${amountPaid} VND → Refund: ${amountRefund} VND (${refundPercent}%)`,
+    );
+
+    // Refund vào wallet của user đã trả tiền (accountId từ post_payments)
+    await this.walletsService.topUp(
+      postPayment.accountId,
+      String(amountRefund),
+      `Hoàn tiền phí đăng bài #${post.id} - ${scenario} - ${refundPercent}%`,
+      `REFUND-POST-${post.id}-${Date.now()}`,
+    );
+
+    this.logger.log(
+      `✅ Refunded ${amountRefund} VND (${refundPercent}%) to user ${postPayment.accountId} for post ${post.id}`,
+    );
   }
 
   /**

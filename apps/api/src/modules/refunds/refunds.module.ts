@@ -7,15 +7,16 @@ import { PaymentOrder } from '../payos/entities';
 import { Refund } from './entities/refund.entity';
 import { RefundPolicy } from '../settings/entities/refund-policy.entity';
 import { Post } from '../posts/entities/post.entity';
+import { PostPayment } from '../transactions/entities/post-payment.entity';
 import { WalletsModule } from '../wallets/wallets.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Refund, PaymentOrder, RefundPolicy, Post]),
+    TypeOrmModule.forFeature([Refund, PaymentOrder, RefundPolicy, Post, PostPayment]),
     WalletsModule,
   ],
   controllers: [RefundsController],
   providers: [RefundsService, RefundsCronService],
-  exports: [RefundsService], // Export để có thể inject vào PostsService nếu cần
+  exports: [RefundsService],
 })
 export class RefundsModule {}
