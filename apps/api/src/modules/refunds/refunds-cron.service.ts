@@ -218,7 +218,7 @@ export class RefundsCronService {
 
     try {
       // 2️⃣ Refund vào wallet của user
-      const tx = await this.walletsService.topUp(
+      const tx = await this.walletsService.refund(
         postPayment.accountId,
         String(amountRefund),
         `Hoàn tiền phí đăng bài #${post.id} - ${scenario} - ${refundPercent}%`,

@@ -160,11 +160,11 @@ export class RefundsService {
 
       try {
         // TopUp wallet
-        const tx = await this.walletsService.topUp(
+        const tx = await this.walletsService.refund(
           postPayment.accountId,
           String(amountRefund),
           `Manual refund ${rate}% for post ${post.id} by admin (${scenario})`,
-          dto.postId,
+          `MANUAL-REFUND-${dto.postId}-${Date.now()}`,
         );
 
         // Update refund status
@@ -223,11 +223,11 @@ export class RefundsService {
         // Admin approve - thực hiện refund
         try {
           const amountRefund = Number(refund.amountRefund);
-          const tx = await this.walletsService.topUp(
+          const tx = await this.walletsService.refund(
             Number(refund.accountId),
             String(amountRefund),
             `Refund approved by admin for post ${refund.postId}${adminNotes ? ` - ${adminNotes}` : ''}`,
-            refund.postId,
+            refund.id,
           );
 
           refund.status = RefundStatus.REFUNDED;
