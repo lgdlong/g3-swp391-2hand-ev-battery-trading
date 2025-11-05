@@ -9,6 +9,9 @@ import { PostImage } from './entities/post-image.entity';
 import { UploadModule } from '../upload/upload.module';
 import { AddressModule } from '../address/address.module';
 import { PostReviewModule } from '../post-review/post-review.module';
+import { WalletsModule } from '../wallets/wallets.module';
+import { SettingsModule } from '../settings/settings.module';
+import { TransactionsModule } from '../transactions/transactions.module';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { PostReviewModule } from '../post-review/post-review.module';
     UploadModule,
     AddressModule,
     PostReviewModule,
+    WalletsModule,
+    SettingsModule,
+    TransactionsModule,
     // nếu sợ vòng phụ thuộc, có thể forwardRef — không bắt buộc ở đây
     forwardRef(() => PostDetailsModule),
   ],
