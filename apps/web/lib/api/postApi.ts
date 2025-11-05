@@ -92,15 +92,80 @@ export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsRes
   if (query.status && query.status !== 'ALL') params.append('status', query.status);
   if (query.postType) params.append('postType', query.postType);
 
-  try {
-    const { data } = await api.get<PostsResponse>(`/posts/admin/all?${params.toString()}`, {
-      headers: getAuthHeaders(),
-    });
+  const { data } = await api.get<PostsResponse>(`/posts/admin/all?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
 
-    return data;
-  } catch (error) {
-    throw error;
-  }
+  return data;
+}
+
+/**
+ * Deduct post creation fee from user's wallet
+ * @param priceVnd - Post price in VND
+ * @param postId - Required post ID for transaction tracking
+ * @returns Object with wallet and transaction details
+ */
+export async function deductPostCreationFee(
+  priceVnd: number,
+  postId: string,
+): Promise<{ wallet: any; transaction: any }> {
+  const { data } = await api.post(
+    '/posts/deduct-fee',
+    { priceVnd, postId },
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * Create a draft car post (status = DRAFT)
+ * Requires authentication token in headers
+ */
+export async function createDraftCarPost(payload: CreateCarPostDto): Promise<Post> {
+  const { data } = await api.post<Post>('/posts/draft', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Create a draft bike post (status = DRAFT)
+ * Requires authentication token in headers
+ */
+export async function createDraftBikePost(payload: CreateBikePostDto): Promise<Post> {
+  const { data } = await api.post<Post>('/posts/draft', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Create a draft battery post (status = DRAFT)
+ * Requires authentication token in headers
+ */
+export async function createDraftBatteryPost(payload: CreateBatteryPostDto): Promise<Post> {
+  const { data } = await api.post<Post>('/posts/draft', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Publish a draft post (change status from DRAFT to PENDING_REVIEW)
+ * Should be called after successful payment
+ * Requires authentication token in headers
+ */
+export async function publishPost(postId: string): Promise<Post> {
+  const { data } = await api.patch<Post>(
+    `/posts/${postId}/publish`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
 }
 
 /**

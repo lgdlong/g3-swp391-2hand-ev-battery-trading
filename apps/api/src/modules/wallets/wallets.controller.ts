@@ -119,6 +119,49 @@ export class WalletsController {
     return result;
   }
 
+  @Post('deduct')
+  @ApiOperation({
+    summary: 'Deduct money from current user wallet',
+    description:
+      'Deduct funds from the authenticated user wallet with detailed transaction tracking. ' +
+      'Supports various service types (POST_PAYMENT, POST_VERIFICATION, etc.) and entity references. ' +
+      'The serviceTypeCode parameter is optional - if not provided, defaults to generic deduction.',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Deduction completed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        wallet: {
+          $ref: '#/components/schemas/WalletResponseDto',
+        },
+        transaction: {
+          $ref: '#/components/schemas/WalletTransactionResponseDto',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid input data or insufficient balance',
+  })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Wallet not found' })
+  async deduct(
+    @CurrentUser() user: ReqUser,
+    @Body() dto: DeductWalletDto,
+  ): Promise<{ wallet: WalletResponseDto; transaction: WalletTransactionResponseDto }> {
+    const result = await this.walletsService.deduct(
+      user.sub,
+      dto.amount.toString(),
+      dto.serviceTypeCode || 'DEDUCTION',
+      dto.description,
+      dto.relatedEntityType,
+      dto.relatedEntityId,
+    );
+    return result;
+  }
+
   // Purpose: Direct wallet topup (manual/internal)
   // Input: TopUpWalletDto with amount, description, paymentOrderId
   // Action: Directly adds funds to wallet balance
