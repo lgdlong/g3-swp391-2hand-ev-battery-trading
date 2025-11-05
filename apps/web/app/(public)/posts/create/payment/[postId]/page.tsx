@@ -103,7 +103,7 @@ export default function PostPaymentPage() {
   const hasEnoughCoins = currentCoins >= depositFee;
 
   // Check if post has already been paid - if status is PENDING_REVIEW, user should go to upload images
-  const isPendingReview = post && post.status === 'PENDING_REVIEW';
+  const isPendingReview = post?.status === 'PENDING_REVIEW';
 
   const handlePayment = async () => {
     if (!hasEnoughCoins) {
