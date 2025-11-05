@@ -443,7 +443,7 @@ export class WalletsService {
         walletUserId: userId,
         amount: `-${amount}`,
         serviceTypeId: serviceType.id,
-        description: description || 'Ví đã được trừ tiền',
+        description: description || 'ví đã được trừ tiền',
         relatedEntityId: paymentOrderId,
       });
       await transactionRepo.save(transaction);

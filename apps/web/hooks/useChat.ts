@@ -1,0 +1,104 @@
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { chatApi } from '@/lib/api/chatApi';
+import type { Conversation, MessagesResponse, PaginationParams } from '@/types/chat';
+import { useAuth } from '@/lib/auth-context';
+
+// Query Keys
+export const chatKeys = {
+  all: ['chat'] as const,
+  conversations: () => [...chatKeys.all, 'conversations'] as const,
+  conversation: (id: string) => [...chatKeys.all, 'conversation', id] as const,
+  messages: (conversationId: string) => [...chatKeys.all, 'messages', conversationId] as const,
+};
+
+// Hooks for Conversations
+export const useConversations = () => {
+  const { isLoggedIn } = useAuth();
+
+  return useQuery({
+    queryKey: chatKeys.conversations(),
+    queryFn: chatApi.getConversations,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: isLoggedIn,
+  });
+};
+
+export const useCreateConversation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: chatApi.createOrGetConversation,
+    onSuccess: (data) => {
+      // Instead of manually updating cache, invalidate to trigger a fresh fetch
+      // This ensures all conversations are loaded, not just the newly created one
+      queryClient.invalidateQueries({ queryKey: chatKeys.conversations() });
+
+      // Optionally, we can still optimistically update the cache for better UX
+      // but ensure we don't lose existing conversations
+      queryClient.setQueryData(chatKeys.conversations(), (old: Conversation[] | undefined) => {
+        // If no existing data, let the invalidation handle the fetch
+        if (!old || old.length === 0) return old;
+
+        // If we have existing data, add the new conversation if it doesn't exist
+        const exists = old.find((conv) => conv.id === data.id);
+        return exists ? old : [data, ...old];
+      });
+    },
+  });
+};
+
+// Hooks for Messages
+export const useConversationMessages = (
+  conversationId: string,
+  params?: PaginationParams,
+  enabled = true,
+) => {
+  return useQuery({
+    queryKey: [...chatKeys.messages(conversationId), params],
+    queryFn: () => chatApi.getConversationMessages(conversationId, params),
+    enabled: enabled && !!conversationId,
+    staleTime: 0, // Always consider data potentially stale for real-time updates
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+  });
+};
+
+// Infinite query for messages with pagination
+export const useInfiniteConversationMessages = (
+  conversationId: string,
+  limit = 50,
+  enabled = true,
+) => {
+  return useInfiniteQuery({
+    queryKey: [...chatKeys.messages(conversationId), 'infinite', limit],
+    queryFn: ({ pageParam }: { pageParam: number }) =>
+      chatApi.getConversationMessages(conversationId, {
+        page: pageParam,
+        limit,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: MessagesResponse, allPages) => {
+      const totalPages = Math.ceil(lastPage.total / limit);
+      const nextPage = allPages.length + 1;
+      return nextPage <= totalPages ? nextPage : undefined;
+    },
+    enabled: enabled && !!conversationId,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+// Helper hook to invalidate chat queries
+export const useChatQueryInvalidation = () => {
+  const queryClient = useQueryClient();
+
+  return {
+    invalidateConversations: () => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.conversations() });
+    },
+    invalidateMessages: (conversationId: string) => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.messages(conversationId) });
+    },
+    invalidateAllChat: () => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.all });
+    },
+  };
+};

@@ -93,7 +93,7 @@ export class WalletsController {
   @UseGuards(RolesGuard)
   @ApiOperation({
     summary: 'Deduct money from wallet',
-    description: 'Users deduct funds from their wallet. Checks balance before deduction.',
+    description: 'User deducts funds from their wallet. Checks balance before deduction.',
   })
   @ApiParam({ name: 'userId', description: 'User ID', type: Number })
   @ApiResponse({

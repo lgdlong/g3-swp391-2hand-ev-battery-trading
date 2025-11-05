@@ -28,7 +28,7 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
   return (
     <Link
       key={item.id}
-      href={`/posts/ev/${item.id}?model=${encodeURIComponent(item.title)}`}
+      href={`/posts/ev/${item.id}?title=${encodeURIComponent(item.title)}`}
       className="group"
     >
       <Card className="overflow-hidden border-0 hover:shadow-md transition-all duration-300 bg-white p-0">

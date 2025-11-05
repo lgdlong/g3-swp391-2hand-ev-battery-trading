@@ -9,23 +9,22 @@ import { Button } from '@/components/ui/button';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { Specifications } from './_components';
-import { PostHeader } from '@/app/(public)/posts/_components';
-import { SellerInfo } from './_components/SellerInfo';
+import { PostHeader, SellerInfo } from '@/app/(public)/posts/_components';
 import { VerificationBadge } from '@/components/VerificationBadge';
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ model?: string }>;
+  searchParams: Promise<{ title?: string }>;
 }
 
 export default function EvDetailPage({ params, searchParams }: Props) {
   const [id, setId] = useState<string>('');
-  const [model, setModel] = useState<string>('all');
+  const [title, setTitle] = useState<string>('all');
   const [mainImage, setMainImage] = useState<string>('');
 
   useEffect(() => {
     params.then((p) => setId(p.id));
-    searchParams.then((sp) => setModel(sp.model || 'all'));
+    searchParams.then((sp) => setTitle(sp.title || 'all'));
   }, [params, searchParams]);
 
   const { data: post, isLoading: postLoading, error: postError } = usePost(id);
@@ -85,7 +84,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
       <FilterButtons
         type="ev"
         initialCategory="Xe điện"
-        initialSubcategory={model || 'all'}
+        initialSubcategory={title || 'all'}
         showFilters={false}
       />
       <div className="container mx-auto py-6">
@@ -107,9 +106,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                     >
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
-                    {post.verificationRequest?.status === 'APPROVED' && (
-                      <VerificationBadge />
-                    )}
+                    {post.verificationRequest?.status === 'APPROVED' && <VerificationBadge />}
                   </div>
                 </div>
                 {post.images?.length > 1 && (
@@ -157,8 +154,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
           <div className="lg:col-span-2 space-y-6">
             <PostHeader post={post} details={details} />
 
-            <Specifications post={post} />
-
             {post.description && (
               <Card key={`post-description-${post.id}`} className="border-none shadow-none">
                 <CardContent className="p-6">
@@ -169,6 +164,8 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 </CardContent>
               </Card>
             )}
+
+            <Specifications post={post} />
           </div>
         </div>
       </div>

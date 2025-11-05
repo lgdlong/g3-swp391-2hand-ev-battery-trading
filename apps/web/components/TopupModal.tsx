@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Coins, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createTopupPayment } from '@/lib/api/walletApi';
@@ -9,14 +9,31 @@ import { toast } from 'sonner';
 interface TopupModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialAmount?: number; // Amount in VND to pre-fill
 }
 
 const PRESET_AMOUNTS = [25000, 50000, 100000, 500000, 1000000, 2000000];
+const MIN_TOPUP_AMOUNT = 2000;
+const SAMPLE_TOPUP = 10000;
+const SAMPLE_TOPUP_STR = '10000';
 
-export function TopupModal({ isOpen, onClose }: TopupModalProps) {
-  const [amount, setAmount] = useState<number>(50000);
-  const [customAmount, setCustomAmount] = useState<string>('50000');
+export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) {
+  const [amount, setAmount] = useState<number>(initialAmount || SAMPLE_TOPUP);
+  const [customAmount, setCustomAmount] = useState<string>(
+    initialAmount ? initialAmount.toString() : SAMPLE_TOPUP_STR
+  );
   const [isLoading, setIsLoading] = useState(false);
+
+  // Update amount when initialAmount changes
+  useEffect(() => {
+    if (isOpen && initialAmount) {
+      setAmount(initialAmount);
+      setCustomAmount(initialAmount.toString());
+    } else if (isOpen && !initialAmount) {
+      setAmount(SAMPLE_TOPUP);
+      setCustomAmount(SAMPLE_TOPUP_STR);
+    }
+  }, [isOpen, initialAmount]);
 
   if (!isOpen) return null;
 
@@ -36,8 +53,8 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
   };
 
   const handleTopup = async () => {
-    if (amount < 10000) {
-      toast.error('Số tiền nạp tối thiểu là 10.000 ₫');
+    if (amount < MIN_TOPUP_AMOUNT) {
+      toast.error(`Số tiền nạp tối thiểu là ${MIN_TOPUP_AMOUNT} ₫`);
       return;
     }
 
@@ -169,7 +186,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
             <span className="text-[#048C73] font-medium cursor-pointer hover:underline">
               Điều khoản sử dụng
             </span>{' '}
-            của Chợ Tốt
+            của
           </div>
         </div>
 
@@ -181,7 +198,7 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
           </div>
           <Button
             onClick={handleTopup}
-            disabled={isLoading || amount < 10000}
+            disabled={isLoading || amount < MIN_TOPUP_AMOUNT}
             className="bg-[#048C73] hover:bg-[#037060] text-white px-8 py-6 text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (

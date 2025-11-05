@@ -1,9 +1,13 @@
 import Image from 'next/image';
-import { Calendar, User, Clock, MessageCircle, Phone } from 'lucide-react';
+import { Calendar, MapPin, User, Phone } from 'lucide-react';
 import { relativeTime } from '@/lib/utils/format';
 import type { PostUI } from '@/types/post';
 import type { AccountUI } from '@/types/account';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/lib/auth-context';
+import { useCreateConversation } from '@/hooks/useChat';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface SellerInfoProps {
   account: AccountUI | undefined;
@@ -15,6 +19,39 @@ interface SellerInfoProps {
  * Seller Information Component
  */
 export function SellerInfo({ account, post }: SellerInfoProps) {
+  const { user, isLoggedIn } = useAuth();
+  const router = useRouter();
+  const createConversationMutation = useCreateConversation();
+
+  const handleContactSeller = async () => {
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      toast.error('Vui lòng đăng nhập để liên hệ người bán');
+      router.push('/login');
+      return;
+    }
+
+    // Check if user is trying to contact themselves
+    if (user?.id === account?.id) {
+      toast.error('Bạn không thể liên hệ với chính mình');
+      return;
+    }
+
+    try {
+      // Create or get existing conversation
+      const conversation = await createConversationMutation.mutateAsync({
+        postId: post.id,
+      });
+
+      // Navigate to chat page with conversation ID
+      router.push(`/chat/${conversation.id}`);
+      toast.success('Đang chuyển đến cuộc trò chuyện...');
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      toast.error('Có lỗi xảy ra khi tạo cuộc trò chuyện');
+    }
+  };
+
   if (!account) {
     return (
       <div className="text-center text-gray-500">
@@ -76,29 +113,41 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
           </div>
         )}
         <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4" />
+          <span>{String(post.provinceNameCached) || 'Không rõ'}</span>
+        </div>
+        <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           <span>Tham gia {relativeTime(account.createdAt)}</span>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <button className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-medium transition-colors">
-          <MessageCircle className="h-4 w-4 inline mr-2" />
-          Liên hệ người bán
-        </button>
-        {account.phone ? (
-          <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-medium transition-colors">
-            Gọi {account.phone}
-          </button>
-        ) : (
+      {/* Only show contact buttons if the logged-in user is not the post owner */}
+      {user?.id !== account?.id && (
+        <div className="space-y-2">
           <button
-            disabled
-            className="w-full border border-gray-300 text-gray-400 py-2 px-4 rounded-lg font-medium cursor-not-allowed"
+            onClick={handleContactSeller}
+            disabled={createConversationMutation.isPending}
+            className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Không có số điện thoại
+            {createConversationMutation.isPending
+              ? 'Đang tạo cuộc trò chuyện...'
+              : 'Liên hệ người bán'}
           </button>
-        )}
-      </div>
+          {account.phone ? (
+            <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors">
+              {account.phone}
+            </button>
+          ) : (
+            <button
+              disabled
+              className="w-full border border-gray-300 text-gray-400 py-2 px-4 rounded-lg font-medium cursor-not-allowed"
+            >
+              Không có số điện thoại
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

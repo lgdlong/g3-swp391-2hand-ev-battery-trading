@@ -12,7 +12,6 @@ import { CreateBatteryPostDto } from './dto/battery/create-post-battery.dto';
 import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 import { PostsQueryDto } from './dto/posts-query.dto';
 import { PostMapper } from './mappers/post.mapper';
-import { PaginatedBasePostResponseDto } from './dto/paginated-post-response.dto';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PostImage } from './entities/post-image.entity';
 import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
@@ -26,6 +25,7 @@ import { DISPLAYABLE_POST_STATUS } from 'src/shared/constants/post';
 import { PostReviewService } from '../post-review/post-review.service';
 import { ReviewActionEnum } from 'src/shared/enums/review.enum';
 import { DEFAULT_PAGE_SIZE } from 'src/shared/constants';
+import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 
 // Union type for all post creation DTOs
 type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
@@ -381,9 +381,13 @@ export class PostsService {
     return PostMapper.toBasePostResponseDto(post);
   }
 
-  async getAllPostsForAdmin(
-    query: ListQueryDto & { status?: string; postType?: string },
-  ): Promise<{ data: BasePostResponseDto[]; total: number; page: number; limit: number; totalPages: number }> {
+  async getAllPostsForAdmin(query: AdminListPostsQueryDto): Promise<{
+    data: BasePostResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const where: any = {};
 
     if (query.status) {
@@ -419,9 +423,7 @@ export class PostsService {
       skip: query.offset,
     });
 
-    const page = query.offset
-      ? Math.floor(query.offset / (query.limit || 20)) + 1
-      : 1;
+    const page = query.offset ? Math.floor(query.offset / (query.limit || 20)) + 1 : 1;
     const limit = query.limit || 20;
     const totalPages = Math.ceil(total / limit);
 
