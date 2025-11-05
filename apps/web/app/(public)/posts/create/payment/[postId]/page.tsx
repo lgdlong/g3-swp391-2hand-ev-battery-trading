@@ -73,17 +73,17 @@ export default function PostPaymentPage() {
   }, [post, router, isRefetchingPost]);
 
   // Calculate fee based on fee tiers (matching backend logic)
-  const postPrice = post ? parseFloat(post.priceVnd) : 0;
+  const postPrice = post ? Number.parseFloat(post.priceVnd) : 0;
   const depositFee = (() => {
     if (!feeTiers || feeTiers.length === 0) return 0;
 
     // Find applicable fee tier
     const applicableTier = feeTiers.find((tier) => {
       const minPrice =
-        typeof tier.minPrice === 'string' ? parseFloat(tier.minPrice) : tier.minPrice;
+        typeof tier.minPrice === 'string' ? Number.parseFloat(tier.minPrice) : tier.minPrice;
       const maxPrice = tier.maxPrice
         ? typeof tier.maxPrice === 'string'
-          ? parseFloat(tier.maxPrice)
+          ? Number.parseFloat(tier.maxPrice)
           : tier.maxPrice
         : Infinity;
       return postPrice >= minPrice && postPrice <= maxPrice;
@@ -94,12 +94,12 @@ export default function PostPaymentPage() {
     // Calculate deposit amount using depositRate
     const depositRate =
       typeof applicableTier.depositRate === 'string'
-        ? parseFloat(applicableTier.depositRate)
+        ? Number.parseFloat(applicableTier.depositRate)
         : applicableTier.depositRate;
     return Math.round(postPrice * depositRate);
   })();
 
-  const currentCoins = wallet ? parseFloat(wallet.balance) : 0;
+  const currentCoins = wallet ? Number.parseFloat(wallet.balance) : 0;
   const hasEnoughCoins = currentCoins >= depositFee;
 
   // Check if post has already been paid - if status is PENDING_REVIEW, user should go to upload images
