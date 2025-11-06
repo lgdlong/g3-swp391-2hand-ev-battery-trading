@@ -75,7 +75,10 @@ export class PostRatingService {
     else if (sort === 'rating_asc') qb.orderBy('r.rating', 'ASC');
     else qb.orderBy('r.createdAt', 'DESC');
 
-    const [rows, total] = await qb.skip((page - 1) * limit).take(limit).getManyAndCount();
+    const [rows, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     return {
       items: PostRatingMapper.toSafeDtoArray(rows),
@@ -134,7 +137,6 @@ export class PostRatingService {
     return { message: 'Deleted successfully by id #' + id };
   }
 
-
   // Delete a rating by post id
   async removeByPostId(postId: string, userId: number) {
     const rating = await this.postRatingsRepository.findOne({
@@ -145,7 +147,6 @@ export class PostRatingService {
     if (rating.customer.id !== userId)
       throw new ForbiddenException('You cannot delete others rating');
 
-    
     const deletedAt = new Date();
     await this.postRatingsRepository.softDelete(rating.id);
 
