@@ -49,7 +49,8 @@ export default function MyPostsPage() {
     id: string;
     title: string;
   } | null>(null);
-  const [verificationRejectReasonDialogOpen, setVerificationRejectReasonDialogOpen] = useState(false);
+  const [verificationRejectReasonDialogOpen, setVerificationRejectReasonDialogOpen] =
+    useState(false);
   const [postForVerificationRejectReason, setPostForVerificationRejectReason] = useState<{
     id: string;
     title: string;
@@ -175,6 +176,9 @@ export default function MyPostsPage() {
   const handleEdit = (postId: string) => {
     router.push(`/my-posts/${postId}/edit`);
   };
+  const handlePayment = (postId: string) => {
+    router.push(`/posts/create/payment/${postId}`);
+  };
   const handleCreateNew = () => {
     router.push('/posts/create');
   };
@@ -289,6 +293,7 @@ export default function MyPostsPage() {
                             onDelete={handleDelete}
                             onView={handleViewDetail}
                             onMarkAsSold={handleMarkAsSold}
+                            onPayment={handlePayment}
                             onViewRejectReason={handleViewRejectReason}
                             onViewVerificationRejectReason={handleViewVerificationRejectReason}
                           />

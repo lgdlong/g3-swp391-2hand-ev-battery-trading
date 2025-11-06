@@ -138,7 +138,7 @@ export default function Home() {
             <div className="text-center lg:text-left">
               <h1 className="text-4xl md:text-5xl font-bold mb-6">EV Trading</h1>
               <h2 className="text-xl md:text-2xl text-gray-300 mb-4">
-                Chợ Mua Bán Xe Điện & Pin EV Hàng Đầu Việt Nam
+                Chợ Mua Bán Xe Điện Và Pin Cũ EV Hàng Đầu Việt Nam
               </h2>
               <p className="text-lg text-gray-400 mb-8">
                 Nền tảng uy tín kết nối người mua với người bán xe điện và pin EV cũ. Giao dịch an

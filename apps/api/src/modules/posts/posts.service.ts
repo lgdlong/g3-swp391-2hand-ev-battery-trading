@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, Repository, DataSource } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { PostType, PostStatus } from '../../shared/enums/post.enum';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
@@ -26,6 +26,9 @@ import { PostReviewService } from '../post-review/post-review.service';
 import { ReviewActionEnum } from 'src/shared/enums/review.enum';
 import { DEFAULT_PAGE_SIZE } from 'src/shared/constants';
 import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
+import { WalletsService } from '../wallets/wallets.service';
+import { FeeTierService } from '../settings/service/fee-tier.service';
+import { TransactionsService } from '../transactions/transactions.service';
 
 // Union type for all post creation DTOs
 type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
@@ -59,6 +62,10 @@ export class PostsService {
     private readonly addressService: AddressService,
     private readonly cloudinary: CloudinaryService,
     private readonly postReviewService: PostReviewService,
+    private readonly walletsService: WalletsService,
+    private readonly feeTierService: FeeTierService,
+    private readonly transactionsService: TransactionsService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async countPosts(status?: string): Promise<{ count: number; status?: string }> {
@@ -71,6 +78,98 @@ export class PostsService {
 
     const count = await queryBuilder.getCount();
     return { count, status };
+  }
+
+  /**
+   * Deduct post creation fee from user's wallet and create post payment record
+   * @param userId - User ID
+   * @param priceVnd - Post price in VND
+   * @param postId - Post ID (required, for linking transaction)
+   * @returns Object with wallet, transaction, and post payment details
+   */
+  async deductPostCreationFee(
+    userId: number,
+    priceVnd: number,
+    postId: string,
+  ): Promise<{ wallet: any; transaction: any; postPayment: any }> {
+    // Validate postId is provided
+    if (!postId) {
+      throw new BadRequestException('Post ID là bắt buộc để trừ phí đăng bài');
+    }
+
+    // Validate post exists and belongs to user
+    const post = await this.postsRepo.findOne({
+      where: { id: postId },
+      relations: [this.SELLER],
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Không tìm thấy bài đăng với ID ${postId}`);
+    }
+
+    if (post.seller.id !== userId) {
+      throw new BadRequestException('Bạn không có quyền thanh toán cho bài đăng này');
+    }
+
+    // Use the enhanced transaction service method that handles both wallet deduction and post payment creation
+    return this.transactionsService.processPostPayment(userId, postId, priceVnd);
+  }
+
+  /**
+   * Create a draft post (status = DRAFT)
+   * This allows users to create a post before payment
+   */
+  async createDraftPost(
+    dto: CreateAnyPostDto,
+    sellerId: number,
+  ): Promise<BasePostResponseDto | null> {
+    // Force status to DRAFT
+    dto.status = PostStatus.DRAFT;
+    return this.createPost(dto, sellerId);
+  }
+
+  /**
+   * Update post status from DRAFT to PENDING_REVIEW after successful payment
+   * Only the post owner can update their draft posts
+   */
+  async updatePostStatusToPublish(postId: string, userId: number): Promise<BasePostResponseDto> {
+    const post = await this.postsRepo.findOne({
+      where: { id: postId },
+      relations: [this.SELLER],
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Không tìm thấy bài đăng với ID ${postId}`);
+    }
+
+    // Verify ownership
+    if (post.seller.id !== userId) {
+      throw new BadRequestException('Bạn không có quyền cập nhật bài đăng này');
+    }
+
+    // Only allow updating from DRAFT to PENDING_REVIEW
+    if (post.status !== PostStatus.DRAFT) {
+      throw new BadRequestException(
+        `Chỉ có thể publish bài đăng ở trạng thái DRAFT. Trạng thái hiện tại: ${post.status}`,
+      );
+    }
+
+    // Update status and submittedAt
+    post.status = PostStatus.PENDING_REVIEW;
+    post.submittedAt = new Date();
+    await this.postsRepo.save(post);
+
+    // Return updated post with full relations
+    const updatedPost = await this.postsRepo.findOne({
+      where: { id: postId },
+      relations: this.POST_FULL_RELATIONS,
+    });
+
+    if (!updatedPost) {
+      throw new NotFoundException('Không tìm thấy bài đăng sau khi cập nhật');
+    }
+
+    return PostMapper.toBasePostResponseDto(updatedPost);
   }
 
   /**

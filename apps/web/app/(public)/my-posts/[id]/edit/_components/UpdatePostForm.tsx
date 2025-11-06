@@ -111,11 +111,6 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
       return;
     }
 
-    if (!basicData.description.trim()) {
-      toast.error('Vui lòng nhập mô tả tin đăng');
-      return;
-    }
-
     if (!basicData.priceVnd || parseFloat(basicData.priceVnd) <= 0) {
       toast.error('Vui lòng nhập giá hợp lệ');
       return;

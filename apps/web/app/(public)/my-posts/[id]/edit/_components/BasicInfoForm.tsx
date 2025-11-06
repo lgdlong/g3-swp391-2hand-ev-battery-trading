@@ -75,16 +75,13 @@ export default function BasicInfoForm({
           </div>
 
           <div>
-            <Label htmlFor="description">
-              Mô tả <span className="text-red-500">*</span>
-            </Label>
+            <Label htmlFor="description">Mô tả</Label>
             <Textarea
               id="description"
               value={basicData.description}
               onChange={(e) => onInputChange('description', e.target.value)}
               placeholder="Mô tả chi tiết về sản phẩm"
               className="min-h-[120px]"
-              required
             />
           </div>
 

@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { WalletTransactionType } from '../../../shared/enums/wallet-transaction-type.enum';
 
 export class DeductWalletDto {
   @ApiProperty({
@@ -11,19 +12,44 @@ export class DeductWalletDto {
   @Min(1000, { message: 'Minimum deduction amount is 1,000 VND' })
   amount!: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    description: 'Service type code for the transaction',
+    example: 'POST_PAYMENT',
+    enum: WalletTransactionType,
+  })
+  @IsOptional()
+  @IsEnum(WalletTransactionType, {
+    message: 'Service type must be a valid WalletTransactionType',
+  })
+  serviceTypeCode?: string;
+
+  @ApiPropertyOptional({
     description: 'Description for the deduction transaction',
-    example: 'Trừ tiền phí dịch vụ',
-    required: false,
+    example: 'Phí đặt cọc đăng bài',
   })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({
-    description: 'Payment order ID reference',
+  @ApiPropertyOptional({
+    description: 'Related entity type (e.g., payment_orders, posts)',
+    example: 'payment_orders',
+  })
+  @IsOptional()
+  @IsString()
+  relatedEntityType?: string;
+
+  @ApiPropertyOptional({
+    description: 'Related entity ID reference',
+    example: 'abc-123-def-456',
+  })
+  @IsOptional()
+  @IsString()
+  relatedEntityId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Payment order ID reference (deprecated - use relatedEntityId instead)',
     example: '123456789',
-    required: false,
   })
   @IsOptional()
   @IsString()

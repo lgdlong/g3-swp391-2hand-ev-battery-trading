@@ -16,6 +16,7 @@ interface DepositModalProps {
   onSuccess: () => Promise<void>; // Callback to create post after successful deposit
 }
 
+// TODO: REMOVE THIS UNUSED COMPONENT AFTER REFACTORING PAYMENT FLOW
 export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositModalProps) {
   const { user } = useAuth();
   const [wallet, setWallet] = useState<WalletType | null>(null);
