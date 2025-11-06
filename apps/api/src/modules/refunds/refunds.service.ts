@@ -151,10 +151,10 @@ export class RefundsService {
       };
     }
 
-    // 8. Thực hiện refund
-    console.log('[REFUND] EXECUTING REAL REFUND - Saving to DB');
+    // 8. Create refund request (PENDING status - requires admin approval)
+    console.log('[REFUND] Creating PENDING refund request - Requires admin approval');
     return this.dataSource.transaction(async (manager) => {
-      // Tạo refund record
+      // Create refund record with PENDING status
       const refund = this.refundRepo.create({
         postId: dto.postId,
         accountId: postPayment.accountId,
@@ -165,42 +165,24 @@ export class RefundsService {
         status: RefundStatus.PENDING,
         reason: `[MANUAL] ${dto.reason}`,
       });
-      await manager.getRepository(Refund).save(refund);
+      const savedRefund = await manager.getRepository(Refund).save(refund);
 
-      try {
-        // TopUp wallet
-        const tx = await this.walletsService.refund(
-          postPayment.accountId,
-          String(amountRefund),
-          `Manual refund ${rate}% for post ${post.id} by admin (${scenario})`,
-          `MANUAL-REFUND-${dto.postId}-${Date.now()}`,
-        );
+      console.log('[REFUND] Refund request created with PENDING status:', savedRefund.id);
 
-        // Update refund status
-        refund.status = RefundStatus.REFUNDED;
-        refund.refundedAt = new Date();
-        refund.walletTransactionId = tx.transaction.id;
-        await manager.getRepository(Refund).save(refund);
-
-        return {
-          success: true,
-          dryRun: false,
-          refundId: refund.id,
-          postId: dto.postId,
-          walletTransactionId: refund.walletTransactionId,
-          amountRefund,
-          rate,
-          scenario,
-          status: RefundStatus.REFUNDED,
-          refundedAt: refund.refundedAt,
-        };
-      } catch (err) {
-        // TopUp failed
-        refund.status = RefundStatus.FAILED;
-        refund.reason = `${refund.reason} | Failed: ${(err as Error).message}`;
-        await manager.getRepository(Refund).save(refund);
-        throw err;
-      }
+      return {
+        success: true,
+        dryRun: false,
+        refundId: savedRefund.id,
+        postId: dto.postId,
+        accountId: postPayment.accountId,
+        amountOriginal,
+        amountRefund,
+        rate,
+        scenario,
+        status: RefundStatus.PENDING,
+        message: 'Refund request created. Use POST /refunds/:id/decide to approve or reject.',
+        createdAt: savedRefund.createdAt,
+      };
     });
   }
 

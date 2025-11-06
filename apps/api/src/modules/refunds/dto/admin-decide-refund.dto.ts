@@ -12,14 +12,4 @@ export class AdminDecideRefundDto {
   })
   @IsEnum(['approve', 'reject'])
   decision!: 'approve' | 'reject';
-
-  @ApiPropertyOptional({
-    description: 'Admin notes/reason for the decision',
-    example: 'Verified user identity, no fraud detected',
-    maxLength: 500,
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  adminNotes?: string;
 }
