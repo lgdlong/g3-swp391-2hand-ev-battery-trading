@@ -145,7 +145,9 @@ export default function ChatPage() {
     }
 
     // Navigate to the new conversation URL (this will update the dynamic param)
-    router.push(`/chat/${chatId}`);
+    if (chatId !== activeChatId) {
+      router.push(`/chat/${chatId}`);
+    }
   };
 
   // Handle sending message
