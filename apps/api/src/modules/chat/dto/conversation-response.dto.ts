@@ -55,4 +55,17 @@ export class ConversationResponseDto {
 
   @ApiProperty({ type: [MessageInConversationDto], nullable: true })
   messages?: MessageInConversationDto[];
+
+  // ✨ NEW: Message tracking fields
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if conversation has any messages',
+  })
+  hasMessages!: boolean;
+
+  @ApiProperty({
+    example: 5,
+    description: 'Total number of messages in conversation',
+  })
+  messagesCount!: number;
 }

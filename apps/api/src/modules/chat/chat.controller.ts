@@ -131,4 +131,65 @@ export class ChatController {
       message: 'Messages retrieved successfully',
     };
   }
+
+  /**
+   * ✨ NEW: Get conversations by message status
+   * GET /conversations/filter/by-status
+   */
+  @Get('filter/by-status')
+  @ApiOperation({
+    summary: 'Get conversations by message status',
+    description: 'Filter conversations by whether they have messages or not',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Conversations retrieved successfully',
+  })
+  async getConversationsByStatus(
+    @Query('hasMessages') hasMessages: string = 'true',
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
+  ) {
+    const hasMessagesBoolean = hasMessages === 'true';
+    const result = await this.chatService.getConversationsByMessageStatus(
+      hasMessagesBoolean,
+      page,
+      limit,
+    );
+
+    return {
+      success: true,
+      data: result.data,
+      meta: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+      },
+      message: 'Conversations retrieved successfully',
+    };
+  }
+
+  /**
+   * ✨ NEW: Get conversation statistics
+   * GET /conversations/stats/overview
+   */
+  @Get('stats/overview')
+  @ApiOperation({
+    summary: 'Get conversation statistics',
+    description: 'Get statistics about conversations with/without messages',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Statistics retrieved successfully',
+  })
+  async getConversationStats() {
+    const stats = await this.chatService.getConversationStats();
+
+    return {
+      success: true,
+      data: stats,
+      message: 'Statistics retrieved successfully',
+    };
+  }
 }
