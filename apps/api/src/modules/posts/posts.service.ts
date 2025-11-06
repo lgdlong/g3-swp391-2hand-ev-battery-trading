@@ -526,10 +526,21 @@ export class PostsService {
       throw new NotFoundException('Post not found or you do not have permission to update it');
     }
 
-    // Only allow updating posts in DRAFT or REJECTED status
-    if (post.status !== PostStatus.DRAFT && post.status !== PostStatus.REJECTED) {
+    // Allow updating status from PUBLISHED to SOLD (only status field)
+    const isOnlyStatusUpdate =
+      post.status === PostStatus.PUBLISHED &&
+      updateDto.status === PostStatus.SOLD &&
+      Object.keys(updateDto).filter((key) => updateDto[key as keyof typeof updateDto] !== undefined).length === 1 &&
+      updateDto.status !== undefined;
+
+    // Only allow updating posts in DRAFT or REJECTED status, or PUBLISHED -> SOLD status update
+    if (
+      post.status !== PostStatus.DRAFT &&
+      post.status !== PostStatus.REJECTED &&
+      !isOnlyStatusUpdate
+    ) {
       throw new BadRequestException(
-        `Cannot update post with status ${post.status}. Only DRAFT or REJECTED posts can be updated.`,
+        `Cannot update post with status ${post.status}. Only DRAFT or REJECTED posts can be updated, or PUBLISHED posts can be marked as SOLD.`,
       );
     }
 
