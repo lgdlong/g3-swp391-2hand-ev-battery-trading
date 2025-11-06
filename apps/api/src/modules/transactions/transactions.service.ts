@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { PostPayment } from './entities/post-payment.entity';
@@ -6,10 +6,6 @@ import { CreatePostPaymentDto } from './dto/create-post-payment.dto';
 import { PostPaymentResponseDto } from './dto/post-payment-response.dto';
 import { WalletsService } from '../wallets/wallets.service';
 import { FeeTierService } from '../settings/service/fee-tier.service';
-import { Injectable, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PostPayment } from './entities/post-payment.entity';
 
 @Injectable()
 export class TransactionsService {
@@ -178,12 +174,6 @@ export class TransactionsService {
       createdAt: postPayment.createdAt,
     };
   }
-}
-export class TransactionsService {
-  constructor(
-    @InjectRepository(PostPayment)
-    private readonly postPaymentRepo: Repository<PostPayment>,
-  ) {}
 
   /**
    * Record post deposit payment when user pays coin to create post
@@ -200,7 +190,7 @@ export class TransactionsService {
     walletTransactionId: number,
   ): Promise<PostPayment> {
     // Check if payment already exists for this post
-    const existingPayment = await this.postPaymentRepo.findOne({
+    const existingPayment = await this.postPaymentRepository.findOne({
       where: { postId },
     });
 
@@ -209,14 +199,14 @@ export class TransactionsService {
     }
 
     // Create new payment record
-    const postPayment = this.postPaymentRepo.create({
+    const postPayment = this.postPaymentRepository.create({
       postId,
       accountId,
       amountPaid,
       walletTransactionId,
     });
 
-    return await this.postPaymentRepo.save(postPayment);
+    return await this.postPaymentRepository.save(postPayment);
   }
 
   /**
@@ -225,7 +215,7 @@ export class TransactionsService {
    * @returns Post payment record or null
    */
   async getPostDepositPayment(postId: string): Promise<PostPayment | null> {
-    return await this.postPaymentRepo.findOne({
+    return await this.postPaymentRepository.findOne({
       where: { postId },
       relations: ['account', 'walletTransaction'],
     });
@@ -237,7 +227,7 @@ export class TransactionsService {
    * @returns True if deposit paid, false otherwise
    */
   async hasDepositPayment(postId: string): Promise<boolean> {
-    const payment = await this.postPaymentRepo.findOne({
+    const payment = await this.postPaymentRepository.findOne({
       where: { postId },
     });
     return !!payment;
