@@ -118,14 +118,23 @@ class ChatWebSocketService {
       this.handleReconnection();
     });
 
-    this.socket.on('error', (error) => {
+    this.socket.on('error', (error: any) => {
       console.error('🔌 Chat WebSocket error:', error);
+      
+      // Log error details for debugging
+      if (error.message) {
+        console.error('🔌 Error message:', error.message);
+      }
+      if (error.type) {
+        console.error('🔌 Error type:', error.type);
+      }
 
       // Check if it's an authentication error
       if (
         error.message &&
         (error.message.includes('Authentication failed') ||
-          error.message.includes('JWT token required'))
+          error.message.includes('JWT token required') ||
+          error.message.includes('Unauthorized'))
       ) {
         console.error(
           '🔌 Authentication error from server, disconnecting and stopping reconnection',

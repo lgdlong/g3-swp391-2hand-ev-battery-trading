@@ -48,21 +48,35 @@ export const useChatWebSocket = () => {
       return;
     }
 
+    // Check current connection state
+    const currentState = chatWebSocketService.isConnected;
+    console.log('🔌 Current WebSocket state:', {
+      isConnected: currentState,
+      hasToken: !!token,
+      isLoggedIn,
+    });
+
     // Only connect if not already connected to prevent duplicate connections
-    if (!chatWebSocketService.isConnected) {
+    if (!currentState) {
       console.log('🔌 Attempting to connect WebSocket with token:', token.substring(0, 20) + '...');
 
       // Reset reconnection settings when establishing new connection
       chatWebSocketService.resetReconnectionSettings();
       chatWebSocketService.connect(token);
+      
+      // Update state after a short delay to allow connection to establish
+      setTimeout(() => {
+        setIsConnected(chatWebSocketService.isConnected);
+      }, 500);
     } else {
       console.log('🔌 WebSocket already connected, skipping connection attempt');
       setIsConnected(true);
     }
 
     return () => {
-      console.log('🔌 Cleaning up WebSocket connection');
-      chatWebSocketService.disconnect();
+      // Don't disconnect on cleanup - keep connection alive during navigation
+      // Only disconnect if user logs out (handled by isLoggedIn check)
+      console.log('🔌 Component unmounting, keeping WebSocket connection alive');
     };
   }, [isLoggedIn]); // Depend on auth state
 
@@ -129,6 +143,18 @@ export const useChatWebSocket = () => {
     console.log('🔌 Synchronizing connection state immediately:', currentConnectionState);
     setIsConnected(currentConnectionState);
 
+    // ✨ NEW: Poll connection state periodically to catch missed updates
+    const pollInterval = setInterval(() => {
+      const actualState = chatWebSocketService.isConnected;
+      if (actualState !== isConnected) {
+        console.log('🔌 Connection state mismatch detected, updating:', {
+          hookState: isConnected,
+          actualState,
+        });
+        setIsConnected(actualState);
+      }
+    }, 1000); // Check every second
+
     //  Sửa lỗi: Lắng nghe sự kiện connect/disconnect để cập nhật state
     const cleanupConnect = chatWebSocketService.onConnect(() => {
       console.log('🔌 WebSocket connected - updating state');
@@ -154,11 +180,12 @@ export const useChatWebSocket = () => {
     // ⚠️ Sửa lỗi: Dùng cleanup cụ thể, không dùng removeAllListeners()
     return () => {
       console.log('🔌 Cleaning up WebSocket event listeners');
+      clearInterval(pollInterval);
       cleanupConnect();
       cleanupDisconnect();
       cleanupNewMessage();
     };
-  }, [handleNewMessage]);
+  }, [handleNewMessage, isConnected]);
 
   // Return WebSocket service methods for components to use
   const onNewMessage = useCallback((callback: (message: Message) => void) => {

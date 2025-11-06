@@ -8,8 +8,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Post, PostStatus } from '@/types/post';
-import { getMyPosts, updatePost, deleteMyPostById } from '@/lib/api/postApi';
+import { getMyPosts, deleteMyPostById } from '@/lib/api/postApi';
 import { useAuth } from '@/lib/auth-context';
+import { updateMyPost } from '@/lib/api/postApi';
 import SearchBar from './_components/search-bar';
 import PostListItem from './_components/post-list-item';
 import PostDetailDialog from './_components/post-detail-dialog';
@@ -91,13 +92,16 @@ export default function MyPostsPage() {
     retry: 1,
   });
 
-  // Get counts from array lengths
+  const publishedPosts = publishedQuery.data || [];
+  const soldPosts = soldQuery.data || [];
+  const publishedPostsExcludingSold = publishedPosts.filter((p) => p.status !== 'SOLD');
+
   const counts = {
     DRAFT: draftQuery.data?.length || 0,
     PENDING_REVIEW: pendingQuery.data?.length || 0,
-    PUBLISHED: publishedQuery.data?.length || 0,
+    PUBLISHED: publishedPostsExcludingSold.length || 0,
     REJECTED: rejectedQuery.data?.length || 0,
-    SOLD: soldQuery.data?.length || 0,
+    SOLD: soldPosts.length || 0,
   };
 
   // Get current posts based on active tab
@@ -108,11 +112,12 @@ export default function MyPostsPage() {
       case 'PENDING_REVIEW':
         return pendingQuery.data || [];
       case 'PUBLISHED':
-        return publishedQuery.data || [];
+        // Exclude sold posts from PUBLISHED tab
+        return publishedPostsExcludingSold;
       case 'REJECTED':
         return rejectedQuery.data || [];
       case 'SOLD':
-        return soldQuery.data || [];
+        return soldPosts;
       default:
         return [];
     }
@@ -140,13 +145,14 @@ export default function MyPostsPage() {
   });
 
   const markAsSoldMutation = useMutation({
-    mutationFn: (postId: string) => updatePost(postId, { status: 'SOLD' }),
+    mutationFn: (postId: string) => updateMyPost(postId, { status: 'SOLD' }),
     onSuccess: () => {
-      toast.success('Đã đánh dấu bài đăng là đã bán');
+      toast.success('Đã đánh dấu bài đăng là đã bán. Bài đăng đã được chuyển vào tab "Đã bán" trong Quản lý đơn hàng.');
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
-    onError: () => {
-      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại.');
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Đánh dấu đã bán thất bại. Vui lòng thử lại.';
+      toast.error(errorMessage);
     },
   });
 

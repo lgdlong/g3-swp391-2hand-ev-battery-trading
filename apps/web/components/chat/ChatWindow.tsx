@@ -7,12 +7,17 @@ import { Conversation, Message } from '@/types/chat';
 import ProductBanner from './ProductBanner';
 import MessageBubble from './MessageBubble';
 import ChatComposer from './ChatComposer';
+import { ChatActionBar } from './ChatActionBar';
+import { BuyerActionBar } from './BuyerActionBar';
 
 interface ChatWindowProps {
   conversation: Conversation | null;
   messages: Message[];
   currentUserId: number;
   onSendMessage: (message: string) => void;
+  existingContract?: any;
+  isLoadingContract?: boolean;
+  onContractCreated?: () => void;
 }
 
 export default function ChatWindow({
@@ -20,6 +25,9 @@ export default function ChatWindow({
   messages,
   currentUserId,
   onSendMessage,
+  existingContract,
+  isLoadingContract = false,
+  onContractCreated,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -31,13 +39,26 @@ export default function ChatWindow({
 
   // Scroll to bottom when messages change (new message received or sent)
   useEffect(() => {
+    console.log('📨 ChatWindow - Messages changed:', {
+      messageCount: messages.length,
+      conversationId: conversation?.id,
+      currentUserId,
+      messages: messages.map((m) => ({
+        id: m.id,
+        senderId: m.senderId,
+        content: m.content.substring(0, 50),
+      })),
+    });
+
     if (messages.length > 0) {
       console.log(
         `📨 Messages updated: ${messages.length} messages in conversation ${conversation?.id}`,
       );
       scrollToBottom();
+    } else {
+      console.warn('⚠️ No messages to display in conversation:', conversation?.id);
     }
-  }, [messages, conversation?.id]);
+  }, [messages, conversation?.id, currentUserId]);
 
   if (!conversation) {
     return (
@@ -77,21 +98,61 @@ export default function ChatWindow({
         </div>
       </div>
 
+      {/* Action Bar for Seller - Chốt đơn */}
+      {conversation && (
+        <ChatActionBar
+          conversation={conversation}
+          currentUserId={currentUserId}
+          existingContract={existingContract}
+          isLoadingContract={isLoadingContract}
+          onContractCreated={onContractCreated || (() => {})}
+        />
+      )}
+
+      {/* Action Bar for Buyer - Xác nhận đã nhận hàng */}
+      {conversation && (
+        <BuyerActionBar
+          conversation={conversation}
+          currentUserId={currentUserId}
+          existingContract={existingContract}
+          isLoadingContract={isLoadingContract}
+        />
+      )}
+
       {/* Product Banner */}
       <div className="flex-shrink-0">
         <ProductBanner post={conversation.post} />
       </div>
 
       {/* Chat Messages */}
-      <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollAreaRef}>
-        <div className="py-4">
-          {messages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isCurrentUser={message.senderId === currentUserId}
-            />
-          ))}
+      <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+        <div className="py-2">
+          {messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full py-8">
+              <div className="text-center text-gray-500">
+                <p className="text-sm">Chưa có tin nhắn nào</p>
+                <p className="text-xs mt-1">Hãy bắt đầu cuộc trò chuyện!</p>
+              </div>
+            </div>
+          ) : (
+            messages.map((message) => {
+              const isCurrentUser = message.senderId === currentUserId;
+              console.log('💬 Rendering message:', {
+                id: message.id,
+                senderId: message.senderId,
+                currentUserId,
+                isCurrentUser,
+                content: message.content.substring(0, 30),
+              });
+              return (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  isCurrentUser={isCurrentUser}
+                />
+              );
+            })
+          )}
           {/* Invisible element to scroll to */}
           <div ref={messagesEndRef} />
         </div>

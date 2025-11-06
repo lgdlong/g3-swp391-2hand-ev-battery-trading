@@ -119,6 +119,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         sender: {
           id: message.sender.id,
           fullName: message.sender.fullName,
+          avatarUrl: message.sender.avatarUrl || null,
         },
       });
 
