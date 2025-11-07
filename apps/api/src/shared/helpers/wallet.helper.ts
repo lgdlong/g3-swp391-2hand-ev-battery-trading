@@ -4,7 +4,7 @@ import { Wallet } from '../../modules/wallets/entities/wallet.entity';
 /**
  * Đảm bảo rằng ví của user tồn tại trong transaction hiện tại.
  * Nếu chưa có thì tạo mới (balance = 0).
- *
+ * 
  * @param manager - Transaction EntityManager (manager từ dataSource.transaction)
  * @param userId - ID của người dùng cần đảm bảo ví
  * @returns Wallet entity (đã có hoặc vừa được tạo)

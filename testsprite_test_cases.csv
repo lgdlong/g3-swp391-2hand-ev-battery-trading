@@ -1,0 +1,62 @@
+Test Case ID,Test Case Name,Description,Preconditions,Test Steps,Expected Result,Priority,Severity,Test Type
+TC001,User Registration - Valid Data,Test user registration with valid data,User is on registration page,1. Navigate to registration page
+2. Fill in valid email, password, and other required fields
+3. Click Register button,User account is created successfully, registration confirmation sent,High,Major,Functional
+TC002,User Registration - Invalid Email,Test user registration with invalid email format,User is on registration page,1. Navigate to registration page
+2. Enter invalid email format (e.g., test@)
+3. Fill other valid fields
+4. Click Register button,Error message displayed: "Invalid email format",High,Major,Functional
+TC003,User Login - Valid Credentials,Test user login with valid credentials,User has registered account,1. Navigate to login page
+2. Enter valid email and password
+3. Click Login button,User is logged in successfully, redirected to dashboard,High,Major,Functional
+TC004,User Login - Invalid Credentials,Test user login with invalid credentials,User is on login page,1. Navigate to login page
+2. Enter invalid email or password
+3. Click Login button,Error message displayed: "Invalid credentials",High,Major,Functional
+TC005,Post Creation - Valid Data,Test creating a new post with valid data,User is logged in,1. Navigate to create post page
+2. Fill in all required fields (title, description, price, images)
+3. Click Submit button,Post is created in draft status, user redirected to post details,High,Major,Functional
+TC006,Post Creation - Missing Required Fields,Test creating post with missing required fields,User is logged in,1. Navigate to create post page
+2. Leave required fields empty
+3. Click Submit button,Error messages displayed for missing fields,High,Major,Functional
+TC007,Admin Post Review - Approve,Test admin approving a pending post,Admin is logged in, post in pending review,1. Navigate to admin review page
+2. Select pending post
+3. Click Approve button
+4. Enter approval notes if required,Post status changes to Published, notification sent to user,High,Major,Functional
+TC008,Admin Post Review - Reject,Test admin rejecting a pending post,Admin is logged in, post in pending review,1. Navigate to admin review page
+2. Select pending post
+3. Click Reject button
+4. Enter rejection reason,Post status changes to Rejected, notification sent to user,High,Major,Functional
+TC009,Post Search - By Keyword,Test searching posts by keyword,Posts exist in system,1. Navigate to search page
+2. Enter search keyword
+3. Click Search button,Relevant posts displayed in results,High,Major,Functional
+TC010,Post Search - By Category,Test searching posts by category,Posts exist in system,1. Navigate to search page
+2. Select category filter
+3. Click Search button,Posts from selected category displayed,High,Major,Functional
+TC011,Post Details View,Test viewing detailed post information,Post exists and is published,1. Navigate to post list
+2. Click on a post title,Post details page displayed with all information,High,Major,Functional
+TC012,Payment Processing - Valid Payment,Test successful payment for post,User logged in, post available, wallet has balance,1. Navigate to post details
+2. Click Buy Now button
+3. Confirm payment details
+4. Complete payment via PayOS,Payment successful, commission deducted, seller receives payment minus commission,High,Critical,Functional
+TC013,Payment Processing - Insufficient Balance,Test payment with insufficient wallet balance,User logged in, post available, wallet has insufficient balance,1. Navigate to post details
+2. Click Buy Now button
+3. Attempt to complete payment,Error message: "Insufficient balance",High,Major,Functional
+TC014,Commission Calculation,Test commission is correctly calculated and deducted,Payment successful,1. Check seller wallet balance
+2. Check admin commission wallet
+3. Verify commission percentage applied correctly,Commission amount matches configured fee tier, deducted from seller payment,High,Critical,Functional
+TC015,Wallet Top-up,Test wallet top-up functionality,User logged in,1. Navigate to wallet page
+2. Click Top-up button
+3. Enter amount and complete payment,Wallet balance updated correctly,High,Major,Functional
+TC016,Transaction History,Test viewing transaction history,User has completed transactions,1. Navigate to wallet/transactions page,All user transactions displayed with correct details,High,Major,Functional
+TC017,Post Status Update - Sold,Test post status changes to sold after payment,Payment completed successfully,1. Check post status in database
+2. Check post details page,Post status shows as Sold, no longer available for purchase,High,Major,Functional
+TC018,Notification System,Test notifications for key events,User has performed actions,1. Check notification center
+2. Verify notifications for post approval, payment, etc.,Appropriate notifications displayed for all key events,Medium,Minor,Functional
+TC019,API Response Validation,Test API endpoints return correct responses,API server running,1. Send requests to various endpoints
+2. Validate response structure and data,All API responses match expected schema,High,Major,API
+TC020,Visual Regression - Homepage,Test homepage visual consistency,Application running,1. Navigate to homepage
+2. Compare with baseline screenshot,No visual differences detected,Medium,Minor,Visual
+TC021,Visual Regression - Post Details,Test post details page visual consistency,Post exists,1. Navigate to post details
+2. Compare with baseline screenshot,No visual differences detected,Medium,Minor,Visual
+TC022,Performance Test - Page Load,Test page load performance,Application running,1. Navigate to various pages
+2. Measure load times,All pages load within acceptable time limits (<3s),Medium,Minor,Performance

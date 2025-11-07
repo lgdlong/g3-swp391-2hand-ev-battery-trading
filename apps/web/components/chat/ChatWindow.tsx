@@ -7,12 +7,17 @@ import { Conversation, Message } from '@/types/chat';
 import ProductBanner from './ProductBanner';
 import MessageBubble from './MessageBubble';
 import ChatComposer from './ChatComposer';
+import { ChatActionBar } from './ChatActionBar';
+import { BuyerActionBar } from './BuyerActionBar';
 
 interface ChatWindowProps {
   conversation: Conversation | null;
   messages: Message[];
   currentUserId: number;
   onSendMessage: (message: string) => void;
+  existingContract?: any;
+  isLoadingContract?: boolean;
+  onContractCreated?: (isExternalTransaction: boolean) => void;
 }
 
 export default function ChatWindow({
@@ -20,24 +25,35 @@ export default function ChatWindow({
   messages,
   currentUserId,
   onSendMessage,
+  existingContract,
+  isLoadingContract = false,
+  onContractCreated,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const lastMessageCountRef = useRef<number>(0);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Scroll to bottom when messages change (new message received or sent)
+  // Auto-scroll when new messages arrive
   useEffect(() => {
-    if (messages.length > 0) {
-      console.log(
-        `📨 Messages updated: ${messages.length} messages in conversation ${conversation?.id}`,
-      );
+    const currentCount = messages.length;
+    const lastCount = lastMessageCountRef.current;
+
+    if (currentCount > lastCount) {
+      // New messages arrived - auto-scroll to bottom
+      lastMessageCountRef.current = currentCount;
+      setTimeout(() => {
       scrollToBottom();
+      }, 100);
+    } else if (currentCount < lastCount || lastCount === 0) {
+      // Messages were removed (conversation changed) or initial load
+      lastMessageCountRef.current = currentCount;
     }
-  }, [messages, conversation?.id]);
+  }, [messages]);
 
   if (!conversation) {
     return (
@@ -77,21 +93,55 @@ export default function ChatWindow({
         </div>
       </div>
 
+      {/* Action Bar for Seller - Chốt đơn */}
+      {conversation && (
+        <ChatActionBar
+          conversation={conversation}
+          currentUserId={currentUserId}
+          existingContract={existingContract}
+          isLoadingContract={isLoadingContract}
+          onContractCreated={onContractCreated || (() => {})}
+        />
+      )}
+
+      {/* Action Bar for Buyer - Xác nhận đã nhận hàng */}
+      {conversation && (
+        <BuyerActionBar
+          conversation={conversation}
+          currentUserId={currentUserId}
+          existingContract={existingContract}
+          isLoadingContract={isLoadingContract}
+        />
+      )}
+
       {/* Product Banner */}
       <div className="flex-shrink-0">
         <ProductBanner post={conversation.post} />
       </div>
 
       {/* Chat Messages */}
-      <ScrollArea className="flex-1 min-h-0 px-4" ref={scrollAreaRef}>
-        <div className="py-4">
-          {messages.map((message) => (
+      <ScrollArea className="flex-1 min-h-0" ref={scrollAreaRef}>
+        <div className="py-2">
+          {messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full py-8">
+              <div className="text-center text-gray-500">
+                <p className="text-sm">Chưa có tin nhắn nào</p>
+                <p className="text-xs mt-1">Hãy bắt đầu cuộc trò chuyện!</p>
+              </div>
+            </div>
+          ) : (
+            messages.map((message) => {
+              const isCurrentUser = message.senderId === currentUserId;
+              
+              return (
             <MessageBubble
               key={message.id}
               message={message}
-              isCurrentUser={message.senderId === currentUserId}
+                  isCurrentUser={isCurrentUser}
             />
-          ))}
+              );
+            })
+          )}
           {/* Invisible element to scroll to */}
           <div ref={messagesEndRef} />
         </div>

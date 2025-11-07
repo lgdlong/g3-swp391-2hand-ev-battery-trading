@@ -1,0 +1,396 @@
+{
+  "testPlan": {
+    "id": "c2c_ecommerce_test_plan",
+    "title": "C2C E-commerce Flow with Commission Collection",
+    "description": "Comprehensive test plan for Customer-to-Customer marketplace with commission system",
+    "version": "1.0",
+    "steps": [
+      "Navigate to registration page",
+      "Fill in valid email, password, and other required fields",
+      "Click Register button"
+    ],
+    "requirements": [
+      {
+        "id": "REQ_AUTH",
+        "name": "User Authentication",
+        "description": "User registration, login, and authentication management",
+        "testCases": [
+          {
+            "id": "TC001",
+            "name": "User Registration - Valid Data",
+            "description": "Test user registration with valid data",
+            "preconditions": "User is on registration page",
+            "steps": [
+              "Navigate to registration page",
+              "Fill in valid email, password, and other required fields",
+              "Click Register button"
+            ],
+            "expectedResult": "User account is created successfully, registration confirmation sent",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC002",
+            "name": "User Registration - Invalid Email",
+            "description": "Test user registration with invalid email format",
+            "preconditions": "User is on registration page",
+            "steps": [
+              "Navigate to registration page",
+              "Enter invalid email format (e.g., test@)",
+              "Fill other valid fields",
+              "Click Register button"
+            ],
+            "expectedResult": "Error message displayed: \"Invalid email format\"",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC003",
+            "name": "User Login - Valid Credentials",
+            "description": "Test user login with valid credentials",
+            "preconditions": "User has registered account",
+            "steps": [
+              "Navigate to login page",
+              "Enter valid email and password",
+              "Click Login button"
+            ],
+            "expectedResult": "User is logged in successfully, redirected to dashboard",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC004",
+            "name": "User Login - Invalid Credentials",
+            "description": "Test user login with invalid credentials",
+            "preconditions": "User is on login page",
+            "steps": [
+              "Navigate to login page",
+              "Enter invalid email or password",
+              "Click Login button"
+            ],
+            "expectedResult": "Error message displayed: \"Invalid credentials\"",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          }
+        ]
+      },
+      {
+        "id": "REQ_POST_MGMT",
+        "name": "Post Management",
+        "description": "Post creation, approval, and lifecycle management",
+        "testCases": [
+          {
+            "id": "TC005",
+            "name": "Post Creation - Valid Data",
+            "description": "Test creating a new post with valid data",
+            "preconditions": "User is logged in",
+            "steps": [
+              "Navigate to create post page",
+              "Fill in all required fields (title, description, price, images)",
+              "Click Submit button"
+            ],
+            "expectedResult": "Post is created in draft status, user redirected to post details",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC006",
+            "name": "Post Creation - Missing Required Fields",
+            "description": "Test creating post with missing required fields",
+            "preconditions": "User is logged in",
+            "steps": [
+              "Navigate to create post page",
+              "Leave required fields empty",
+              "Click Submit button"
+            ],
+            "expectedResult": "Error messages displayed for missing fields",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC007",
+            "name": "Admin Post Review - Approve",
+            "description": "Test admin approving a pending post",
+            "preconditions": "Admin is logged in, post in pending review",
+            "steps": [
+              "Navigate to admin review page",
+              "Select pending post",
+              "Click Approve button",
+              "Enter approval notes if required"
+            ],
+            "expectedResult": "Post status changes to Published, notification sent to user",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC008",
+            "name": "Admin Post Review - Reject",
+            "description": "Test admin rejecting a pending post",
+            "preconditions": "Admin is logged in, post in pending review",
+            "steps": [
+              "Navigate to admin review page",
+              "Select pending post",
+              "Click Reject button",
+              "Enter rejection reason"
+            ],
+            "expectedResult": "Post status changes to Rejected, notification sent to user",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          }
+        ]
+      },
+      {
+        "id": "REQ_SEARCH",
+        "name": "Search and Discovery",
+        "description": "Post search, filtering, and viewing functionality",
+        "testCases": [
+          {
+            "id": "TC009",
+            "name": "Post Search - By Keyword",
+            "description": "Test searching posts by keyword",
+            "preconditions": "Posts exist in system",
+            "steps": [
+              "Navigate to search page",
+              "Enter search keyword",
+              "Click Search button"
+            ],
+            "expectedResult": "Relevant posts displayed in results",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC010",
+            "name": "Post Search - By Category",
+            "description": "Test searching posts by category",
+            "preconditions": "Posts exist in system",
+            "steps": [
+              "Navigate to search page",
+              "Select category filter",
+              "Click Search button"
+            ],
+            "expectedResult": "Posts from selected category displayed",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC011",
+            "name": "Post Details View",
+            "description": "Test viewing detailed post information",
+            "preconditions": "Post exists and is published",
+            "steps": [
+              "Navigate to post list",
+              "Click on a post title"
+            ],
+            "expectedResult": "Post details page displayed with all information",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          }
+        ]
+      },
+      {
+        "id": "REQ_PAYMENT",
+        "name": "Payment and Commission",
+        "description": "Payment processing and commission collection system",
+        "testCases": [
+          {
+            "id": "TC012",
+            "name": "Payment Processing - Valid Payment",
+            "description": "Test successful payment for post",
+            "preconditions": "User logged in, post available, wallet has balance",
+            "steps": [
+              "Navigate to post details",
+              "Click Buy Now button",
+              "Confirm payment details",
+              "Complete payment via PayOS"
+            ],
+            "expectedResult": "Payment successful, commission deducted, seller receives payment minus commission",
+            "priority": "High",
+            "severity": "Critical",
+            "type": "Functional"
+          },
+          {
+            "id": "TC013",
+            "name": "Payment Processing - Insufficient Balance",
+            "description": "Test payment with insufficient wallet balance",
+            "preconditions": "User logged in, post available, wallet has insufficient balance",
+            "steps": [
+              "Navigate to post details",
+              "Click Buy Now button",
+              "Attempt to complete payment"
+            ],
+            "expectedResult": "Error message: \"Insufficient balance\"",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC014",
+            "name": "Commission Calculation",
+            "description": "Test commission is correctly calculated and deducted",
+            "preconditions": "Payment successful",
+            "steps": [
+              "Check seller wallet balance",
+              "Check admin commission wallet",
+              "Verify commission percentage applied correctly"
+            ],
+            "expectedResult": "Commission amount matches configured fee tier, deducted from seller payment",
+            "priority": "High",
+            "severity": "Critical",
+            "type": "Functional"
+          },
+          {
+            "id": "TC015",
+            "name": "Wallet Top-up",
+            "description": "Test wallet top-up functionality",
+            "preconditions": "User logged in",
+            "steps": [
+              "Navigate to wallet page",
+              "Click Top-up button",
+              "Enter amount and complete payment"
+            ],
+            "expectedResult": "Wallet balance updated correctly",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC016",
+            "name": "Transaction History",
+            "description": "Test viewing transaction history",
+            "preconditions": "User has completed transactions",
+            "steps": [
+              "Navigate to wallet/transactions page"
+            ],
+            "expectedResult": "All user transactions displayed with correct details",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          },
+          {
+            "id": "TC017",
+            "name": "Post Status Update - Sold",
+            "description": "Test post status changes to sold after payment",
+            "preconditions": "Payment completed successfully",
+            "steps": [
+              "Check post status in database",
+              "Check post details page"
+            ],
+            "expectedResult": "Post status shows as Sold, no longer available for purchase",
+            "priority": "High",
+            "severity": "Major",
+            "type": "Functional"
+          }
+        ]
+      },
+      {
+        "id": "REQ_NOTIFICATIONS",
+        "name": "Notifications",
+        "description": "System notifications for key events",
+        "testCases": [
+          {
+            "id": "TC018",
+            "name": "Notification System",
+            "description": "Test notifications for key events",
+            "preconditions": "User has performed actions",
+            "steps": [
+              "Check notification center",
+              "Verify notifications for post approval, payment, etc."
+            ],
+            "expectedResult": "Appropriate notifications displayed for all key events",
+            "priority": "Medium",
+            "severity": "Minor",
+            "type": "Functional"
+          }
+        ]
+      },
+      {
+        "id": "REQ_API",
+        "name": "API Testing",
+        "description": "Backend API endpoint validation",
+        "testCases": [
+          {
+            "id": "TC019",
+            "name": "API Response Validation",
+            "description": "Test API endpoints return correct responses",
+            "preconditions": "API server running",
+            "steps": [
+              "Send requests to various endpoints",
+              "Validate response structure and data"
+            ],
+            "expectedResult": "All API responses match expected schema",
+            "priority": "High",
+            "severity": "Major",
+            "type": "API"
+          }
+        ]
+      },
+      {
+        "id": "REQ_VISUAL",
+        "name": "Visual Testing",
+        "description": "Visual regression and UI consistency testing",
+        "testCases": [
+          {
+            "id": "TC020",
+            "name": "Visual Regression - Homepage",
+            "description": "Test homepage visual consistency",
+            "preconditions": "Application running",
+            "steps": [
+              "Navigate to homepage",
+              "Compare with baseline screenshot"
+            ],
+            "expectedResult": "No visual differences detected",
+            "priority": "Medium",
+            "severity": "Minor",
+            "type": "Visual"
+          },
+          {
+            "id": "TC021",
+            "name": "Visual Regression - Post Details",
+            "description": "Test post details page visual consistency",
+            "preconditions": "Post exists",
+            "steps": [
+              "Navigate to post details",
+              "Compare with baseline screenshot"
+            ],
+            "expectedResult": "No visual differences detected",
+            "priority": "Medium",
+            "severity": "Minor",
+            "type": "Visual"
+          }
+        ]
+      },
+      {
+        "id": "REQ_PERFORMANCE",
+        "name": "Performance Testing",
+        "description": "Application performance validation",
+        "testCases": [
+          {
+            "id": "TC022",
+            "name": "Performance Test - Page Load",
+            "description": "Test page load performance",
+            "preconditions": "Application running",
+            "steps": [
+              "Navigate to various pages",
+              "Measure load times"
+            ],
+            "expectedResult": "All pages load within acceptable time limits (<3s)",
+            "priority": "Medium",
+            "severity": "Minor",
+            "type": "Performance"
+          }
+        ]
+      }
+    ]
+  }
+}

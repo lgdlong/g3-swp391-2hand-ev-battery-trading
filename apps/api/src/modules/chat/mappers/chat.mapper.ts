@@ -40,8 +40,5 @@ export function mapConversationToDto(conversation: Conversation): ConversationRe
         ? mapMessageToDto(conversation.messages[0])
         : undefined,
     messages: conversation.messages?.map(mapMessageToDto),
-    // ✨ NEW: Map tracking fields
-    hasMessages: conversation.hasMessages,
-    messagesCount: conversation.messagesCount,
   };
 }

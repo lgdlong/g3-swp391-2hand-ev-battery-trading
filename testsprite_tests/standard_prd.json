@@ -1,0 +1,272 @@
+{
+  "productRequirementsDocument": {
+    "title": "C2C E-commerce Platform with Commission Collection",
+    "version": "1.0",
+    "description": "A customer-to-customer marketplace for buying and selling used electric vehicle batteries with integrated commission collection system",
+    "features": [
+      {
+        "id": "F001",
+        "name": "User Authentication",
+        "description": "Complete user registration and login system with JWT authentication",
+        "requirements": [
+          "User registration with email validation",
+          "Secure login with password encryption",
+          "JWT token-based authentication",
+          "Google OAuth integration",
+          "Password reset functionality",
+          "User profile management"
+        ],
+        "acceptanceCriteria": [
+          "Users can register with valid email and password",
+          "Invalid email formats are rejected",
+          "Login works with correct credentials",
+          "Invalid credentials show appropriate error messages"
+        ]
+      },
+      {
+        "id": "F002",
+        "name": "Post Management",
+        "description": "Comprehensive post creation, review, and lifecycle management",
+        "requirements": [
+          "Create posts with images, description, price",
+          "Post status workflow: Draft → Pending → Published/Rejected",
+          "Admin review system for post approval",
+          "Post editing and deletion",
+          "Image upload to Cloudinary",
+          "Post categorization and tagging"
+        ],
+        "acceptanceCriteria": [
+          "Posts can be created with all required fields",
+          "Missing required fields show validation errors",
+          "Posts go through proper approval workflow",
+          "Admins can approve or reject posts with reasons"
+        ]
+      },
+      {
+        "id": "F003",
+        "name": "Search and Discovery",
+        "description": "Advanced search and filtering capabilities",
+        "requirements": [
+          "Keyword-based search",
+          "Category and location filtering",
+          "Price range filtering",
+          "Battery-specific filters (brand, health, capacity)",
+          "Search result pagination",
+          "Breadcrumb navigation"
+        ],
+        "acceptanceCriteria": [
+          "Search returns relevant results",
+          "Filters work correctly",
+          "Post details display all information",
+          "Navigation is intuitive"
+        ]
+      },
+      {
+        "id": "F004",
+        "name": "Payment and Wallet System",
+        "description": "Integrated payment processing with commission collection",
+        "requirements": [
+          "PayOS payment gateway integration",
+          "User wallet system",
+          "Wallet top-up functionality",
+          "Commission calculation based on fee tiers",
+          "Transaction history tracking",
+          "Secure payment processing"
+        ],
+        "acceptanceCriteria": [
+          "Payments process successfully via PayOS",
+          "Commission is correctly calculated and deducted",
+          "Wallet balances update accurately",
+          "Transaction history is complete and accurate"
+        ]
+      },
+      {
+        "id": "F005",
+        "name": "Admin Management",
+        "description": "Administrative functions for platform management",
+        "requirements": [
+          "Post review and approval system",
+          "User role management",
+          "Fee tier configuration",
+          "Post lifecycle settings",
+          "Refund policy management",
+          "Commission monitoring"
+        ],
+        "acceptanceCriteria": [
+          "Admins can review and approve posts",
+          "Fee tiers can be configured",
+          "Commission collection works correctly",
+          "Admin dashboard shows relevant metrics"
+        ]
+      },
+      {
+        "id": "F006",
+        "name": "Notification System",
+        "description": "Real-time notifications for key events",
+        "requirements": [
+          "Post approval notifications",
+          "Payment confirmation notifications",
+          "Transaction completion notifications",
+          "System status notifications",
+          "Email and in-app notifications"
+        ],
+        "acceptanceCriteria": [
+          "Users receive notifications for all key events",
+          "Notifications are timely and accurate",
+          "Notification preferences can be managed"
+        ]
+      },
+      {
+        "id": "F007",
+        "name": "API and Integration",
+        "description": "RESTful API with proper documentation",
+        "requirements": [
+          "Complete REST API coverage",
+          "Swagger/OpenAPI documentation",
+          "Proper error handling",
+          "API rate limiting",
+          "Data validation",
+          "Authentication middleware"
+        ],
+        "acceptanceCriteria": [
+          "All endpoints return correct responses",
+          "API documentation is complete",
+          "Error responses are consistent",
+          "Authentication works correctly"
+        ]
+      },
+      {
+        "id": "F008",
+        "name": "Performance and Reliability",
+        "description": "System performance and visual consistency",
+        "requirements": [
+          "Page load times under 3 seconds",
+          "Visual regression testing",
+          "Responsive design",
+          "Cross-browser compatibility",
+          "Error boundary handling"
+        ],
+        "acceptanceCriteria": [
+          "Pages load within acceptable time limits",
+          "Visual consistency is maintained",
+          "System works across different browsers",
+          "Errors are handled gracefully"
+        ]
+      }
+    ],
+    "userStories": [
+      {
+        "id": "US001",
+        "asA": "New User",
+        "iWant": "to register an account",
+        "soThat": "I can buy and sell batteries on the platform",
+        "acceptanceCriteria": [
+          "Can register with email and password",
+          "Receive confirmation email",
+          "Can login after registration"
+        ]
+      },
+      {
+        "id": "US002",
+        "asA": "Seller",
+        "iWant": "to create a post for my battery",
+        "soThat": "potential buyers can see my listing",
+        "acceptanceCriteria": [
+          "Can upload images and enter details",
+          "Post goes to pending review",
+          "Receive notification when approved"
+        ]
+      },
+      {
+        "id": "US003",
+        "asA": "Buyer",
+        "iWant": "to search for batteries",
+        "soThat": "I can find what I'm looking for",
+        "acceptanceCriteria": [
+          "Can search by keyword and filters",
+          "See detailed post information",
+          "Can contact seller or purchase directly"
+        ]
+      },
+      {
+        "id": "US004",
+        "asA": "Buyer",
+        "iWant": "to purchase a battery",
+        "soThat": "I can complete my transaction",
+        "acceptanceCriteria": [
+          "Can initiate payment securely",
+          "Commission is automatically deducted",
+          "Receive confirmation of purchase"
+        ]
+      },
+      {
+        "id": "US005",
+        "asA": "Admin",
+        "iWant": "to review posts",
+        "soThat": "I can ensure quality listings",
+        "acceptanceCriteria": [
+          "Can approve or reject posts",
+          "Can add review notes",
+          "Users are notified of decisions"
+        ]
+      },
+      {
+        "id": "US006",
+        "asA": "Platform Owner",
+        "iWant": "to collect commissions",
+        "soThat": "I can monetize the platform",
+        "acceptanceCriteria": [
+          "Commission rates are configurable",
+          "Commissions are automatically calculated",
+          "Commission data is trackable"
+        ]
+      }
+    ],
+    "technicalRequirements": {
+      "frontend": {
+        "framework": "Next.js 15",
+        "language": "TypeScript",
+        "styling": "Tailwind CSS",
+        "ui": "Radix UI",
+        "state": "TanStack Query",
+        "auth": "JWT + Google OAuth"
+      },
+      "backend": {
+        "framework": "NestJS",
+        "language": "TypeScript",
+        "database": "PostgreSQL",
+        "orm": "TypeORM",
+        "auth": "JWT",
+        "payment": "PayOS",
+        "upload": "Cloudinary"
+      },
+      "testing": {
+        "e2e": "TestCafe",
+        "api": "Jest/Supertest",
+        "visual": "TestSprite"
+      }
+    },
+    "businessRules": [
+      {
+        "rule": "Commission Collection",
+        "description": "Platform collects commission on each successful transaction",
+        "details": "Commission rates are configurable via admin panel, deducted from seller payment"
+      },
+      {
+        "rule": "Post Approval",
+        "description": "All posts must be reviewed and approved by admins before publishing",
+        "details": "Posts start as draft, move to pending review, then published or rejected"
+      },
+      {
+        "rule": "Payment Security",
+        "description": "All payments must go through secure PayOS gateway",
+        "details": "No direct payments, all transactions tracked and secured"
+      },
+      {
+        "rule": "Wallet System",
+        "description": "Users must maintain wallet balance for purchases",
+        "details": "Wallet top-up required, insufficient balance prevents purchase"
+      }
+    ]
+  }
+}

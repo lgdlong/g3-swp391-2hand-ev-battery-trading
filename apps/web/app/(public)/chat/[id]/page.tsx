@@ -13,11 +13,19 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatWindow from '@/components/chat/ChatWindow';
-import { useConversations, useInfiniteConversationMessages } from '@/hooks/useChat';
+import { useConversations, useInfiniteConversationMessages, chatKeys } from '@/hooks/useChat';
 import { useAuth } from '@/lib/auth-context';
 import { useChatWebSocket } from '@/hooks/useChatWebSocket';
+import {
+  getContractByListingAndBuyer,
+  getContractByBuyerAndListing,
+  createContractBySeller,
+  type Contract,
+} from '@/lib/api/transactionApi';
 import type { Message } from '@/types/chat';
 
 export default function ChatPage() {
@@ -25,6 +33,7 @@ export default function ChatPage() {
   const router = useRouter();
   const chatId = params.id as string;
   const { user, isLoggedIn, loading } = useAuth();
+  const queryClient = useQueryClient();
 
   // Use chatId from URL as the active chat ID
   const activeChatId = chatId;
@@ -45,6 +54,57 @@ export default function ChatPage() {
     50, // limit
     !!activeChatId && !!isLoggedIn,
   );
+
+  // Get active conversation
+  const activeConversation = conversations.find((conv) => conv.id === activeChatId) || null;
+
+  // Get contract for current conversation (if exists)
+  const listingId = activeConversation?.post?.id;
+  const buyerId = activeConversation?.buyerId;
+  const isSeller = user?.id === activeConversation?.sellerId;
+  const isBuyer = user?.id === activeConversation?.buyerId;
+
+  // Query contract - different endpoints for seller vs buyer
+  const {
+    data: existingContract,
+    isLoading: isLoadingContract,
+    error: contractError,
+  } = useQuery<Contract | null>({
+    queryKey: ['contract', listingId, buyerId, isSeller ? 'seller' : 'buyer'],
+    queryFn: () => {
+      if (!listingId) return null;
+      if (isSeller && buyerId) {
+        // Seller: get contract by listing and buyer
+        return getContractByListingAndBuyer(listingId, buyerId);
+      } else if (isBuyer) {
+        // Buyer: get contract by listing (their own contract)
+        return getContractByBuyerAndListing(listingId);
+      }
+      return null;
+    },
+    enabled: !!listingId && !!user && (isSeller ? !!buyerId : isBuyer),
+  });
+
+  // Mutation to create contract when seller confirms order
+  const createContractMutation = useMutation({
+    mutationFn: async (isExternalTransaction: boolean) => {
+      if (!listingId || !buyerId) {
+        throw new Error('Missing listingId or buyerId');
+      }
+      return createContractBySeller(listingId, buyerId, isExternalTransaction);
+    },
+    onSuccess: () => {
+      toast.success('Đã chốt đơn thành công!');
+      // Invalidate contract queries to refetch (for both seller and buyer)
+      queryClient.invalidateQueries({ queryKey: ['contract', listingId] });
+    },
+    onError: (error: any) => {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi chốt đơn';
+      toast.error(errorMessage);
+      console.error('Error creating contract:', error);
+    },
+  });
 
   // Log any API errors
   useEffect(() => {
@@ -67,41 +127,64 @@ export default function ChatPage() {
 
   // ✨ NEW: Listen for WebSocket messages and update state only
   useEffect(() => {
-    if (!onNewMessage) return;
+    if (!onNewMessage || !activeChatId) return;
 
     const handleNewMessage = (message: Message) => {
       console.log('🚀 Received new message via WebSocket:', message);
 
-      // Only update local state, don't touch React Query cache
+      // ✅ FIX: Only add message if it belongs to the current conversation
+      if (message.conversationId === activeChatId) {
       setNewMessages((prev) => [...prev, message]);
+      } else {
+        console.log(
+          `⚠️ Ignoring message from different conversation. Current: ${activeChatId}, Message: ${message.conversationId}`,
+        );
+      }
     };
 
     // Set up the listener
     const cleanup = onNewMessage(handleNewMessage);
 
     return cleanup;
-  }, [onNewMessage]);
+  }, [onNewMessage, activeChatId]);
 
-  // ✨ NEW: Reset newMessages when activeChatId changes
+  // ✨ NEW: Reset newMessages when activeChatId changes and invalidate React Query to fetch latest messages
   useEffect(() => {
-    console.log('🔄 Active chat changed, resetting new messages state');
+    if (!activeChatId) return;
+    
+    console.log('🔄 Active chat changed, resetting new messages state and refetching messages');
     setNewMessages([]);
-  }, [activeChatId]);
+    
+    // Invalidate and refetch messages from server to ensure we have all messages
+    // This is important when user enters chat page - they should see all messages that were sent while they were away
+    queryClient.invalidateQueries({
+      queryKey: chatKeys.messages(activeChatId),
+    });
+  }, [activeChatId, queryClient]);
 
   // ✨ NEW: Merge old messages (from React Query) with new messages (from state)
   const allMessages = useMemo(() => {
+    if (!activeChatId) return [];
+
     // Get old messages from infinite query and flatten them
     // Backend already returns messages in chronological order (ASC), so no need to reverse
     const oldMessages = infiniteMessagesData?.pages?.flatMap((page) => page.messages || []) || [];
 
-    // Filter new messages to avoid duplicates
+    // ✅ FIX: Filter messages to ensure they belong to current conversation
+    const filteredOldMessages = oldMessages.filter(
+      (msg) => msg.conversationId === activeChatId,
+    );
+
+    // Filter new messages to avoid duplicates and ensure they belong to current conversation
     const uniqueNewMessages = newMessages.filter(
-      (newMsg) => !oldMessages.some((oldMsg) => oldMsg.id === newMsg.id),
+      (newMsg) =>
+        newMsg.conversationId === activeChatId &&
+        !filteredOldMessages.some((oldMsg) => oldMsg.id === newMsg.id),
     );
 
     // Combine: old messages + unique new messages (both already in chronological order)
-    return [...oldMessages, ...uniqueNewMessages];
-  }, [infiniteMessagesData, newMessages]);
+    return [...filteredOldMessages, ...uniqueNewMessages];
+  }, [infiniteMessagesData, newMessages, activeChatId]);
 
   // Handle case where requested conversation doesn't exist
   useEffect(() => {
@@ -145,9 +228,7 @@ export default function ChatPage() {
     }
 
     // Navigate to the new conversation URL (this will update the dynamic param)
-    if (chatId !== activeChatId) {
-      router.push(`/chat/${chatId}`);
-    }
+    router.push(`/chat/${chatId}`);
   };
 
   // Handle sending message
@@ -207,7 +288,24 @@ export default function ChatPage() {
     );
   }
 
-  const activeConversation = conversations.find((conv) => conv.id === activeChatId) || null;
+
+  // Handle contract creation
+  const handleContractCreated = (isExternalTransaction: boolean) => {
+    if (!listingId || !buyerId) {
+      toast.error('Thiếu thông tin để chốt đơn');
+      return;
+    }
+    createContractMutation.mutate(isExternalTransaction);
+  };
+
+  // Ensure user exists before rendering
+  if (!user || !user.id) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-4rem)] flex bg-gray-50">
@@ -222,6 +320,9 @@ export default function ChatPage() {
         messages={allMessages}
         currentUserId={user.id}
         onSendMessage={handleSendMessage}
+        existingContract={existingContract || undefined}
+        isLoadingContract={isLoadingContract || createContractMutation.isPending}
+        onContractCreated={handleContractCreated}
       />
     </div>
   );

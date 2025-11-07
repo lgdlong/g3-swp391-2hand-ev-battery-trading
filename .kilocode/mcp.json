@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "TestSprite": {
+      "command": "npx",
+      "args": [
+        "@testsprite/testsprite-mcp@latest"
+      ],
+      "env": {  "API_KEY": "sk-user-b7rcaZgcewPLJUnrzuF2V6sIL8lyj0k4h4RuANOWIri2KUCQrLo6dTWG4NNdq0U8cG3vvSjFGCN6g9YGzIsXdM4QRsF0_fESfs4DD-ON0rBA2pyVV3ftczA3eD3YuVr-_-c"
+      
+      },
+      "alwaysAllow": [
+        "testsprite_generate_code_summary",
+        "testsprite_generate_standardized_prd",
+        "testsprite_generate_frontend_test_plan",
+        "testsprite_bootstrap_tests"
+      ],
+      "timeout": 60
+    }
+  }
+}
