@@ -134,7 +134,7 @@ export default function ChatPage() {
 
       // ✅ FIX: Only add message if it belongs to the current conversation
       if (message.conversationId === activeChatId) {
-        setNewMessages((prev) => [...prev, message]);
+      setNewMessages((prev) => [...prev, message]);
       } else {
         console.log(
           `⚠️ Ignoring message from different conversation. Current: ${activeChatId}, Message: ${message.conversationId}`,

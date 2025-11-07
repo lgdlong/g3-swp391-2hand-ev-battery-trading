@@ -47,7 +47,7 @@ export default function ChatWindow({
       // New messages arrived - auto-scroll to bottom
       lastMessageCountRef.current = currentCount;
       setTimeout(() => {
-        scrollToBottom();
+      scrollToBottom();
       }, 100);
     } else if (currentCount < lastCount || lastCount === 0) {
       // Messages were removed (conversation changed) or initial load
@@ -134,11 +134,11 @@ export default function ChatWindow({
               const isCurrentUser = message.senderId === currentUserId;
               
               return (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
+            <MessageBubble
+              key={message.id}
+              message={message}
                   isCurrentUser={isCurrentUser}
-                />
+            />
               );
             })
           )}
