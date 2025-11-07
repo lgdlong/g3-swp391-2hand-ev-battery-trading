@@ -254,7 +254,7 @@ export default function UploadImagesPage() {
                       type="file"
                       className="hidden"
                       multiple
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
                       onChange={handleFileSelect}
                       disabled={isUploading}
                     />

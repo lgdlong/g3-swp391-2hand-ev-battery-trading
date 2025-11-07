@@ -169,7 +169,7 @@ export default function ImageUpload({ existingImages = [], onImagesUpdate }: Ima
             id="image-upload"
             type="file"
             multiple
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
             className="hidden"
             onChange={handleFileInputChange}
             disabled={state.uploading}

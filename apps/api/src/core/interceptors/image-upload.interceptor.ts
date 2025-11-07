@@ -7,14 +7,14 @@ import { memoryStorage } from 'multer';
  * - storage: dùng memoryStorage() → file sẽ được lưu trong bộ nhớ RAM tạm thời,
  *   rồi chuyển tiếp lên Cloudinary (hoặc service khác). Không lưu file xuống disk local.
  * - limits: giới hạn dung lượng mỗi file tối đa 10MB.
- * - fileFilter: chỉ cho phép các định dạng ảnh hợp lệ (jpg, jpeg, png, webp, gif, avif).
+ * - fileFilter: chỉ cho phép các định dạng ảnh hợp lệ (jpg, jpeg, png, webp).
  *   Nếu định dạng khác → throw BadRequestException.
  */
 const imageUploadConfig = {
   storage: memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // Giới hạn: 10MB mỗi ảnh
   fileFilter: (_req: any, file: Express.Multer.File, cb: any) => {
-    const ok = /^image\/(jpe?g|png|webp|gif|avif)$/i.test(file.mimetype);
+    const ok = /^image\/(jpe?g|png|webp|avif)$/i.test(file.mimetype);
     // cb(error, acceptFile)
     cb(ok ? null : new BadRequestException('Invalid image type'), ok);
   },
