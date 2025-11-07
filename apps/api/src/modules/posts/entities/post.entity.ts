@@ -119,7 +119,8 @@ export class Post {
   batteryDetails?: PostBatteryDetails;
 
   @OneToOne(
-    () => require('../../verifyPost/entities/post-verification-request.entity').PostVerificationRequest,
+    () =>
+      require('../../verifyPost/entities/post-verification-request.entity').PostVerificationRequest,
     (verificationRequest: PostVerificationRequest) => verificationRequest.post,
     { cascade: true },
   )

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, Send } from '@/components/ui/icons';
+import { Send } from '@/components/ui/icons';
 
 interface ChatComposerProps {
   onSendMessage: (message: string) => void;
