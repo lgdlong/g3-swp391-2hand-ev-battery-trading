@@ -156,6 +156,7 @@ export class ChatService {
   /**
    * FR-CHAT-M3: Send a message in a conversation
    * Includes security check and returns the created message
+   * ✨ AUTO-UPDATE: hasMessages and messagesCount
    */
   async sendMessage(sendMessageDto: SendMessageDto, senderId: number): Promise<Message> {
     const { conversationId, content } = sendMessageDto;
@@ -182,8 +183,10 @@ export class ChatService {
 
     const savedMessage = await this.messageRepo.save(message);
 
-    // Update conversation's updatedAt timestamp
+    // ✨ UPDATE: Increment messagesCount and set hasMessages to true
+    await this.conversationRepo.increment({ id: conversationId }, 'messagesCount', 1);
     await this.conversationRepo.update(conversationId, {
+      hasMessages: true,
       updatedAt: new Date(),
     });
 
@@ -226,5 +229,49 @@ export class ChatService {
     });
 
     return conversations.map((conv) => conv.id);
+  }
+
+  /**
+   * ✨ NEW: Get conversations filtered by hasMessages status
+   * Useful for finding conversations with/without messages
+   */
+  async getConversationsByMessageStatus(
+    hasMessages: boolean,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<{ data: ConversationResponseDto[]; total: number }> {
+    const [conversations, total] = await this.conversationRepo.findAndCount({
+      where: { hasMessages },
+      relations: ['post', 'post.images', 'post.seller', 'buyer', 'seller'],
+      order: { updatedAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      data: conversations.map(mapConversationToDto),
+      total,
+    };
+  }
+
+  /**
+   * ✨ NEW: Get conversation statistics
+   * Returns counts of conversations with/without messages
+   */
+  async getConversationStats(): Promise<{
+    totalConversations: number;
+    conversationsWithMessages: number;
+    conversationsWithoutMessages: number;
+  }> {
+    const total = await this.conversationRepo.count();
+    const withMessages = await this.conversationRepo.count({
+      where: { hasMessages: true },
+    });
+
+    return {
+      totalConversations: total,
+      conversationsWithMessages: withMessages,
+      conversationsWithoutMessages: total - withMessages,
+    };
   }
 }

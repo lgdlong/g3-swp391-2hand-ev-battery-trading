@@ -8,7 +8,7 @@
  * 4. Cleaner separation of concerns
  */
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   chatWebSocketService,
@@ -20,6 +20,7 @@ import { chatKeys } from './useChat';
 import { useAuth } from '@/lib/auth-context';
 import type { Conversation, Message } from '@/types/chat';
 import { ACCESS_TOKEN_KEY } from '@/config/constants';
+import { toast } from 'sonner';
 
 // Simplified WebSocket hook for basic chat functionality
 export const useChatWebSocket = () => {
@@ -29,47 +30,68 @@ export const useChatWebSocket = () => {
   // 🐛 Sửa lỗi: Dùng state để theo dõi trạng thái kết nối
   const [isConnected, setIsConnected] = useState(chatWebSocketService.isConnected);
 
+  // ✨ Track first connection to avoid premature disconnect
+  const isFirstMountRef = useRef(true);
+  const hasTriedToConnectRef = useRef(false);
+
   // ✨ NEW: Store message callback for external components
   const [messageCallback, setMessageCallback] = useState<((message: Message) => void) | null>(null);
 
-  // Connect to WebSocket when user is authenticated
+  // ✅ Connect to WebSocket with delay to wait for auth state
   useEffect(() => {
-    if (!isLoggedIn) {
-      console.log('🔌 User not logged in, disconnecting WebSocket');
-      chatWebSocketService.disconnect();
-      setIsConnected(false);
-      return;
-    }
+    const connectWithDelay = async () => {
+      // ✨ Lần đầu tiên: chờ auth sẵn sàng (isLoggedIn từ false → true)
+      if (isFirstMountRef.current && !isLoggedIn) {
+        console.log('🔌 Lần đầu mount: Đang chờ auth sẵn sàng...');
+        return; // Chưa đến lúc, đợi isLoggedIn thay đổi
+      }
 
-    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
-    if (!token) {
-      console.warn('🔌 No access token found for WebSocket connection');
-      setIsConnected(false);
-      return;
-    }
+      if (isFirstMountRef.current) {
+        isFirstMountRef.current = false;
+        console.log('🔌 Auth đã sẵn sàng, tiến hành kết nối');
+        // Chờ một chút để đảm bảo token đã được lưu
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
 
-    // Only connect if not already connected to prevent duplicate connections
-    if (!chatWebSocketService.isConnected) {
-      console.log('🔌 Attempting to connect WebSocket with token:', token.substring(0, 20) + '...');
+      if (!isLoggedIn) {
+        console.log('🔌 Người dùng chưa đăng nhập, ngắt kết nối WebSocket');
+        chatWebSocketService.disconnect();
+        setIsConnected(false);
+        hasTriedToConnectRef.current = false;
+        return;
+      }
 
-      // Reset reconnection settings when establishing new connection
-      chatWebSocketService.resetReconnectionSettings();
-      chatWebSocketService.connect(token);
-    } else {
-      console.log('🔌 WebSocket already connected, skipping connection attempt');
-      setIsConnected(true);
-    }
+      const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+      if (!token) {
+        console.warn('🔌 Không tìm thấy token truy cập để kết nối WebSocket');
+        setIsConnected(false);
+        return;
+      }
+
+      // Chỉ kết nối nếu chưa kết nối
+      if (!chatWebSocketService.isConnected && !hasTriedToConnectRef.current) {
+        hasTriedToConnectRef.current = true;
+        console.log('🔌 Cố gắng kết nối WebSocket với token:', token.substring(0, 20) + '...');
+        chatWebSocketService.resetReconnectionSettings();
+        chatWebSocketService.connect(token);
+      } else if (chatWebSocketService.isConnected) {
+        console.log('🔌 WebSocket đã kết nối, bỏ qua nỗ lực kết nối');
+        setIsConnected(true);
+      }
+    };
+
+    connectWithDelay();
 
     return () => {
-      console.log('🔌 Cleaning up WebSocket connection');
+      console.log('🔌 Dọn dẹp kết nối WebSocket');
       chatWebSocketService.disconnect();
     };
-  }, [isLoggedIn]); // Depend on auth state
+  }, [isLoggedIn]); // Chỉ phụ thuộc vào trạng thái đăng nhập
 
   const handleNewMessage = useCallback(
     (message: NewMessageEvent) => {
       const { conversationId } = message;
-      console.log(`🚀 WebSocket received new message:`, {
+      console.log(`🚀 WebSocket nhận tin nhắn mới:`, {
         conversationId,
         content: message.content,
       });
@@ -122,38 +144,35 @@ export const useChatWebSocket = () => {
 
   // Set up event listeners
   useEffect(() => {
-    console.log('🔌 Setting up WebSocket event listeners');
+    console.log('🔌 Thiết lập trình nghe sự kiện WebSocket');
 
     // 🐛 Sửa lỗi: Đồng bộ state ngay lập tức với trạng thái hiện tại
     const currentConnectionState = chatWebSocketService.isConnected;
-    console.log('🔌 Synchronizing connection state immediately:', currentConnectionState);
+    console.log('🔌 Đồng bộ trạng thái kết nối ngay lập tức:', currentConnectionState);
     setIsConnected(currentConnectionState);
 
     //  Sửa lỗi: Lắng nghe sự kiện connect/disconnect để cập nhật state
     const cleanupConnect = chatWebSocketService.onConnect(() => {
-      console.log('🔌 WebSocket connected - updating state');
+      console.log('🔌 WebSocket đã kết nối - cập nhật trạng thái');
       setIsConnected(true);
     });
 
     const cleanupDisconnect = chatWebSocketService.onDisconnect((reason) => {
-      console.log('🔌 WebSocket disconnected - updating state. Reason:', reason);
       setIsConnected(false);
+      // setConnectionError(`WebSocket disconnected: ${reason}`);
 
-      // If disconnected due to authentication failure and reconnection is disabled,
-      // log the user out to refresh the session
-      if (reason === 'transport close' && !chatWebSocketService.isConnected) {
-        console.warn(
-          '🔌 WebSocket disconnected due to authentication issues. Consider refreshing the page.',
-        );
-        // Don't auto-logout as it might be disruptive. Let user manually refresh.
-      }
+      // ✅ Thông báo user
+      toast.error('Mất kết nối chat', {
+        description: `${reason}`,
+        duration: 3000,
+      });
     });
 
     const cleanupNewMessage = chatWebSocketService.onNewMessage(handleNewMessage);
 
     // ⚠️ Sửa lỗi: Dùng cleanup cụ thể, không dùng removeAllListeners()
     return () => {
-      console.log('🔌 Cleaning up WebSocket event listeners');
+      console.log('🔌 Dọn dẹp trình nghe sự kiện WebSocket');
       cleanupConnect();
       cleanupDisconnect();
       cleanupNewMessage();
@@ -191,7 +210,7 @@ export const useChatWebSocket = () => {
   };
 
   // Debug log for troubleshooting
-  console.log('🔌 useChatWebSocket returning state:', {
+  console.log('🔌 useChatWebSocket trả về trạng thái:', {
     isConnected: hookState.isConnected,
     serviceConnected: chatWebSocketService.isConnected,
   });

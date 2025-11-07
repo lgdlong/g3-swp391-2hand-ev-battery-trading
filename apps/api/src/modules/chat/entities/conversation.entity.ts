@@ -8,6 +8,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Unique,
+  Index,
 } from 'typeorm';
 import type { Account } from '../../accounts/entities/account.entity';
 import type { Post } from '../../posts/entities/post.entity';
@@ -61,6 +62,14 @@ export class Conversation {
     cascade: true,
   })
   messages!: Message[];
+
+  // ✨ NEW: Tracking fields for message status
+  @Column({ name: 'has_messages', type: 'boolean', default: false })
+  @Index() // Index for filtering conversations with/without messages
+  hasMessages!: boolean;
+
+  @Column({ name: 'messages_count', type: 'int', default: 0 })
+  messagesCount!: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
