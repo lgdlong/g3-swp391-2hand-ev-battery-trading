@@ -53,6 +53,7 @@ import {
 } from '@nestjs/swagger';
 import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 import { DeletePostResponseDto } from './dto/delete-post-response.dto';
+import { DeductPostFeeDto } from './dto/deduct-post-fee.dto';
 
 @ApiTags('posts')
 @ApiExtraModels(
@@ -256,6 +257,31 @@ export class PostsController {
   //------------ POST ENDPOINTS -------------
   //-----------------------------------------
 
+  @Post('deduct-fee')
+  @ApiOperation({ summary: 'Trừ phí đặt cọc đăng bài từ ví người dùng' })
+  @ApiBearerAuth()
+  @ApiCreatedResponse({
+    description: 'Trừ tiền thành công',
+    schema: {
+      type: 'object',
+      properties: {
+        wallet: { type: 'object' },
+        transaction: { type: 'object' },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Không đủ tiền trong ví hoặc không tìm thấy bậc phí' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiBody({ type: DeductPostFeeDto })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  async deductPostFee(
+    @Body() body: DeductPostFeeDto,
+    @User() user: AuthUser,
+  ): Promise<{ wallet: any; transaction: any }> {
+    return this.postsService.deductPostCreationFee(user.sub, body.priceVnd, body.postId);
+  }
+
   @Post('car')
   @ApiOperation({ summary: 'Tạo bài đăng ô tô điện' })
   @ApiBearerAuth() // khớp với .addBearerAuth trong main.ts
@@ -320,6 +346,44 @@ export class PostsController {
     dto.postType = PostType.BATTERY;
     const sellerId = user.sub;
     return this.postsService.createBatteryPost(dto, sellerId);
+  }
+
+  @Post('draft')
+  @ApiOperation({ summary: 'Tạo bài đăng nháp (DRAFT) - hỗ trợ tất cả loại xe/pin' })
+  @ApiBearerAuth()
+  @ApiCreatedResponse({
+    description: 'Tạo bài đăng nháp thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiBadRequestResponse({ description: 'Body không hợp lệ' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không đủ quyền' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  async createDraftPost(
+    @Body() dto: CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto,
+    @User() user: AuthUser,
+  ): Promise<BasePostResponseDto | null> {
+    const sellerId = user.sub;
+    return this.postsService.createDraftPost(dto, sellerId);
+  }
+
+  @Patch(':id/publish')
+  @ApiOperation({ summary: 'Publish bài đăng từ DRAFT sang PENDING_REVIEW sau thanh toán' })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', type: String, example: '123' })
+  @ApiOkResponse({
+    description: 'Publish bài đăng thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiNotFoundResponse({ description: 'Không tìm thấy bài đăng' })
+  @ApiBadRequestResponse({ description: 'Chỉ có thể publish bài đăng DRAFT' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không có quyền publish bài đăng này' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  async publishPost(@Param('id') id: string, @User() user: AuthUser): Promise<BasePostResponseDto> {
+    return this.postsService.updatePostStatusToPublish(id, user.sub);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
