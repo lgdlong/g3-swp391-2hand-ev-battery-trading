@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCarBrands, getBikeBrands, getCarModels, getBikeModels } from '@/lib/api/catalogApi';
 import {
-  createCarPost,
-  createBikePost,
-  createBatteryPost,
+  createDraftCarPost,
+  createDraftBikePost,
+  createDraftBatteryPost,
   uploadPostImages,
 } from '@/lib/api/postApi';
 import { toast } from 'sonner';
@@ -33,13 +33,6 @@ export function useCreatePost() {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
-  // Deposit Modal state
-  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-  const [pendingPostData, setPendingPostData] = useState<{
-    postType: PostType;
-    priceVnd: string;
-  } | null>(null);
-
   // Geo selections for cached address fields
   const [provinceCode, setProvinceCode] = useState<string>('');
   const [districtCode, setDistrictCode] = useState<string>('');
@@ -65,20 +58,28 @@ export function useCreatePost() {
     });
   };
 
-  // Function to actually create post after deposit is successful
-  const handleCreatePostAfterDeposit = async () => {
-    if (!postType || !pendingPostData) {
-      toast.error('Không có dữ liệu bài đăng');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!postType) {
+      toast.error('Vui lòng chọn loại tin đăng');
+      return;
+    }
+
+    // Validate price
+    const priceValue = unformatNumber(formData.priceVnd);
+    if (!priceValue || parseFloat(priceValue) <= 0) {
+      toast.error('Vui lòng nhập giá bài đăng hợp lệ');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      let createdPost;
+      let draftPost;
 
       if (postType === 'battery') {
-        // Battery post creation
+        // Create draft battery post
         const batteryPostData = {
           postType: 'BATTERY' as const,
           title: formData.title,
@@ -90,17 +91,15 @@ export function useCreatePost() {
           addressTextCached: formData.addressTextCached || formData.addressText || '',
           priceVnd: unformatNumber(formData.priceVnd),
           isNegotiable: formData.isNegotiable,
+          status: 'DRAFT' as const,
           batteryDetails: {
-            // Only send brand_id if not empty string (which represents "Khác")
             ...(formData.brand_id && formData.brand_id !== ''
               ? { brand_id: parseInt(formData.brand_id) }
               : {}),
             voltageV: parseFloat(formData.voltageV) || 0,
             capacityAh: parseFloat(formData.capacityAh) || 0,
             chargeTimeHours: parseFloat(formData.chargeTimeHours) || 0,
-            // Only send chemistry if not empty string (which represents "Khác")
             ...(formData.chemistry !== '' ? { chemistry: formData.chemistry } : {}),
-            // Only send origin if not empty string (which represents "Khác")
             origin: formData.origin,
             weightKg: parseFloat(formData.weightKg) || 0,
             cycleLife: parseInt(formData.cycleLife) || 0,
@@ -109,12 +108,11 @@ export function useCreatePost() {
           },
         };
 
-        createdPost = await createBatteryPost(batteryPostData);
-        toast.success('Tạo bài đăng pin thành công!');
+        draftPost = await createDraftBatteryPost(batteryPostData);
       } else {
         // EV post logic (car or bike)
         if (formData.vehicleType === 'xe_hoi') {
-          // Create car post
+          // Create draft car post
           const carPostData = {
             postType: 'EV_CAR' as const,
             title: formData.title,
@@ -126,17 +124,15 @@ export function useCreatePost() {
             addressTextCached: formData.addressTextCached || formData.addressText || '',
             priceVnd: unformatNumber(formData.priceVnd),
             isNegotiable: false,
+            status: 'DRAFT' as const,
             carDetails: {
-              // Only send brand_id if not "other" option
               ...(formData.brandId !== 'other' && formData.brandId
                 ? { brand_id: parseInt(formData.brandId) }
                 : {}),
-              // Only send model_id if not "other" option
               ...(formData.modelId !== 'other' && formData.modelId
                 ? { model_id: parseInt(formData.modelId) }
                 : {}),
               manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
-              // Only send body_style if not "OTHER"
               ...(formData.bodyStyle !== 'OTHER' && formData.bodyStyle
                 ? { body_style: formData.bodyStyle }
                 : {}),
@@ -154,9 +150,9 @@ export function useCreatePost() {
             },
           };
 
-          createdPost = await createCarPost(carPostData);
+          draftPost = await createDraftCarPost(carPostData);
         } else {
-          // Create bike post
+          // Create draft bike post
           const bikePostData = {
             postType: 'EV_BIKE' as const,
             title: formData.title,
@@ -168,17 +164,15 @@ export function useCreatePost() {
             addressTextCached: formData.addressTextCached || formData.addressText || '',
             priceVnd: unformatNumber(formData.priceVnd),
             isNegotiable: false,
+            status: 'DRAFT' as const,
             bikeDetails: {
-              // Only send brand_id if not "other" option
               ...(formData.brandId !== 'other' && formData.brandId
                 ? { brand_id: parseInt(formData.brandId) }
                 : {}),
-              // Only send model_id if not "other" option
               ...(formData.modelId !== 'other' && formData.modelId
                 ? { model_id: parseInt(formData.modelId) }
                 : {}),
               manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
-              // Only send bike_style if not "OTHER"
               ...(formData.bikeStyle !== 'OTHER' && formData.bikeStyle
                 ? { bike_style: formData.bikeStyle }
                 : {}),
@@ -195,48 +189,23 @@ export function useCreatePost() {
             },
           };
 
-          createdPost = await createBikePost(bikePostData);
+          draftPost = await createDraftBikePost(bikePostData);
         }
-
-        toast.success('Tạo bài đăng thành công!');
       }
 
-      // Save the created post ID for image upload step
-      setCreatedPostId(createdPost.id);
+      toast.success('Tạo bài đăng nháp thành công!');
+
+      // Redirect to payment page
+      router.push(`/posts/create/payment/${draftPost.id}`);
     } catch (error: unknown) {
-      console.error('Failed to create post:', error);
+      console.error('Failed to create draft post:', error);
       type ApiError = { response?: { data?: { message?: string } }; message?: string };
       const err = error as ApiError;
-      const errorMessage =
-        err?.response?.data?.message || err?.message || 'Tạo bài đăng thất bại';
+      const errorMessage = err?.response?.data?.message || err?.message || 'Tạo bài đăng thất bại';
       toast.error(`Tạo bài đăng thất bại: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
-      setPendingPostData(null);
     }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!postType) {
-      toast.error('Vui lòng chọn loại tin đăng');
-      return;
-    }
-
-    // Validate price
-    const priceValue = unformatNumber(formData.priceVnd);
-    if (!priceValue || parseFloat(priceValue) <= 0) {
-      toast.error('Vui lòng nhập giá bài đăng hợp lệ');
-      return;
-    }
-
-    // Save post data and open deposit modal
-    setPendingPostData({
-      postType,
-      priceVnd: priceValue,
-    });
-    setIsDepositModalOpen(true);
   };
 
   const handleImageUpload = async () => {
@@ -456,13 +425,10 @@ export function useCreatePost() {
     formData,
     provinceCode,
     districtCode,
-    isDepositModalOpen,
-    pendingPostData,
 
     // Actions
     handleInputChange,
     handleSubmit,
-    handleCreatePostAfterDeposit,
     handleImageUpload,
     handleFileSelect,
     removeImage,
@@ -474,7 +440,6 @@ export function useCreatePost() {
     handleDistrictChange,
     handleWardChange,
     handleAddressTextChange,
-    setIsDepositModalOpen,
 
     // Helpers
     formatNumberWithCommas,

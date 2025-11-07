@@ -9,7 +9,7 @@ import { getPostById } from '@/lib/api/postApi';
 import { useAuth } from '@/lib/auth-context';
 import UpdatePostForm from './_components/UpdatePostForm';
 import ImageUpload from './_components/ImageUpload';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { ImageDiffPayload } from '@/types/post';
 
 export default function UpdatePostPage() {
@@ -20,6 +20,12 @@ export default function UpdatePostPage() {
 
   // State to hold image diff payload for submission
   const [imageDiff, setImageDiff] = useState<ImageDiffPayload | null>(null);
+
+  // Memoize the onImagesUpdate callback to prevent infinite loops
+  const handleImagesUpdate = useCallback((diff: ImageDiffPayload) => {
+    setImageDiff(diff);
+    console.log('Image diff payload:', diff);
+  }, []);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -120,14 +126,7 @@ export default function UpdatePostPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Image Upload - Left Side */}
         <div className="lg:col-span-1">
-          <ImageUpload
-            existingImages={post.images || []}
-            onImagesUpdate={(diff) => {
-              // Save the diff payload to state for form submission
-              setImageDiff(diff);
-              console.log('Image diff payload:', diff);
-            }}
-          />
+          <ImageUpload existingImages={post.images || []} onImagesUpdate={handleImagesUpdate} />
         </div>
 
         {/* Update Form - Right Side */}

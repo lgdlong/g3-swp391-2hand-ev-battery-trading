@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Edit, Trash2, Eye, Package, AlertCircle } from 'lucide-react';
+import { Edit, Trash2, Eye, Package, AlertCircle, Coins } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
 import { VerificationBadge } from '@/components/VerificationBadge';
 import { RequestVerificationButton } from './RequestVerificationButton';
@@ -12,6 +12,7 @@ interface PostListItemProps {
   onDelete?: (postId: string) => void;
   onView?: (post: Post) => void;
   onMarkAsSold?: (postId: string) => void;
+  onPayment?: (postId: string) => void;
   onViewRejectReason?: (postId: string, postTitle: string) => void;
   onViewVerificationRejectReason?: (postId: string, postTitle: string) => void;
 }
@@ -93,6 +94,7 @@ export default function PostListItem({
   onDelete,
   onView,
   onMarkAsSold,
+  onPayment,
   onViewRejectReason,
   onViewVerificationRejectReason,
 }: PostListItemProps) {
@@ -182,6 +184,26 @@ export default function PostListItem({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
+            {/* Payment button - visible for DRAFT only */}
+            {post.status === 'DRAFT' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="gap-2 bg-green-600 hover:bg-green-700"
+                    onClick={() => onPayment?.(post.id)}
+                  >
+                    <Coins className="h-4 w-4" />
+                    Thanh toán
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Thanh toán để đăng bài</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             {/* Edit button - visible for DRAFT, REJECTED */}
             {(post.status === 'DRAFT' || post.status === 'REJECTED') && (
               <Tooltip>
