@@ -22,6 +22,44 @@ import type { Conversation, Message } from '@/types/chat';
 import { ACCESS_TOKEN_KEY } from '@/config/constants';
 import { toast } from 'sonner';
 
+/**
+ * Translates technical WebSocket disconnect reasons into user-friendly Vietnamese messages
+ */
+function getDisconnectMessage(reason: string): { title: string; description: string } {
+  switch (reason) {
+    case 'io server disconnect':
+      return {
+        title: 'Mất kết nối chat',
+        description: 'Máy chủ đã ngắt kết nối. Hệ thống sẽ tự động kết nối lại.',
+      };
+    case 'transport close':
+      return {
+        title: 'Mất kết nối chat',
+        description: 'Kết nối bị đóng. Vui lòng kiểm tra đăng nhập và thử lại.',
+      };
+    case 'transport error':
+      return {
+        title: 'Lỗi kết nối chat',
+        description: 'Có lỗi kết nối mạng. Hệ thống sẽ tự động thử lại.',
+      };
+    case 'ping timeout':
+      return {
+        title: 'Mất kết nối chat',
+        description: 'Kết nối quá lâu không phản hồi. Vui lòng kiểm tra mạng của bạn.',
+      };
+    case 'io client disconnect':
+      return {
+        title: 'Đã ngắt kết nối chat',
+        description: 'Bạn đã ngắt kết nối khỏi chat.',
+      };
+    default:
+      return {
+        title: 'Mất kết nối chat',
+        description: 'Kết nối bị gián đoạn. Vui lòng thử lại sau.',
+      };
+  }
+}
+
 // Simplified WebSocket hook for basic chat functionality
 export const useChatWebSocket = () => {
   const queryClient = useQueryClient();
@@ -159,12 +197,13 @@ export const useChatWebSocket = () => {
 
     const cleanupDisconnect = chatWebSocketService.onDisconnect((reason) => {
       setIsConnected(false);
-      // setConnectionError(`WebSocket disconnected: ${reason}`);
-
-      // ✅ Thông báo user
-      toast.error('Mất kết nối chat', {
-        description: `${reason}`,
-        duration: 3000,
+      
+      // Translate technical disconnect reason to user-friendly Vietnamese message
+      const { title, description } = getDisconnectMessage(reason);
+      
+      toast.error(title, {
+        description,
+        duration: 5000,
       });
     });
 
