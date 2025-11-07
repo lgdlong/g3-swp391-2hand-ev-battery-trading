@@ -68,7 +68,7 @@ export class Conversation {
   @Index() // Index for filtering conversations with/without messages
   hasMessages!: boolean;
 
-  @Column({ name: 'messages_count', type: 'smallint', default: 0 })
+  @Column({ name: 'messages_count', type: 'int', default: 0 })
   messagesCount!: number;
 
   @CreateDateColumn({ name: 'created_at' })
