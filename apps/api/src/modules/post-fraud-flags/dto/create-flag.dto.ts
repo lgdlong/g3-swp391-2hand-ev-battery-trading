@@ -21,6 +21,6 @@ export class CreateFlagDto {
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsString({ nullable: true })
   flaggedBy?: string | null;
 }
