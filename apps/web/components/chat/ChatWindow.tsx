@@ -17,7 +17,7 @@ interface ChatWindowProps {
   onSendMessage: (message: string) => void;
   existingContract?: any;
   isLoadingContract?: boolean;
-  onContractCreated?: () => void;
+  onContractCreated?: (isExternalTransaction: boolean) => void;
 }
 
 export default function ChatWindow({
@@ -31,34 +31,29 @@ export default function ChatWindow({
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const lastMessageCountRef = useRef<number>(0);
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Scroll to bottom when messages change (new message received or sent)
+  // Auto-scroll when new messages arrive
   useEffect(() => {
-    console.log('📨 ChatWindow - Messages changed:', {
-      messageCount: messages.length,
-      conversationId: conversation?.id,
-      currentUserId,
-      messages: messages.map((m) => ({
-        id: m.id,
-        senderId: m.senderId,
-        content: m.content.substring(0, 50),
-      })),
-    });
+    const currentCount = messages.length;
+    const lastCount = lastMessageCountRef.current;
 
-    if (messages.length > 0) {
-      console.log(
-        `📨 Messages updated: ${messages.length} messages in conversation ${conversation?.id}`,
-      );
-      scrollToBottom();
-    } else {
-      console.warn('⚠️ No messages to display in conversation:', conversation?.id);
+    if (currentCount > lastCount) {
+      // New messages arrived - auto-scroll to bottom
+      lastMessageCountRef.current = currentCount;
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    } else if (currentCount < lastCount || lastCount === 0) {
+      // Messages were removed (conversation changed) or initial load
+      lastMessageCountRef.current = currentCount;
     }
-  }, [messages, conversation?.id, currentUserId]);
+  }, [messages]);
 
   if (!conversation) {
     return (
@@ -137,13 +132,7 @@ export default function ChatWindow({
           ) : (
             messages.map((message) => {
               const isCurrentUser = message.senderId === currentUserId;
-              console.log('💬 Rendering message:', {
-                id: message.id,
-                senderId: message.senderId,
-                currentUserId,
-                isCurrentUser,
-                content: message.content.substring(0, 30),
-              });
+              
               return (
                 <MessageBubble
                   key={message.id}

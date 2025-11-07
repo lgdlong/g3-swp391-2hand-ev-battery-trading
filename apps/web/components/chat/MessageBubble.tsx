@@ -6,13 +6,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 interface MessageBubbleProps {
   message: Message;
   isCurrentUser: boolean;
+  isUnread?: boolean;
 }
 
 export default function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
   return (
     <div
       className={cn(
-        'flex items-end gap-2 mb-1 px-4',
+        'flex items-end gap-2 mb-1 px-4 transition-all duration-300',
         isCurrentUser ? 'flex-row-reverse' : 'flex-row',
       )}
     >
@@ -31,7 +32,7 @@ export default function MessageBubble({ message, isCurrentUser }: MessageBubbleP
         {/* Message bubble - Messenger style */}
         <div
           className={cn(
-            'rounded-2xl px-3 py-2',
+            'rounded-2xl px-3 py-2 transition-all duration-300',
             isCurrentUser
               ? 'bg-[#0084ff] text-white rounded-tr-none'
               : 'bg-[#e4e6eb] text-gray-900 rounded-tl-none',

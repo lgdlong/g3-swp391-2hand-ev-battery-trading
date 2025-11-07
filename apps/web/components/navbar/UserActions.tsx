@@ -22,6 +22,7 @@ export function UserActions({
   user,
   onUserMenuToggle,
 }: UserActionsProps) {
+
   if (isLoggedIn) {
     return (
       <div className={cn('flex items-center gap-6', className)}>

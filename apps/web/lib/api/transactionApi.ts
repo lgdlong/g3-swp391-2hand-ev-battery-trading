@@ -54,6 +54,7 @@ export interface CreateContractDto {
 export interface CreateContractBySellerDto {
   listingId: string;
   buyerId: number;
+  isExternalTransaction?: boolean;
 }
 
 /**
@@ -76,10 +77,11 @@ export async function createContract(listingId: string): Promise<Contract> {
 export async function createContractBySeller(
   listingId: string,
   buyerId: number,
+  isExternalTransaction: boolean = false,
 ): Promise<Contract> {
   const { data } = await api.post<Contract>(
     '/transactions/contracts/seller',
-    { listingId, buyerId },
+    { listingId, buyerId, isExternalTransaction },
     {
       headers: getAuthHeaders(),
     },

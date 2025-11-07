@@ -5,6 +5,7 @@ interface ChatItemProps {
   id: string;
   sellerName: string;
   sellerAvatar: string;
+  postTitle: string;
   lastMessage: string;
   lastMessageTime: string;
   isActive: boolean;
@@ -15,6 +16,7 @@ export default function ChatItem({
   id,
   sellerName,
   sellerAvatar,
+  postTitle,
   lastMessage,
   lastMessageTime,
   isActive,
@@ -34,11 +36,12 @@ export default function ChatItem({
       </Avatar>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-1">
           <h3 className="font-medium text-sm truncate">{sellerName}</h3>
           <span className="text-xs text-gray-500 shrink-0">{lastMessageTime}</span>
         </div>
-        <p className="text-sm text-gray-600 truncate mt-1">{lastMessage}</p>
+        <p className="text-xs text-gray-500 truncate mb-1">{postTitle}</p>
+        <p className="text-sm text-gray-600 truncate">{lastMessage}</p>
       </div>
     </div>
   );

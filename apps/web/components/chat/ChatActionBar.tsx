@@ -12,7 +12,7 @@ interface ChatActionBarProps {
   currentUserId: number;
   existingContract: Contract | null | undefined;
   isLoadingContract: boolean;
-  onContractCreated: () => void;
+  onContractCreated: (isExternalTransaction: boolean) => void;
 }
 
 export function ChatActionBar({
@@ -70,19 +70,24 @@ export function ChatActionBar({
           <Button
             onClick={() => setIsDialogOpen(true)}
             disabled={isLoadingContract}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           >
             <Package className="h-4 w-4 mr-2" />
-            Chốt đơn
+            {isLoadingContract ? 'Đang xử lý...' : 'Chốt đơn'}
           </Button>
         </div>
       </div>
 
       <ConfirmOrderDialog
         isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
+        onClose={() => {
+          setIsDialogOpen(false);
+        }}
         conversation={conversation}
-        onConfirm={onContractCreated}
+        onConfirm={(isExternalTransaction) => {
+          onContractCreated(isExternalTransaction);
+          setIsDialogOpen(false);
+        }}
       />
     </>
   );

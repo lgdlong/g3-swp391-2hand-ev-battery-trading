@@ -37,6 +37,7 @@ export default function Sidebar({
                 id={conversation.id}
                 sellerName={otherUser.fullName}
                 sellerAvatar={otherUser.avatarUrl || ''}
+                postTitle={conversation.post?.title || 'Sản phẩm'}
                 lastMessage={conversation.lastMessage?.content || 'Chưa có tin nhắn'}
                 lastMessageTime={
                   conversation.lastMessage?.createdAt
