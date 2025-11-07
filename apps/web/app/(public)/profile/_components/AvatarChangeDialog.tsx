@@ -40,7 +40,11 @@ export function AvatarChangeDialog({
   });
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: { 'image/*': [] },
+    accept: { 
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp']
+    },
     multiple: false,
     maxFiles: 1,
     maxSize: MAX_BYTES,
@@ -104,7 +108,7 @@ export function AvatarChangeDialog({
             )}
           </div>
           <div className="text-sm text-gray-600">
-            <div>Chọn ảnh (JPG/PNG/WebP/GIF), tối đa 5MB.</div>
+            <div>Chọn ảnh (JPG/PNG/WebP), tối đa 5MB.</div>
             {file && <div className="mt-1 text-gray-500">Đã chọn: {file.name}</div>}
             {error && <div className="mt-1 text-red-600">{error}</div>}
           </div>
