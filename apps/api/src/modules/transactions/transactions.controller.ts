@@ -42,7 +42,6 @@ import { Contract } from './entities/contract.entity';
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Tạo hợp đồng mua hàng (Buyer)' })
   @ApiOkResponse({
     description: 'Tạo hợp đồng thành công',
@@ -59,7 +58,6 @@ export class TransactionsController {
     return this.transactionsService.createContract(dto.listingId, user.sub);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Tạo hợp đồng bởi Seller (Chốt đơn)' })
   @ApiOkResponse({
     description: 'Chốt đơn thành công',
@@ -77,7 +75,6 @@ export class TransactionsController {
     return this.transactionsService.createContractBySeller(dto.listingId, user.sub, dto.buyerId);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Lấy hợp đồng của buyer cho một bài đăng' })
   @ApiParam({ name: 'listingId', type: String, description: 'Post/Listing ID' })
   @ApiOkResponse({
@@ -94,7 +91,6 @@ export class TransactionsController {
     return this.transactionsService.getContractByBuyerAndListing(listingId, user.sub);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Lấy hợp đồng theo bài đăng và buyer (Seller only)' })
   @ApiParam({ name: 'listingId', type: String, description: 'Post/Listing ID' })
   @ApiParam({ name: 'buyerId', type: Number, description: 'Buyer ID' })
@@ -114,7 +110,6 @@ export class TransactionsController {
     return this.transactionsService.getContractByListingAndBuyer(listingId, buyerId, user.sub);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Lấy danh sách hợp đồng theo bài đăng (Seller only)' })
   @ApiParam({ name: 'listingId', type: String, description: 'Post/Listing ID' })
   @ApiOkResponse({
@@ -132,7 +127,6 @@ export class TransactionsController {
     return this.transactionsService.getContractsByListingId(listingId, user.sub);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Lấy tất cả hợp đồng của seller' })
   @ApiOkResponse({
     description: 'Danh sách hợp đồng của seller',
@@ -144,7 +138,6 @@ export class TransactionsController {
     return this.transactionsService.getSellerContracts(user.sub);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Lấy tất cả hợp đồng của buyer' })
   @ApiOkResponse({
     description: 'Danh sách hợp đồng của buyer',
@@ -156,7 +149,6 @@ export class TransactionsController {
     return this.transactionsService.getBuyerContracts(user.sub);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Lấy thông tin hợp đồng' })
   @ApiParam({ name: 'id', type: String, description: 'Contract ID' })
   @ApiOkResponse({
@@ -174,7 +166,6 @@ export class TransactionsController {
     return this.transactionsService.getContract(contractId, user.sub);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Buyer xác nhận đã nhận hàng' })
   @ApiParam({ name: 'id', type: String, description: 'Contract ID' })
   @ApiOkResponse({
@@ -194,7 +185,6 @@ export class TransactionsController {
     return this.transactionsService.confirmByBuyer(contractId, user.sub, dto);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Seller xác nhận đã giao hàng' })
   @ApiParam({ name: 'id', type: String, description: 'Contract ID' })
   @ApiOkResponse({
@@ -214,7 +204,6 @@ export class TransactionsController {
     return this.transactionsService.confirmBySeller(contractId, user.sub, dto);
   }
 
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Seller báo bán ngoài hệ thống' })
   @ApiParam({ name: 'id', type: String, description: 'Contract ID' })
   @ApiOkResponse({

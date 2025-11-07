@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Contract } from './entities/contract.entity';
 import { ContractStatus } from '../../shared/enums/contract-status.enum';
 import { ConfirmContractDto } from './dto/confirm-contract.dto';
@@ -29,7 +29,6 @@ export class TransactionsService {
     private readonly postPaymentRepository: Repository<PostPayment>,
     private readonly walletsService: WalletsService,
     private readonly feeTierService: FeeTierService,
-    private readonly dataSource: DataSource,
   ) {}
 
   /**
