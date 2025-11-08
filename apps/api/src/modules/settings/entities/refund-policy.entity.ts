@@ -30,6 +30,18 @@ export class RefundPolicy {
   @Column({ name: 'fraud_suspected_rate', type: 'decimal', precision: 5, scale: 4, nullable: true })
   fraudSuspectedRate!: number | null;
 
+  /** Ngưỡng số ngày để xác định hủy sớm (mặc định: 7 ngày) */
+  @IsInt()
+  @Min(1)
+  @Column({ name: 'cancel_early_days_threshold', type: 'smallint', nullable: true, default: 7 })
+  cancelEarlyDaysThreshold!: number | null;
+
+  /** Ngưỡng số ngày để xác định hủy trễ (mặc định: 7 ngày) */
+  @IsInt()
+  @Min(1)
+  @Column({ name: 'cancel_late_days_threshold', type: 'smallint', nullable: true, default: 7 })
+  cancelLateDaysThreshold!: number | null;
+
   /** Số ngày giữ tiền khi gian lận (3-5 ngày) */
   @IsInt()
   @Min(0)
