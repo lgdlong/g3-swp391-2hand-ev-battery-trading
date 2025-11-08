@@ -121,14 +121,6 @@ export default function PostListItem({
   const isVerificationRejected =
     post.status === 'PUBLISHED' && post.verificationRequest?.status === 'REJECTED';
 
-  // Debug log for verification rejection
-  console.log('PostListItem Debug:', {
-    postId: post.id,
-    status: post.status,
-    verificationRequest: post.verificationRequest,
-    isVerificationRejected,
-  });
-
   return (
     <div className="transition-colors hover:bg-muted/50">
       <div className="flex gap-4 py-4">

@@ -44,7 +44,7 @@ export default function ImageUploadSection({
               type="file"
               id="image-upload"
               multiple
-              accept="image/jpeg,image/jpg,image/png,image/webp"
+              accept="image/*"
               onChange={onFileSelect}
               className="hidden"
             />
@@ -64,7 +64,7 @@ export default function ImageUploadSection({
                 </Button>
               </label>
               <p className="text-sm text-gray-500 mt-2">
-                Hỗ trợ: JPG, PNG, WebP (tối đa 10MB mỗi ảnh, tối đa 10 ảnh)
+                Hỗ trợ: JPG, PNG, GIF (tối đa 10MB mỗi ảnh, tối đa 10 ảnh)
               </p>
             </div>
           </div>

@@ -21,7 +21,6 @@ import { ServiceTypesModule } from './modules/service-types/service-types.module
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { ChatModule } from './modules/chat/chat.module';
-import { PostFraudFlagsModule } from './modules/post-fraud-flags/post-fraud-flags.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -78,7 +77,6 @@ import { PostFraudFlagsModule } from './modules/post-fraud-flags/post-fraud-flag
     WalletsModule,
     TransactionsModule,
     ChatModule,
-    PostFraudFlagsModule,
   ],
   controllers: [],
   providers: [],

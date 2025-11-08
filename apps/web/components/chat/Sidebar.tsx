@@ -1,3 +1,4 @@
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Conversation } from '@/types/chat';
 import ChatItem from './ChatItem';
@@ -30,16 +31,13 @@ export default function Sidebar({
             const otherUser =
               currentUserId === conversation.sellerId ? conversation.buyer : conversation.seller;
 
-            // Get first post image
-            const firstPostImage = conversation.post?.images?.[0]?.url;
-
             return (
               <ChatItem
                 key={conversation.id}
                 id={conversation.id}
                 sellerName={otherUser.fullName}
                 sellerAvatar={otherUser.avatarUrl || ''}
-                firstPostImage={firstPostImage}
+                postTitle={conversation.post?.title || 'Sản phẩm'}
                 lastMessage={conversation.lastMessage?.content || 'Chưa có tin nhắn'}
                 lastMessageTime={
                   conversation.lastMessage?.createdAt

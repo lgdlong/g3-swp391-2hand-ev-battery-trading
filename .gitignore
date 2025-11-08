@@ -63,3 +63,6 @@ tmp/
 temp/
 
 .qodo
+
+# Kilocode MCP config (contains sensitive API keys)
+.kilocode/mcp.json

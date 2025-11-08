@@ -7,7 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../../ev/_queries';
-import { SellerInfo, PostHeader } from '@/app/(public)/posts/_components';
+import { useAuth } from '@/lib/auth-context';
+import { SellerInfo, PostHeader, PostContractsList } from '@/app/(public)/posts/_components';
 import { Specifications } from './_components';
 import { DEFAULT_IMAGE } from '@/constants/images';
 
@@ -20,6 +21,7 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
   const [id, setId] = useState<string>('');
   const [brand, setBrand] = useState<string>('all');
   const [mainImage, setMainImage] = useState<string>('');
+  const { user } = useAuth();
 
   useEffect(() => {
     params.then((p) => setId(p.id));
@@ -83,8 +85,25 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'REJECTED':
         return 'bg-red-100 text-red-800 border-red-200';
+      case 'SOLD':
+        return 'bg-red-600 text-white border-red-600';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'PUBLISHED':
+        return 'Đã đăng';
+      case 'PENDING_REVIEW':
+        return 'Chờ duyệt';
+      case 'REJECTED':
+        return 'Đã từ chối';
+      case 'SOLD':
+        return 'Đã bán';
+      default:
+        return status;
     }
   };
 
@@ -114,15 +133,13 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
                   <div className="absolute top-4 left-4">
                     <Badge className="bg-gray-900 text-white border-0">PIN EV</Badge>
                   </div>
+                  {post.status !== 'SOLD' && (
                   <div className="absolute top-4 right-4">
                     <Badge className={`border ${getStatusColor(post.status)}`}>
-                      {post.status === 'PUBLISHED'
-                        ? 'Đã đăng'
-                        : post.status === 'PENDING_REVIEW'
-                          ? 'Chờ duyệt'
-                          : 'Đã từ chối'}
+                        {getStatusLabel(post.status)}
                     </Badge>
                   </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -133,6 +150,15 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
                 <SellerInfo account={seller} post={post} loading={sellerLoading} />
               </CardContent>
             </Card>
+
+            {/* Contracts List for Seller */}
+            {post && (
+              <PostContractsList
+                listingId={post.id}
+                sellerId={post.seller.id}
+                currentUserId={user?.id}
+              />
+            )}
           </div>
 
           {/* Details Section */}

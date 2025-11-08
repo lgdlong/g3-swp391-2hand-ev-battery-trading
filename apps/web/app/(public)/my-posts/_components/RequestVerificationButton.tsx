@@ -110,16 +110,6 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
 
   const isPendingVerification =
     post.status === 'PUBLISHED' && post.verificationRequest?.status === 'PENDING';
-  // Debug log to verify fields are now properly mapped
-  console.log('RequestVerificationButton: Post verification status', {
-    postId: post.id,
-    status: post.status,
-    verificationRequest: post.verificationRequest,
-    canRequestVerification,
-    canRequestAgain,
-    isOwner,
-    isLoggedIn,
-  });
 
   // Hiển thị trạng thái "đang chờ kiểm định"
   if (isPendingVerification) {
