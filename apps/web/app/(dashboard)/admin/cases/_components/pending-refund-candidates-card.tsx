@@ -44,11 +44,10 @@ export function PendingRefundCandidatesCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
-          Posts Đang Chờ Hoàn Tiền
+          Bài đăng chờ hoàn tiền
         </CardTitle>
         <CardDescription>
-          Danh sách các post đã đủ điều kiện refund nhưng chưa được cron job xử lý. Admin có thể
-          manual refund nếu cần gấp.
+          Danh sách các bài đăng đủ điều kiện hoàn tiền nhưng chưa được xử lý. Admin có thể hoàn tiền thủ công nếu cần gấp.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -60,15 +59,17 @@ export function PendingRefundCandidatesCard({
         ) : candidates.length === 0 ? (
           <div className="text-center py-6 text-gray-500">
             <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>Không có post nào đang chờ refund</p>
+            <p>Không có bài đăng nào chờ hoàn tiền</p>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{candidates.length} posts đang chờ xử lý</span>
+              <span className="text-sm font-medium">
+                {candidates.length} bài đăng chờ xử lý
+              </span>
               <Button variant="outline" size="sm" onClick={() => onRefetch()}>
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+                Tải lại
               </Button>
             </div>
             <div className="max-h-60 overflow-y-auto space-y-2">
@@ -91,7 +92,7 @@ export function PendingRefundCandidatesCard({
                         )}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Post #{post.id} • {post.seller.email} • {daysSinceReviewed} ngày trước
+                        Bài #{post.id} • {post.seller.email} • {daysSinceReviewed} ngày trước
                       </div>
                     </div>
                     <Button
@@ -100,14 +101,14 @@ export function PendingRefundCandidatesCard({
                       disabled={isProcessing}
                       className="ml-3"
                     >
-                      {isProcessing ? 'Processing...' : 'Manual Refund'}
+                      {isProcessing ? 'Đang xử lý...' : 'Hoàn tiền thủ công'}
                     </Button>
                   </div>
                 );
               })}
               {candidates.length > 10 && (
                 <div className="text-center text-sm text-gray-500 py-2">
-                  Và {candidates.length - 10} posts khác...
+                  Và {candidates.length - 10} bài đăng khác...
                 </div>
               )}
             </div>

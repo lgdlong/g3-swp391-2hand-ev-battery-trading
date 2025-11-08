@@ -30,7 +30,7 @@ export function CasesClient() {
   };
 
   const handleManualRefund = (postId: string) => {
-    if (confirm(`Bạn có chắc muốn refund thủ công cho post ${postId}?`)) {
+    if (confirm(`Bạn có chắc muốn hoàn tiền thủ công cho bài đăng ${postId}?`)) {
       manualRefund(postId, {
         onSuccess: () => {
           refetchCandidates();
@@ -55,31 +55,31 @@ export function CasesClient() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total Cases</CardDescription>
+            <CardDescription>Tổng cộng</CardDescription>
             <CardTitle className="text-3xl">{stats.total}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Pending</CardDescription>
+            <CardDescription>Chờ duyệt</CardDescription>
             <CardTitle className="text-3xl text-yellow-600">{stats.pending}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Refunded</CardDescription>
+            <CardDescription>Đã hoàn</CardDescription>
             <CardTitle className="text-3xl text-green-600">{stats.refunded}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Rejected</CardDescription>
+            <CardDescription>Từ chối</CardDescription>
             <CardTitle className="text-3xl text-gray-600">{stats.rejected}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Failed</CardDescription>
+            <CardDescription>Thất bại</CardDescription>
             <CardTitle className="text-3xl text-red-600">{stats.failed}</CardTitle>
           </CardHeader>
         </Card>

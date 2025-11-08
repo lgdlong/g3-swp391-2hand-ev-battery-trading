@@ -100,9 +100,9 @@ export function CasesTableCard({
         <CardContent className="flex min-h-[400px] items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-destructive" />
-            <h3 className="mb-2 text-lg font-semibold">Error Loading Refunds</h3>
+            <h3 className="mb-2 text-lg font-semibold">Lỗi tải hoàn tiền</h3>
             <p className="text-sm text-muted-foreground">
-              {error instanceof Error ? error.message : 'Failed to load refunds'}
+              {error instanceof Error ? error.message : 'Tải hoàn tiền thất bại'}
             </p>
           </div>
         </CardContent>
@@ -116,7 +116,7 @@ export function CasesTableCard({
         <CardContent className="flex min-h-[400px] items-center justify-center">
           <div className="text-center">
             <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="text-sm text-muted-foreground">Loading cases...</p>
+            <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
           </div>
         </CardContent>
       </Card>
@@ -126,9 +126,9 @@ export function CasesTableCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>All Refund Cases</CardTitle>
+        <CardTitle>Danh sách hoàn tiền</CardTitle>
         <CardDescription>
-          View and manage all refund cases. Use filters to find specific cases.
+          Xem và quản lý tất cả hoàn tiền. Sử dụng bộ lọc để tìm hoàn tiền cụ thể.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -138,7 +138,7 @@ export function CasesTableCard({
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by ID, email, post ID..."
+                placeholder="Tìm theo ID, email, ID post..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -149,26 +149,26 @@ export function CasesTableCard({
             <Filter className="h-4 w-4 text-muted-foreground" />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="REFUNDED">Refunded</SelectItem>
-                <SelectItem value="REJECTED">Rejected</SelectItem>
-                <SelectItem value="FAILED">Failed</SelectItem>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="PENDING">Chờ duyệt</SelectItem>
+                <SelectItem value="REFUNDED">Đã hoàn</SelectItem>
+                <SelectItem value="REJECTED">Từ chối</SelectItem>
+                <SelectItem value="FAILED">Thất bại</SelectItem>
               </SelectContent>
             </Select>
             <Select value={scenarioFilter} onValueChange={setScenarioFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Scenario" />
+                <SelectValue placeholder="Tình huống" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Scenarios</SelectItem>
-                <SelectItem value="CANCEL_EARLY">Cancel Early</SelectItem>
-                <SelectItem value="CANCEL_LATE">Cancel Late</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
-                <SelectItem value="FRAUD_SUSPECTED">Fraud Suspected</SelectItem>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="CANCEL_EARLY">Hủy sớm</SelectItem>
+                <SelectItem value="CANCEL_LATE">Hủy muộn</SelectItem>
+                <SelectItem value="EXPIRED">Hết hạn</SelectItem>
+                <SelectItem value="FRAUD_SUSPECTED">Nghi ngờ gian lận</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" size="icon" onClick={() => onRefetch()}>
@@ -180,11 +180,11 @@ export function CasesTableCard({
         {filteredCases.length === 0 ? (
           <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
             <FileText className="mb-4 h-16 w-16 text-muted-foreground opacity-20" />
-            <h3 className="mb-2 text-lg font-semibold">No Cases Found</h3>
+            <h3 className="mb-2 text-lg font-semibold">Không tìm thấy hoàn tiền</h3>
             <p className="text-sm text-muted-foreground">
               {searchTerm || statusFilter !== 'all' || scenarioFilter !== 'all'
-                ? 'No cases match your filters. Try adjusting your search.'
-                : 'No refund cases available.'}
+                ? 'Không có hoàn tiền phù hợp với bộ lọc. Thử điều chỉnh tìm kiếm.'
+                : 'Không có hoàn tiền nào.'}
             </p>
           </div>
         ) : (
@@ -192,16 +192,16 @@ export function CasesTableCard({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="p-3 text-left font-medium">Case ID</th>
-                  <th className="p-3 text-left font-medium">User</th>
-                  <th className="p-3 text-left font-medium">Post</th>
-                  <th className="p-3 text-right font-medium">Amount</th>
-                  <th className="p-3 text-left font-medium">Scenario</th>
-                  <th className="p-3 text-center font-medium">Rate</th>
-                  <th className="p-3 text-left font-medium">Status</th>
-                  <th className="p-3 text-left font-medium">Reason</th>
-                  <th className="p-3 text-left font-medium">Created</th>
-                  <th className="p-3 text-center font-medium">Actions</th>
+                  <th className="p-3 text-left font-medium">ID hoàn tiền</th>
+                  <th className="p-3 text-left font-medium">Người dùng</th>
+                  <th className="p-3 text-left font-medium">Bài đăng</th>
+                  <th className="p-3 text-right font-medium">Số tiền</th>
+                  <th className="p-3 text-left font-medium">Tình huống</th>
+                  <th className="p-3 text-center font-medium">%</th>
+                  <th className="p-3 text-left font-medium">Trạng thái</th>
+                  <th className="p-3 text-left font-medium">Lý do</th>
+                  <th className="p-3 text-left font-medium">Ngày tạo</th>
+                  <th className="p-3 text-center font-medium">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -276,9 +276,9 @@ export function CasesTableCard({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => onSelectCase(caseItem)}>
-                            Resolve Case
+                            Giải quyết hoàn tiền
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
