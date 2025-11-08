@@ -67,12 +67,12 @@ export class RefundsController {
     summary: '[ADMIN] Manual refund for specific post',
     description: `
       Admin manually create refund request for a specific post.
-      
+
       Features:
       - Auto-calculate scenario based on reviewedAt
       - Or admin can specify scenario + custom rate
       - DryRun=true to preview before creating
-      
+
       Use cases:
       - User special request
       - Fix cron errors
@@ -89,10 +89,7 @@ export class RefundsController {
     description: 'Dry run preview (when dryRun=true)',
     type: DryRunResponseDto,
   })
-  async manualRefund(
-    @Body() dto: ManualRefundDto,
-    @CurrentUser() adminUser: ReqUser,
-  ) {
+  async manualRefund(@Body() dto: ManualRefundDto, @CurrentUser() adminUser: ReqUser) {
     return this.refundsService.manualRefund(dto, adminUser);
   }
 
@@ -106,10 +103,10 @@ export class RefundsController {
     summary: '[ADMIN] Approve or reject pending refund',
     description: `
       Admin reviews and decides to approve or reject PENDING refund.
-      
+
       - approve: Execute refund to user wallet
       - reject: No refund, retain funds
-      
+
       Common use cases:
       - Cron created PENDING (FRAUD_SUSPECTED scenario)
       - Manual refund pending review
@@ -125,15 +122,66 @@ export class RefundsController {
     @Body() dto: AdminDecideRefundDto,
     @CurrentUser() adminUser: ReqUser,
   ) {
-    return this.refundsService.adminDecideRefund(
-      refundId,
-      dto.decision,
-      adminUser,
-    );
+    return this.refundsService.adminDecideRefund(refundId, dto.decision, adminUser);
   }
 
   /**
-   * 🔥 Manual trigger for cron job (Admin only - For testing)
+   * � Get posts eligible for refund (chờ cron job quét)
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Get('candidates')
+  @ApiOperation({
+    summary: '[ADMIN] Get posts eligible for refund',
+    description: `
+      Lấy danh sách các post đang chờ hoàn tiền - đủ điều kiện refund nhưng chưa được cron job xử lý.
+
+      Điều kiện:
+      - Post đã được duyệt (có reviewedAt)
+      - Status: PUBLISHED (có thể hết hạn > 30 ngày) hoặc ARCHIVED (user đã hủy)
+      - Chưa có refund record
+
+      Admin có thể dùng để kiểm tra và manual refund nếu cần gấp.
+    `,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of posts eligible for refund',
+    // type: [PostCandidateResponseDto], // TODO: Tạo DTO nếu cần
+  })
+  async getRefundCandidates() {
+    return this.refundsCronService.getRefundCandidatePosts();
+  }
+
+  /**
+   * ⚡ Manual refund cho một post cụ thể
+   */
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @Post(':postId/manual-refund')
+  @ApiOperation({
+    summary: '[ADMIN] Manual refund for specific post',
+    description: `
+      Admin thực hiện refund thủ công cho một post cụ thể (nếu cần gấp, không chờ cron job).
+
+      Sẽ kiểm tra:
+      - Post có đủ điều kiện refund không
+      - Post chưa có refund record
+      - Tính toán scenario và rate
+      - Thực hiện refund vào ví user ngay lập tức
+    `,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Manual refund result',
+    // type: ManualRefundForPostResponseDto, // TODO: Tạo DTO nếu cần
+  })
+  async manualRefundForPost(@Param('postId') postId: string) {
+    return this.refundsCronService.processManualRefundForPost(postId);
+  }
+
+  /**
+   * �🔥 Manual trigger for cron job (Admin only - For testing)
    */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN)
@@ -146,7 +194,7 @@ export class RefundsController {
       - CANCEL_EARLY (< 7 days): 100%
       - CANCEL_LATE (7-30 days): 70%
       - EXPIRED (> 30 days): 50%
-      
+
       ⚠️ For testing only! Production runs automatically daily at 00:00.
     `,
   })

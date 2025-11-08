@@ -41,3 +41,33 @@ export interface AdminDecideRefundResponse {
   amountRefunded?: number;
   walletTransactionId?: number;
 }
+
+/**
+ * Post candidate for refund (từ backend - tương tự Post entity)
+ */
+export interface RefundCandidatePost {
+  id: string;
+  title: string;
+  status: 'PUBLISHED' | 'ARCHIVED';
+  reviewedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  seller: {
+    id: number;
+    email: string;
+    fullName?: string;
+  };
+}
+
+/**
+ * Manual refund response
+ */
+export interface ManualRefundResponse {
+  success: boolean;
+  message: string;
+  refund?: {
+    id: string;
+    status: string;
+    amountRefund: string;
+  };
+}

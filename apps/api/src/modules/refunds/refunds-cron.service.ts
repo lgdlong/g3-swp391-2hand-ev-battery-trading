@@ -316,6 +316,70 @@ export class RefundsCronService {
   }
 
   /**
+   * Lấy danh sách posts đang chờ hoàn tiền (đủ điều kiện nhưng chưa được cron job xử lý)
+   *
+   * @returns Danh sách posts ứng cử cho refund
+   */
+  async getRefundCandidatePosts(): Promise<Post[]> {
+    return this.findRefundCandidatePosts();
+  }
+
+  /**
+   * Xử lý refund thủ công cho một post cụ thể
+   *
+   * @param postId - ID của post cần refund
+   * @returns Kết quả xử lý refund
+   */
+  async processManualRefundForPost(postId: string): Promise<{
+    success: boolean;
+    message: string;
+    refund?: any;
+  }> {
+    try {
+      // Tìm post
+      const post = await this.postRepo.findOne({
+        where: { id: postId },
+        relations: ['seller'],
+      });
+
+      if (!post) {
+        return {
+          success: false,
+          message: `Post ${postId} not found`,
+        };
+      }
+
+      // Kiểm tra xem post đã có refund chưa
+      const existingRefund = await this.refundRepo.findOne({
+        where: { postId },
+      });
+
+      if (existingRefund) {
+        return {
+          success: false,
+          message: `Post ${postId} already has a refund record`,
+        };
+      }
+
+      // Xử lý refund
+      await this.processRefundForCandidatePost(post);
+
+      return {
+        success: true,
+        message: `Successfully processed refund for post ${postId}`,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to manually refund post ${postId}: ${errorMessage}`);
+
+      return {
+        success: false,
+        message: `Failed to refund post ${postId}: ${errorMessage}`,
+      };
+    }
+  }
+
+  /**
    * Manual trigger để test cron job (có thể gọi từ API endpoint)
    *
    * Hàm này cho phép admin trigger refund check thủ công để test hoặc xử lý khẩn cấp.

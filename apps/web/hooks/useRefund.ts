@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { api } from '@/lib/axios';
 import { getAuthHeaders } from '@/lib/auth';
 import { RefundCase, AdminDecideRefundPayload, AdminDecideRefundResponse } from '@/types/refund';
+import { getRefundCandidates, manualRefundForPost } from '@/lib/api/refundApi';
 
 /**
  * Get all refunds
@@ -80,6 +81,40 @@ export function useAdminDecideRefund() {
     },
     onError: (error: Error) => {
       toast.error('Failed to process refund', {
+        description: error.message || 'An unexpected error occurred',
+        duration: 5000,
+      });
+    },
+  });
+}
+
+/**
+ * Query hook: Get posts eligible for refund (chờ cron job quét)
+ */
+export function useGetRefundCandidates() {
+  return useQuery({
+    queryKey: ['refund-candidates'],
+    queryFn: getRefundCandidates,
+  });
+}
+
+/**
+ * Mutation hook: Manual refund for specific post
+ */
+export function useManualRefundForPost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: manualRefundForPost,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['refund-candidates'] });
+      queryClient.invalidateQueries({ queryKey: ['all-refunds'] });
+      toast.success('Manual refund processed', {
+        description: data.message,
+      });
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to process manual refund', {
         description: error.message || 'An unexpected error occurred',
         duration: 5000,
       });
