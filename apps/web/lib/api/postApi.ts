@@ -355,7 +355,7 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
   }
 
   // Check file types and sizes (reduce max size to avoid 413 error)
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   const maxSize = 2 * 1024 * 1024; // 2MB per file to avoid payload too large
 
   files.forEach((file, index) => {
