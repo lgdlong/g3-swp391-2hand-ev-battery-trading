@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Refund } from './entities/refund.entity';
@@ -10,7 +6,7 @@ import { RefundStatus } from '../../shared/enums/refund-status.enum';
 import { RefundScenario } from '../../shared/enums/refund-scenario.enum';
 import { Post } from '../posts/entities/post.entity';
 import { PostPayment } from '../transactions/entities/post-payment.entity';
-import { RefundPolicy } from '../settings/entities/refund-policy.entity';
+import { RefundPolicyService } from '../settings/service/refund-policy.service';
 import { WalletsService } from '../wallets/wallets.service';
 import { ManualRefundDto } from './dto/manual-refund.dto';
 import type { ReqUser } from '../../core/decorators/current-user.decorator';
@@ -27,8 +23,7 @@ export class RefundsService {
     private readonly postRepo: Repository<Post>,
     @InjectRepository(PostPayment)
     private readonly postPaymentRepo: Repository<PostPayment>,
-    @InjectRepository(RefundPolicy)
-    private readonly policyRepo: Repository<RefundPolicy>,
+    private readonly refundPolicyService: RefundPolicyService,
     private readonly walletsService: WalletsService,
     private readonly dataSource: DataSource,
   ) {}
@@ -129,12 +124,12 @@ export class RefundsService {
     const amountOriginal = Number(postPayment.amountPaid);
     const amountRefund = Math.floor(amountOriginal * (rate / 100));
 
-        // 7. Dry run - chỉ preview
+    // 7. Dry run - chỉ preview
     // Handle both boolean and string "true"/"false"
-    const isDryRun = dto.dryRun === true || dto.dryRun === 'true' as any;
+    const isDryRun = dto.dryRun === true || dto.dryRun === ('true' as any);
     console.log('[REFUND] dto.dryRun received:', dto.dryRun, 'type:', typeof dto.dryRun);
     console.log('[REFUND] isDryRun:', isDryRun);
-    
+
     if (isDryRun) {
       console.log('[REFUND] DRY RUN MODE - Not saving to DB');
       return {
@@ -205,9 +200,7 @@ export class RefundsService {
     }
 
     if (refund.status !== RefundStatus.PENDING) {
-      throw new BadRequestException(
-        `Refund đã được xử lý rồi (status: ${refund.status})`,
-      );
+      throw new BadRequestException(`Refund đã được xử lý rồi (status: ${refund.status})`);
     }
 
     return this.dataSource.transaction(async (manager) => {
@@ -280,7 +273,15 @@ export class RefundsService {
   /**
    * 📊 Helper: Lấy rate từ policy theo scenario
    */
-  private getRateByScenario(scenario: RefundScenario, policy: RefundPolicy): number {
+  private getRateByScenario(
+    scenario: RefundScenario,
+    policy: {
+      cancelEarlyRate: number | null;
+      cancelLateRate: number | null;
+      expiredRate: number | null;
+      fraudSuspectedRate: number | null;
+    },
+  ): number {
     switch (scenario) {
       case RefundScenario.CANCEL_EARLY:
         return Number(policy.cancelEarlyRate ?? 100);
@@ -290,19 +291,126 @@ export class RefundsService {
         return Number(policy.expiredRate ?? 50);
       case RefundScenario.FRAUD_SUSPECTED:
         return Number(policy.fraudSuspectedRate ?? 0);
-      default:
-        throw new BadRequestException(`Unknown scenario: ${scenario}`);
+    }
+    throw new BadRequestException('Unknown refund scenario');
+  }
+
+  /**
+   * 📊 Helper: Lấy policy hiện tại (RefundPolicy luôn có ID = 1)
+   */
+  private async getPolicy(): Promise<{
+    cancelEarlyRate: number | null;
+    cancelLateRate: number | null;
+    expiredRate: number | null;
+    fraudSuspectedRate: number | null;
+  }> {
+    try {
+      return await this.refundPolicyService.findOne(1);
+    } catch {
+      throw new NotFoundException('Refund policy not found');
     }
   }
 
   /**
-   * 📊 Helper: Lấy policy hiện tại
+   * Tìm các posts ứng cử để kiểm tra refund (cho cron job)
+   * Chỉ trả về posts chưa có refund record
    */
-  private async getPolicy(): Promise<RefundPolicy> {
-    const policy = await this.policyRepo.findOne({ where: {} });
-    if (!policy) {
-      throw new NotFoundException('Refund policy not found');
+  async findRefundCandidatePosts(): Promise<Post[]> {
+    const posts = await this.postRepo
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.seller', 'seller')
+      .leftJoin('refunds', 'refund', 'refund.post_id = post.id')
+      .where('post.reviewedAt IS NOT NULL')
+      .andWhere('post.status IN (:...statuses)', {
+        statuses: ['PUBLISHED', 'ARCHIVED'],
+      })
+      .andWhere('refund.id IS NULL')
+      .getMany();
+
+    return posts;
+  }
+
+  /**
+   * Tìm payment record của post
+   */
+  async findPostPaymentByPostId(postId: string): Promise<PostPayment | null> {
+    return await this.postPaymentRepo.findOne({
+      where: { postId },
+      relations: ['account'],
+    });
+  }
+
+  /**
+   * Tạo refund record với status PENDING
+   */
+  async createRefundRecord(params: {
+    postId: string;
+    accountId: number;
+    scenario: RefundScenario;
+    refundPercent: number;
+    amountOriginal: string;
+    amountRefund: string;
+  }): Promise<Refund> {
+    const refund = this.refundRepo.create({
+      postId: params.postId,
+      accountId: params.accountId,
+      scenario: params.scenario,
+      policyRatePercent: params.refundPercent,
+      amountOriginal: params.amountOriginal,
+      amountRefund: params.amountRefund,
+      status: RefundStatus.PENDING,
+      reason: `Auto refund - ${params.scenario}`,
+    });
+
+    return await this.refundRepo.save(refund);
+  }
+
+  /**
+   * Cập nhật refund status thành REFUNDED với transaction info
+   */
+  async updateRefundAsRefunded(refundId: string, walletTransactionId: number): Promise<Refund> {
+    const refund = await this.refundRepo.findOne({ where: { id: refundId } });
+    if (!refund) {
+      throw new NotFoundException('Refund not found');
     }
-    return policy;
+
+    refund.status = RefundStatus.REFUNDED;
+    refund.walletTransactionId = walletTransactionId;
+    refund.refundedAt = new Date();
+
+    return await this.refundRepo.save(refund);
+  }
+
+  /**
+   * Cập nhật refund status thành FAILED
+   */
+  async updateRefundAsFailed(refundId: string, reason: string): Promise<Refund> {
+    const refund = await this.refundRepo.findOne({ where: { id: refundId } });
+    if (!refund) {
+      throw new NotFoundException('Refund not found');
+    }
+
+    refund.status = RefundStatus.FAILED;
+    refund.reason = `Auto refund failed: ${reason}`;
+
+    return await this.refundRepo.save(refund);
+  }
+
+  /**
+   * Kiểm tra xem post đã có refund chưa
+   */
+  async hasRefundByPostId(postId: string): Promise<boolean> {
+    const count = await this.refundRepo.count({ where: { postId } });
+    return count > 0;
+  }
+
+  /**
+   * Tìm post by ID với relations
+   */
+  async findPostById(postId: string): Promise<Post | null> {
+    return await this.postRepo.findOne({
+      where: { id: postId },
+      relations: ['seller'],
+    });
   }
 }

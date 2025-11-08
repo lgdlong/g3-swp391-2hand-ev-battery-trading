@@ -1,14 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, forwardRef, Inject } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
 import { Post } from '../posts/entities/post.entity';
-import { PostPayment } from '../transactions/entities/post-payment.entity';
-import { Refund } from './entities/refund.entity';
+import { RefundPolicyService } from '../settings/service/refund-policy.service';
+import { PostLifecycleService } from '../settings/service/post-lifecycle.service';
 import { WalletsService } from '../wallets/wallets.service';
-import { PostStatus } from '../../shared/enums/post.enum';
 import { RefundScenario } from '../../shared/enums/refund-scenario.enum';
-import { RefundStatus } from '../../shared/enums/refund-status.enum';
+import { RefundsService } from './refunds.service';
+import {
+  RefundPolicyConfig,
+  DEFAULT_REFUND_POLICY,
+  calculateDaysSinceReviewed,
+  getRefundScenarioAndRate,
+} from './helper';
 
 /**
  * Cron Job Service để tự động xử lý refund cho các post hết hạn
@@ -19,13 +22,10 @@ export class RefundsCronService {
   private readonly logger = new Logger(RefundsCronService.name);
 
   constructor(
-    private readonly dataSource: DataSource,
-    @InjectRepository(Post)
-    private readonly postRepo: Repository<Post>,
-    @InjectRepository(PostPayment)
-    private readonly postPaymentRepo: Repository<PostPayment>,
-    @InjectRepository(Refund)
-    private readonly refundRepo: Repository<Refund>,
+    @Inject(forwardRef(() => RefundsService))
+    private readonly refundsService: RefundsService,
+    private readonly refundPolicyService: RefundPolicyService,
+    private readonly postLifecycleService: PostLifecycleService,
     private readonly walletsService: WalletsService,
   ) {}
 
@@ -42,7 +42,7 @@ export class RefundsCronService {
 
     try {
       // 1️⃣ Tìm tất cả posts ứng cử để kiểm tra refund
-      const candidatePosts = await this.findRefundCandidatePosts();
+      const candidatePosts = await this.refundsService.findRefundCandidatePosts();
 
       this.logger.log(`Found ${candidatePosts.length} candidate posts for refund check`);
 
@@ -77,130 +77,33 @@ export class RefundsCronService {
   }
 
   /**
-   * Xác định scenario và tỷ lệ refund dựa trên status và số ngày
-   *
-   * @param post - Post cần kiểm tra
-   * @param daysSinceReviewed - Số ngày từ khi post được duyệt
-   * @returns Object chứa scenario và rate, hoặc null nếu không đủ điều kiện refund
+   * Lấy RefundPolicy hiện tại từ database qua service
+   * RefundPolicy luôn chỉ có 1 dòng duy nhất
+   * Nếu không có, trả về giá trị mặc định
    */
-  private getRefundScenarioAndRate(
-    post: Post,
-    daysSinceReviewed: number,
-  ): { scenario: RefundScenario; rate: number } | null {
-    // Post đã bị user hủy (ARCHIVED)
-    if (post.status === PostStatus.ARCHIVED) {
-      if (daysSinceReviewed < 7) {
-        // Hủy sớm < 7 ngày: 100%
-        return { scenario: RefundScenario.CANCEL_EARLY, rate: 1.0 };
-      } else {
-        // Hủy trễ >= 7 ngày: 70%
-        return { scenario: RefundScenario.CANCEL_LATE, rate: 0.7 };
-      }
+  private async getRefundPolicy(): Promise<RefundPolicyConfig> {
+    try {
+      // RefundPolicy luôn có ID = 1 (singleton record)
+      const policy = await this.refundPolicyService.findOne(1);
+
+      return {
+        cancelEarlyRate: policy.cancelEarlyRate ?? 1.0,
+        cancelLateRate: policy.cancelLateRate ?? 0.7,
+        expiredRate: policy.expiredRate ?? 0.5,
+        fraudSuspectedRate: policy.fraudSuspectedRate ?? 0.0,
+        cancelEarlyDaysThreshold: policy.cancelEarlyDaysThreshold ?? 7,
+        cancelLateDaysThreshold: policy.cancelLateDaysThreshold ?? 7,
+      };
+    } catch {
+      this.logger.warn('⚠️ No RefundPolicy found in database, using default values');
+      return DEFAULT_REFUND_POLICY;
     }
-
-    // Post đang published
-    if (post.status === PostStatus.PUBLISHED) {
-      if (daysSinceReviewed >= 30) {
-        // Hết hạn > 30 ngày: 50%
-        return { scenario: RefundScenario.EXPIRED, rate: 0.5 };
-      } else {
-        // Chưa hết hạn, không refund
-        this.logger.debug(
-          `⏳ Post ${post.id} is PUBLISHED but not expired yet (${daysSinceReviewed} days), skipping`,
-        );
-        return null;
-      }
-    }
-
-    // Status không hợp lệ
-    this.logger.warn(`⚠️ Post ${post.id} has invalid status ${post.status}, skipping`);
-    return null;
-  }
-
-  /**
-   * Tính số ngày từ khi post được duyệt đến hiện tại
-   *
-   * @param reviewedAt - Thời điểm post được duyệt
-   * @returns Số ngày đã trôi qua
-   */
-  private calculateDaysSinceReviewed(reviewedAt: Date): number {
-    const now = new Date();
-    return Math.floor((now.getTime() - reviewedAt.getTime()) / (1000 * 60 * 60 * 24));
-  }
-
-  /**
-   * Tìm các posts ứng cử để kiểm tra refund
-   *
-   * Hàm này trả về tất cả posts có khả năng được refund, chưa kiểm tra điều kiện chi tiết.
-   * Việc kiểm tra điều kiện cụ thể (số ngày, status) sẽ được thực hiện trong processRefundForCandidatePost.
-   *
-   * Điều kiện lọc:
-   * - Post có reviewedAt (đã được duyệt)
-   * - Post status = PUBLISHED (có thể hết hạn) hoặc ARCHIVED (user đã hủy)
-   * - Chưa được refund (kiểm tra trong bảng refunds)
-   *
-   * @returns Danh sách posts ứng cử để kiểm tra refund
-   */
-  private async findRefundCandidatePosts(): Promise<Post[]> {
-    const posts = await this.postRepo
-      .createQueryBuilder('post')
-      .leftJoinAndSelect('post.seller', 'seller')
-      .leftJoin('refunds', 'refund', 'refund.post_id = post.id')
-      .where('post.reviewedAt IS NOT NULL')
-      .andWhere('post.status IN (:...statuses)', {
-        statuses: [PostStatus.PUBLISHED, PostStatus.ARCHIVED],
-      })
-      .andWhere('refund.id IS NULL')
-      .getMany();
-
-    return posts;
-  }
-
-  /**
-   * Tìm payment record của post
-   *
-   * @param postId - ID của post
-   * @returns PostPayment record hoặc null nếu không tìm thấy
-   */
-  private async findPostPayment(postId: string): Promise<PostPayment | null> {
-    return await this.postPaymentRepo.findOne({
-      where: { postId },
-      relations: ['account'],
-    });
-  }
-
-  /**
-   * Tạo refund record với status PENDING
-   *
-   * @param params - Thông tin để tạo refund
-   * @returns Refund record đã được lưu
-   */
-  private async createRefundRecord(params: {
-    postId: string;
-    accountId: number;
-    scenario: RefundScenario;
-    refundPercent: number;
-    amountOriginal: string;
-    amountRefund: string;
-  }): Promise<Refund> {
-    const refund = this.refundRepo.create({
-      postId: params.postId,
-      accountId: params.accountId,
-      scenario: params.scenario,
-      policyRatePercent: params.refundPercent,
-      amountOriginal: params.amountOriginal,
-      amountRefund: params.amountRefund,
-      status: RefundStatus.PENDING,
-      reason: `Auto refund - ${params.scenario}`,
-    });
-
-    return await this.refundRepo.save(refund);
   }
 
   /**
    * Thực hiện hoàn tiền vào ví user và cập nhật trạng thái refund
    *
-   * @param refund - Refund record cần xử lý
+   * @param refundId - ID của refund record
    * @param postId - ID của post
    * @param accountId - ID của account nhận tiền
    * @param amountRefund - Số tiền hoàn
@@ -208,7 +111,7 @@ export class RefundsCronService {
    * @param refundPercent - Tỷ lệ refund
    */
   private async executeRefundToWallet(
-    refund: Refund,
+    refundId: string,
     postId: string,
     accountId: number,
     amountRefund: number,
@@ -225,21 +128,16 @@ export class RefundsCronService {
       );
 
       // Cập nhật trạng thái thành công
-      refund.status = RefundStatus.REFUNDED;
-      refund.walletTransactionId = tx.transaction.id;
-      refund.refundedAt = new Date();
-      await this.refundRepo.save(refund);
+      await this.refundsService.updateRefundAsRefunded(refundId, tx.transaction.id);
 
       this.logger.log(
         `✅ Refunded ${amountRefund} VND (${refundPercent}%) to user ${accountId} for post ${postId}`,
       );
     } catch (error) {
       // Cập nhật trạng thái thất bại
-      refund.status = RefundStatus.FAILED;
-      refund.reason = `Auto refund failed: ${(error as Error).message}`;
-      await this.refundRepo.save(refund);
-
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await this.refundsService.updateRefundAsFailed(refundId, errorMessage);
+
       this.logger.error(`❌ Failed to refund post ${postId}: ${errorMessage}`);
       throw error;
     }
@@ -249,18 +147,26 @@ export class RefundsCronService {
    * Xử lý refund cho 1 post ứng cử
    *
    * Flow xử lý:
-   * 1. Tìm payment record
-   * 2. Tính số ngày từ khi post được duyệt
-   * 3. Xác định scenario và rate (nếu không đủ điều kiện thì bỏ qua)
-   * 4. Tính số tiền refund
-   * 5. Tạo refund record
-   * 6. Thực hiện refund vào wallet
+   * 1. Lấy RefundPolicy từ database
+   * 2. Tìm payment record
+   * 3. Tính số ngày từ khi post được duyệt
+   * 4. Xác định scenario và rate (nếu không đủ điều kiện thì bỏ qua)
+   * 5. Tính số tiền refund
+   * 6. Tạo refund record
+   * 7. Thực hiện refund vào wallet
    *
    * @param post - Post cần xử lý refund
    */
   private async processRefundForCandidatePost(post: Post): Promise<void> {
+    // Lấy RefundPolicy từ database
+    const policy = await this.getRefundPolicy();
+
+    // Lấy expirationDays từ PostLifecycle
+    const postLifecycle = await this.postLifecycleService.findOne(1);
+    const expirationDays = postLifecycle.expirationDays ?? 30;
+
     // Guard: Kiểm tra payment record
-    const postPayment = await this.findPostPayment(post.id);
+    const postPayment = await this.refundsService.findPostPaymentByPostId(post.id);
     if (!postPayment) {
       this.logger.warn(
         `⚠️ Post ${post.id} has no payment record in post_payments, skipping refund`,
@@ -273,10 +179,10 @@ export class RefundsCronService {
     );
 
     // Tính số ngày từ khi post được duyệt
-    const daysSinceReviewed = this.calculateDaysSinceReviewed(new Date(post.reviewedAt!));
+    const daysSinceReviewed = calculateDaysSinceReviewed(new Date(post.reviewedAt!));
 
     // Guard: Xác định scenario và rate
-    const refundInfo = this.getRefundScenarioAndRate(post, daysSinceReviewed);
+    const refundInfo = getRefundScenarioAndRate(post, daysSinceReviewed, policy, expirationDays);
     if (!refundInfo) {
       return; // Post không đủ điều kiện refund
     }
@@ -295,7 +201,7 @@ export class RefundsCronService {
     );
 
     // Tạo refund record
-    const refund = await this.createRefundRecord({
+    const refund = await this.refundsService.createRefundRecord({
       postId: post.id,
       accountId: postPayment.accountId,
       scenario,
@@ -306,7 +212,7 @@ export class RefundsCronService {
 
     // Thực hiện refund vào wallet
     await this.executeRefundToWallet(
-      refund,
+      refund.id,
       post.id,
       postPayment.accountId,
       amountRefund,
@@ -321,7 +227,7 @@ export class RefundsCronService {
    * @returns Danh sách posts ứng cử cho refund
    */
   async getRefundCandidatePosts(): Promise<Post[]> {
-    return this.findRefundCandidatePosts();
+    return await this.refundsService.findRefundCandidatePosts();
   }
 
   /**
@@ -337,10 +243,7 @@ export class RefundsCronService {
   }> {
     try {
       // Tìm post
-      const post = await this.postRepo.findOne({
-        where: { id: postId },
-        relations: ['seller'],
-      });
+      const post = await this.refundsService.findPostById(postId);
 
       if (!post) {
         return {
@@ -350,11 +253,9 @@ export class RefundsCronService {
       }
 
       // Kiểm tra xem post đã có refund chưa
-      const existingRefund = await this.refundRepo.findOne({
-        where: { postId },
-      });
+      const hasRefund = await this.refundsService.hasRefundByPostId(postId);
 
-      if (existingRefund) {
+      if (hasRefund) {
         return {
           success: false,
           message: `Post ${postId} already has a refund record`,
@@ -393,7 +294,7 @@ export class RefundsCronService {
   }> {
     this.logger.log('🔧 [MANUAL] Triggering manual refund check...');
 
-    const candidatePosts = await this.findRefundCandidatePosts();
+    const candidatePosts = await this.refundsService.findRefundCandidatePosts();
     let successCount = 0;
     let failCount = 0;
 
