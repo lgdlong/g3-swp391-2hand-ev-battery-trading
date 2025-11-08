@@ -53,7 +53,7 @@ import { PostFraudFlagsModule } from './modules/post-fraud-flags/post-fraud-flag
           synchronize: isDev, // chỉ tự động đồng bộ hóa CSDL ở môi trường development
           retryAttempts: 5,
           retryDelay: 3000,
-          logging: isDev, // chỉ bật log ở môi trường development
+          // logging: isDev, // chỉ bật log ở môi trường development
           extra: {
             max: 10,
             min: 2,
