@@ -5,6 +5,17 @@ import type { Account } from '@/types/account';
 import type { Post } from '@/types/api/post';
 
 /**
+ * Paginated response from backend
+ */
+export interface PaginatedPostsResponse {
+  data: Post[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/**
  * Admin Dashboard Statistics
  */
 export interface DashboardStats {
@@ -70,17 +81,35 @@ export interface PostCountResponse {
 /**
  * Get dashboard statistics
  * Requires admin authentication
+ * Uses count APIs and fetches limited posts for type/today calculations
  */
 export async function getDashboardStats(): Promise<DashboardStats> {
   try {
-    // Fetch accounts and posts in parallel
-    const [accountsRes, postsRes] = await Promise.all([
-      api.get<Account[]>('/accounts', { headers: getAuthHeaders() }),
-      api.get<Post[]>('/posts/admin/all', { headers: getAuthHeaders() }),
+    const headers = getAuthHeaders();
+
+    // Fetch counts in parallel using count APIs
+    const [
+      accountsRes,
+      recentPostsRes,
+      totalPostsCount,
+      publishedCount,
+      pendingCount,
+      rejectedCount,
+      activeUsersCount,
+      bannedUsersCount,
+    ] = await Promise.all([
+      api.get<Account[]>('/accounts', { headers }),
+      api.get<PaginatedPostsResponse>('/posts/admin/all?limit=100&order=DESC', { headers }),
+      getPostCount(), // All posts
+      getPostCount('PUBLISHED'),
+      getPostCount('PENDING_REVIEW'),
+      getPostCount('REJECTED'),
+      getAccountCount('active'),
+      getAccountCount('banned'),
     ]);
 
     const accounts = accountsRes.data;
-    const posts = postsRes.data;
+    const recentPosts = recentPostsRes.data.data; // Last 100 posts for calculations
 
     // Calculate today's date
     const today = new Date();
@@ -89,41 +118,42 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     // Calculate statistics
     const stats: DashboardStats = {
       totalUsers: accounts.length,
-      totalPosts: posts.length,
-      totalPublishedPosts: posts.filter((p) => p.status === 'PUBLISHED').length,
-      totalPendingPosts: posts.filter((p) => p.status === 'PENDING_REVIEW').length,
-      totalRejectedPosts: posts.filter((p) => p.status === 'REJECTED').length,
+      totalPosts: totalPostsCount.count,
+      totalPublishedPosts: publishedCount.count,
+      totalPendingPosts: pendingCount.count,
+      totalRejectedPosts: rejectedCount.count,
       totalBookmarks: 0, // This would need a separate API endpoint
       newUsersToday: accounts.filter((a) => {
         const createdAt = new Date(a.createdAt);
         return createdAt >= today;
       }).length,
-      newPostsToday: posts.filter((p) => {
+      newPostsToday: recentPosts.filter((p) => {
         const createdAt = new Date(p.createdAt);
         return createdAt >= today;
       }).length,
-      activeUsers: accounts.filter((a) => a.status === 'active').length,
+      activeUsers: activeUsersCount.count,
       postsByType: {
-        EV_CAR: posts.filter((p) => p.postType === 'EV_CAR').length,
-        EV_BIKE: posts.filter((p) => p.postType === 'EV_BIKE').length,
-        BATTERY: posts.filter((p) => p.postType === 'BATTERY').length,
+        // Note: Using recent posts sample - may not be 100% accurate for large datasets
+        EV_CAR: recentPosts.filter((p) => p.postType === 'EV_CAR').length,
+        EV_BIKE: recentPosts.filter((p) => p.postType === 'EV_BIKE').length,
+        BATTERY: recentPosts.filter((p) => p.postType === 'BATTERY').length,
       },
       postsByStatus: {
-        DRAFT: posts.filter((p) => p.status === 'DRAFT').length,
-        PENDING_REVIEW: posts.filter((p) => p.status === 'PENDING_REVIEW').length,
-        PUBLISHED: posts.filter((p) => p.status === 'PUBLISHED').length,
-        REJECTED: posts.filter((p) => p.status === 'REJECTED').length,
-        PAUSED: posts.filter((p) => p.status === 'PAUSED').length,
-        SOLD: posts.filter((p) => p.status === 'SOLD').length,
-        ARCHIVED: posts.filter((p) => p.status === 'ARCHIVED').length,
+        DRAFT: recentPosts.filter((p) => p.status === 'DRAFT').length,
+        PENDING_REVIEW: pendingCount.count,
+        PUBLISHED: publishedCount.count,
+        REJECTED: rejectedCount.count,
+        PAUSED: recentPosts.filter((p) => p.status === 'PAUSED').length,
+        SOLD: recentPosts.filter((p) => p.status === 'SOLD').length,
+        ARCHIVED: recentPosts.filter((p) => p.status === 'ARCHIVED').length,
       },
       usersByRole: {
         USER: accounts.filter((a) => a.role === 'user').length,
         ADMIN: accounts.filter((a) => a.role === 'admin').length,
       },
       usersByStatus: {
-        ACTIVE: accounts.filter((a) => a.status === 'active').length,
-        BANNED: accounts.filter((a) => a.status === 'banned').length,
+        ACTIVE: activeUsersCount.count,
+        BANNED: bannedUsersCount.count,
       },
     };
 
@@ -137,16 +167,21 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 /**
  * Get time series data for the last N days
  * Requires admin authentication
+ * Note: This fetches limited data (max 1000 records due to API limit)
+ * For production, consider creating a dedicated stats API endpoint
  */
 export async function getTimeSeriesData(days: number = 7): Promise<TimeSeriesData[]> {
   try {
+    const headers = getAuthHeaders();
+
+    // Fetch max allowed records (1000 is API limit)
     const [accountsRes, postsRes] = await Promise.all([
-      api.get<Account[]>('/accounts', { headers: getAuthHeaders() }),
-      api.get<Post[]>('/posts/admin/all', { headers: getAuthHeaders() }),
+      api.get<Account[]>('/accounts', { headers }),
+      api.get<PaginatedPostsResponse>('/posts/admin/all?limit=1000&order=DESC', { headers }),
     ]);
 
     const accounts = accountsRes.data;
-    const posts = postsRes.data;
+    const posts = postsRes.data.data;
 
     // Generate date range
     const dateRange: TimeSeriesData[] = [];
@@ -212,13 +247,15 @@ export async function getRecentUsers(limit: number = 10): Promise<Account[]> {
  */
 export async function getRecentPosts(limit: number = 10): Promise<Post[]> {
   try {
-    const { data } = await api.get<Post[]>('/posts/admin/all', {
-      headers: getAuthHeaders(),
-    });
+    const { data } = await api.get<PaginatedPostsResponse>(
+      `/posts/admin/all?limit=${limit}&order=DESC`,
+      {
+        headers: getAuthHeaders(),
+      },
+    );
 
-    return data
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
+    // Backend already sorts by createdAt DESC, just return the data array
+    return data.data;
   } catch (error) {
     console.error('Error fetching recent posts:', error);
     throw error;
