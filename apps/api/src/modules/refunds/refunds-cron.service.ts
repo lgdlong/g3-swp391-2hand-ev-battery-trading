@@ -20,16 +20,12 @@ export class RefundsCronService {
 
   constructor(
     private readonly dataSource: DataSource,
-
     @InjectRepository(Post)
     private readonly postRepo: Repository<Post>,
-
     @InjectRepository(PostPayment)
     private readonly postPaymentRepo: Repository<PostPayment>,
-
     @InjectRepository(Refund)
     private readonly refundRepo: Repository<Refund>,
-
     private readonly walletsService: WalletsService,
   ) {}
 
@@ -41,17 +37,17 @@ export class RefundsCronService {
     name: 'auto-refund-expired-posts',
     timeZone: 'Asia/Ho_Chi_Minh',
   })
-  async handleExpiredPostsRefund() {
-    this.logger.log('🔄 [CRON] Starting auto refund for expired posts...');
+  async handleExpiredPostsRefund(): Promise<void> {
+    this.logger.log('[CRON] Starting auto refund for expired posts...');
 
     try {
-      // 1️⃣ Tìm tất cả posts đã hết hạn và chưa được refund
-      const expiredPosts = await this.findExpiredPostsNeedingRefund();
+      // 1️⃣ Tìm tất cả posts ứng cử để kiểm tra refund
+      const candidatePosts = await this.findRefundCandidatePosts();
 
-      this.logger.log(`📋 Found ${expiredPosts.length} expired posts needing refund`);
+      this.logger.log(`Found ${candidatePosts.length} candidate posts for refund check`);
 
-      if (expiredPosts.length === 0) {
-        this.logger.log('✅ No expired posts to process');
+      if (candidatePosts.length === 0) {
+        this.logger.log('No posts to process');
         return;
       }
 
@@ -59,85 +55,212 @@ export class RefundsCronService {
       let successCount = 0;
       let failCount = 0;
 
-      for (const post of expiredPosts) {
+      for (const post of candidatePosts) {
         try {
-          await this.processRefundForExpiredPost(post);
+          await this.processRefundForCandidatePost(post);
           successCount++;
-          this.logger.log(`✅ Refunded post ${post.id}: ${post.title}`);
+          this.logger.log(`Refunded post ${post.id}: ${post.title}`);
         } catch (error) {
           failCount++;
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           const errorStack = error instanceof Error ? error.stack : undefined;
-          this.logger.error(
-            `❌ Failed to refund post ${post.id}: ${errorMessage}`,
-            errorStack,
-          );
+          this.logger.error(`Failed to refund post ${post.id}: ${errorMessage}`, errorStack);
         }
       }
 
-      this.logger.log(
-        `🎯 [CRON] Completed: ${successCount} success, ${failCount} failed`,
-      );
+      this.logger.log(`🎯 [CRON] Completed: ${successCount} success, ${failCount} failed`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(
-        `💥 [CRON] Critical error in auto refund job: ${errorMessage}`,
-        errorStack,
-      );
+      this.logger.error(`💥 [CRON] Critical error in auto refund job: ${errorMessage}`, errorStack);
     }
   }
 
   /**
-   * Tìm các posts cần refund
-   * Điều kiện:
-   * - Post có reviewedAt (đã được duyệt)
-   * - Post status = PUBLISHED (có thể hết hạn) hoặc ARCHIVED (user hủy)
-   * - Chưa được refund (kiểm tra trong refunds table)
-   * 
-   * Logic refund:
-   * - ARCHIVED + < 7 ngày: 100% (hủy sớm)
-   * - ARCHIVED + 7-30 ngày: 70% (hủy trễ)
-   * - PUBLISHED + > 30 ngày: 50% (hết hạn tự động)
-   * - FRAUD: 0% (admin reject)
+   * Xác định scenario và tỷ lệ refund dựa trên status và số ngày
+   *
+   * @param post - Post cần kiểm tra
+   * @param daysSinceReviewed - Số ngày từ khi post được duyệt
+   * @returns Object chứa scenario và rate, hoặc null nếu không đủ điều kiện refund
    */
-  private async findExpiredPostsNeedingRefund(): Promise<Post[]> {
-    // Tìm tất cả posts đã được duyệt và có status PUBLISHED hoặc ARCHIVED
+  private getRefundScenarioAndRate(
+    post: Post,
+    daysSinceReviewed: number,
+  ): { scenario: RefundScenario; rate: number } | null {
+    // Post đã bị user hủy (ARCHIVED)
+    if (post.status === PostStatus.ARCHIVED) {
+      if (daysSinceReviewed < 7) {
+        // Hủy sớm < 7 ngày: 100%
+        return { scenario: RefundScenario.CANCEL_EARLY, rate: 1.0 };
+      } else {
+        // Hủy trễ >= 7 ngày: 70%
+        return { scenario: RefundScenario.CANCEL_LATE, rate: 0.7 };
+      }
+    }
+
+    // Post đang published
+    if (post.status === PostStatus.PUBLISHED) {
+      if (daysSinceReviewed >= 30) {
+        // Hết hạn > 30 ngày: 50%
+        return { scenario: RefundScenario.EXPIRED, rate: 0.5 };
+      } else {
+        // Chưa hết hạn, không refund
+        this.logger.debug(
+          `⏳ Post ${post.id} is PUBLISHED but not expired yet (${daysSinceReviewed} days), skipping`,
+        );
+        return null;
+      }
+    }
+
+    // Status không hợp lệ
+    this.logger.warn(`⚠️ Post ${post.id} has invalid status ${post.status}, skipping`);
+    return null;
+  }
+
+  /**
+   * Tính số ngày từ khi post được duyệt đến hiện tại
+   *
+   * @param reviewedAt - Thời điểm post được duyệt
+   * @returns Số ngày đã trôi qua
+   */
+  private calculateDaysSinceReviewed(reviewedAt: Date): number {
+    const now = new Date();
+    return Math.floor((now.getTime() - reviewedAt.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  /**
+   * Tìm các posts ứng cử để kiểm tra refund
+   *
+   * Hàm này trả về tất cả posts có khả năng được refund, chưa kiểm tra điều kiện chi tiết.
+   * Việc kiểm tra điều kiện cụ thể (số ngày, status) sẽ được thực hiện trong processRefundForCandidatePost.
+   *
+   * Điều kiện lọc:
+   * - Post có reviewedAt (đã được duyệt)
+   * - Post status = PUBLISHED (có thể hết hạn) hoặc ARCHIVED (user đã hủy)
+   * - Chưa được refund (kiểm tra trong bảng refunds)
+   *
+   * @returns Danh sách posts ứng cử để kiểm tra refund
+   */
+  private async findRefundCandidatePosts(): Promise<Post[]> {
     const posts = await this.postRepo
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.seller', 'seller')
       .leftJoin('refunds', 'refund', 'refund.post_id = post.id')
-      .where('post.reviewedAt IS NOT NULL') // Chỉ lấy posts đã được duyệt
-      .andWhere('post.status IN (:...statuses)', { 
-        statuses: [PostStatus.PUBLISHED, PostStatus.ARCHIVED]
+      .where('post.reviewedAt IS NOT NULL')
+      .andWhere('post.status IN (:...statuses)', {
+        statuses: [PostStatus.PUBLISHED, PostStatus.ARCHIVED],
       })
-      .andWhere('refund.id IS NULL') // Chưa có refund record
+      .andWhere('refund.id IS NULL')
       .getMany();
 
     return posts;
   }
 
   /**
-   * Xử lý refund cho 1 post
-   * Logic dựa vào post_payments:
-   *   - Tìm payment record trong post_payments với post_id
-   *   - Lấy amount_paid và account_id
-   *   
-   * Refund rate (NEW LOGIC):
-   *   - Hủy sớm (< 7 ngày): 100%
-   *   - Hủy trễ (7-30 ngày): 70%
-   *   - Hết hạn (> 30 ngày): 50%
-   *   - Gian lận: 0% (admin reject)
+   * Tìm payment record của post
+   *
+   * @param postId - ID của post
+   * @returns PostPayment record hoặc null nếu không tìm thấy
    */
-  private async processRefundForExpiredPost(post: Post): Promise<void> {
-    // Tìm payment record trong post_payments
-    const postPayment = await this.postPaymentRepo.findOne({
-      where: {
-        postId: post.id,
-      },
+  private async findPostPayment(postId: string): Promise<PostPayment | null> {
+    return await this.postPaymentRepo.findOne({
+      where: { postId },
       relations: ['account'],
     });
+  }
 
+  /**
+   * Tạo refund record với status PENDING
+   *
+   * @param params - Thông tin để tạo refund
+   * @returns Refund record đã được lưu
+   */
+  private async createRefundRecord(params: {
+    postId: string;
+    accountId: number;
+    scenario: RefundScenario;
+    refundPercent: number;
+    amountOriginal: string;
+    amountRefund: string;
+  }): Promise<Refund> {
+    const refund = this.refundRepo.create({
+      postId: params.postId,
+      accountId: params.accountId,
+      scenario: params.scenario,
+      policyRatePercent: params.refundPercent,
+      amountOriginal: params.amountOriginal,
+      amountRefund: params.amountRefund,
+      status: RefundStatus.PENDING,
+      reason: `Auto refund - ${params.scenario}`,
+    });
+
+    return await this.refundRepo.save(refund);
+  }
+
+  /**
+   * Thực hiện hoàn tiền vào ví user và cập nhật trạng thái refund
+   *
+   * @param refund - Refund record cần xử lý
+   * @param postId - ID của post
+   * @param accountId - ID của account nhận tiền
+   * @param amountRefund - Số tiền hoàn
+   * @param scenario - Scenario refund
+   * @param refundPercent - Tỷ lệ refund
+   */
+  private async executeRefundToWallet(
+    refund: Refund,
+    postId: string,
+    accountId: number,
+    amountRefund: number,
+    scenario: RefundScenario,
+    refundPercent: number,
+  ): Promise<void> {
+    try {
+      // Hoàn tiền vào wallet
+      const tx = await this.walletsService.refund(
+        accountId,
+        String(amountRefund),
+        `Hoàn tiền phí đăng bài #${postId} - ${scenario} - ${refundPercent}%`,
+        `REFUND-POST-${postId}-${Date.now()}`,
+      );
+
+      // Cập nhật trạng thái thành công
+      refund.status = RefundStatus.REFUNDED;
+      refund.walletTransactionId = tx.transaction.id;
+      refund.refundedAt = new Date();
+      await this.refundRepo.save(refund);
+
+      this.logger.log(
+        `✅ Refunded ${amountRefund} VND (${refundPercent}%) to user ${accountId} for post ${postId}`,
+      );
+    } catch (error) {
+      // Cập nhật trạng thái thất bại
+      refund.status = RefundStatus.FAILED;
+      refund.reason = `Auto refund failed: ${(error as Error).message}`;
+      await this.refundRepo.save(refund);
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`❌ Failed to refund post ${postId}: ${errorMessage}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Xử lý refund cho 1 post ứng cử
+   *
+   * Flow xử lý:
+   * 1. Tìm payment record
+   * 2. Tính số ngày từ khi post được duyệt
+   * 3. Xác định scenario và rate (nếu không đủ điều kiện thì bỏ qua)
+   * 4. Tính số tiền refund
+   * 5. Tạo refund record
+   * 6. Thực hiện refund vào wallet
+   *
+   * @param post - Post cần xử lý refund
+   */
+  private async processRefundForCandidatePost(post: Post): Promise<void> {
+    // Guard: Kiểm tra payment record
+    const postPayment = await this.findPostPayment(post.id);
     if (!postPayment) {
       this.logger.warn(
         `⚠️ Post ${post.id} has no payment record in post_payments, skipping refund`,
@@ -150,104 +273,54 @@ export class RefundsCronService {
     );
 
     // Tính số ngày từ khi post được duyệt
-    const reviewedAt = new Date(post.reviewedAt!);
-    const now = new Date();
-    const daysSinceReviewed = Math.floor(
-      (now.getTime() - reviewedAt.getTime()) / (1000 * 60 * 60 * 24),
-    );
+    const daysSinceReviewed = this.calculateDaysSinceReviewed(new Date(post.reviewedAt!));
 
-    // Xác định tỷ lệ refund dựa trên status và số ngày
-    let refundRate: number;
-    let scenario: RefundScenario;
-
-    if (post.status === PostStatus.ARCHIVED) {
-      // User chủ động hủy (ARCHIVED)
-      if (daysSinceReviewed < 7) {
-        // Hủy sớm < 7 ngày: 100%
-        refundRate = 1.0;
-        scenario = RefundScenario.CANCEL_EARLY;
-      } else {
-        // Hủy trễ >= 7 ngày (chưa hết hạn): 70%
-        refundRate = 0.7;
-        scenario = RefundScenario.CANCEL_LATE;
-      }
-    } else if (post.status === PostStatus.PUBLISHED) {
-      // Hết hạn tự động (PUBLISHED + > 30 ngày)
-      if (daysSinceReviewed >= 30) {
-        // Hết hạn > 30 ngày: 50%
-        refundRate = 0.5;
-        scenario = RefundScenario.EXPIRED;
-      } else {
-        // Chưa hết hạn, không refund
-        this.logger.debug(
-          `⏳ Post ${post.id} is PUBLISHED but not expired yet (${daysSinceReviewed} days), skipping`,
-        );
-        return;
-      }
-    } else {
-      this.logger.warn(
-        `⚠️ Post ${post.id} has invalid status ${post.status}, skipping`,
-      );
-      return;
+    // Guard: Xác định scenario và rate
+    const refundInfo = this.getRefundScenarioAndRate(post, daysSinceReviewed);
+    if (!refundInfo) {
+      return; // Post không đủ điều kiện refund
     }
 
-    // Tính số tiền refund từ post_payments.amount_paid
-    const amountPaid = parseFloat(postPayment.amountPaid);
-    const amountRefund = Math.floor(amountPaid * refundRate);
-    const refundPercent = Math.floor(refundRate * 100);
+    const { scenario, rate } = refundInfo;
+
+    const amountPaid = Number.parseFloat(postPayment.amountPaid); // số tiền đã thanh toán
+    const amountRefund = Math.floor(amountPaid * rate); // số tiền sẽ được hoàn lại
+    const refundPercent = Math.floor(rate * 100); // phần trăm hoàn tiền
 
     this.logger.log(
       `Processing refund for post ${post.id}: ${post.status}, ${daysSinceReviewed} days → ${scenario} (${refundPercent}%)`,
     );
     this.logger.log(
-      `  Amount paid: ${amountPaid} VND → Refund: ${amountRefund} VND (${refundPercent}%)`,
+      `Amount paid: ${amountPaid} VND → Refund: ${amountRefund} VND (${refundPercent}%)`,
     );
 
-    // 1️⃣ Tạo Refund record (PENDING)
-    const refund = this.refundRepo.create({
+    // Tạo refund record
+    const refund = await this.createRefundRecord({
       postId: post.id,
       accountId: postPayment.accountId,
-      scenario: scenario,
-      policyRatePercent: refundPercent,
+      scenario,
+      refundPercent,
       amountOriginal: postPayment.amountPaid,
       amountRefund: String(amountRefund),
-      status: RefundStatus.PENDING,
-      reason: `Auto refund - ${scenario}`,
     });
-    await this.refundRepo.save(refund);
 
-    try {
-      // 2️⃣ Refund vào wallet của user
-      const tx = await this.walletsService.refund(
-        postPayment.accountId,
-        String(amountRefund),
-        `Hoàn tiền phí đăng bài #${post.id} - ${scenario} - ${refundPercent}%`,
-        `REFUND-POST-${post.id}-${Date.now()}`,
-      );
-
-      // 3️⃣ Update refund status → REFUNDED
-      refund.status = RefundStatus.REFUNDED;
-      refund.walletTransactionId = tx.transaction.id;
-      refund.refundedAt = new Date();
-      await this.refundRepo.save(refund);
-
-      this.logger.log(
-        `✅ Refunded ${amountRefund} VND (${refundPercent}%) to user ${postPayment.accountId} for post ${post.id}`,
-      );
-    } catch (error) {
-      // 4️⃣ Nếu lỗi → Update refund status → FAILED
-      refund.status = RefundStatus.FAILED;
-      refund.reason = `Auto refund failed: ${(error as Error).message}`;
-      await this.refundRepo.save(refund);
-
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`❌ Failed to refund post ${post.id}: ${errorMessage}`);
-      throw error;
-    }
+    // Thực hiện refund vào wallet
+    await this.executeRefundToWallet(
+      refund,
+      post.id,
+      postPayment.accountId,
+      amountRefund,
+      scenario,
+      refundPercent,
+    );
   }
 
   /**
-   * Manual trigger để test (có thể gọi từ API endpoint)
+   * Manual trigger để test cron job (có thể gọi từ API endpoint)
+   *
+   * Hàm này cho phép admin trigger refund check thủ công để test hoặc xử lý khẩn cấp.
+   *
+   * @returns Kết quả xử lý bao gồm số lượng posts đã xử lý, thành công và thất bại
    */
   async triggerManualRefundCheck(): Promise<{
     processed: number;
@@ -256,13 +329,13 @@ export class RefundsCronService {
   }> {
     this.logger.log('🔧 [MANUAL] Triggering manual refund check...');
 
-    const expiredPosts = await this.findExpiredPostsNeedingRefund();
+    const candidatePosts = await this.findRefundCandidatePosts();
     let successCount = 0;
     let failCount = 0;
 
-    for (const post of expiredPosts) {
+    for (const post of candidatePosts) {
       try {
-        await this.processRefundForExpiredPost(post);
+        await this.processRefundForCandidatePost(post);
         successCount++;
       } catch (error) {
         failCount++;
@@ -272,7 +345,7 @@ export class RefundsCronService {
     }
 
     return {
-      processed: expiredPosts.length,
+      processed: candidatePosts.length,
       success: successCount,
       failed: failCount,
     };
