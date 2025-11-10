@@ -1,7 +1,13 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { StatsCards, DashboardCharts, RecentTables } from './_components';
+import {
+  StatsCards,
+  DashboardCharts,
+  RecentTables,
+  FinancialStatsCards,
+  FraudStatsCards,
+} from './_components';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Database, Shield, AlertCircle } from 'lucide-react';
@@ -11,6 +17,7 @@ import {
   getRecentUsers,
   getRecentPosts,
 } from '@/lib/api/adminDashboardApi';
+import { getAdminDashboardStatistics } from '@/lib/api/adminStatisticsApi';
 
 export default function AdminDashboard() {
   // Fetch dashboard data with React Query
@@ -58,8 +65,20 @@ export default function AdminDashboard() {
     staleTime: 10000,
   });
 
-  const isLoading = statsLoading || timeSeriesLoading || usersLoading || postsLoading;
-  const hasError = statsError || timeSeriesError || usersError || postsError;
+  const {
+    data: adminStats,
+    isLoading: adminStatsLoading,
+    error: adminStatsError,
+  } = useQuery({
+    queryKey: ['admin-dashboard-statistics'],
+    queryFn: getAdminDashboardStatistics,
+    refetchInterval: 30000,
+    staleTime: 10000,
+  });
+
+  const isLoading =
+    statsLoading || timeSeriesLoading || usersLoading || postsLoading || adminStatsLoading;
+  const hasError = statsError || timeSeriesError || usersError || postsError || adminStatsError;
 
   return (
     <main className="flex-1 p-6 space-y-6">
@@ -94,6 +113,16 @@ export default function AdminDashboard() {
 
       {/* Statistics Cards */}
       {stats && <StatsCards stats={stats} isLoading={statsLoading} />}
+
+      {/* Financial Statistics Cards */}
+      {adminStats?.financial && (
+        <FinancialStatsCards financial={adminStats.financial} isLoading={adminStatsLoading} />
+      )}
+
+      {/* Fraud & Risk Statistics Cards */}
+      {adminStats?.fraud && (
+        <FraudStatsCards fraud={adminStats.fraud} isLoading={adminStatsLoading} />
+      )}
 
       {/* Charts Section */}
       {stats && timeSeriesData && (
