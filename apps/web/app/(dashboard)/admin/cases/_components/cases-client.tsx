@@ -52,32 +52,32 @@ export function CasesClient() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
-        <Card>
+      <div className="flex flex-wrap gap-4">
+        <Card className="max-w-xs w-full flex-1">
           <CardHeader className="pb-3">
             <CardDescription>Tổng cộng</CardDescription>
             <CardTitle className="text-3xl">{stats.total}</CardTitle>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="max-w-xs w-full flex-1">
           <CardHeader className="pb-3">
             <CardDescription>Chờ duyệt</CardDescription>
             <CardTitle className="text-3xl text-yellow-600">{stats.pending}</CardTitle>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="max-w-xs w-full flex-1">
           <CardHeader className="pb-3">
             <CardDescription>Đã hoàn</CardDescription>
             <CardTitle className="text-3xl text-green-600">{stats.refunded}</CardTitle>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="max-w-xs w-full flex-1">
           <CardHeader className="pb-3">
             <CardDescription>Từ chối</CardDescription>
             <CardTitle className="text-3xl text-gray-600">{stats.rejected}</CardTitle>
           </CardHeader>
         </Card>
-        <Card>
+        <Card className="max-w-xs w-full flex-1">
           <CardHeader className="pb-3">
             <CardDescription>Thất bại</CardDescription>
             <CardTitle className="text-3xl text-red-600">{stats.failed}</CardTitle>
