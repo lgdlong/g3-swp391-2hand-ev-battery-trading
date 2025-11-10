@@ -22,6 +22,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { PostFraudFlagsModule } from './modules/post-fraud-flags/post-fraud-flags.module';
+import { AdminStatisticsModule } from './modules/admin-statistics/admin-statistics.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -79,6 +80,7 @@ import { PostFraudFlagsModule } from './modules/post-fraud-flags/post-fraud-flag
     TransactionsModule,
     ChatModule,
     PostFraudFlagsModule,
+    AdminStatisticsModule,
   ],
   controllers: [],
   providers: [],
