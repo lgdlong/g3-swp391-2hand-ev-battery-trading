@@ -2,4 +2,5 @@
 export { StatsCards } from './StatsCards';
 export { DashboardCharts } from './DashboardCharts';
 export { RecentTables } from './RecentTables';
-
+export { FinancialStatsCards } from './FinancialStatsCards';
+export { FraudStatsCards } from './FraudStatsCards';
