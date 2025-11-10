@@ -166,24 +166,19 @@ export function ResolveCaseDialog({ refundCase, open, onOpenChange }: ResolveCas
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select decision" />
+                        <SelectValue placeholder="Select a decision" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="approve">Approve (Refund to user)</SelectItem>
-                      <SelectItem value="reject">Reject (No refund)</SelectItem>
+                      <SelectItem value="approve">Hoàn tiền (Refund to user)</SelectItem>
+                      <SelectItem value="reject">Giữ Phí (Forfeit fee)</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    {watchDecision === 'approve'
-                      ? 'User will receive the refund amount into their wallet'
-                      : 'The refund will be rejected and no money will be returned'}
-                  </FormDescription>
+                  <FormDescription>Choose whether to refund or forfeit the fee</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
-            />
-
+            />{' '}
             {watchDecision === 'approve' && (
               <FormField
                 control={form.control}
@@ -212,7 +207,6 @@ export function ResolveCaseDialog({ refundCase, open, onOpenChange }: ResolveCas
                 )}
               />
             )}
-
             <FormField
               control={form.control}
               name="adminNote"
@@ -233,7 +227,6 @@ export function ResolveCaseDialog({ refundCase, open, onOpenChange }: ResolveCas
                 </FormItem>
               )}
             />
-
             <DialogFooter>
               <Button
                 type="button"
@@ -250,7 +243,7 @@ export function ResolveCaseDialog({ refundCase, open, onOpenChange }: ResolveCas
                     Processing...
                   </>
                 ) : (
-                  `${watchDecision === 'approve' ? 'Approve' : 'Reject'} Refund`
+                  `${watchDecision === 'approve' ? 'Hoàn Tiền' : 'Giữ Phí'}`
                 )}
               </Button>
             </DialogFooter>

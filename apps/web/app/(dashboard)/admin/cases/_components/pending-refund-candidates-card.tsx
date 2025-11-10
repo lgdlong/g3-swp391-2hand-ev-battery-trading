@@ -21,22 +21,21 @@ export function PendingRefundCandidatesCard({
   onManualRefund,
   onRefetch,
 }: PendingRefundCandidatesCardProps) {
+  // Get scenario info with color mapping for display
+  const getScenarioColor = (scenario: string) => {
+    const colorMap: Record<string, string> = {
+      CANCEL_EARLY: 'bg-green-100 text-green-800',
+      CANCEL_LATE: 'bg-yellow-100 text-yellow-800',
+      EXPIRED: 'bg-orange-100 text-orange-800',
+      FRAUD_SUSPECTED: 'bg-red-100 text-red-800',
+    };
+    return colorMap[scenario] || 'bg-gray-100 text-gray-800';
+  };
+
   const calculateDaysSinceReviewed = (reviewedAt: string): number => {
     const now = new Date();
     const reviewed = new Date(reviewedAt);
     return Math.floor((now.getTime() - reviewed.getTime()) / (1000 * 60 * 60 * 24));
-  };
-
-  const getRefundScenario = (status: string, daysSinceReviewed: number) => {
-    if (status === 'ARCHIVED') {
-      return daysSinceReviewed < 7
-        ? { scenario: 'CANCEL_EARLY', rate: 100, color: 'bg-green-100 text-green-800' }
-        : { scenario: 'CANCEL_LATE', rate: 70, color: 'bg-yellow-100 text-yellow-800' };
-    }
-    if (status === 'PUBLISHED' && daysSinceReviewed >= 30) {
-      return { scenario: 'EXPIRED', rate: 50, color: 'bg-orange-100 text-orange-800' };
-    }
-    return null;
   };
 
   return (
@@ -47,7 +46,8 @@ export function PendingRefundCandidatesCard({
           Bài đăng chờ hoàn tiền
         </CardTitle>
         <CardDescription>
-          Danh sách các bài đăng đủ điều kiện hoàn tiền nhưng chưa được xử lý. Admin có thể hoàn tiền thủ công nếu cần gấp.
+          Danh sách các bài đăng đủ điều kiện hoàn tiền nhưng chưa được xử lý. Admin có thể hoàn
+          tiền thủ công nếu cần gấp.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -64,9 +64,7 @@ export function PendingRefundCandidatesCard({
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
-                {candidates.length} bài đăng chờ xử lý
-              </span>
+              <span className="text-sm font-medium">{candidates.length} bài đăng chờ xử lý</span>
               <Button variant="outline" size="sm" onClick={() => onRefetch()}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Tải lại
@@ -75,7 +73,10 @@ export function PendingRefundCandidatesCard({
             <div className="max-h-60 overflow-y-auto space-y-2">
               {candidates.slice(0, 10).map((post) => {
                 const daysSinceReviewed = calculateDaysSinceReviewed(post.reviewedAt);
-                const scenario = getRefundScenario(post.status, daysSinceReviewed);
+                // Scenario and rate are calculated by backend based on settings
+                const scenario = post.scenario || 'PENDING';
+                const rate = post.refundRate || 0;
+                const scenarioColor = getScenarioColor(scenario);
 
                 return (
                   <div
@@ -86,8 +87,8 @@ export function PendingRefundCandidatesCard({
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium text-sm">{post.title}</span>
                         {scenario && (
-                          <Badge className={scenario.color}>
-                            {scenario.scenario} ({scenario.rate}%)
+                          <Badge className={scenarioColor}>
+                            {scenario} {rate > 0 && `(${rate}%)`}
                           </Badge>
                         )}
                       </div>

@@ -277,7 +277,10 @@ export function CasesTableCard({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => onSelectCase(caseItem)}>
+                          <DropdownMenuItem
+                            onClick={() => onSelectCase(caseItem)}
+                            disabled={caseItem.status !== 'PENDING'}
+                          >
                             Giải quyết hoàn tiền
                           </DropdownMenuItem>
                         </DropdownMenuContent>

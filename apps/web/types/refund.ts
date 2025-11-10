@@ -57,6 +57,9 @@ export interface RefundCandidatePost {
     email: string;
     fullName?: string;
   };
+  // Backend-calculated refund scenario and rate
+  scenario?: 'CANCEL_EARLY' | 'CANCEL_LATE' | 'EXPIRED' | 'FRAUD_SUSPECTED' | 'PENDING';
+  refundRate?: number;
 }
 
 /**

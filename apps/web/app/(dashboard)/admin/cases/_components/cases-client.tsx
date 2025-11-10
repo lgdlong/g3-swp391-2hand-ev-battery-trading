@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RefundCase } from '@/types/refund';
 import {
   useGetAllRefunds,
@@ -40,7 +41,7 @@ export function CasesClient() {
     }
   };
 
-  const allCases = cases || [];
+  const allCases = useMemo(() => cases || [], [cases]);
   const stats = {
     total: allCases.length,
     pending: allCases.filter((c) => c.status === 'PENDING').length,
@@ -48,6 +49,9 @@ export function CasesClient() {
     rejected: allCases.filter((c) => c.status === 'REJECTED').length,
     failed: allCases.filter((c) => c.status === 'FAILED').length,
   };
+
+  // Filter pending cases for the fraud queue tab
+  const pendingCases = useMemo(() => allCases.filter((c) => c.status === 'PENDING'), [allCases]);
 
   return (
     <div className="space-y-6">
@@ -85,23 +89,53 @@ export function CasesClient() {
         </Card>
       </div>
 
-      {/* Cases Table Card */}
-      <CasesTableCard
-        cases={cases}
-        isLoading={isLoading}
-        error={error}
-        onRefetch={refetch}
-        onSelectCase={handleResolveCase}
-      />
+      {/* Tabs for Queue Management and History */}
+      <Tabs defaultValue="queue" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger
+            className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+            value="queue"
+          >
+            Hàng đợi Duyệt (Fraud)
+          </TabsTrigger>
+          <TabsTrigger
+            className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+            value="history"
+          >
+            Lịch sử Hoàn tiền (Tra cứu)
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Pending Refund Candidates Card */}
-      <PendingRefundCandidatesCard
-        candidates={candidates}
-        isLoading={candidatesLoading}
-        isProcessing={isProcessing}
-        onManualRefund={handleManualRefund}
-        onRefetch={refetchCandidates}
-      />
+        {/* Tab 1: Fraud Queue - Only pending cases */}
+        <TabsContent value="queue" className="space-y-4">
+          <CasesTableCard
+            cases={pendingCases}
+            isLoading={isLoading}
+            error={error}
+            onRefetch={refetch}
+            onSelectCase={handleResolveCase}
+          />
+        </TabsContent>
+
+        {/* Tab 2: History - All cases and candidates */}
+        <TabsContent value="history" className="space-y-4">
+          <CasesTableCard
+            cases={cases}
+            isLoading={isLoading}
+            error={error}
+            onRefetch={refetch}
+            onSelectCase={handleResolveCase}
+          />
+
+          <PendingRefundCandidatesCard
+            candidates={candidates}
+            isLoading={candidatesLoading}
+            isProcessing={isProcessing}
+            onManualRefund={handleManualRefund}
+            onRefetch={refetchCandidates}
+          />
+        </TabsContent>
+      </Tabs>
 
       <ResolveCaseDialog refundCase={selectedCase} open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
