@@ -3,6 +3,23 @@
  * Aligned with Backend API: apps/api/src/modules/post-ratings/
  */
 
+// ==================== ACCOUNT INFO ====================
+
+/**
+ * Safe account info included in ratings
+ */
+export interface SafeAccountDto {
+  id: number;
+  email?: string | null;
+  phone?: string | null;
+  fullName: string;
+  avatarUrl?: string | null;
+  status: string;
+  role: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // ==================== MAIN TYPES ====================
 
 /**
@@ -16,16 +33,18 @@ export interface CreateRatingDto {
 
 /**
  * Rating response from API
- * Backend: PostRatingResponseDto
+ * Backend: SafePostRatingDto
  */
 export interface RatingResponse {
   id: string;
   rating: number;
-  content?: string;
-  postId: string;
+  content?: string | null;
+  postId: string | number;
   userId: number;
+  customer?: SafeAccountDto | null;
+  seller?: SafeAccountDto | null;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 }
 
 /**

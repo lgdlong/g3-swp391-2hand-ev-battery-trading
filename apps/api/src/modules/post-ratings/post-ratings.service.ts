@@ -63,8 +63,8 @@ export class PostRatingService {
     const qb = this.postRatingsRepository
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.customer', 'customer')
-      .leftJoin('r.post', 'post')
-      .addSelect(['post.id'])
+      .leftJoinAndSelect('r.post', 'post')
+      .leftJoinAndSelect('post.seller', 'seller')
       .where('r.post_id = :postId', { postId });
 
     // Optional rating filter
@@ -81,7 +81,7 @@ export class PostRatingService {
       .getManyAndCount();
 
     return {
-      items: PostRatingMapper.toSafeDtoArray(rows),
+      data: PostRatingMapper.toSafeDtoArray(rows),
       total,
       page: Number(page),
       limit: Number(limit),
