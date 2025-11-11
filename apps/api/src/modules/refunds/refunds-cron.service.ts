@@ -171,6 +171,9 @@ export class RefundsCronService {
       this.logger.warn(
         `⚠️ Post ${post.id} has no payment record in post_payments, skipping refund`,
       );
+      this.logger.debug(
+        '[processRefundForCandidatePost] SKIPPING: No payment record found for this post',
+      );
       return;
     }
 
@@ -184,6 +187,10 @@ export class RefundsCronService {
     // Guard: Xác định scenario và rate
     const refundInfo = getRefundScenarioAndRate(post, daysSinceReviewed, policy, expirationDays);
     if (!refundInfo) {
+      this.logger.warn(`⚠️ Post ${post.id} does not meet refund criteria, skipping refund`);
+      this.logger.debug(
+        '[processRefundForCandidatePost] SKIPPING: Post does not meet refund eligibility criteria',
+      );
       return; // Post không đủ điều kiện refund
     }
 
@@ -199,6 +206,13 @@ export class RefundsCronService {
     this.logger.log(
       `Amount paid: ${amountPaid} VND → Refund: ${amountRefund} VND (${refundPercent}%)`,
     );
+    if (amountRefund <= 0) {
+      this.logger.warn(`⚠️ Calculated refund amount is 0 for post ${post.id}, skipping refund`);
+      this.logger.debug(
+        '[processRefundForCandidatePost] SKIPPING: Calculated refund amount is zero or negative',
+      );
+      return;
+    }
 
     // Tạo refund record
     const refund = await this.refundsService.createRefundRecord({
@@ -224,10 +238,30 @@ export class RefundsCronService {
   /**
    * Lấy danh sách posts đang chờ hoàn tiền (đủ điều kiện nhưng chưa được cron job xử lý)
    *
+   * Lọc các bài đăng thực sự đủ điều kiện hoàn tiền:
+   * - ARCHIVED: Tất cả các bài đã hủy (bất kể số ngày)
+   * - PUBLISHED: Chỉ các bài đã hết hạn (>= expirationDays)
+   *
    * @returns Danh sách posts ứng cử cho refund
    */
   async getRefundCandidatePosts(): Promise<Post[]> {
-    return await this.refundsService.findRefundCandidatePosts();
+    const allCandidates = await this.refundsService.findRefundCandidatePosts();
+
+    // Lấy policy và lifecycle config
+    const policy = await this.getRefundPolicy();
+    const postLifecycle = await this.postLifecycleService.findOne(1);
+    const expirationDays = postLifecycle.expirationDays ?? 30;
+
+    // Filter chỉ lấy các post thực sự đủ điều kiện
+    const eligiblePosts = allCandidates.filter((post) => {
+      const daysSinceReviewed = calculateDaysSinceReviewed(new Date(post.reviewedAt!));
+      const refundInfo = getRefundScenarioAndRate(post, daysSinceReviewed, policy, expirationDays);
+
+      // Chỉ trả về post nếu có scenario refund hợp lệ
+      return refundInfo !== null;
+    });
+
+    return eligiblePosts;
   }
 
   /**

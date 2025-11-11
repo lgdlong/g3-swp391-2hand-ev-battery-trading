@@ -52,16 +52,28 @@ export function getRefundScenarioAndRate(
   policy: RefundPolicyConfig,
   expirationDays: number,
 ): { scenario: RefundScenario; rate: number } | null {
+  // Debug log
+  // eslint-disable-next-line no-console
+  console.debug('[getRefundScenarioAndRate] Checking refund eligibility for post');
+
   // Post đã bị user hủy (ARCHIVED)
   if (post.status === PostStatus.ARCHIVED) {
     const threshold = policy.cancelEarlyDaysThreshold ?? 7;
     if (daysSinceReviewed < threshold) {
+      // eslint-disable-next-line no-console
+      console.debug(
+        '[getRefundScenarioAndRate] Post is ARCHIVED and within early cancel threshold - ELIGIBLE for CANCEL_EARLY refund',
+      );
       // Hủy sớm: sử dụng rate từ DB
       return {
         scenario: RefundScenario.CANCEL_EARLY,
         rate: policy.cancelEarlyRate ?? 1.0,
       };
     } else {
+      // eslint-disable-next-line no-console
+      console.debug(
+        '[getRefundScenarioAndRate] Post is ARCHIVED but past early cancel threshold - ELIGIBLE for CANCEL_LATE refund',
+      );
       // Hủy trễ: sử dụng rate từ DB
       return {
         scenario: RefundScenario.CANCEL_LATE,
@@ -74,17 +86,27 @@ export function getRefundScenarioAndRate(
   if (post.status === PostStatus.PUBLISHED) {
     // Sử dụng expirationDays từ PostLifecycle
     if (daysSinceReviewed >= expirationDays) {
+      // eslint-disable-next-line no-console
+      console.debug(
+        '[getRefundScenarioAndRate] Post is PUBLISHED and has EXPIRED - ELIGIBLE for EXPIRED refund',
+      );
       // Hết hạn: sử dụng rate từ DB
       return {
         scenario: RefundScenario.EXPIRED,
         rate: policy.expiredRate ?? 0.5,
       };
     } else {
+      // eslint-disable-next-line no-console
+      console.debug(
+        '[getRefundScenarioAndRate] Post is PUBLISHED but NOT EXPIRED yet - NOT ELIGIBLE for refund',
+      );
       // Chưa hết hạn, không refund
       return null;
     }
   }
 
   // Status không hợp lệ
+  // eslint-disable-next-line no-console
+  console.debug('[getRefundScenarioAndRate] Post has INVALID status - NOT ELIGIBLE for refund');
   return null;
 }
