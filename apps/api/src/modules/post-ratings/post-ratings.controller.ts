@@ -25,7 +25,7 @@ import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 import type { ReqUser } from 'src/core/decorators/current-user.decorator';
 
 @ApiTags('Post Ratings')
-@Controller('rating')
+@Controller('ratings')
 export class PostRatingController {
   constructor(private readonly postRatingService: PostRatingService) {}
 
@@ -112,28 +112,28 @@ export class PostRatingController {
   //   return this.postRatingService.update(id, updatePostRatingDto, user.sub);
   // }
 
-  @ApiOperation({ summary: 'Delete a rating by ID' })
-  @ApiParam({ name: 'id', description: 'Rating ID', example: '123' })
-  @ApiResponse({ status: 200, description: 'Rating deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Not the owner of this rating' })
-  @ApiResponse({ status: 404, description: 'Rating not found' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  removeById(@Param('id') id: string, @CurrentUser() user: ReqUser) {
-    return this.postRatingService.removeById(id, user.sub);
-  }
+  // @ApiOperation({ summary: 'Delete a rating by ID' })
+  // @ApiParam({ name: 'id', description: 'Rating ID', example: '123' })
+  // @ApiResponse({ status: 200, description: 'Rating deleted successfully' })
+  // @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
+  // @ApiResponse({ status: 403, description: 'Forbidden - Not the owner of this rating' })
+  // @ApiResponse({ status: 404, description: 'Rating not found' })
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @Delete(':id')
+  // removeById(@Param('id') id: string, @CurrentUser() user: ReqUser) {
+  //   return this.postRatingService.removeById(id, user.sub);
+  // }
 
-  @ApiOperation({ summary: "Delete user's rating for a specific post" })
-  @ApiParam({ name: 'id', description: 'Post ID', example: '123' })
-  @ApiResponse({ status: 200, description: 'Rating deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
-  @ApiResponse({ status: 404, description: 'Rating not found for this post and user' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Delete('/post/:id')
-  removeByPostId(@Param('id') id: string, @CurrentUser() user: ReqUser) {
-    return this.postRatingService.removeByPostId(id, user.sub);
-  }
+  // @ApiOperation({ summary: "Delete user's rating for a specific post" })
+  // @ApiParam({ name: 'id', description: 'Post ID', example: '123' })
+  // @ApiResponse({ status: 200, description: 'Rating deleted successfully' })
+  // @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
+  // @ApiResponse({ status: 404, description: 'Rating not found for this post and user' })
+  // @ApiBearerAuth()
+  // @UseGuards(JwtAuthGuard)
+  // @Delete('/post/:id')
+  // removeByPostId(@Param('id') id: string, @CurrentUser() user: ReqUser) {
+  //   return this.postRatingService.removeByPostId(id, user.sub);
+  // }
 }

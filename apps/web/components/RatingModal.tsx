@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Star } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -14,38 +15,91 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { submitRating } from '@/lib/api/ratingApi';
 
 interface RatingModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (rating: number, comment: string) => void;
+  postId: string; // Required - ID của post cần đánh giá
   postTitle?: string;
-  isSubmitting?: boolean;
+  buttonText?: string; // Custom button text
+  onSuccess?: () => void; // Optional callback sau khi submit thành công
 }
 
 /**
- * RatingModal - Modal để đánh giá bài post sau khi mua
- * - Hiển thị 5 sao để chọn rating (0-5)
- * - Textarea lớn để nhập bình luận
- * - Submit rating về backend
+ * RatingModal - Uncontrolled Modal Component để đánh giá bài post
+ * - Component tự quản lý state (isOpen)
+ * - Hiển thị button mở modal + modal content
+ * - Tự động xử lý API call bên trong component
+ * - Toast notifications cho success/error
+ * 
+ * @example
+ * ```tsx
+ * <RatingModal
+ *   postId="post-123"
+ *   postTitle="Pin xe máy điện VinFast"
+ *   buttonText="Viết đánh giá" // Optional
+ *   onSuccess={() => {
+ *     // Optional: Refresh data sau khi rating thành công
+ *     queryClient.invalidateQueries(['ratings', 'post-123']);
+ *   }}
+ * />
+ * ```
  */
 export function RatingModal({
-  isOpen,
-  onClose,
-  onSubmit,
+  postId,
   postTitle,
-  isSubmitting = false,
+  buttonText = 'Viết đánh giá',
+  onSuccess,
 }: RatingModalProps) {
+  // Internal state - Component tự quản lý
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [rating, setRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [comment, setComment] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (rating === 0) {
-      // Có thể thêm toast warning ở đây
+      toast.warning('Vui lòng chọn số sao đánh giá');
       return;
     }
-    onSubmit(rating, comment);
+
+    setIsSubmitting(true);
+
+    try {
+      // 🚀 Gọi API submitRating với signature mới
+      const response = await submitRating(postId, {
+        rating,
+        content: comment, // Backend dùng field 'content' không phải 'comment'
+      });
+
+      console.log('✅ Rating API Response:', response);
+
+      // Toast success
+      toast.success('Đánh giá thành công!', {
+        description: `Bạn đã đánh giá ${rating} sao`,
+        duration: 3000,
+      });
+
+      // Callback để parent refresh data nếu cần
+      onSuccess?.();
+
+      // Đóng modal và reset state
+      handleClose();
+    } catch (error: any) {
+      console.error('❌ Rating API Error:', error);
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Không thể gửi đánh giá. Vui lòng thử lại sau';
+
+      toast.error('Có lỗi xảy ra', {
+        description: errorMessage,
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
@@ -53,11 +107,23 @@ export function RatingModal({
     setRating(0);
     setHoveredRating(0);
     setComment('');
-    onClose();
+    setIsOpen(false); // ← Tự update internal state
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <>
+      {/* Button mở modal */}
+      <Button 
+        onClick={() => setIsOpen(true)}
+        size="lg"
+        className="gap-2"
+      >
+        <Star className="h-5 w-5" />
+        {buttonText}
+      </Button>
+
+      {/* Rating Modal */}
+      <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-2xl">Đánh giá sản phẩm</DialogTitle>
@@ -154,5 +220,6 @@ export function RatingModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
