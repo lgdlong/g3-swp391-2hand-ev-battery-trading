@@ -123,33 +123,54 @@ export class PostRatingService {
   //   return PostRatingMapper.toSafeDto(saved);
   // }
 
-  // Delete a rating by id
-  async removeById(id: string, userId: number) {
-    const rating = await this.postRatingsRepository.findOne({
-      where: { id },
-      relations: ['customer'],
-    });
-    if (!rating) throw new NotFoundException('Rating not found');
-    if (rating.customer.id !== userId)
-      throw new ForbiddenException('You cannot delete others rating');
+  // // Delete a rating by id
+  // async removeById(id: string, userId: number) {
+  //   const rating = await this.postRatingsRepository.findOne({
+  //     where: { id },
+  //     relations: ['customer'],
+  //   });
+  //   if (!rating) throw new NotFoundException('Rating not found');
+  //   if (rating.customer.id !== userId)
+  //     throw new ForbiddenException('You cannot delete others rating');
 
-    await this.postRatingsRepository.softDelete(rating.id);
-    return { message: 'Deleted successfully by id #' + id };
-  }
+  //   await this.postRatingsRepository.softDelete(rating.id);
+  //   return { message: 'Deleted successfully by id #' + id };
+  // }
 
-  // Delete a rating by post id
-  async removeByPostId(postId: string, userId: number) {
-    const rating = await this.postRatingsRepository.findOne({
-      where: { post: { id: postId }, customer: { id: userId } },
-      relations: ['customer'],
-    });
-    if (!rating) throw new NotFoundException('Rating not found');
-    if (rating.customer.id !== userId)
-      throw new ForbiddenException('You cannot delete others rating');
+  // // Delete a rating by post id
+  // async removeByPostId(postId: string, userId: number) {
+  //   const rating = await this.postRatingsRepository.findOne({
+  //     where: { post: { id: postId }, customer: { id: userId } },
+  //     relations: ['customer'],
+  //   });
+  //   if (!rating) throw new NotFoundException('Rating not found');
+  //   if (rating.customer.id !== userId)
+  //     throw new ForbiddenException('You cannot delete others rating');
 
-    const deletedAt = new Date();
-    await this.postRatingsRepository.softDelete(rating.id);
+  //   const deletedAt = new Date();
+  //   await this.postRatingsRepository.softDelete(rating.id);
 
-    return { message: 'Deleted successfully for post id #' + postId };
+  //   return { message: 'Deleted successfully for post id #' + postId };
+  // }
+
+  // Get seller rating statistics (average rating + total reviews)
+  async getSellerRatingStats(sellerId: number) {
+    if (!sellerId || sellerId <= 0) {
+      throw new BadRequestException('Invalid seller ID');
+    }
+
+    const stats = await this.postRatingsRepository
+      .createQueryBuilder('pr')
+      .select('COALESCE(AVG(pr.rating), 0)', 'averageRating')
+      .addSelect('COUNT(pr.id)', 'totalReviews')
+      .innerJoin('pr.post', 'p')
+      .where('p.seller.id = :sellerId', { sellerId })
+      .andWhere('pr.deletedAt IS NULL')
+      .getRawOne();
+
+    return {
+      averageRating: stats ? Math.round(parseFloat(stats.averageRating) * 10) / 10 : 0,
+      totalReviews: stats ? parseInt(stats.totalReviews) : 0,
+    };
   }
 }

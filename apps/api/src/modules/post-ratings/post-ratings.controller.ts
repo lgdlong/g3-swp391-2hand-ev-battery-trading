@@ -103,6 +103,25 @@ export class PostRatingController {
     return review;
   }
 
+  @ApiOperation({ summary: 'Get seller rating statistics' })
+  @ApiParam({ name: 'sellerId', description: 'Seller Account ID', example: '123' })
+  @ApiResponse({
+    status: 200,
+    description: 'Seller rating stats retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        averageRating: { type: 'number', example: 4.4, description: 'Average rating (0-5)' },
+        totalReviews: { type: 'number', example: 8, description: 'Total number of reviews' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid seller ID' })
+  @Get('seller/:sellerId/stats')
+  async getSellerRatingStats(@Param('sellerId') sellerId: string) {
+    return this.postRatingService.getSellerRatingStats(Number(sellerId));
+  }
+
   // @UseGuards(JwtAuthGuard)
   // @Patch(':id')
   // update(
