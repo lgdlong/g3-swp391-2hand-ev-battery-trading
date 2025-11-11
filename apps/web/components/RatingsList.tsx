@@ -155,7 +155,7 @@ function RatingItem({ rating }: { rating: RatingResponse }) {
                   />
                 ))}
                 <span className="ml-1 text-sm font-semibold text-gray-700">
-                  {rating.rating}.0
+                  {rating.rating.toFixed(1)}
                 </span>
               </div>
             </div>
