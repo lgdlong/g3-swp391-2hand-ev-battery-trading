@@ -90,16 +90,16 @@ export function CasesClient() {
       </div>
 
       {/* Tabs for Queue Management and History */}
-      <Tabs defaultValue="queue" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="queue" className="w-auto">
+        <TabsList className="grid grid-cols-2 ">
           <TabsTrigger
-            className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+            className="gap-2  font-semibold h-full data-[state=active]:bg-white"
             value="queue"
           >
             Hàng đợi Duyệt (Fraud)
           </TabsTrigger>
           <TabsTrigger
-            className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+            className="gap-2  font-semibold h-full data-[state=active]:bg-white"
             value="history"
           >
             Lịch sử Hoàn tiền (Tra cứu)
