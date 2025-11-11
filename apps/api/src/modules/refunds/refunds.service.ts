@@ -312,8 +312,8 @@ export class RefundsService {
   }
 
   /**
-   * Tìm các posts ứng cử để kiểm tra refund (cho cron job)
-   * Chỉ trả về posts chưa có refund record
+   * Hàm này truy vấn danh sách các bài đăng đã được review, đang ở trạng thái PUBLISHED hoặc
+   * ARCHIVED, và chưa từng được hoàn tiền (chưa có record refund).
    */
   async findRefundCandidatePosts(): Promise<Post[]> {
     const posts = await this.postRepo

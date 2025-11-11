@@ -192,7 +192,7 @@ export function CasesTableCard({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="p-3 text-left font-medium">ID hoàn tiền</th>
+                  <th className="p-3 text-left font-medium">ID</th>
                   <th className="p-3 text-left font-medium">Người dùng</th>
                   <th className="p-3 text-left font-medium">Bài đăng</th>
                   <th className="p-3 text-right font-medium">Số tiền</th>
@@ -201,14 +201,14 @@ export function CasesTableCard({
                   <th className="p-3 text-left font-medium">Trạng thái</th>
                   <th className="p-3 text-left font-medium">Lý do</th>
                   <th className="p-3 text-left font-medium">Ngày tạo</th>
-                  <th className="p-3 text-center font-medium">Hành động</th>
+                  <th className="p-3 text-center font-medium"></th>
                 </tr>
               </thead>
               <tbody>
                 {filteredCases.map((caseItem) => (
                   <tr key={caseItem.id} className="border-b hover:bg-muted/50">
                     <td className="p-3">
-                      <div className="font-mono text-xs">#{caseItem.id}</div>
+                      <div className="font-mono text-xs">{caseItem.id}</div>
                     </td>
                     <td className="p-3">
                       <div className="flex flex-col">
@@ -221,7 +221,7 @@ export function CasesTableCard({
                       </div>
                     </td>
                     <td className="p-3">
-                      <div className="max-w-[150px]">
+                      <div className="max-w-auto">
                         <div className="font-mono text-xs text-muted-foreground">
                           #{caseItem.postId}
                         </div>
