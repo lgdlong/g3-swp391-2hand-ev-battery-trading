@@ -27,10 +27,10 @@ export class PostsQueryDto extends ListQueryDto {
 
   @ApiPropertyOptional({
     description: 'Trường sắp xếp',
-    enum: ['createdAt', 'priceVnd', 'title'],
+    enum: ['createdAt', 'updatedAt', 'priceVnd', 'title'],
     default: 'createdAt',
   })
   @IsOptional()
-  @IsIn(['createdAt', 'priceVnd', 'title'])
-  sort?: 'createdAt' | 'priceVnd' | 'title' = 'createdAt';
+  @IsIn(['createdAt', 'updatedAt', 'priceVnd', 'title'])
+  sort?: 'createdAt' | 'updatedAt' | 'priceVnd' | 'title' = 'createdAt';
 }

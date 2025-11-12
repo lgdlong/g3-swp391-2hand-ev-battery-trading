@@ -62,42 +62,42 @@ export default function MyPostsPage() {
   // Query for each status to get posts and counts
   const draftQuery = useQuery({
     queryKey: ['myPosts', 'DRAFT'],
-    queryFn: () => getMyPosts({ status: 'DRAFT', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'DRAFT', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const pendingQuery = useQuery({
     queryKey: ['myPosts', 'PENDING_REVIEW'],
-    queryFn: () => getMyPosts({ status: 'PENDING_REVIEW', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'PENDING_REVIEW', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const publishedQuery = useQuery({
     queryKey: ['myPosts', 'PUBLISHED'],
-    queryFn: () => getMyPosts({ status: 'PUBLISHED', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'PUBLISHED', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const rejectedQuery = useQuery({
     queryKey: ['myPosts', 'REJECTED'],
-    queryFn: () => getMyPosts({ status: 'REJECTED', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'REJECTED', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const soldQuery = useQuery({
     queryKey: ['myPosts', 'SOLD'],
-    queryFn: () => getMyPosts({ status: 'SOLD', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'SOLD', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const archivedQuery = useQuery({
     queryKey: ['myPosts', 'ARCHIVED'],
-    queryFn: () => getMyPosts({ status: 'ARCHIVED', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'ARCHIVED', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });

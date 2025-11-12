@@ -190,6 +190,9 @@ export default function PostListItem({
               {districtName && `, ${districtName}`}
             </p>
             <p className="text-xs text-muted-foreground">Cập nhật: {formatDate(post.updatedAt)}</p>
+            <p className="text-xs text-muted-foreground">
+              Đăng: {post.reviewedAt ? formatDate(String(post.reviewedAt)) : '--'}
+            </p>
           </div>
 
           {/* Action Buttons */}
