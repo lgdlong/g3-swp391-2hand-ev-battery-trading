@@ -5,7 +5,11 @@ import { RefundPolicyService } from '../settings/service/refund-policy.service';
 import { PostLifecycleService } from '../settings/service/post-lifecycle.service';
 import { WalletsService } from '../wallets/wallets.service';
 import { RefundScenario } from '../../shared/enums/refund-scenario.enum';
+import { RefundStatus } from '../../shared/enums/refund-status.enum';
 import { RefundsService } from './refunds.service';
+import { PostFraudFlagsService } from '../post-fraud-flags/post-fraud-flags.service';
+import { FraudFlagStatus } from '../post-fraud-flags/entities/post-fraud-flag.entity';
+import { ChatService } from '../chat/chat.service';
 import {
   RefundPolicyConfig,
   DEFAULT_REFUND_POLICY,
@@ -27,12 +31,15 @@ export class RefundsCronService {
     private readonly refundPolicyService: RefundPolicyService,
     private readonly postLifecycleService: PostLifecycleService,
     private readonly walletsService: WalletsService,
+    private readonly postFraudFlagsService: PostFraudFlagsService,
+    private readonly chatService: ChatService,
   ) {}
 
   /**
    * Cron job chạy mỗi ngày lúc 00:00 (12h đêm)
    * Quét và refund các post hết hạn
    */
+  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
   @Cron(CronExpression.EVERY_MINUTE, {
     name: 'auto-refund-expired-posts',
     timeZone: 'Asia/Ho_Chi_Minh',
@@ -127,8 +134,8 @@ export class RefundsCronService {
         `REFUND-POST-${postId}-${Date.now()}`,
       );
 
-      // Cập nhật trạng thái thành công
-      await this.refundsService.updateRefundAsRefunded(refundId, tx.transaction.id);
+      // Cập nhật trạng thái thành công + auto-archive post
+      await this.refundsService.updateRefundAsRefunded(refundId, tx.transaction.id, postId);
 
       this.logger.log(
         `✅ Refunded ${amountRefund} VND (${refundPercent}%) to user ${accountId} for post ${postId}`,
@@ -149,11 +156,13 @@ export class RefundsCronService {
    * Flow xử lý:
    * 1. Lấy RefundPolicy từ database
    * 2. Tìm payment record
-   * 3. Tính số ngày từ khi post được duyệt
-   * 4. Xác định scenario và rate (nếu không đủ điều kiện thì bỏ qua)
-   * 5. Tính số tiền refund
-   * 6. Tạo refund record
-   * 7. Thực hiện refund vào wallet
+   * 3. 🔒 KIỂM TRA GIAN LẬN (ưu tiên cao nhất)
+   * 4. 🔒 KIỂM TRA HOẠT ĐỘNG CHAT (chống bán chui)
+   * 5. Tính số ngày từ khi post được duyệt
+   * 6. Xác định scenario và rate (nếu không đủ điều kiện thì bỏ qua)
+   * 7. Tính số tiền refund
+   * 8. Tạo refund record với status PENDING
+   * 9. (Không tự động hoàn tiền - chờ Admin duyệt)
    *
    * @param post - Post cần xử lý refund
    */
@@ -181,11 +190,62 @@ export class RefundsCronService {
       `💰 Found payment: ${postPayment.amountPaid} VND for post ${post.id} by account ${postPayment.accountId}`,
     );
 
+    // 🔒 1. KIỂM TRA GIAN LẬN (ƯU TIÊN CAO NHẤT)
+    const fraudFlag = await this.postFraudFlagsService.getFlagByPostId(post.id);
+    if (
+      fraudFlag &&
+      (fraudFlag.status === FraudFlagStatus.SUSPECTED ||
+        fraudFlag.status === FraudFlagStatus.CONFIRMED)
+    ) {
+      // Bài đăng bị gắn cờ gian lận -> Tạo refund PENDING với rate = 0%
+      this.logger.warn(
+        `⚠️ Post ${post.id} is flagged as ${fraudFlag.status}. Creating PENDING refund for admin review.`,
+      );
+
+      const rate = policy.fraudSuspectedRate ?? 0.0;
+      const amountPaid = Number.parseFloat(postPayment.amountPaid);
+      const amountRefund = Math.floor(amountPaid * rate);
+      const refundPercent = Math.floor(rate * 100);
+
+      // Tạo refund record PENDING để Admin duyệt
+      await this.refundsService.createRefundRecord({
+        postId: post.id,
+        accountId: postPayment.accountId,
+        scenario: RefundScenario.FRAUD_SUSPECTED,
+        refundPercent,
+        amountOriginal: postPayment.amountPaid,
+        amountRefund: String(amountRefund),
+        status: RefundStatus.PENDING,
+        reason: `[AUTO] Flagged as ${fraudFlag.status}. Awaiting admin decision.`,
+      });
+
+      this.logger.log(
+        `✅ Created PENDING refund for fraud-flagged post ${post.id} (${refundPercent}% = ${amountRefund} VND)`,
+      );
+      return; // Dừng xử lý tự động
+    }
+
+    // 🔒 2. KIỂM TRA HOẠT ĐỘNG CHAT (CHỐNG BÁN CHUI)
+    const hasChatActivity = await this.chatService.hasPostChatActivity(post.id);
+
+    if (hasChatActivity) {
+      const chatCount = await this.chatService.getPostChatActivityCount(post.id);
+      this.logger.log(
+        `💬 Post ${post.id} has chat activity (${chatCount} conversation(s)) - will apply anti-fraud logic`,
+      );
+    }
+
     // Tính số ngày từ khi post được duyệt
     const daysSinceReviewed = calculateDaysSinceReviewed(new Date(post.reviewedAt!));
 
-    // Guard: Xác định scenario và rate
-    const refundInfo = getRefundScenarioAndRate(post, daysSinceReviewed, policy, expirationDays);
+    // Guard: Xác định scenario và rate (ĐÃ BAO GỒM CHAT)
+    const refundInfo = getRefundScenarioAndRate(
+      post,
+      daysSinceReviewed,
+      policy,
+      expirationDays,
+      hasChatActivity,
+    );
     if (!refundInfo) {
       this.logger.warn(`⚠️ Post ${post.id} does not meet refund criteria, skipping refund`);
       this.logger.debug(
@@ -214,7 +274,7 @@ export class RefundsCronService {
       return;
     }
 
-    // Tạo refund record
+    // Tạo refund record với status PENDING
     const refund = await this.refundsService.createRefundRecord({
       postId: post.id,
       accountId: postPayment.accountId,
@@ -222,16 +282,14 @@ export class RefundsCronService {
       refundPercent,
       amountOriginal: postPayment.amountPaid,
       amountRefund: String(amountRefund),
+      status: RefundStatus.PENDING,
+      reason: `[AUTO] ${scenario}${hasChatActivity ? ' - Has chat activity' : ''}`,
     });
 
-    // Thực hiện refund vào wallet
-    await this.executeRefundToWallet(
-      refund.id,
-      post.id,
-      postPayment.accountId,
-      amountRefund,
-      scenario,
-      refundPercent,
+    // ⚠️ KHÔNG tự động thực thi refund - để Admin duyệt
+    // await this.executeRefundToWallet(...) // REMOVED
+    this.logger.log(
+      `✅ Created PENDING refund record ${refund.id} for post ${post.id} - Awaiting admin approval`,
     );
   }
 
@@ -241,6 +299,8 @@ export class RefundsCronService {
    * Lọc các bài đăng thực sự đủ điều kiện hoàn tiền:
    * - ARCHIVED: Tất cả các bài đã hủy (bất kể số ngày)
    * - PUBLISHED: Chỉ các bài đã hết hạn (>= expirationDays)
+   *
+   * Note: Không cần kiểm tra chat ở đây vì đây chỉ là pre-filter
    *
    * @returns Danh sách posts ứng cử cho refund
    */
@@ -253,9 +313,17 @@ export class RefundsCronService {
     const expirationDays = postLifecycle.expirationDays ?? 30;
 
     // Filter chỉ lấy các post thực sự đủ điều kiện
+    // Note: hasChatActivity = false ở đây vì đây chỉ là pre-filter
+    // Chat activity sẽ được kiểm tra trong processRefundForCandidatePost
     const eligiblePosts = allCandidates.filter((post) => {
       const daysSinceReviewed = calculateDaysSinceReviewed(new Date(post.reviewedAt!));
-      const refundInfo = getRefundScenarioAndRate(post, daysSinceReviewed, policy, expirationDays);
+      const refundInfo = getRefundScenarioAndRate(
+        post,
+        daysSinceReviewed,
+        policy,
+        expirationDays,
+        false, // pre-filter, không cần kiểm tra chat
+      );
 
       // Chỉ trả về post nếu có scenario refund hợp lệ
       return refundInfo !== null;

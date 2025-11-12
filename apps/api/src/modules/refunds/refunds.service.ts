@@ -4,6 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Refund } from './entities/refund.entity';
 import { RefundStatus } from '../../shared/enums/refund-status.enum';
 import { RefundScenario } from '../../shared/enums/refund-scenario.enum';
+import { PostStatus } from '../../shared/enums/post.enum';
 import { Post } from '../posts/entities/post.entity';
 import { PostPayment } from '../transactions/entities/post-payment.entity';
 import { RefundPolicyService } from '../settings/service/refund-policy.service';
@@ -350,6 +351,8 @@ export class RefundsService {
     refundPercent: number;
     amountOriginal: string;
     amountRefund: string;
+    status?: RefundStatus;
+    reason?: string;
   }): Promise<Refund> {
     const refund = this.refundRepo.create({
       postId: params.postId,
@@ -358,8 +361,8 @@ export class RefundsService {
       policyRatePercent: params.refundPercent,
       amountOriginal: params.amountOriginal,
       amountRefund: params.amountRefund,
-      status: RefundStatus.PENDING,
-      reason: `Auto refund - ${params.scenario}`,
+      status: params.status ?? RefundStatus.PENDING,
+      reason: params.reason ?? `Auto refund - ${params.scenario}`,
     });
 
     return await this.refundRepo.save(refund);
@@ -367,8 +370,13 @@ export class RefundsService {
 
   /**
    * Cập nhật refund status thành REFUNDED với transaction info
+   * Auto-archive post nếu còn PUBLISHED (user thu hồi bài đăng)
    */
-  async updateRefundAsRefunded(refundId: string, walletTransactionId: number): Promise<Refund> {
+  async updateRefundAsRefunded(
+    refundId: string,
+    walletTransactionId: number,
+    postId?: string,
+  ): Promise<Refund> {
     const refund = await this.refundRepo.findOne({ where: { id: refundId } });
     if (!refund) {
       throw new NotFoundException('Refund not found');
@@ -378,7 +386,19 @@ export class RefundsService {
     refund.walletTransactionId = walletTransactionId;
     refund.refundedAt = new Date();
 
-    return await this.refundRepo.save(refund);
+    const updatedRefund = await this.refundRepo.save(refund);
+
+    // ✅ Auto-archive post nếu còn PUBLISHED (user được hoàn tiền = thu hồi bài)
+    if (postId) {
+      const post = await this.postRepo.findOne({ where: { id: postId } });
+      if (post && post.status === PostStatus.PUBLISHED) {
+        post.status = PostStatus.ARCHIVED;
+        await this.postRepo.save(post);
+        // Log in cron service sẽ handle
+      }
+    }
+
+    return updatedRefund;
   }
 
   /**

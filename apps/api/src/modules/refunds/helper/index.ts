@@ -44,6 +44,7 @@ export function calculateDaysSinceReviewed(reviewedAt: Date): number {
  * @param daysSinceReviewed - Số ngày từ khi post được duyệt
  * @param policy - RefundPolicy config từ database
  * @param expirationDays - Số ngày hết hạn của post từ PostLifecycle
+ * @param hasChatActivity - Có hoạt động chat hay không (chống bán chui)
  * @returns Object chứa scenario và rate, hoặc null nếu không đủ điều kiện refund
  */
 export function getRefundScenarioAndRate(
@@ -51,29 +52,28 @@ export function getRefundScenarioAndRate(
   daysSinceReviewed: number,
   policy: RefundPolicyConfig,
   expirationDays: number,
+  hasChatActivity: boolean = false,
 ): { scenario: RefundScenario; rate: number } | null {
-  // Debug log
-  // eslint-disable-next-line no-console
-  console.debug('[getRefundScenarioAndRate] Checking refund eligibility for post');
-
   // Post đã bị user hủy (ARCHIVED)
   if (post.status === PostStatus.ARCHIVED) {
+    // 🔒 LOGIC CHỐNG BÁN CHUI (ƯU TIÊN HƠN THỜI GIAN)
+    if (hasChatActivity) {
+      // Có chat, luôn tính là Hủy Trễ (hoặc 1 kịch bản "Bán chui" riêng nếu bạn muốn)
+      return {
+        scenario: RefundScenario.CANCEL_LATE,
+        rate: policy.cancelLateRate ?? 0.7,
+      };
+    }
+
+    // LOGIC HỦY SỚM (CHỈ KHI KHÔNG CÓ CHAT)
     const threshold = policy.cancelEarlyDaysThreshold ?? 7;
     if (daysSinceReviewed < threshold) {
-      // eslint-disable-next-line no-console
-      console.debug(
-        '[getRefundScenarioAndRate] Post is ARCHIVED and within early cancel threshold - ELIGIBLE for CANCEL_EARLY refund',
-      );
       // Hủy sớm: sử dụng rate từ DB
       return {
         scenario: RefundScenario.CANCEL_EARLY,
         rate: policy.cancelEarlyRate ?? 1.0,
       };
     } else {
-      // eslint-disable-next-line no-console
-      console.debug(
-        '[getRefundScenarioAndRate] Post is ARCHIVED but past early cancel threshold - ELIGIBLE for CANCEL_LATE refund',
-      );
       // Hủy trễ: sử dụng rate từ DB
       return {
         scenario: RefundScenario.CANCEL_LATE,
@@ -86,27 +86,17 @@ export function getRefundScenarioAndRate(
   if (post.status === PostStatus.PUBLISHED) {
     // Sử dụng expirationDays từ PostLifecycle
     if (daysSinceReviewed >= expirationDays) {
-      // eslint-disable-next-line no-console
-      console.debug(
-        '[getRefundScenarioAndRate] Post is PUBLISHED and has EXPIRED - ELIGIBLE for EXPIRED refund',
-      );
       // Hết hạn: sử dụng rate từ DB
       return {
         scenario: RefundScenario.EXPIRED,
         rate: policy.expiredRate ?? 0.5,
       };
     } else {
-      // eslint-disable-next-line no-console
-      console.debug(
-        '[getRefundScenarioAndRate] Post is PUBLISHED but NOT EXPIRED yet - NOT ELIGIBLE for refund',
-      );
       // Chưa hết hạn, không refund
       return null;
     }
   }
 
   // Status không hợp lệ
-  // eslint-disable-next-line no-console
-  console.debug('[getRefundScenarioAndRate] Post has INVALID status - NOT ELIGIBLE for refund');
   return null;
 }
