@@ -4,7 +4,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/axios';
 import { Star } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils/format';
 import type { RatingListResponse, RatingResponse } from '@/types/rating';
 
 interface RatingsListProps {
