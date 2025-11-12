@@ -274,4 +274,32 @@ export class ChatService {
       conversationsWithoutMessages: total - withMessages,
     };
   }
+
+  /**
+   * Check if a post has any chat activity (conversations with messages)
+   * Used by refunds system to detect "shadow sales"
+   *
+   * @param postId - ID of the post to check
+   * @returns true if post has conversations with messages, false otherwise
+   */
+  async hasPostChatActivity(postId: string): Promise<boolean> {
+    const count = await this.conversationRepo.count({
+      where: { postId, hasMessages: true },
+    });
+
+    return count > 0;
+  }
+
+  /**
+   * Get count of conversations with messages for a post
+   * Used for detailed logging/analytics
+   *
+   * @param postId - ID of the post to check
+   * @returns number of conversations with messages
+   */
+  async getPostChatActivityCount(postId: string): Promise<number> {
+    return this.conversationRepo.count({
+      where: { postId, hasMessages: true },
+    });
+  }
 }

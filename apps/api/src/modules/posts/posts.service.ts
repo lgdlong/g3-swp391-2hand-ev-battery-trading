@@ -29,6 +29,7 @@ import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 import { WalletsService } from '../wallets/wallets.service';
 import { FeeTierService } from '../settings/service/fee-tier.service';
 import { TransactionsService } from '../transactions/transactions.service';
+import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
 
 // Union type for all post creation DTOs
 type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
@@ -723,6 +724,43 @@ export class PostsService {
       });
 
       return PostMapper.toBasePostResponseDto(updatedPost!);
+    });
+  }
+
+  /**
+   * Recall a post by the owner - mark it as ARCHIVED
+   * This method uses a DB transaction to ensure atomicity
+   */
+  async recallMyPostById(id: string, userId: number): Promise<ArchivePostResponseDto> {
+    return this.dataSource.transaction(async (manager) => {
+      // 1. Find the post
+      const post = await manager.findOne(Post, {
+        where: { id, seller: { id: userId } },
+        relations: this.POST_FULL_RELATIONS,
+      });
+
+      // 2. Validation
+      if (!post) {
+        throw new NotFoundException('Post not found or you do not have permission to recall it');
+      }
+
+      if (post.status !== PostStatus.PUBLISHED) {
+        throw new BadRequestException('Bài viết không ở trạng thái PUBLISHED và không thể thu hồi');
+      }
+
+      // 3. Update post status and archived timestamp
+      post.status = PostStatus.ARCHIVED;
+      post.archivedAt = new Date();
+      await manager.save(Post, post);
+
+      // 4. Return success response
+      return {
+        success: true,
+        postId: id,
+        newStatus: PostStatus.ARCHIVED,
+        message:
+          'Bài viết đã được thu hồi. Yêu cầu hoàn phí (nếu đủ điều kiện) sẽ được xử lý tự động.',
+      };
     });
   }
 }

@@ -67,7 +67,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
     loadData();
   }, [isOpen, priceVnd, onClose]);
 
-  // Reload wallet data when TopupModal closes (in case user topped up)
+  // Reload wallet data when TopupModal closes (in cases user topped up)
   useEffect(() => {
     if (!isTopupModalOpen && isOpen) {
       const reloadWallet = async () => {

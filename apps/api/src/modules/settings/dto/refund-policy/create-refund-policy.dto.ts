@@ -25,10 +25,21 @@ export class CreateRefundPolicyDto {
   expiredRate?: number | null;
 
   @ApiPropertyOptional({
+    description: 'Refund rate for late cancellation (0.0000 to 1.0000)',
+    minimum: 0,
+    maximum: 1,
+    example: 0.7,
+  })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 4 })
+  @Min(0)
+  cancelLateRate?: number | null;
+
+  @ApiPropertyOptional({
     description: 'Refund rate when fraud suspected (0.0000 to 1.0000)',
     minimum: 0,
     maximum: 1,
-    example: 0.3,
+    example: 0.0,
   })
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 4 })
@@ -36,9 +47,29 @@ export class CreateRefundPolicyDto {
   fraudSuspectedRate?: number | null;
 
   @ApiPropertyOptional({
+    description: 'Days threshold for early cancellation (default: 7)',
+    minimum: 1,
+    example: 7,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  cancelEarlyDaysThreshold?: number | null;
+
+  @ApiPropertyOptional({
+    description: 'Days threshold for late cancellation (default: 7)',
+    minimum: 1,
+    example: 7,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  cancelLateDaysThreshold?: number | null;
+
+  @ApiPropertyOptional({
     description: 'Number of days to hold money when suspicious',
     minimum: 0,
-    example: 30,
+    example: 3,
   })
   @IsOptional()
   @IsInt()
@@ -48,7 +79,7 @@ export class CreateRefundPolicyDto {
   @ApiPropertyOptional({
     description: 'Auto refund after X days (0 = disabled)',
     minimum: 0,
-    example: 7,
+    example: 30,
   })
   @IsOptional()
   @IsInt()

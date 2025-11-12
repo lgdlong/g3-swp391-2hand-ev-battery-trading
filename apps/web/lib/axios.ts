@@ -39,7 +39,7 @@ api.interceptors.response.use(
       const hasAuthToken = Boolean(err?.config?.headers?.Authorization);
 
       if (hasAuthToken) {
-        // Token expiration case
+        // Token expiration cases
         handleTokenExpiration();
         return Promise.reject({
           code: 'TOKEN_EXPIRED',

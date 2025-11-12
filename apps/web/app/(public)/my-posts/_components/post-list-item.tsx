@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Edit, Trash2, Eye, Package, AlertCircle, Coins } from 'lucide-react';
+import { Edit, Trash2, Eye, Package, AlertCircle, Coins, Archive } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
 import { VerificationBadge } from '@/components/VerificationBadge';
 import { RequestVerificationButton } from './RequestVerificationButton';
@@ -13,6 +13,7 @@ interface PostListItemProps {
   onView?: (post: Post) => void;
   onMarkAsSold?: (postId: string) => void;
   onPayment?: (postId: string) => void;
+  onArchive?: (postId: string, postTitle: string) => void;
   onViewRejectReason?: (postId: string, postTitle: string) => void;
   onViewVerificationRejectReason?: (postId: string, postTitle: string) => void;
 }
@@ -95,6 +96,7 @@ export default function PostListItem({
   onView,
   onMarkAsSold,
   onPayment,
+  onArchive,
   onViewRejectReason,
   onViewVerificationRejectReason,
 }: PostListItemProps) {
@@ -188,6 +190,9 @@ export default function PostListItem({
               {districtName && `, ${districtName}`}
             </p>
             <p className="text-xs text-muted-foreground">Cập nhật: {formatDate(post.updatedAt)}</p>
+            <p className="text-xs text-muted-foreground">
+              Đăng: {post.reviewedAt ? formatDate(String(post.reviewedAt)) : '--'}
+            </p>
           </div>
 
           {/* Action Buttons */}
@@ -270,6 +275,26 @@ export default function PostListItem({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Đánh dấu đã bán</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Archive button - visible for PUBLISHED */}
+            {post.status === 'PUBLISHED' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
+                    onClick={() => onArchive?.(post.id, post.title)}
+                  >
+                    <Archive className="h-4 w-4" />
+                    Thu hồi
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Thu hồi bài viết</p>
                 </TooltipContent>
               </Tooltip>
             )}

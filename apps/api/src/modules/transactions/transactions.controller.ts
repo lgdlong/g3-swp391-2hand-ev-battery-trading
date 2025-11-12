@@ -8,6 +8,7 @@ import {
   Query,
   HttpStatus,
   ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,16 +17,21 @@ import {
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
+import { PostPayment } from './entities/post-payment.entity';
+import { RecordPostDepositDto } from './dto/record-post-deposit.dto';
 import { CreatePostPaymentDto } from './dto/create-post-payment.dto';
 import { PostPaymentResponseDto } from './dto/post-payment-response.dto';
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
 import type { ReqUser } from '../../core/decorators/current-user.decorator';
 
-@ApiTags('Post Payments')
+@ApiTags('Transactions')
 @ApiBearerAuth()
-@Controller('transactions/post-payments')
+@Controller('transactions')
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
@@ -137,5 +143,60 @@ export class TransactionsController {
   async deletePostPayment(@Param('postId') postId: string): Promise<{ message: string }> {
     await this.transactionsService.deletePostPayment(postId);
     return { message: 'Post payment deleted successfully' };
+  }
+
+  /**
+   * Record post deposit payment
+   * Called after user pays deposit for creating post
+   */
+  @Post('post-deposit')
+  @ApiOperation({ 
+    summary: 'Ghi nhận thanh toán đặt cọc khi tạo post',
+    description: 'Được gọi sau khi user trả deposit (đặt cọc) để tạo post. Lưu vào post_payments để tracking cho refund.'
+  })
+  @ApiBody({ type: RecordPostDepositDto })
+  @ApiCreatedResponse({ description: 'Deposit payment recorded successfully', type: PostPayment })
+  async recordPostDeposit(@Body() dto: RecordPostDepositDto): Promise<PostPayment> {
+    return await this.transactionsService.recordPostDepositPayment(
+      dto.postId,
+      dto.accountId,
+      dto.amountPaid,
+      dto.walletTransactionId,
+    );
+  }
+
+  /**
+   * Get post deposit payment info
+   */
+  @Get('post-deposit/:postId')
+  @ApiOperation({ summary: 'Lấy thông tin deposit payment của post' })
+  @ApiParam({ name: 'postId', description: 'Post ID' })
+  @ApiOkResponse({ description: 'Post deposit payment info', type: PostPayment })
+  async getPostDepositPayment(@Param('postId') postId: string): Promise<PostPayment> {
+    const payment = await this.transactionsService.getPostDepositPayment(postId);
+    if (!payment) {
+      throw new NotFoundException(`Deposit payment for post ${postId} not found`);
+    }
+    return payment;
+  }
+
+  /**
+   * Check if post has deposit payment
+   */
+  @Get('post-deposit/:postId/status')
+  @ApiOperation({ summary: 'Kiểm tra post đã trả deposit chưa' })
+  @ApiParam({ name: 'postId', description: 'Post ID' })
+  @ApiOkResponse({ 
+    schema: { 
+      type: 'object', 
+      properties: { 
+        postId: { type: 'string' },
+        hasDeposit: { type: 'boolean' }
+      }
+    }
+  })
+  async checkDepositStatus(@Param('postId') postId: string) {
+    const hasDeposit = await this.transactionsService.hasDepositPayment(postId);
+    return { postId, hasDeposit };
   }
 }

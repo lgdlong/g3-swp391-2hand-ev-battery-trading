@@ -6,8 +6,11 @@ export class RefundPolicyMapper {
     return {
       id: entity.id,
       cancelEarlyRate: entity.cancelEarlyRate,
+      cancelLateRate: entity.cancelLateRate,
       expiredRate: entity.expiredRate,
       fraudSuspectedRate: entity.fraudSuspectedRate,
+      cancelEarlyDaysThreshold: entity.cancelEarlyDaysThreshold,
+      cancelLateDaysThreshold: entity.cancelLateDaysThreshold,
       holdDays: entity.holdDays,
       autoRefundAfterDays: entity.autoRefundAfterDays,
       updatedAt: entity.updatedAt,
