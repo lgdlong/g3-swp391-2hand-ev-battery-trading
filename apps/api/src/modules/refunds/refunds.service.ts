@@ -315,6 +315,8 @@ export class RefundsService {
   /**
    * Hàm này truy vấn danh sách các bài đăng đã được review, đang ở trạng thái PUBLISHED hoặc
    * ARCHIVED, và chưa từng được hoàn tiền (chưa có record refund).
+   *
+   * ⚠️ Loại trừ bài SOLD (Kịch bản #1: Giao dịch thành công → Giữ 100% fee, không refund)
    */
   async findRefundCandidatePosts(): Promise<Post[]> {
     const posts = await this.postRepo
@@ -324,6 +326,9 @@ export class RefundsService {
       .where('post.reviewedAt IS NOT NULL')
       .andWhere('post.status IN (:...statuses)', {
         statuses: ['PUBLISHED', 'ARCHIVED'],
+      })
+      .andWhere('post.status != :soldStatus', {
+        soldStatus: 'SOLD',
       })
       .andWhere('refund.id IS NULL')
       .getMany();

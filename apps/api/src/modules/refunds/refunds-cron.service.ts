@@ -192,37 +192,55 @@ export class RefundsCronService {
 
     // 🔒 1. KIỂM TRA GIAN LẬN (ƯU TIÊN CAO NHẤT)
     const fraudFlag = await this.postFraudFlagsService.getFlagByPostId(post.id);
-    if (
-      fraudFlag &&
-      (fraudFlag.status === FraudFlagStatus.SUSPECTED ||
-        fraudFlag.status === FraudFlagStatus.CONFIRMED)
-    ) {
-      // Bài đăng bị gắn cờ gian lận -> Tạo refund PENDING với rate = 0%
-      this.logger.warn(
-        `⚠️ Post ${post.id} is flagged as ${fraudFlag.status}. Creating PENDING refund for admin review.`,
-      );
-
-      const rate = policy.fraudSuspectedRate ?? 0.0;
+    if (fraudFlag) {
       const amountPaid = Number.parseFloat(postPayment.amountPaid);
+      const rate = policy.fraudSuspectedRate ?? 0.0;
       const amountRefund = Math.floor(amountPaid * rate);
       const refundPercent = Math.floor(rate * 100);
 
-      // Tạo refund record PENDING để Admin duyệt
-      await this.refundsService.createRefundRecord({
-        postId: post.id,
-        accountId: postPayment.accountId,
-        scenario: RefundScenario.FRAUD_SUSPECTED,
-        refundPercent,
-        amountOriginal: postPayment.amountPaid,
-        amountRefund: String(amountRefund),
-        status: RefundStatus.PENDING,
-        reason: `[AUTO] Flagged as ${fraudFlag.status}. Awaiting admin decision.`,
-      });
+      // Case 1: CONFIRMED fraud → REJECTED ngay (Kịch bản #2)
+      if (fraudFlag.status === FraudFlagStatus.CONFIRMED) {
+        this.logger.warn(
+          `🚫 Post ${post.id} is CONFIRMED fraud. Creating REJECTED refund (0% refund, 100% fee captured).`,
+        );
 
-      this.logger.log(
-        `✅ Created PENDING refund for fraud-flagged post ${post.id} (${refundPercent}% = ${amountRefund} VND)`,
-      );
-      return; // Dừng xử lý tự động
+        await this.refundsService.createRefundRecord({
+          postId: post.id,
+          accountId: postPayment.accountId,
+          scenario: RefundScenario.FRAUD_CONFIRMED,
+          refundPercent: 0,
+          amountOriginal: postPayment.amountPaid,
+          amountRefund: '0',
+          status: RefundStatus.REJECTED,
+          reason: `[AUTO] Fraud CONFIRMED by admin. No refund allowed. 100% fee captured.`,
+        });
+
+        this.logger.log(`✅ Created REJECTED refund for confirmed fraud post ${post.id}`);
+        return;
+      }
+
+      // Case 2: SUSPECTED fraud → PENDING cho admin duyệt (Kịch bản #3)
+      if (fraudFlag.status === FraudFlagStatus.SUSPECTED) {
+        this.logger.warn(
+          `⚠️ Post ${post.id} is SUSPECTED fraud. Creating PENDING refund for admin review.`,
+        );
+
+        await this.refundsService.createRefundRecord({
+          postId: post.id,
+          accountId: postPayment.accountId,
+          scenario: RefundScenario.FRAUD_SUSPECTED,
+          refundPercent,
+          amountOriginal: postPayment.amountPaid,
+          amountRefund: String(amountRefund),
+          status: RefundStatus.PENDING,
+          reason: `[AUTO] Fraud SUSPECTED. Awaiting admin decision (default: ${refundPercent}% = ${amountRefund} VND).`,
+        });
+
+        this.logger.log(
+          `✅ Created PENDING refund for suspected fraud post ${post.id} (${refundPercent}%)`,
+        );
+        return;
+      }
     }
 
     // 🔒 2. KIỂM TRA HOẠT ĐỘNG CHAT (CHỐNG BÁN CHUI)
