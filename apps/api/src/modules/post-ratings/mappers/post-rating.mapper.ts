@@ -9,6 +9,7 @@ export interface SafePostRatingDto {
   content: string | null;
   createdAt: Date;
   customer: SafeAccountDto | null;
+  seller?: SafeAccountDto | null;
 }
 
 export class PostRatingMapper {
@@ -20,6 +21,7 @@ export class PostRatingMapper {
       content: entity.content ?? null,
       createdAt: entity.createdAt,
       customer: entity.customer ? AccountMapper.toSafeDto(entity.customer) : null,
+      seller: (entity.post as any)?.seller ? AccountMapper.toSafeDto((entity.post as any).seller) : null,
     };
   }
 

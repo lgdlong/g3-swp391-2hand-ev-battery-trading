@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth-context';
 import { SellerInfo, PostHeader, PostContractsList } from '@/app/(public)/posts/_components';
 import { Specifications } from './_components';
 import { DEFAULT_IMAGE } from '@/constants/images';
+import { RatingsList } from '@/components/RatingsList';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -180,6 +181,8 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
 
             {/* Battery Specifications */}
             <Specifications post={post} />
+
+            <RatingsList postId={post.id} limit={10} />
           </div>
         </div>
       </div>
