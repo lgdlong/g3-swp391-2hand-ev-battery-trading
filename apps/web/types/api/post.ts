@@ -156,3 +156,10 @@ export interface DeletePostResponse {
   message: string;
   deletedAt: string;
 }
+
+export interface ArchivePostResponse {
+  success: boolean;
+  postId: string;
+  newStatus: PostStatus;
+  message: string;
+}

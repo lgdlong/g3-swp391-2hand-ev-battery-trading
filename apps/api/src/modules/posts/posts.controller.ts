@@ -54,6 +54,7 @@ import {
 import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 import { DeletePostResponseDto } from './dto/delete-post-response.dto';
 import { DeductPostFeeDto } from './dto/deduct-post-fee.dto';
+import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
 
 @ApiTags('posts')
 @ApiExtraModels(
@@ -519,7 +520,7 @@ export class PostsController {
   })
   @ApiOkResponse({
     description: 'Post recalled and archived successfully',
-    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+    type: ArchivePostResponseDto,
   })
   @ApiBadRequestResponse({ description: 'Cannot recall post in current state' })
   @ApiNotFoundResponse({ description: 'Post not found or no permission' })
@@ -528,10 +529,9 @@ export class PostsController {
   async recallMyPostById(
     @Param('id') id: string,
     @User() user: AuthUser,
-  ): Promise<BasePostResponseDto> {
+  ): Promise<ArchivePostResponseDto> {
     return this.postsService.recallMyPostById(id, user.sub);
   }
-
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
