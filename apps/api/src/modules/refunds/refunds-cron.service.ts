@@ -245,9 +245,10 @@ export class RefundsCronService {
 
     // 🔒 2. KIỂM TRA HOẠT ĐỘNG CHAT (CHỐNG BÁN CHUI)
     const hasChatActivity = await this.chatService.hasPostChatActivity(post.id);
+    let chatCount = 0;
 
     if (hasChatActivity) {
-      const chatCount = await this.chatService.getPostChatActivityCount(post.id);
+      chatCount = await this.chatService.getPostChatActivityCount(post.id);
       this.logger.log(
         `💬 Post ${post.id} has chat activity (${chatCount} conversation(s)) - will apply anti-fraud logic`,
       );
@@ -292,23 +293,60 @@ export class RefundsCronService {
       return;
     }
 
-    // Tạo refund record với status PENDING
-    const refund = await this.refundsService.createRefundRecord({
-      postId: post.id,
-      accountId: postPayment.accountId,
-      scenario,
-      refundPercent,
-      amountOriginal: postPayment.amountPaid,
-      amountRefund: String(amountRefund),
-      status: RefundStatus.PENDING,
-      reason: `[AUTO] ${scenario}${hasChatActivity ? ' - Has chat activity' : ''}`,
-    });
+    // 🔄 Quyết định tự động hoàn tiền hay chờ Admin duyệt
+    // - Tự động hoàn tiền: Trường hợp bình thường (KHÔNG có chat activity nghi ngờ bán chui)
+    // - Chờ Admin duyệt: Có chat activity (nghi ngờ bán chui) → cần kiểm tra thủ công
+    const shouldAutoRefund = !hasChatActivity;
 
-    // ⚠️ KHÔNG tự động thực thi refund - để Admin duyệt
-    // await this.executeRefundToWallet(...) // REMOVED
-    this.logger.log(
-      `✅ Created PENDING refund record ${refund.id} for post ${post.id} - Awaiting admin approval`,
-    );
+    if (shouldAutoRefund) {
+      // ✅ TỰ ĐỘNG HOÀN TIỀN - Trường hợp bình thường
+      this.logger.log(`Post ${post.id} is clean (no chat activity). Auto-processing refund...`);
+
+      const refund = await this.refundsService.createRefundRecord({
+        postId: post.id,
+        accountId: postPayment.accountId,
+        scenario,
+        refundPercent,
+        amountOriginal: postPayment.amountPaid,
+        amountRefund: String(amountRefund),
+        status: RefundStatus.PENDING, // Tạo PENDING trước
+        reason: `[AUTO] ${scenario} - Clean refund (no suspicious activity)`,
+      });
+
+      // Thực thi hoàn tiền ngay lập tức
+      await this.executeRefundToWallet(
+        refund.id,
+        post.id,
+        postPayment.accountId,
+        amountRefund,
+        scenario,
+        refundPercent,
+      );
+
+      this.logger.log(
+        `Auto-refunded ${amountRefund} VND (${refundPercent}%) to user ${postPayment.accountId} for post ${post.id}`,
+      );
+    } else {
+      // ⚠️ CHỜ ADMIN DUYỆT - Có dấu hiệu bán chui
+      this.logger.warn(
+        `Post ${post.id} has chat activity (${chatCount} conversation(s)). Creating PENDING refund for admin review (suspected private sale).`,
+      );
+
+      const refund = await this.refundsService.createRefundRecord({
+        postId: post.id,
+        accountId: postPayment.accountId,
+        scenario,
+        refundPercent,
+        amountOriginal: postPayment.amountPaid,
+        amountRefund: String(amountRefund),
+        status: RefundStatus.PENDING,
+        reason: `[AUTO] ${scenario} - Has chat activity (${chatCount} conversations). Suspected private sale - awaiting admin review.`,
+      });
+
+      this.logger.log(
+        `Created PENDING refund record ${refund.id} for post ${post.id} - Awaiting admin approval (has ${chatCount} chat conversations)`,
+      );
+    }
   }
 
   /**
