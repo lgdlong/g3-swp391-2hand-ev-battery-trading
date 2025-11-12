@@ -120,7 +120,7 @@ class ChatWebSocketService {
 
     this.socket.on('error', (error: any) => {
       console.error('🔌 Chat WebSocket error:', error);
-      
+
       // Log error details for debugging
       if (error.message) {
         console.error('🔌 Error message:', error.message);
@@ -243,6 +243,11 @@ class ChatWebSocketService {
   // Utility
   get isConnected() {
     return this.socket?.connected ?? false;
+  }
+
+  // Get socket instance for direct event listening
+  getSocket(): Socket | null {
+    return this.socket;
   }
 }
 

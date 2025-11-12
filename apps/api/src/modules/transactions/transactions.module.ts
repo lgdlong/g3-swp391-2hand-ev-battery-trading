@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TransactionsService } from './transactions.service';
 import { TransactionsController } from './transactions.controller';
@@ -16,7 +16,7 @@ import { PostFraudFlag } from '../post-fraud-flags/entities/post-fraud-flag.enti
     TypeOrmModule.forFeature([Contract, PostPayment, PostFraudFlag, Post]),
     WalletsModule,
     SettingsModule,
-    ChatModule,
+    forwardRef(() => ChatModule), // Use forwardRef to avoid circular dependency
     PostFraudFlagsModule,
   ],
   controllers: [TransactionsController],

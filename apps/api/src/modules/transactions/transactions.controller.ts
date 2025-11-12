@@ -35,6 +35,7 @@ import { PostPayment } from './entities/post-payment.entity';
 import { RecordPostDepositDto } from './dto/record-post-deposit.dto';
 import { CreatePostPaymentDto } from './dto/create-post-payment.dto';
 import { PostPaymentResponseDto } from './dto/post-payment-response.dto';
+import { InitiateConfirmationDto } from './dto/initiate-confirmation.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
 import type { ReqUser } from '../../core/decorators/current-user.decorator';
@@ -345,7 +346,8 @@ export class TransactionsController {
   @Post('post-deposit')
   @ApiOperation({
     summary: 'Ghi nhận thanh toán đặt cọc khi tạo post',
-    description: 'Được gọi sau khi user trả deposit (đặt cọc) để tạo post. Lưu vào post_payments để tracking cho refund.'
+    description:
+      'Được gọi sau khi user trả deposit (đặt cọc) để tạo post. Lưu vào post_payments để tracking cho refund.',
   })
   @ApiBody({ type: RecordPostDepositDto })
   @ApiCreatedResponse({ description: 'Deposit payment recorded successfully', type: PostPayment })
@@ -384,12 +386,48 @@ export class TransactionsController {
       type: 'object',
       properties: {
         postId: { type: 'string' },
-        hasDeposit: { type: 'boolean' }
-      }
-    }
+        hasDeposit: { type: 'boolean' },
+      },
+    },
   })
   async checkDepositStatus(@Param('postId') postId: string) {
     const hasDeposit = await this.transactionsService.hasDepositPayment(postId);
     return { postId, hasDeposit };
+  }
+
+  @Post('contracts/initiate-confirmation')
+  @ApiOperation({ summary: 'Khởi tạo xác nhận giao dịch (Seller)' })
+  @ApiBody({ type: InitiateConfirmationDto })
+  @ApiCreatedResponse({
+    description: 'Khởi tạo xác nhận thành công',
+    type: ContractResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Không tìm thấy bài đăng hoặc cuộc trò chuyện' })
+  @ApiBadRequestResponse({ description: 'Bài đăng đã được bán hoặc đã có xác nhận đang chờ' })
+  @ApiForbiddenResponse({ description: 'Bạn không phải chủ bài đăng' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  async initiateConfirmation(
+    @Body() dto: InitiateConfirmationDto,
+    @CurrentUser() user: ReqUser,
+  ): Promise<Contract> {
+    return this.transactionsService.initiateConfirmation(dto, user.sub);
+  }
+
+  @Post('contracts/:contractId/agree')
+  @ApiOperation({ summary: 'Đồng ý giao dịch (Buyer)' })
+  @ApiParam({ name: 'contractId', type: String, description: 'Contract ID' })
+  @ApiCreatedResponse({
+    description: 'Đồng ý giao dịch thành công',
+    type: ContractResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Không tìm thấy hợp đồng' })
+  @ApiBadRequestResponse({ description: 'Hợp đồng đã được xử lý hoặc người bán chưa xác nhận' })
+  @ApiForbiddenResponse({ description: 'Bạn không phải người mua' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  async agreeToContract(
+    @Param('contractId') contractId: string,
+    @CurrentUser() user: ReqUser,
+  ): Promise<Contract> {
+    return this.transactionsService.agreeToContract(contractId, user.sub);
   }
 }

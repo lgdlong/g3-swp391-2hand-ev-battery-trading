@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Package, CheckCircle2 } from 'lucide-react';
+import { Package, CheckCircle2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Conversation } from '@/types/chat';
-import { Contract } from '@/lib/api/transactionApi';
+import { Contract, initiateConfirmation } from '@/lib/api/transactionApi';
 import { ConfirmOrderDialog } from './ConfirmOrderDialog';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { handleApiError } from '@/lib/handle-api-error';
 
 interface ChatActionBarProps {
   conversation: Conversation;
@@ -23,6 +26,22 @@ export function ChatActionBar({
   onContractCreated,
 }: ChatActionBarProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Mutation for Flow F: Seller initiates confirmation
+  const initiateFlowFMutation = useMutation({
+    mutationFn: () => {
+      if (!conversation.post?.id) {
+        throw new Error('Missing post ID');
+      }
+      return initiateConfirmation(conversation.post.id, Number.parseInt(conversation.id));
+    },
+    onSuccess: () => {
+      toast.success('Đã gửi yêu cầu xác nhận cho người mua!');
+    },
+    onError: (err) => {
+      handleApiError(err);
+    },
+  });
 
   // Only show for seller
   const isSeller = currentUserId === conversation.sellerId;
@@ -67,14 +86,25 @@ export function ChatActionBar({
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            disabled={isLoadingContract}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-          >
-            <Package className="h-4 w-4 mr-2" />
-            {isLoadingContract ? 'Đang xử lý...' : 'Chốt đơn'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              disabled={isLoadingContract}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            >
+              <Package className="h-4 w-4 mr-2" />
+              {isLoadingContract ? 'Đang xử lý...' : 'Chốt đơn'}
+            </Button>
+            <Button
+              onClick={() => initiateFlowFMutation.mutate()}
+              disabled={isLoadingContract || initiateFlowFMutation.isPending}
+              variant="outline"
+              className="border-green-600 text-green-600 hover:bg-green-50"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {initiateFlowFMutation.isPending ? 'Đang xử lý...' : 'Chốt Giao Dịch (Flow F)'}
+            </Button>
+          </div>
         </div>
       </div>
 

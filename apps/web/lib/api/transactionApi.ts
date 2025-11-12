@@ -206,3 +206,36 @@ export async function forfeitExternal(contractId: string): Promise<Contract> {
   return data;
 }
 
+/**
+ * Initiate contract confirmation flow (Seller starts Flow F)
+ * @param listingId - Post/listing ID
+ * @param conversationId - Conversation ID with the buyer
+ */
+export async function initiateConfirmation(
+  listingId: string,
+  conversationId: number,
+): Promise<Contract> {
+  const { data } = await api.post<Contract>(
+    '/transactions/contracts/initiate-confirmation',
+    { listingId, conversationId },
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * Buyer agrees to contract (completes Flow F)
+ * @param contractId - Contract ID
+ */
+export async function agreeToContract(contractId: string): Promise<Contract> {
+  const { data } = await api.post<Contract>(
+    `/transactions/contracts/${contractId}/agree`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}

@@ -287,4 +287,28 @@ export class ChatService {
       where: { postId, hasMessages: true },
     });
   }
+
+  /**
+   * Get conversation by ID with access check
+   * @param conversationId - Conversation ID
+   * @param userId - User ID to verify access
+   * @returns Conversation or null
+   */
+  async getConversationById(conversationId: number, userId: number): Promise<Conversation | null> {
+    const conversation = await this.conversationRepo.findOne({
+      where: { id: conversationId.toString() },
+      relations: ['post', 'buyer', 'seller'],
+    });
+
+    if (!conversation) {
+      return null;
+    }
+
+    // Verify user has access to this conversation
+    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+      throw new ForbiddenException('You do not have access to this conversation');
+    }
+
+    return conversation;
+  }
 }

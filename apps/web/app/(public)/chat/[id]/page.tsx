@@ -123,6 +123,7 @@ export default function ChatPage() {
     leaveConversation,
     isConnected,
     onNewMessage, // ✨ NEW: Get callback to listen for new messages
+    confirmationCard, // ✨ Flow F: Confirmation card state
   } = useChatWebSocket();
 
   // ✨ NEW: Listen for WebSocket messages and update state only
@@ -134,7 +135,7 @@ export default function ChatPage() {
 
       // ✅ FIX: Only add message if it belongs to the current conversation
       if (message.conversationId === activeChatId) {
-      setNewMessages((prev) => [...prev, message]);
+        setNewMessages((prev) => [...prev, message]);
       } else {
         console.log(
           `⚠️ Ignoring message from different conversation. Current: ${activeChatId}, Message: ${message.conversationId}`,
@@ -151,10 +152,10 @@ export default function ChatPage() {
   // ✨ NEW: Reset newMessages when activeChatId changes and invalidate React Query to fetch latest messages
   useEffect(() => {
     if (!activeChatId) return;
-    
+
     console.log('🔄 Active chat changed, resetting new messages state and refetching messages');
     setNewMessages([]);
-    
+
     // Invalidate and refetch messages from server to ensure we have all messages
     // This is important when user enters chat page - they should see all messages that were sent while they were away
     queryClient.invalidateQueries({
@@ -171,9 +172,7 @@ export default function ChatPage() {
     const oldMessages = infiniteMessagesData?.pages?.flatMap((page) => page.messages || []) || [];
 
     // ✅ FIX: Filter messages to ensure they belong to current conversation
-    const filteredOldMessages = oldMessages.filter(
-      (msg) => msg.conversationId === activeChatId,
-    );
+    const filteredOldMessages = oldMessages.filter((msg) => msg.conversationId === activeChatId);
 
     // Filter new messages to avoid duplicates and ensure they belong to current conversation
     const uniqueNewMessages = newMessages.filter(
@@ -288,7 +287,6 @@ export default function ChatPage() {
     );
   }
 
-
   // Handle contract creation
   const handleContractCreated = (isExternalTransaction: boolean) => {
     if (!listingId || !buyerId) {
@@ -323,6 +321,7 @@ export default function ChatPage() {
         existingContract={existingContract || undefined}
         isLoadingContract={isLoadingContract || createContractMutation.isPending}
         onContractCreated={handleContractCreated}
+        confirmationCard={confirmationCard}
       />
     </div>
   );

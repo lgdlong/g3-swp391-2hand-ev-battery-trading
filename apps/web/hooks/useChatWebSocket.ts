@@ -32,6 +32,15 @@ export const useChatWebSocket = () => {
   // ✨ NEW: Store message callback for external components
   const [messageCallback, setMessageCallback] = useState<((message: Message) => void) | null>(null);
 
+  // 🆕 State for confirmation card (Flow F)
+  const [confirmationCard, setConfirmationCard] = useState<{
+    contractId: string;
+    actionParty?: 'BUYER' | 'SELLER';
+    isFinal?: boolean;
+    pdfUrl?: string;
+    timestamp?: string;
+  } | null>(null);
+
   // Connect to WebSocket when user is authenticated
   useEffect(() => {
     if (!isLoggedIn) {
@@ -63,7 +72,7 @@ export const useChatWebSocket = () => {
       // Reset reconnection settings when establishing new connection
       chatWebSocketService.resetReconnectionSettings();
       chatWebSocketService.connect(token);
-      
+
       // Update state after a short delay to allow connection to establish
       setTimeout(() => {
         setIsConnected(chatWebSocketService.isConnected);
@@ -177,6 +186,32 @@ export const useChatWebSocket = () => {
 
     const cleanupNewMessage = chatWebSocketService.onNewMessage(handleNewMessage);
 
+    // 🆕 Listen for confirmation card events (Flow F)
+    const socket = chatWebSocketService.getSocket();
+    const handleShowConfirmationCard = (payload: {
+      contractId: string;
+      actionParty?: string;
+      timestamp?: string;
+    }) => {
+      console.log('📩 Received confirmation card:', payload);
+      setConfirmationCard({ ...payload, actionParty: payload.actionParty as 'BUYER' | 'SELLER' });
+    };
+
+    const handleConfirmationComplete = (payload: {
+      contractId: string;
+      isFinal?: boolean;
+      pdfUrl?: string;
+      timestamp?: string;
+    }) => {
+      console.log('✅ Received confirmation complete:', payload);
+      setConfirmationCard(payload);
+    };
+
+    if (socket) {
+      socket.on('server:show_confirmation_card', handleShowConfirmationCard);
+      socket.on('server:confirmation_complete', handleConfirmationComplete);
+    }
+
     // ⚠️ Sửa lỗi: Dùng cleanup cụ thể, không dùng removeAllListeners()
     return () => {
       console.log('🔌 Cleaning up WebSocket event listeners');
@@ -184,6 +219,12 @@ export const useChatWebSocket = () => {
       cleanupConnect();
       cleanupDisconnect();
       cleanupNewMessage();
+
+      // Cleanup confirmation card listeners
+      if (socket) {
+        socket.off('server:show_confirmation_card', handleShowConfirmationCard);
+        socket.off('server:confirmation_complete', handleConfirmationComplete);
+      }
     };
   }, [handleNewMessage, isConnected]);
 
@@ -215,12 +256,15 @@ export const useChatWebSocket = () => {
     isConnected: isConnected, // Trả về state thay vì thuộc tính tĩnh
     // ✨ NEW: Provide callback mechanism for listening to new messages
     onNewMessage,
+    // 🆕 Expose confirmation card state (Flow F)
+    confirmationCard,
   };
 
   // Debug log for troubleshooting
   console.log('🔌 useChatWebSocket returning state:', {
     isConnected: hookState.isConnected,
     serviceConnected: chatWebSocketService.isConnected,
+    hasConfirmationCard: !!hookState.confirmationCard,
   });
 
   return hookState;

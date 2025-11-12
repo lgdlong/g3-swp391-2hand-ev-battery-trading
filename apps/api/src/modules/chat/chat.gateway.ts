@@ -200,4 +200,48 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('error', { message: errorMessage });
     }
   }
+
+  /**
+   * Send confirmation card signal to client (for buyer to see pending confirmation)
+   * Called by TransactionsService when seller initiates confirmation
+   *
+   * @param conversationId - ID of conversation to send signal to
+   * @param contractId - ID of the contract created
+   */
+  public sendConfirmationCard(conversationId: number, contractId: string): void {
+    const roomName = `conversation:${conversationId}`;
+    this.server.to(roomName).emit('server:show_confirmation_card', {
+      contractId: contractId,
+      actionParty: 'BUYER',
+      timestamp: new Date().toISOString(),
+    });
+    this.logger.log(
+      `Sent confirmation card for contract ${contractId} to conversation ${conversationId}`,
+    );
+  }
+
+  /**
+   * Send confirmation complete signal to client (transaction completed)
+   * Called by TransactionsService when buyer confirms
+   *
+   * @param conversationId - ID of conversation to send signal to
+   * @param contractId - ID of the completed contract
+   * @param pdfUrl - URL of the generated PDF contract
+   */
+  public sendConfirmationComplete(
+    conversationId: number,
+    contractId: string,
+    pdfUrl: string,
+  ): void {
+    const roomName = `conversation:${conversationId}`;
+    this.server.to(roomName).emit('server:confirmation_complete', {
+      contractId: contractId,
+      isFinal: true,
+      pdfUrl: pdfUrl,
+      timestamp: new Date().toISOString(),
+    });
+    this.logger.log(
+      `Sent confirmation complete for contract ${contractId} to conversation ${conversationId}`,
+    );
+  }
 }

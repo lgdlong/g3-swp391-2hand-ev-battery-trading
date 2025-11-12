@@ -16,6 +16,6 @@ import { Post } from '../posts/entities/post.entity';
   imports: [TypeOrmModule.forFeature([Conversation, Message, Post]), AuthModule],
   controllers: [ChatController],
   providers: [ChatService, ChatGateway],
-  exports: [ChatService], // Export service for use in other modules if needed
+  exports: [ChatService, ChatGateway],
 })
 export class ChatModule {}

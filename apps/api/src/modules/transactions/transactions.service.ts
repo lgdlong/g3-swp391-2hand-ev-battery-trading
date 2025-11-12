@@ -4,9 +4,11 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Contract } from './entities/contract.entity';
 import { ContractStatus } from '../../shared/enums/contract-status.enum';
 import { ConfirmContractDto } from './dto/confirm-contract.dto';
@@ -18,6 +20,8 @@ import { CreatePostPaymentDto } from './dto/create-post-payment.dto';
 import { PostPaymentResponseDto } from './dto/post-payment-response.dto';
 import { WalletsService } from '../wallets/wallets.service';
 import { FeeTierService } from '../settings/service/fee-tier.service';
+import { ChatGateway } from '../chat/chat.gateway';
+import { ChatService } from '../chat/chat.service';
 
 @Injectable()
 export class TransactionsService {
@@ -30,6 +34,11 @@ export class TransactionsService {
     private readonly postPaymentRepository: Repository<PostPayment>,
     private readonly walletsService: WalletsService,
     private readonly feeTierService: FeeTierService,
+    private readonly entityManager: EntityManager,
+    @Inject(forwardRef(() => ChatGateway))
+    private readonly chatGateway: ChatGateway,
+    @Inject(forwardRef(() => ChatService))
+    private readonly chatService: ChatService,
   ) {}
 
   /**
@@ -691,5 +700,167 @@ export class TransactionsService {
       where: { postId },
     });
     return !!payment;
+  }
+
+  /**
+   * Initiate contract confirmation (Seller starts the flow)
+   * Creates a contract and sends WebSocket signal to buyer
+   */
+  async initiateConfirmation(
+    dto: { listingId: string; conversationId: number },
+    sellerId: number,
+  ): Promise<Contract> {
+    // 1. Get post info
+    const post = await this.postRepo.findOne({
+      where: { id: dto.listingId },
+      relations: ['seller'],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Bài đăng không tồn tại.');
+    }
+
+    const postSellerId = typeof post.seller === 'object' ? post.seller.id : post.seller;
+
+    if (postSellerId !== sellerId) {
+      throw new ForbiddenException('Bạn không phải chủ bài đăng này.');
+    }
+
+    if (post.status === PostStatus.SOLD) {
+      throw new BadRequestException('Bài đăng này đã được bán.');
+    }
+
+    // 2. Get buyer info from conversation
+    const conversation = await this.chatService.getConversationById(dto.conversationId, sellerId);
+
+    if (!conversation) {
+      throw new NotFoundException('Không tìm thấy cuộc trò chuyện.');
+    }
+
+    const buyerId =
+      conversation.buyerId === sellerId ? conversation.sellerId : conversation.buyerId;
+
+    // 3. Check for existing pending contract
+    const existingContract = await this.contractRepo.findOne({
+      where: {
+        listingId: dto.listingId,
+        buyerId: buyerId,
+        status: ContractStatus.AWAITING_CONFIRMATION,
+      },
+    });
+
+    if (existingContract && existingContract.sellerConfirmedAt) {
+      throw new BadRequestException('Đã có yêu cầu xác nhận đang chờ xử lý.');
+    }
+
+    // 4. Create or update contract
+    let contract: Contract;
+    if (existingContract) {
+      existingContract.sellerConfirmedAt = new Date();
+      contract = await this.contractRepo.save(existingContract);
+    } else {
+      const newContract = this.contractRepo.create({
+        listingId: dto.listingId,
+        sellerId: sellerId,
+        buyerId: buyerId,
+        status: ContractStatus.AWAITING_CONFIRMATION,
+        sellerConfirmedAt: new Date(),
+        buyerConfirmedAt: null,
+        listingSnapshot: {
+          id: post.id,
+          title: post.title,
+          priceVnd: post.priceVnd,
+          postType: post.postType,
+          description: post.description,
+          createdAt: post.createdAt,
+        },
+      });
+      contract = await this.contractRepo.save(newContract);
+    }
+
+    // 5. Send WebSocket signal to buyer
+    this.chatGateway.sendConfirmationCard(dto.conversationId, contract.id);
+
+    return contract;
+  }
+
+  /**
+   * Buyer agrees to contract (completes the transaction)
+   * Updates contract status and generates PDF
+   */
+  async agreeToContract(contractId: string, buyerId: number): Promise<Contract> {
+    return this.entityManager.transaction(async (manager) => {
+      const contractRepo = manager.getRepository(Contract);
+
+      // 1. Lock contract row FIRST (without LEFT JOIN)
+      const contractLocked = await contractRepo.findOne({
+        where: { id: contractId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      // 2. Validations
+      if (!contractLocked) {
+        throw new NotFoundException('Không tìm thấy hợp đồng.');
+      }
+
+      if (contractLocked.buyerId !== buyerId) {
+        throw new ForbiddenException('Bạn không phải người mua.');
+      }
+
+      if (contractLocked.status !== ContractStatus.AWAITING_CONFIRMATION) {
+        throw new BadRequestException('Hợp đồng đã được xử lý.');
+      }
+
+      if (contractLocked.buyerConfirmedAt) {
+        throw new BadRequestException('Bạn đã xác nhận rồi.');
+      }
+
+      if (!contractLocked.sellerConfirmedAt) {
+        throw new BadRequestException('Người bán chưa xác nhận.');
+      }
+
+      // 3. Load relations AFTER locking (separate query, no lock needed)
+      const contract = await contractRepo.findOne({
+        where: { id: contractId },
+        relations: ['seller', 'buyer'],
+      });
+
+      if (!contract) {
+        throw new NotFoundException('Không thể tải thông tin hợp đồng.');
+      }
+
+      // 4. Generate PDF (placeholder - implement actual PDF generation later)
+      const pdfUrl = `/contracts/contract-${contract.id}.pdf`;
+
+      // 5. Update contract
+      contract.buyerConfirmedAt = new Date();
+      contract.confirmedAt = new Date();
+      contract.status = ContractStatus.SUCCESS;
+      contract.filePath = pdfUrl;
+      await contractRepo.save(contract);
+
+      // 6. Update post status to SOLD
+      const postRepo = manager.getRepository(Post);
+      await postRepo.update(contract.listingId, { status: PostStatus.SOLD });
+
+      // 7. Find conversation and send WebSocket signal
+      const conversations = await this.chatService.getUserConversations(buyerId);
+      const conversation = conversations.find(
+        (conv) =>
+          conv.postId === contract.listingId &&
+          ((conv.buyerId === buyerId && conv.sellerId === contract.sellerId) ||
+            (conv.sellerId === buyerId && conv.buyerId === contract.sellerId)),
+      );
+
+      if (conversation) {
+        this.chatGateway.sendConfirmationComplete(
+          Number.parseInt(conversation.id),
+          contract.id,
+          pdfUrl,
+        );
+      }
+
+      return contract;
+    });
   }
 }
