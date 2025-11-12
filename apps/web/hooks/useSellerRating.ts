@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api/instance';
+import { api } from '@/lib/axios';
 
 interface SellerRatingStats {
   averageRating: number;
@@ -12,13 +12,13 @@ interface SellerRatingStats {
  * useSellerRating - Hook để lấy đánh giá trung bình của seller
  * @param sellerId - ID của seller
  * @returns { averageRating, totalReviews, isLoading, error }
- * 
+ *
  * @example
  * ```tsx
  * const { averageRating, totalReviews, isLoading } = useSellerRating('seller-123');
- * 
+ *
  * if (isLoading) return <div>Loading...</div>;
- * 
+ *
  * <SellerRatingDisplay averageRating={averageRating} totalReviews={totalReviews} />
  * ```
  */
@@ -56,7 +56,7 @@ export function useSellerRating(sellerId?: string) {
  * calculateAverageRating - Tính average rating từ array ratings
  * @param ratings - Array of ratings (0-5)
  * @returns Average rating (0-5), hoặc 0 nếu array rỗng
- * 
+ *
  * @example
  * ```tsx
  * const ratings = [5, 4, 4, 3];

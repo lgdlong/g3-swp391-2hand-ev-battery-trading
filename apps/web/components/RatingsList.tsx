@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api/instance';
-import { Star, User } from 'lucide-react';
+import { api } from '@/lib/axios';
+import { Star } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import type { RatingListResponse, RatingResponse } from '@/types/rating';
 
@@ -18,7 +18,7 @@ interface RatingsListProps {
  * - Fetch ratings từ API theo postId
  * - Hiển thị từng rating với avatar, name, rating, comment
  * - Pagination support
- * 
+ *
  * @example
  * ```tsx
  * <RatingsList postId="post-123" limit={10} page={1} />
@@ -71,9 +71,7 @@ export function RatingsList({ postId, limit = 10, page = 1 }: RatingsListProps) 
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold">
-          Đánh giá ({data.total})
-        </h2>
+        <h2 className="text-2xl font-semibold">Đánh giá ({data.total})</h2>
       </div>
 
       {/* Ratings List */}
@@ -138,9 +136,7 @@ function RatingItem({ rating }: { rating: RatingResponse }) {
           <div className="flex items-center justify-between gap-2">
             <div>
               {/* Name */}
-              <p className="font-semibold text-gray-900">
-                {displayName}
-              </p>
+              <p className="font-semibold text-gray-900">{displayName}</p>
 
               {/* Rating Stars */}
               <div className="flex items-center gap-1 mt-1">
@@ -148,9 +144,7 @@ function RatingItem({ rating }: { rating: RatingResponse }) {
                   <Star
                     key={i}
                     className={`h-4 w-4 ${
-                      filled
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'fill-gray-200 text-gray-200'
+                      filled ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-200'
                     }`}
                   />
                 ))}
