@@ -4,7 +4,6 @@ import {
   Post,
   Body,
   Param,
-  Delete,
   UseGuards,
   Query,
   NotFoundException,
@@ -25,7 +24,7 @@ import { CurrentUser } from 'src/core/decorators/current-user.decorator';
 import type { ReqUser } from 'src/core/decorators/current-user.decorator';
 
 @ApiTags('Post Ratings')
-@Controller('rating')
+@Controller('ratings')
 export class PostRatingController {
   constructor(private readonly postRatingService: PostRatingService) {}
 
@@ -103,37 +102,22 @@ export class PostRatingController {
     return review;
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Patch(':id')
-  // update(
-  //   @Param('id') id: string,
-  //   @Body() updatePostRatingDto: UpdatePostRatingDto,
-  //   @CurrentUser() user: ReqUser) {
-  //   return this.postRatingService.update(id, updatePostRatingDto, user.sub);
-  // }
-
-  @ApiOperation({ summary: 'Delete a rating by ID' })
-  @ApiParam({ name: 'id', description: 'Rating ID', example: '123' })
-  @ApiResponse({ status: 200, description: 'Rating deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Not the owner of this rating' })
-  @ApiResponse({ status: 404, description: 'Rating not found' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  removeById(@Param('id') id: string, @CurrentUser() user: ReqUser) {
-    return this.postRatingService.removeById(id, user.sub);
-  }
-
-  @ApiOperation({ summary: "Delete user's rating for a specific post" })
-  @ApiParam({ name: 'id', description: 'Post ID', example: '123' })
-  @ApiResponse({ status: 200, description: 'Rating deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized - Authentication required' })
-  @ApiResponse({ status: 404, description: 'Rating not found for this post and user' })
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Delete('/post/:id')
-  removeByPostId(@Param('id') id: string, @CurrentUser() user: ReqUser) {
-    return this.postRatingService.removeByPostId(id, user.sub);
+  @ApiOperation({ summary: 'Get seller rating statistics' })
+  @ApiParam({ name: 'sellerId', description: 'Seller Account ID', example: '123' })
+  @ApiResponse({
+    status: 200,
+    description: 'Seller rating stats retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        averageRating: { type: 'number', example: 4.4, description: 'Average rating (0-5)' },
+        totalReviews: { type: 'number', example: 8, description: 'Total number of reviews' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid seller ID' })
+  @Get('seller/:sellerId/stats')
+  async getSellerRatingStats(@Param('sellerId') sellerId: string) {
+    return this.postRatingService.getSellerRatingStats(Number(sellerId));
   }
 }

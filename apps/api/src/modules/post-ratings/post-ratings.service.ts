@@ -1,16 +1,10 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostRatings } from './entities/post-ratings.entity';
 import { Account } from '../accounts/entities/account.entity';
 import { Post } from '../posts/entities/post.entity';
 import { CreatePostRatingDto } from './dto/create-post-rating.dto';
-import { UpdatePostRatingDto } from './dto/update-post-rating.dto';
 import { PostRatingMapper } from './mappers/post-rating.mapper';
 
 @Injectable()
@@ -63,8 +57,8 @@ export class PostRatingService {
     const qb = this.postRatingsRepository
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.customer', 'customer')
-      .leftJoin('r.post', 'post')
-      .addSelect(['post.id'])
+      .leftJoinAndSelect('r.post', 'post')
+      .leftJoinAndSelect('post.seller', 'seller')
       .where('r.post_id = :postId', { postId });
 
     // Optional rating filter
@@ -81,7 +75,7 @@ export class PostRatingService {
       .getManyAndCount();
 
     return {
-      items: PostRatingMapper.toSafeDtoArray(rows),
+      data: PostRatingMapper.toSafeDtoArray(rows),
       total,
       page: Number(page),
       limit: Number(limit),
@@ -105,51 +99,24 @@ export class PostRatingService {
     return PostRatingMapper.toSafeDto(review);
   }
 
-  // // Update rating content or score
-  // async update(id: string, dto: UpdatePostRatingDto, userId: number) {
-  //   const rating = await this.postRatingsRepository.findOne({
-  //     where: { id },
-  //     relations: ['customer'],
-  //   });
+  // Get seller rating statistics (average rating + total reviews)
+  async getSellerRatingStats(sellerId: number) {
+    if (!sellerId || sellerId <= 0) {
+      throw new BadRequestException('Invalid seller ID');
+    }
 
-  //   if (!rating) throw new NotFoundException('Rating not found');
-  //   if (rating.customer.id !== userId)
-  //     throw new ForbiddenException('You cannot edit others’ rating');
+    const stats = await this.postRatingsRepository
+      .createQueryBuilder('pr')
+      .select('COALESCE(AVG(pr.rating), 0)', 'averageRating')
+      .addSelect('COUNT(pr.id)', 'totalReviews')
+      .innerJoin('pr.post', 'p')
+      .where('p.seller.id = :sellerId', { sellerId })
+      .andWhere('pr.deletedAt IS NULL')
+      .getRawOne();
 
-  //   if (dto.rating !== undefined) rating.rating = dto.rating;
-  //   if (dto.content !== undefined) rating.content = dto.content;
-
-  //   const saved = await this.postRatingsRepository.save(rating);
-  //   return PostRatingMapper.toSafeDto(saved);
-  // }
-
-  // Delete a rating by id
-  async removeById(id: string, userId: number) {
-    const rating = await this.postRatingsRepository.findOne({
-      where: { id },
-      relations: ['customer'],
-    });
-    if (!rating) throw new NotFoundException('Rating not found');
-    if (rating.customer.id !== userId)
-      throw new ForbiddenException('You cannot delete others rating');
-
-    await this.postRatingsRepository.softDelete(rating.id);
-    return { message: 'Deleted successfully by id #' + id };
-  }
-
-  // Delete a rating by post id
-  async removeByPostId(postId: string, userId: number) {
-    const rating = await this.postRatingsRepository.findOne({
-      where: { post: { id: postId }, customer: { id: userId } },
-      relations: ['customer'],
-    });
-    if (!rating) throw new NotFoundException('Rating not found');
-    if (rating.customer.id !== userId)
-      throw new ForbiddenException('You cannot delete others rating');
-
-    const deletedAt = new Date();
-    await this.postRatingsRepository.softDelete(rating.id);
-
-    return { message: 'Deleted successfully for post id #' + postId };
+    return {
+      averageRating: stats ? Math.round(parseFloat(stats.averageRating) * 10) / 10 : 0,
+      totalReviews: stats ? parseInt(stats.totalReviews) : 0,
+    };
   }
 }
