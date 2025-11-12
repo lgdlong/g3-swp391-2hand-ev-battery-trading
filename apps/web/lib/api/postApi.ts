@@ -12,6 +12,7 @@ import type {
   GetPostsQuery,
   FlexibleField,
   DeletePostResponse,
+  ArchivePostResponse,
 } from '@/types/api/post';
 
 // Re-export types for backward compatibility
@@ -273,6 +274,22 @@ export async function deleteMyPostById(id: string): Promise<DeletePostResponse> 
   const { data } = await api.delete<DeletePostResponse>(`/posts/${id}/me`, {
     headers: getAuthHeaders(),
   });
+  return data;
+}
+
+/**
+ * Archive (recall) a post
+ * Changes post status from PUBLISHED to ARCHIVED
+ * Triggers automatic refund processing via cron job
+ */
+export async function archivePost(postId: string): Promise<ArchivePostResponse> {
+  const { data } = await api.patch<ArchivePostResponse>(
+    `/posts/${postId}/recall`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
   return data;
 }
 

@@ -57,7 +57,7 @@ export default function WalletPage() {
     if (parseFloat(transaction.amount) > 0) {
       return {
         type: 'deposit',
-        label: 'Nạp tiền',
+        label: 'Tiền vào',
         icon: TrendingUp,
         color: 'text-green-600',
         bgColor: 'bg-green-50',

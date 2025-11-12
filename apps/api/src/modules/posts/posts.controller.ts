@@ -54,6 +54,7 @@ import {
 import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 import { DeletePostResponseDto } from './dto/delete-post-response.dto';
 import { DeductPostFeeDto } from './dto/deduct-post-fee.dto';
+import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
 
 @ApiTags('posts')
 @ApiExtraModels(
@@ -504,6 +505,32 @@ export class PostsController {
     @Body() updateDto: UpdatePostDto,
   ): Promise<BasePostResponseDto> {
     return this.postsService.updateMyPostById(id, user.sub, updateDto);
+  }
+
+  // api update post by id for user
+  @Patch(':id/recall')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Recall (withdraw) a post and archive it (owner only)' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID của bài đăng',
+    example: '1',
+  })
+  @ApiOkResponse({
+    description: 'Post recalled and archived successfully',
+    type: ArchivePostResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Cannot recall post in current state' })
+  @ApiNotFoundResponse({ description: 'Post not found or no permission' })
+  @ApiUnauthorizedResponse({ description: 'Chưa xác thực' })
+  @ApiForbiddenResponse({ description: 'Không có quyền truy cập' })
+  async recallMyPostById(
+    @Param('id') id: string,
+    @User() user: AuthUser,
+  ): Promise<ArchivePostResponseDto> {
+    return this.postsService.recallMyPostById(id, user.sub);
   }
 
   @ApiBearerAuth()

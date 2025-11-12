@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { PostsController } from './posts.controller';
+import { PostsLifecycleCronService } from './posts-lifecycle-cron.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Post } from './entities/post.entity';
 import { AuthModule } from '../auth/auth.module';
@@ -27,7 +28,7 @@ import { TransactionsModule } from '../transactions/transactions.module';
     forwardRef(() => PostDetailsModule),
   ],
   controllers: [PostsController],
-  providers: [PostsService],
+  providers: [PostsService, PostsLifecycleCronService],
   exports: [PostsService],
 })
 export class PostsModule {}

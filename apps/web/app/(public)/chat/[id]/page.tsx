@@ -186,7 +186,7 @@ export default function ChatPage() {
     return [...filteredOldMessages, ...uniqueNewMessages];
   }, [infiniteMessagesData, newMessages, activeChatId]);
 
-  // Handle case where requested conversation doesn't exist
+  // Handle cases where requested conversation doesn't exist
   useEffect(() => {
     if (!conversationsLoading && conversations.length > 0 && activeChatId) {
       const conversationExists = conversations.some((conv) => conv.id === activeChatId);

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import databaseConfig from './config/database.config';
 import { envValidationSchema } from './config/validation';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
@@ -20,6 +21,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { ServiceTypesModule } from './modules/service-types/service-types.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { RefundsModule } from './modules/refunds/refunds.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { PostFraudFlagsModule } from './modules/post-fraud-flags/post-fraud-flags.module';
 import { AdminStatisticsModule } from './modules/admin-statistics/admin-statistics.module';
@@ -34,6 +36,7 @@ import { AdminStatisticsModule } from './modules/admin-statistics/admin-statisti
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       validationSchema: envValidationSchema,
     }),
+    ScheduleModule.forRoot(), // Enable cron jobs
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
@@ -51,7 +54,7 @@ import { AdminStatisticsModule } from './modules/admin-statistics/admin-statisti
           synchronize: isDev, // chỉ tự động đồng bộ hóa CSDL ở môi trường development
           retryAttempts: 5,
           retryDelay: 3000,
-          logging: isDev, // chỉ bật log ở môi trường development
+          // logging: isDev, // chỉ bật log ở môi trường development
           extra: {
             max: 10,
             min: 2,
@@ -78,6 +81,7 @@ import { AdminStatisticsModule } from './modules/admin-statistics/admin-statisti
     ServiceTypesModule,
     WalletsModule,
     TransactionsModule,
+    RefundsModule,
     ChatModule,
     PostFraudFlagsModule,
     AdminStatisticsModule,

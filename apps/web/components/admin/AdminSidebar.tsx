@@ -45,27 +45,15 @@ const navigationItems = [
     badge: null,
   },
   {
+    name: 'Refund Cases',
+    href: '/admin/cases',
+    icon: DollarSign,
+    badge: null,
+  },
+  {
     name: 'Analytics',
     href: '/admin/analytics',
     icon: BarChart3,
-    badge: null,
-  },
-  {
-    name: 'Database',
-    href: '/admin/database',
-    icon: Database,
-    badge: null,
-  },
-  {
-    name: 'Security',
-    href: '/admin/security',
-    icon: Shield,
-    badge: null,
-  },
-  {
-    name: 'Notifications',
-    href: '/admin/notifications',
-    icon: Bell,
     badge: null,
   },
   {

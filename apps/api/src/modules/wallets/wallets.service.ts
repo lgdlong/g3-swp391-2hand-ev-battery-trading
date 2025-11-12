@@ -175,6 +175,57 @@ export class WalletsService {
   }
 
   /**
+   * Refund to wallet - Creates transaction with REFUND service type
+   * @param userId - User account ID
+   * @param amount - Amount to refund
+   * @param description - Refund description
+   * @param refundId - Related refund ID
+   * @returns Object with updated wallet and transaction
+   */
+  async refund(
+    userId: number,
+    amount: string,
+    description: string,
+    refundId: string,
+  ): Promise<{ wallet: Wallet; transaction: WalletTransaction }> {
+    return this.dataSource.transaction(async (manager) => {
+      const walletRepo = manager.getRepository(Wallet);
+      const transactionRepo = manager.getRepository(WalletTransaction);
+
+      // Initialize wallet if not exists
+      const wallet = await ensureWalletInTx(manager, userId);
+
+      // Get service type for refund (ID = 3 - DEPOSIT_REFUND)
+      const serviceType = await this.serviceTypesService.findOrCreateByCode(
+        'DEPOSIT_REFUND',
+        'Hoàn tiền đặt cọc',
+        'Refund deposit payment',
+      );
+
+      // Create wallet transaction
+      const transaction = transactionRepo.create({
+        walletUserId: userId,
+        amount,
+        serviceTypeId: serviceType.id, // Should be 3
+        description,
+        relatedEntityType: 'refunds',
+        relatedEntityId: refundId,
+      });
+      await transactionRepo.save(transaction);
+
+      // Update wallet balance
+      const currentBalance = parseFloat(wallet.balance);
+      const amountToAdd = parseFloat(amount);
+      const newBalance = currentBalance + amountToAdd;
+
+      wallet.balance = newBalance.toFixed(2);
+      await walletRepo.save(wallet);
+
+      return { wallet, transaction };
+    });
+  }
+
+  /**
    * Deduct from wallet - Creates transaction and updates balance atomically
    * @param userId - User account ID
    * @param amount - Amount to deduct

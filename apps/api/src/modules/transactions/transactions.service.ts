@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -334,10 +335,11 @@ export class TransactionsService {
     }
 
     // Check if contract is in a valid state
-    if (contract.status !== ContractStatus.AWAITING_CONFIRMATION && contract.status !== ContractStatus.PENDING_REFUND) {
-      throw new BadRequestException(
-        `Cannot confirm. Contract status is ${contract.status}`,
-      );
+    if (
+      contract.status !== ContractStatus.AWAITING_CONFIRMATION &&
+      contract.status !== ContractStatus.PENDING_REFUND
+    ) {
+      throw new BadRequestException(`Cannot confirm. Contract status is ${contract.status}`);
     }
 
     // Check if buyer already confirmed
@@ -381,10 +383,11 @@ export class TransactionsService {
     }
 
     // Check if contract is in a valid state
-    if (contract.status !== ContractStatus.AWAITING_CONFIRMATION && contract.status !== ContractStatus.PENDING_REFUND) {
-      throw new BadRequestException(
-        `Cannot confirm. Contract status is ${contract.status}`,
-      );
+    if (
+      contract.status !== ContractStatus.AWAITING_CONFIRMATION &&
+      contract.status !== ContractStatus.PENDING_REFUND
+    ) {
+      throw new BadRequestException(`Cannot confirm. Contract status is ${contract.status}`);
     }
 
     // Check if seller already confirmed
@@ -409,10 +412,7 @@ export class TransactionsService {
   /**
    * Seller reports sold outside the system
    */
-  async forfeitExternal(
-    contractId: string,
-    userId: number,
-  ): Promise<Contract> {
+  async forfeitExternal(contractId: string, userId: number): Promise<Contract> {
     const contract = await this.contractRepo.findOne({
       where: { id: contractId },
     });
@@ -427,10 +427,11 @@ export class TransactionsService {
     }
 
     // Check if contract is in a valid state
-    if (contract.status !== ContractStatus.AWAITING_CONFIRMATION && contract.status !== ContractStatus.PENDING_REFUND) {
-      throw new BadRequestException(
-        `Cannot forfeit. Contract status is ${contract.status}`,
-      );
+    if (
+      contract.status !== ContractStatus.AWAITING_CONFIRMATION &&
+      contract.status !== ContractStatus.PENDING_REFUND
+    ) {
+      throw new BadRequestException(`Cannot forfeit. Contract status is ${contract.status}`);
     }
 
     // Update contract status to FORFEITED_EXTERNAL and mark as external transaction
@@ -632,5 +633,63 @@ export class TransactionsService {
       walletTransactionId: postPayment.walletTransactionId,
       createdAt: postPayment.createdAt,
     };
+  }
+
+  /**
+   * Record post deposit payment when user pays coin to create post
+   * @param postId - Post ID
+   * @param accountId - User account ID who paid deposit
+   * @param amountPaid - Deposit amount paid
+   * @param walletTransactionId - Related wallet transaction ID
+   * @returns Created post payment record
+   */
+  async recordPostDepositPayment(
+    postId: string,
+    accountId: number,
+    amountPaid: string,
+    walletTransactionId: number,
+  ): Promise<PostPayment> {
+    // Check if payment already exists for this post
+    const existingPayment = await this.postPaymentRepository.findOne({
+      where: { postId },
+    });
+
+    if (existingPayment) {
+      throw new ConflictException(`Post ${postId} already has a deposit payment record`);
+    }
+
+    // Create new payment record
+    const postPayment = this.postPaymentRepository.create({
+      postId,
+      accountId,
+      amountPaid,
+      walletTransactionId,
+    });
+
+    return await this.postPaymentRepository.save(postPayment);
+  }
+
+  /**
+   * Get post deposit payment by post ID
+   * @param postId - Post ID
+   * @returns Post payment record or null
+   */
+  async getPostDepositPayment(postId: string): Promise<PostPayment | null> {
+    return await this.postPaymentRepository.findOne({
+      where: { postId },
+      relations: ['account', 'walletTransaction'],
+    });
+  }
+
+  /**
+   * Check if post has deposit payment
+   * @param postId - Post ID
+   * @returns True if deposit paid, false otherwise
+   */
+  async hasDepositPayment(postId: string): Promise<boolean> {
+    const payment = await this.postPaymentRepository.findOne({
+      where: { postId },
+    });
+    return !!payment;
   }
 }

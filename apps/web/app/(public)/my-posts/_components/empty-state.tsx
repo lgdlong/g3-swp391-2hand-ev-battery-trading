@@ -19,6 +19,8 @@ export default function EmptyState({ status, onCreateNew }: EmptyStateProps) {
         return 'Bạn chưa bán được sản phẩm nào';
       case 'DRAFT':
         return 'Bạn chưa có tin nháp nào được lưu';
+      case 'ARCHIVED':
+        return 'Bạn chưa thu hồi bài viết nào';
       default:
         return 'Chưa có tin nào trong mục này';
     }

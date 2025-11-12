@@ -84,6 +84,9 @@ export class Post {
   @Column({ type: 'text', nullable: true })
   rejectReason: string | null = null;
 
+  @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
+  archivedAt: Date | null = null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 

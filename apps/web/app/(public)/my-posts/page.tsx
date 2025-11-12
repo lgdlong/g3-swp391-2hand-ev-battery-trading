@@ -8,13 +8,14 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Post, PostStatus } from '@/types/post';
-import { getMyPosts, deleteMyPostById } from '@/lib/api/postApi';
+import { getMyPosts, deleteMyPostById, archivePost } from '@/lib/api/postApi';
 import { useAuth } from '@/lib/auth-context';
 import { updateMyPost } from '@/lib/api/postApi';
 import SearchBar from './_components/search-bar';
 import PostListItem from './_components/post-list-item';
 import PostDetailDialog from './_components/post-detail-dialog';
 import DeleteConfirmDialog from './_components/delete-confirm-dialog';
+import ArchiveConfirmDialog from './_components/archive-confirm-dialog';
 import RejectReasonDialog from './_components/reject-reason-dialog';
 import VerificationRejectReasonDialog from './_components/verification-reject-reason-dialog';
 import EmptyState from './_components/empty-state';
@@ -56,39 +57,48 @@ export default function MyPostsPage() {
     id: string;
     title: string;
   } | null>(null);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [postToArchive, setPostToArchive] = useState<{ id: string; title: string } | null>(null);
 
   // Query for each status to get posts and counts
   const draftQuery = useQuery({
     queryKey: ['myPosts', 'DRAFT'],
-    queryFn: () => getMyPosts({ status: 'DRAFT', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'DRAFT', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const pendingQuery = useQuery({
     queryKey: ['myPosts', 'PENDING_REVIEW'],
-    queryFn: () => getMyPosts({ status: 'PENDING_REVIEW', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'PENDING_REVIEW', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const publishedQuery = useQuery({
     queryKey: ['myPosts', 'PUBLISHED'],
-    queryFn: () => getMyPosts({ status: 'PUBLISHED', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'PUBLISHED', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const rejectedQuery = useQuery({
     queryKey: ['myPosts', 'REJECTED'],
-    queryFn: () => getMyPosts({ status: 'REJECTED', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'REJECTED', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const soldQuery = useQuery({
     queryKey: ['myPosts', 'SOLD'],
-    queryFn: () => getMyPosts({ status: 'SOLD', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'SOLD', order: 'DESC', sort: 'updatedAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
+  });
+
+  const archivedQuery = useQuery({
+    queryKey: ['myPosts', 'ARCHIVED'],
+    queryFn: () => getMyPosts({ status: 'ARCHIVED', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
@@ -102,7 +112,9 @@ export default function MyPostsPage() {
     PENDING_REVIEW: pendingQuery.data?.length || 0,
     PUBLISHED: publishedPostsExcludingSold.length || 0,
     REJECTED: rejectedQuery.data?.length || 0,
+    // SOLD: soldQuery.data?.length || 0,
     SOLD: soldPosts.length || 0,
+    ARCHIVED: archivedQuery.data?.length || 0,
   };
 
   // Get current posts based on active tab
@@ -119,6 +131,9 @@ export default function MyPostsPage() {
         return rejectedQuery.data || [];
       case 'SOLD':
         return soldPosts;
+        // return soldQuery.data || [];
+      case 'ARCHIVED':
+        return archivedQuery.data || [];
       default:
         return [];
     }
@@ -130,7 +145,8 @@ export default function MyPostsPage() {
     pendingQuery.isLoading ||
     publishedQuery.isLoading ||
     rejectedQuery.isLoading ||
-    soldQuery.isLoading;
+    soldQuery.isLoading ||
+    archivedQuery.isLoading;
 
   const deleteMutation = useMutation({
     mutationFn: (postId: string) => deleteMyPostById(postId),
@@ -156,6 +172,32 @@ export default function MyPostsPage() {
       toast.error(errorMessage);
     },
   });
+
+  const archiveMutation = useMutation({
+    mutationFn: (postId: string) => archivePost(postId),
+    onSuccess: () => {
+      toast.success('Đã thu hồi bài viết thành công');
+      queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+      setArchiveDialogOpen(false);
+      setPostToArchive(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Thu hồi bài viết thất bại. Vui lòng thử lại.');
+    },
+  });
+
+  // const archiveMutation = useMutation({
+  //   mutationFn: (postId: string) => archivePost(postId),
+  //   onSuccess: () => {
+  //     toast.success('Đã thu hồi bài viết thành công');
+  //     queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+  //     setArchiveDialogOpen(false);
+  //     setPostToArchive(null);
+  //   },
+  //   onError: (error: Error) => {
+  //     toast.error(error.message || 'Thu hồi bài viết thất bại. Vui lòng thử lại.');
+  //   },
+  // });
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as PostStatus);
@@ -198,6 +240,17 @@ export default function MyPostsPage() {
     setVerificationRejectReasonDialogOpen(true);
   };
 
+  const handleArchive = (postId: string, postTitle: string) => {
+    setPostToArchive({ id: postId, title: postTitle });
+    setArchiveDialogOpen(true);
+  };
+
+  const confirmArchive = () => {
+    if (postToArchive) {
+      archiveMutation.mutate(postToArchive.id);
+    }
+  };
+
   // Show loading state while auth is initializing
   if (loading) {
     return (
@@ -225,7 +278,7 @@ export default function MyPostsPage() {
             />
           </div>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-auto grid-cols-5 mb-8 p-1 h-auto bg-background">
+            <TabsList className="grid w-auto grid-cols-6 mb-8 p-1 h-auto bg-background">
               <TabsTrigger
                 value="PUBLISHED"
                 className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
@@ -281,41 +334,67 @@ export default function MyPostsPage() {
                   </Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger
+                value="ARCHIVED"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
+                ĐÃ THU HỒI
+                {counts.ARCHIVED > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
+                    {counts.ARCHIVED}
+                  </Badge>
+                )}
+              </TabsTrigger>
             </TabsList>
-            {(['PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'SOLD', 'DRAFT'] as PostStatus[]).map(
-              (status) => (
-                <TabsContent key={status} value={status} className="mt-0">
-                  {isLoading ? (
-                    <PostListSkeleton />
-                  ) : posts.length === 0 ? (
-                    <EmptyState status={status} onCreateNew={handleCreateNew} />
-                  ) : (
-                    <div className="space-y-0">
-                      {posts.map((post, index) => (
-                        <div key={post.id} className={index !== posts.length - 1 ? 'border-b' : ''}>
-                          <PostListItem
-                            post={post}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            onView={handleViewDetail}
-                            onMarkAsSold={handleMarkAsSold}
-                            onPayment={handlePayment}
-                            onViewRejectReason={handleViewRejectReason}
-                            onViewVerificationRejectReason={handleViewVerificationRejectReason}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-              ),
-            )}
+            {(
+              [
+                'PENDING_REVIEW',
+                'PUBLISHED',
+                'REJECTED',
+                'SOLD',
+                'DRAFT',
+                'ARCHIVED',
+              ] as PostStatus[]
+            ).map((status) => (
+              <TabsContent key={status} value={status} className="mt-0">
+                {isLoading ? (
+                  <PostListSkeleton />
+                ) : posts.length === 0 ? (
+                  <EmptyState status={status} onCreateNew={handleCreateNew} />
+                ) : (
+                  <div className="space-y-0">
+                    {posts.map((post, index) => (
+                      <div key={post.id} className={index !== posts.length - 1 ? 'border-b' : ''}>
+                        <PostListItem
+                          post={post}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onView={handleViewDetail}
+                          onMarkAsSold={handleMarkAsSold}
+                          onPayment={handlePayment}
+                          onArchive={handleArchive}
+                          onViewRejectReason={handleViewRejectReason}
+                          onViewVerificationRejectReason={handleViewVerificationRejectReason}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            ))}
           </Tabs>
         </div>
         <DeleteConfirmDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           onConfirm={confirmDelete}
+        />
+        <ArchiveConfirmDialog
+          open={archiveDialogOpen}
+          onOpenChange={setArchiveDialogOpen}
+          onConfirm={confirmArchive}
+          postTitle={postToArchive?.title || ''}
+          isArchiving={archiveMutation.isPending}
         />
         <PostDetailDialog
           open={viewDialogOpen}
