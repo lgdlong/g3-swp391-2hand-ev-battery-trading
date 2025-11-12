@@ -212,7 +212,7 @@ export class RefundsCronService {
           amountOriginal: postPayment.amountPaid,
           amountRefund: '0',
           status: RefundStatus.REJECTED,
-          reason: `[AUTO] Fraud CONFIRMED by admin. No refund allowed. 100% fee captured.`,
+          reason: `[TỰ ĐỘNG] Gian lận được XÁC NHẬN bởi admin. Không được phép hoàn tiền. Tiền phí đã bị tịch thu.`,
         });
 
         this.logger.log(`✅ Created REJECTED refund for confirmed fraud post ${post.id}`);
@@ -233,7 +233,7 @@ export class RefundsCronService {
           amountOriginal: postPayment.amountPaid,
           amountRefund: String(amountRefund),
           status: RefundStatus.PENDING,
-          reason: `[AUTO] Fraud SUSPECTED. Awaiting admin decision (default: ${refundPercent}% = ${amountRefund} VND).`,
+          reason: `[TỰ ĐỘNG] Nghi ngờ gian lận. Chờ quyết định của admin (mặc định: ${refundPercent}% = ${amountRefund} VND).`,
         });
 
         this.logger.log(
@@ -310,7 +310,7 @@ export class RefundsCronService {
         amountOriginal: postPayment.amountPaid,
         amountRefund: String(amountRefund),
         status: RefundStatus.PENDING, // Tạo PENDING trước
-        reason: `[AUTO] ${scenario} - Clean refund (no suspicious activity)`,
+        reason: `[TỰ ĐỘNG] ${scenario} - Hoàn tiền sạch (không có hoạt động nghi ngờ)`,
       });
 
       // Thực thi hoàn tiền ngay lập tức
@@ -340,7 +340,7 @@ export class RefundsCronService {
         amountOriginal: postPayment.amountPaid,
         amountRefund: String(amountRefund),
         status: RefundStatus.PENDING,
-        reason: `[AUTO] ${scenario} - Has chat activity (${chatCount} conversations). Suspected private sale - awaiting admin review.`,
+        reason: `[TỰ ĐỘNG] ${scenario} - Có hoạt động chat (${chatCount} cuộc trò chuyện). Nghi ngờ bán chui - chờ duyệt của admin.`,
       });
 
       this.logger.log(

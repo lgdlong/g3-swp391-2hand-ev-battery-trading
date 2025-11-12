@@ -80,7 +80,7 @@ export class RefundsService {
   /**
    * 🔧 Manual refund - Admin refund 1 post cụ thể
    */
-  async manualRefund(dto: ManualRefundDto, adminUser: ReqUser) {
+  async manualRefund(dto: ManualRefundDto) {
     // 1. Lấy post + post_payment
     const post = await this.postRepo.findOne({
       where: { id: dto.postId },
@@ -91,7 +91,7 @@ export class RefundsService {
     }
 
     if (!post.reviewedAt) {
-      throw new BadRequestException('Post chưa được review (chưa có deposit payment)');
+      throw new BadRequestException('Bài đăng chưa được duyệt (chưa có thanh toán tiền cọc)');
     }
 
     // 2. Lấy post_payment (post_id là PK)
@@ -100,7 +100,7 @@ export class RefundsService {
     });
 
     if (!postPayment) {
-      throw new NotFoundException('Post chưa có deposit payment');
+      throw new NotFoundException('Bài đăng chưa có thanh toán tiền cọc');
     }
 
     // 3. Check đã refund chưa
@@ -109,7 +109,9 @@ export class RefundsService {
     });
 
     if (existingRefund) {
-      throw new BadRequestException(`Post đã được refund rồi (Refund ID: ${existingRefund.id})`);
+      throw new BadRequestException(
+        `Bài đăng đã được hoàn tiền rồi (ID Hoàn tiền: ${existingRefund.id})`,
+      );
     }
 
     // 4. Tính scenario (nếu admin không truyền)
@@ -176,7 +178,8 @@ export class RefundsService {
         rate,
         scenario,
         status: RefundStatus.PENDING,
-        message: 'Refund request created. Use POST /refunds/:id/decide to approve or reject.',
+        message:
+          'Yêu cầu hoàn tiền đã được tạo. Sử dụng POST /refunds/:id/decide để duyệt hoặc từ chối.',
         createdAt: savedRefund.createdAt,
       };
     });
@@ -201,7 +204,7 @@ export class RefundsService {
     }
 
     if (refund.status !== RefundStatus.PENDING) {
-      throw new BadRequestException(`Refund đã được xử lý rồi (status: ${refund.status})`);
+      throw new BadRequestException(`Hoàn tiền đã được xử lý rồi (trạng thái: ${refund.status})`);
     }
 
     return this.dataSource.transaction(async (manager) => {
@@ -212,7 +215,7 @@ export class RefundsService {
           const tx = await this.walletsService.refund(
             Number(refund.accountId),
             String(amountRefund),
-            `Refund approved by admin for post ${refund.postId}${adminNotes ? ` - ${adminNotes}` : ''}`,
+            `Hoàn tiền được duyệt bởi admin cho bài đăng ${refund.postId}${adminNotes ? ` - ${adminNotes}` : ''}`,
             refund.id,
           );
 
@@ -220,7 +223,7 @@ export class RefundsService {
           refund.refundedAt = new Date();
           refund.walletTransactionId = tx.transaction.id;
           if (adminNotes) {
-            refund.reason = `${refund.reason} | Admin approved: ${adminNotes}`;
+            refund.reason = `${refund.reason} | Admin duyệt: ${adminNotes}`;
           }
 
           await manager.getRepository(Refund).save(refund);
@@ -235,7 +238,7 @@ export class RefundsService {
           };
         } catch (err) {
           refund.status = RefundStatus.FAILED;
-          refund.reason = `${refund.reason} | Admin approve failed: ${(err as Error).message}`;
+          refund.reason = `${refund.reason} | Admin duyệt thất bại: ${(err as Error).message}`;
           await manager.getRepository(Refund).save(refund);
           throw err;
         }
@@ -243,7 +246,7 @@ export class RefundsService {
         // Admin reject - không refund
         refund.status = RefundStatus.REJECTED;
         if (adminNotes) {
-          refund.reason = `${refund.reason} | Admin rejected: ${adminNotes}`;
+          refund.reason = `${refund.reason} | Admin từ chối: ${adminNotes}`;
         }
 
         await manager.getRepository(Refund).save(refund);
@@ -252,7 +255,7 @@ export class RefundsService {
           success: true,
           decision: 'reject',
           refundId: refund.id,
-          message: 'Refund rejected by admin. Funds retained.',
+          message: 'Hoàn tiền bị từ chối bởi admin. Tiền phí không được hoàn lại.',
           reason: refund.reason,
         };
       }
@@ -293,7 +296,7 @@ export class RefundsService {
       case RefundScenario.FRAUD_SUSPECTED:
         return Number(policy.fraudSuspectedRate ?? 0);
     }
-    throw new BadRequestException('Unknown refund scenario');
+    throw new BadRequestException('Kịch bản hoàn tiền không hợp lệ');
   }
 
   /**
@@ -308,7 +311,7 @@ export class RefundsService {
     try {
       return await this.refundPolicyService.findOne(1);
     } catch {
-      throw new NotFoundException('Refund policy not found');
+      throw new NotFoundException('Không tìm thấy chính sách hoàn tiền');
     }
   }
 
@@ -384,7 +387,7 @@ export class RefundsService {
   ): Promise<Refund> {
     const refund = await this.refundRepo.findOne({ where: { id: refundId } });
     if (!refund) {
-      throw new NotFoundException('Refund not found');
+      throw new NotFoundException('Không tìm thấy hoàn tiền');
     }
 
     refund.status = RefundStatus.REFUNDED;
@@ -412,11 +415,11 @@ export class RefundsService {
   async updateRefundAsFailed(refundId: string, reason: string): Promise<Refund> {
     const refund = await this.refundRepo.findOne({ where: { id: refundId } });
     if (!refund) {
-      throw new NotFoundException('Refund not found');
+      throw new NotFoundException('Không tìm thấy hoàn tiền');
     }
 
     refund.status = RefundStatus.FAILED;
-    refund.reason = `Auto refund failed: ${reason}`;
+    refund.reason = `Hoàn tiền tự động thất bại: ${reason}`;
 
     return await this.refundRepo.save(refund);
   }
