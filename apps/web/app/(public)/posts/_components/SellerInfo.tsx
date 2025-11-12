@@ -8,6 +8,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useCreateConversation } from '@/hooks/useChat';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { SellerRatingDisplay } from '@/components/SellerRatingDisplay';
+import { useSellerRating } from '@/hooks/useSellerRating';
 
 interface SellerInfoProps {
   account: AccountUI | undefined;
@@ -22,6 +24,11 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
   const { user, isLoggedIn } = useAuth();
   const router = useRouter();
   const createConversationMutation = useCreateConversation();
+  
+  // Lấy rating của seller
+  const { averageRating, totalReviews, isLoading: ratingLoading } = useSellerRating(
+    account?.id?.toString()
+  );
 
   const handleContactSeller = async () => {
     // Check if user is logged in
@@ -73,13 +80,22 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
             </div>
           )}
         </div>
-        <div>
+        <div className="flex-1">
           <h3 className="font-semibold text-gray-900">{account.fullName}</h3>
-          <div className="flex items-center gap-1 text-sm text-gray-500">
-            {account.status === 'active' ? (
-              <Badge className="bg-emerald-600 text-white">Đang hoạt động</Badge>
-            ) : (
-              <Badge variant="destructive">Không hoạt động</Badge>
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              {account.status === 'active' ? (
+                <Badge className="bg-emerald-600 text-white">Đang hoạt động</Badge>
+              ) : (
+                <Badge variant="destructive">Không hoạt động</Badge>
+              )}
+            </div>
+            {/* ⭐ Rating Display */}
+            {!ratingLoading && (
+              <SellerRatingDisplay
+                averageRating={averageRating}
+                totalReviews={totalReviews}
+              />
             )}
           </div>
         </div>

@@ -2,13 +2,11 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   TrendingUp,
   TrendingDown,
-  Clock,
   Calendar,
   Hash,
   FileText,
@@ -25,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatDateTime } from '@/lib/utils/format';
 import { getTransactionById } from '@/lib/api/walletApi';
 import { toast } from 'sonner';
 import { TopupModal } from '@/components/TopupModal';
@@ -48,17 +47,6 @@ export default function TransactionDetailPage() {
 
   const formatAmount = (amount: string) => {
     return new Intl.NumberFormat('vi-VN').format(Math.abs(parseFloat(amount))) + ' Coin';
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('vi-VN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    }).format(new Date(dateString));
   };
 
   const getTransactionType = () => {
@@ -240,7 +228,9 @@ export default function TransactionDetailPage() {
               <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm text-gray-500">Thời gian giao dịch</p>
-                <p className="font-semibold text-gray-900">{formatDate(transaction.createdAt)}</p>
+                <p className="font-semibold text-gray-900">
+                  {formatDateTime(transaction.createdAt)}
+                </p>
               </div>
             </div>
 

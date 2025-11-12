@@ -1,4 +1,4 @@
-import { api } from './instance';
+import { api } from '@/lib/axios';
 import type {
   PostPayment,
   CreatePostPaymentDto,

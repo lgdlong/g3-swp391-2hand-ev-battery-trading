@@ -8,7 +8,7 @@ This document describes the **3-stage post creation workflow** on the 2nd-hand E
 2. **Stage 2 - Deposit Payment**: User pays deposit fee from wallet (percentage of post price)
 3. **Stage 3 - Post Creation & Image Upload**: Backend creates post → User uploads images (optional)
 
-This flow requires **wallet payment** before post creation. The deposit amount is calculated based on fee tiers (percentage of post price).
+This flow requires **wallet payment** before post creation. The deposit amount is   d based on fee tiers (percentage of post price).
 
 ---
 
