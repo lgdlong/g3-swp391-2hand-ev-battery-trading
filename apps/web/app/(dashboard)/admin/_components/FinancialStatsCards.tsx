@@ -12,6 +12,7 @@ import {
   ArrowDownCircle,
   Coins,
 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils/format';
 import type { FinancialOverview } from '@/types/admin-statistics';
 
 interface FinancialStatsCardsProps {
@@ -40,10 +41,6 @@ export function FinancialStatsCards({ financial, isLoading }: FinancialStatsCard
       </div>
     );
   }
-
-  const formatCurrency = (value: string) => {
-    return `${Number.parseFloat(value).toLocaleString('vi-VN')} ₫`;
-  };
 
   type FinancialCard = {
     title: string;

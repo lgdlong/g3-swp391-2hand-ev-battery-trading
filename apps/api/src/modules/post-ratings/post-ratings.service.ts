@@ -1,16 +1,10 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostRatings } from './entities/post-ratings.entity';
 import { Account } from '../accounts/entities/account.entity';
 import { Post } from '../posts/entities/post.entity';
 import { CreatePostRatingDto } from './dto/create-post-rating.dto';
-import { UpdatePostRatingDto } from './dto/update-post-rating.dto';
 import { PostRatingMapper } from './mappers/post-rating.mapper';
 
 @Injectable()
@@ -104,54 +98,6 @@ export class PostRatingService {
 
     return PostRatingMapper.toSafeDto(review);
   }
-
-  // // Update rating content or score
-  // async update(id: string, dto: UpdatePostRatingDto, userId: number) {
-  //   const rating = await this.postRatingsRepository.findOne({
-  //     where: { id },
-  //     relations: ['customer'],
-  //   });
-
-  //   if (!rating) throw new NotFoundException('Rating not found');
-  //   if (rating.customer.id !== userId)
-  //     throw new ForbiddenException('You cannot edit others’ rating');
-
-  //   if (dto.rating !== undefined) rating.rating = dto.rating;
-  //   if (dto.content !== undefined) rating.content = dto.content;
-
-  //   const saved = await this.postRatingsRepository.save(rating);
-  //   return PostRatingMapper.toSafeDto(saved);
-  // }
-
-  // // Delete a rating by id
-  // async removeById(id: string, userId: number) {
-  //   const rating = await this.postRatingsRepository.findOne({
-  //     where: { id },
-  //     relations: ['customer'],
-  //   });
-  //   if (!rating) throw new NotFoundException('Rating not found');
-  //   if (rating.customer.id !== userId)
-  //     throw new ForbiddenException('You cannot delete others rating');
-
-  //   await this.postRatingsRepository.softDelete(rating.id);
-  //   return { message: 'Deleted successfully by id #' + id };
-  // }
-
-  // // Delete a rating by post id
-  // async removeByPostId(postId: string, userId: number) {
-  //   const rating = await this.postRatingsRepository.findOne({
-  //     where: { post: { id: postId }, customer: { id: userId } },
-  //     relations: ['customer'],
-  //   });
-  //   if (!rating) throw new NotFoundException('Rating not found');
-  //   if (rating.customer.id !== userId)
-  //     throw new ForbiddenException('You cannot delete others rating');
-
-  //   const deletedAt = new Date();
-  //   await this.postRatingsRepository.softDelete(rating.id);
-
-  //   return { message: 'Deleted successfully for post id #' + postId };
-  // }
 
   // Get seller rating statistics (average rating + total reviews)
   async getSellerRatingStats(sellerId: number) {
