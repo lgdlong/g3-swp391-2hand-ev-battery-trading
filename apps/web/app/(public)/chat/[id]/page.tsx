@@ -13,8 +13,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Sidebar from '@/components/chat/Sidebar';
 import ChatWindow from '@/components/chat/ChatWindow';
 import { useConversations, useInfiniteConversationMessages, chatKeys } from '@/hooks/useChat';
@@ -23,7 +22,6 @@ import { useChatWebSocket } from '@/hooks/useChatWebSocket';
 import {
   getContractByListingAndBuyer,
   getContractByBuyerAndListing,
-  createContractBySeller,
   type Contract,
 } from '@/lib/api/transactionApi';
 import type { Message } from '@/types/chat';
@@ -65,11 +63,7 @@ export default function ChatPage() {
   const isBuyer = user?.id === activeConversation?.buyerId;
 
   // Query contract - different endpoints for seller vs buyer
-  const {
-    data: existingContract,
-    isLoading: isLoadingContract,
-    error: contractError,
-  } = useQuery<Contract | null>({
+  const { data: existingContract, isLoading: isLoadingContract } = useQuery<Contract | null>({
     queryKey: ['contract', listingId, buyerId, isSeller ? 'seller' : 'buyer'],
     queryFn: () => {
       if (!listingId) return null;
@@ -83,27 +77,6 @@ export default function ChatPage() {
       return null;
     },
     enabled: !!listingId && !!user && (isSeller ? !!buyerId : isBuyer),
-  });
-
-  // Mutation to create contract when seller confirms order
-  const createContractMutation = useMutation({
-    mutationFn: async (isExternalTransaction: boolean) => {
-      if (!listingId || !buyerId) {
-        throw new Error('Missing listingId or buyerId');
-      }
-      return createContractBySeller(listingId, buyerId, isExternalTransaction);
-    },
-    onSuccess: () => {
-      toast.success('Đã chốt đơn thành công!');
-      // Invalidate contract queries to refetch (for both seller and buyer)
-      queryClient.invalidateQueries({ queryKey: ['contract', listingId] });
-    },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi chốt đơn';
-      toast.error(errorMessage);
-      console.error('Error creating contract:', error);
-    },
   });
 
   // Log any API errors
@@ -287,15 +260,6 @@ export default function ChatPage() {
     );
   }
 
-  // Handle contract creation
-  const handleContractCreated = (isExternalTransaction: boolean) => {
-    if (!listingId || !buyerId) {
-      toast.error('Thiếu thông tin để chốt đơn');
-      return;
-    }
-    createContractMutation.mutate(isExternalTransaction);
-  };
-
   // Ensure user exists before rendering
   if (!user || !user.id) {
     return (
@@ -319,8 +283,7 @@ export default function ChatPage() {
         currentUserId={user.id}
         onSendMessage={handleSendMessage}
         existingContract={existingContract || undefined}
-        isLoadingContract={isLoadingContract || createContractMutation.isPending}
-        onContractCreated={handleContractCreated}
+        isLoadingContract={isLoadingContract}
         confirmationCard={confirmationCard}
       />
     </div>

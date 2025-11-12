@@ -18,7 +18,6 @@ interface ChatWindowProps {
   onSendMessage: (message: string) => void;
   existingContract?: any;
   isLoadingContract?: boolean;
-  onContractCreated?: (isExternalTransaction: boolean) => void;
   confirmationCard?: {
     contractId: string;
     actionParty?: 'BUYER' | 'SELLER';
@@ -35,7 +34,6 @@ export default function ChatWindow({
   onSendMessage,
   existingContract,
   isLoadingContract = false,
-  onContractCreated,
   confirmationCard,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -84,7 +82,7 @@ export default function ChatWindow({
   return (
     <div className="flex-1 flex flex-col bg-[#f7f7f7] h-full">
       {/* Chat Header */}
-      <div className="border-b border-gray-200 bg-white p-4 mb-2 flex-shrink-0">
+      <div className="border-b border-gray-200 bg-white p-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
@@ -102,14 +100,13 @@ export default function ChatWindow({
         </div>
       </div>
 
-      {/* Action Bar for Seller - Chốt đơn */}
+      {/* Action Bar for Seller - Flow F confirmation */}
       {conversation && (
         <ChatActionBar
           conversation={conversation}
           currentUserId={currentUserId}
           existingContract={existingContract}
           isLoadingContract={isLoadingContract}
-          onContractCreated={onContractCreated || (() => {})}
         />
       )}
 
