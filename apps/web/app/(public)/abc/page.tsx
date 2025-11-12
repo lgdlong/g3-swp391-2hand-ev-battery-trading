@@ -19,14 +19,11 @@ export default function AbcPage() {
         {/* Seller Rating Display */}
         <div className="rounded-lg border bg-card p-6 space-y-4">
           <h2 className="text-2xl font-semibold">Đánh giá của người bán</h2>
-          
+
           {isLoading ? (
             <div className="text-muted-foreground">Đang tải...</div>
           ) : (
-            <SellerRatingDisplay
-              averageRating={averageRating}
-              totalReviews={totalReviews}
-            />
+            <SellerRatingDisplay averageRating={averageRating} totalReviews={totalReviews} />
           )}
         </div>
 
@@ -36,10 +33,10 @@ export default function AbcPage() {
           <p className="text-muted-foreground">
             Bạn đã mua sản phẩm này? Hãy chia sẻ trải nghiệm của bạn!
           </p>
-          
+
           {/* ✨ RatingModal - Uncontrolled Component */}
           <RatingModal
-            postId="1" // TODO: Thay bằng postId thật
+            postId="21" // TODO: Thay bằng postId thật
             postTitle="Pin xe máy điện VinFast"
             buttonText="Viết đánh giá"
           />
