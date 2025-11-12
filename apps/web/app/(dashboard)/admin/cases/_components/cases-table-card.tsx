@@ -10,7 +10,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -21,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { RefundCase } from '@/types/refund';
+import { RefundCaseDetailDialog } from './refund-case-detail-dialog';
 
 interface CasesTableCardProps {
   cases: RefundCase[] | undefined;
@@ -67,6 +67,8 @@ export function CasesTableCard({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [scenarioFilter, setScenarioFilter] = useState<string>('all');
+  const [selectedCase, setSelectedCase] = useState<RefundCase | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   // Filter and search logic
   const filteredCases = useMemo(() => {
@@ -276,7 +278,14 @@ export function CasesTableCard({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedCase(caseItem);
+                              setDetailDialogOpen(true);
+                            }}
+                          >
+                            Xem chi tiết
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => onSelectCase(caseItem)}
                             disabled={caseItem.status !== 'PENDING'}
@@ -293,6 +302,14 @@ export function CasesTableCard({
           </div>
         )}
       </CardContent>
+
+      {/* Detail Dialog */}
+      <RefundCaseDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        refundCase={selectedCase}
+        onAction={onSelectCase}
+      />
     </Card>
   );
 }
