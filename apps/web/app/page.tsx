@@ -150,7 +150,7 @@ export default function Home() {
                 <Button
                   onClick={handleCreatePostClick}
                   size="lg"
-                  className="bg-white text-gray-900 hover:bg-gray-100 flex items-center gap-2"
+                  className="bg-white text-gray-900 hover:bg-gray-50 hover:shadow-lg active:scale-95 transition-all duration-200 flex items-center gap-2 cursor-pointer"
                 >
                   <TrendingUp className="h-5 w-5" />
                   Đăng tin miễn phí
@@ -424,69 +424,66 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="md:col-span-2">
+          {/* Top Section - EV Trading and Categories Side by Side */}
+          <div className="flex flex-col md:flex-row md:items-start md:justify-center gap-150 mb-8 px-6">
+            {/* About Section */}
+            <div className="flex-shrink-0">
               <h3 className="text-xl font-bold mb-4">EV Trading</h3>
-              <p className="text-gray-300 mb-4 max-w-md">
-                Nền tảng mua bán xe điện và pin EV cũ hàng đầu Việt Nam. Chúng tôi kết nối người mua
-                với người bán một cách an toàn và hiệu quả.
+              <p className="text-gray-300 mb-4 text-sm leading-relaxed max-w-sm">
+                Nền tảng mua bán xe điện và pin EV cũ hàng đầu Việt Nam. An toàn, nhanh chóng, hiệu quả.
               </p>
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <CheckCircle className="h-4 w-4" />
-                <span>Đã phục vụ hàng nghìn giao dịch thành công</span>
+                <span>Hàng nghìn giao dịch thành công</span>
               </div>
             </div>
 
+            {/* Categories */}
             <div>
-              <h4 className="font-semibold mb-4">Danh mục</h4>
+              <h4 className="font-semibold mb-4 text-white">Danh mục</h4>
               <ul className="space-y-2 text-sm text-gray-300">
                 <li>
-                  <Link href="/posts/ev" className="hover:text-white transition-colors">
+                  <Link href="/posts/ev" className="hover:text-emerald-400 transition-colors">
                     Xe điện
                   </Link>
                 </li>
                 <li>
-                  <Link href="/posts/battery" className="hover:text-white transition-colors">
+                  <Link href="/posts/batteries" className="hover:text-emerald-400 transition-colors">
                     Pin EV
                   </Link>
                 </li>
                 <li>
-                  <Link href="/posts/create" className="hover:text-white transition-colors">
+                  <Link href="/posts/create" className="hover:text-emerald-400 transition-colors">
                     Đăng tin
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Hỗ trợ</h4>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li>
-                  <Link href="/about" className="hover:text-white transition-colors">
-                    Về chúng tôi
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-white transition-colors">
-                    Liên hệ
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/help" className="hover:text-white transition-colors">
-                    Trợ giúp
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="hover:text-white transition-colors">
-                    Điều khoản
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-            <p>&copy; 2024 EV Trading Platform. Tất cả quyền được bảo lưu.</p>
+          <div className="border-t border-gray-800 pt-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <p className="text-sm text-gray-400">
+                &copy; 2025 EV Trading Platform.
+              </p>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-gray-400">Theo dõi chúng tôi:</p>
+                <div className="flex gap-3">
+                  <Link href="#" className="text-gray-400 hover:text-emerald-400 transition-colors">
+                    <span className="sr-only">Facebook</span>
+                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.39v-1.2h-2.84v8.37h2.84v-4.13c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.13h2.84M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                    </svg>
+                  </Link>
+                  <Link href="#" className="text-gray-400 hover:text-emerald-400 transition-colors">
+                    <span className="sr-only">Twitter</span>
+                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M22.46 6c-.87.39-1.8.65-2.77.77 1-1 1.77-2.6 2.14-4.5-1 .6-2.1 1-3.27 1.3-.94-1-2.28-1.6-3.76-1.6-2.85 0-5.15 2.3-5.15 5.15 0 .4.05.8.15 1.18-4.28-.2-8.08-2.27-10.62-5.4-.44.77-.7 1.67-.7 2.62 0 1.79.91 3.37 2.29 4.3-.84-.03-1.64-.26-2.34-.65v.06c0 2.5 1.78 4.58 4.14 5.05-.44.12-.9.18-1.37.18-.34 0-.67-.03-1-.1.67 2.1 2.62 3.63 4.92 3.67-1.76 1.38-4 2.2-6.42 2.2-.42 0-.83-.02-1.23-.07 2.29 1.47 5.02 2.32 7.94 2.32 9.53 0 14.73-7.9 14.73-14.73 0-.22 0-.45-.02-.67.88-.64 1.64-1.44 2.24-2.36"/>
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
