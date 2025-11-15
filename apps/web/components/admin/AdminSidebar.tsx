@@ -44,18 +44,12 @@ const navigationItems = [
     icon: FileText,
     badge: null,
   },
-  {
-    name: 'Refund Cases',
-    href: '/admin/cases',
-    icon: DollarSign,
-    badge: null,
-  },
-  {
-    name: 'Analytics',
-    href: '/admin/analytics',
-    icon: BarChart3,
-    badge: null,
-  },
+  // {
+  //   name: 'Analytics',
+  //   href: '/admin/analytics',
+  //   icon: BarChart3,
+  //   badge: null,
+  // },
   {
     name: 'Settings',
     href: '/admin/settings',
