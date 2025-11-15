@@ -27,14 +27,24 @@ import { Providers } from '@/app/providers';
 //   display: "swap",
 // })
 
+import { Roboto } from 'next/font/google';
+
+const roboto = Roboto({
+  subsets: ['latin'],
+  variable: '--font-roboto',
+  display: 'swap',
+  weight: ['100', '300', '400', '500', '700', '900'],
+});
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang="en"
+      lang="vi"
       // comment bellow to using the default font of shadcn ui, tailwind: font-sans
       // className={`${geist.variable} ${geistMono.variable} ${montserrat.variable} ${roboto.variable}`}
+      className={`${roboto.variable}`}
     >
-      <body className="font-sans" suppressHydrationWarning={true}>
+      <body suppressHydrationWarning={true}>
         <Providers>{children}</Providers>
         <Toaster />
       </body>
