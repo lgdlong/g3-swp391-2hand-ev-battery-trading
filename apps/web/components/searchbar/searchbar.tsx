@@ -5,22 +5,18 @@ import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LocationSelector } from './LocationSelector';
-import { FilterDropdown } from './FilterDropdown';
 import { searchPosts } from '@/lib/api/postApi';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 interface SearchBarProps {
   className?: string;
-  showFilters?: boolean;
 }
 
-export function SearchBar({ className, showFilters = true }: SearchBarProps) {
+export function SearchBar({ className }: SearchBarProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
-  const [selectedBrand, setSelectedBrand] = useState('');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = async () => {
@@ -45,7 +41,6 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
       const params = new URLSearchParams();
       params.append('q', searchQuery);
       if (selectedLocation) params.append('location', selectedLocation);
-      if (selectedBrand) params.append('brand', selectedBrand);
 
       router.push(`/posts/ev?${params.toString()}`);
 
@@ -59,23 +54,9 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
     }
   };
 
-  const handlePriceRange = (priceTag: any) => {
-    console.log('Price range:', priceTag);
-    // TODO: Implement price range logic
-  };
-
-  const handleClearFilters = () => {
-    setSelectedLocation('');
-    setSelectedBrand('');
-    setSearchQuery('');
-    setIsFilterOpen(false);
-  };
-
   const handleClearSearch = () => {
     setSearchQuery('');
     setSelectedLocation('');
-    setSelectedBrand('');
-    setIsFilterOpen(false);
     // Navigate back to default list
     router.push('/posts/ev');
     toast.success('Đã xóa bộ lọc tìm kiếm');
@@ -122,19 +103,6 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
               onLocationChange={setSelectedLocation}
             />
 
-            {/* Filter Dropdown - chỉ hiển thị khi showFilters = true */}
-            {showFilters && (
-              <FilterDropdown
-                isOpen={isFilterOpen}
-                onToggle={() => setIsFilterOpen(!isFilterOpen)}
-                onClose={() => setIsFilterOpen(false)}
-                selectedBrand={selectedBrand}
-                onBrandChange={setSelectedBrand}
-                onPriceRangeSelect={handlePriceRange}
-                onClearFilters={handleClearFilters}
-              />
-            )}
-
             {/* Search Button */}
             <Button
               onClick={handleSearch}
@@ -154,4 +122,3 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
 export { LocationSelector } from './LocationSelector';
 export { BrandFilter } from './BrandFilter';
 export { PriceFilter } from './PriceFilter';
-export { FilterDropdown } from './FilterDropdown';
