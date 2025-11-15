@@ -155,12 +155,12 @@ export class TransactionsController {
    */
   @Post('post-deposit')
   @ApiOperation({
-    summary: 'Ghi nhận thanh toán đặt cọc khi tạo post',
+    summary: 'Ghi nhận thanh toán phí đăng bài',
     description:
-      'Được gọi sau khi user trả deposit (đặt cọc) để tạo post. Lưu vào post_payments để tracking cho refund.',
+      'Được gọi sau khi user thanh toán phí đăng bài. Lưu vào post_payments để tracking payment history.',
   })
   @ApiBody({ type: RecordPostDepositDto })
-  @ApiCreatedResponse({ description: 'Deposit payment recorded successfully', type: PostPayment })
+  @ApiCreatedResponse({ description: 'Post payment recorded successfully', type: PostPayment })
   async recordPostDeposit(@Body() dto: RecordPostDepositDto): Promise<PostPayment> {
     return await this.transactionsService.recordPostDepositPayment(
       dto.postId,

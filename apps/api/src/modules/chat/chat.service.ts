@@ -262,7 +262,7 @@ export class ChatService {
 
   /**
    * Check if a post has any chat activity (conversations with messages)
-   * Used by refunds system to detect "shadow sales"
+   * Used to track post engagement and user interest
    *
    * @param postId - ID of the post to check
    * @returns true if post has conversations with messages, false otherwise

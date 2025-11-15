@@ -240,4 +240,18 @@ export class AdminStatisticsService {
     // Fraud detection feature removed - return zero values
     return { total: 0, suspected: 0, confirmed: 0 };
   }
+
+  /**
+   * Get total revenue from post payments
+   * Revenue = SUM(amount_paid) from post_payments table
+   * Note: In the new business model, all fees are retained (no refunds)
+   */
+  async getTotalRevenue(): Promise<string> {
+    const result = await this.postPaymentRepo
+      .createQueryBuilder('pp')
+      .select('SUM(CAST(pp.amount_paid AS DECIMAL))', 'total')
+      .getRawOne();
+
+    return result?.total || '0';
+  }
 }

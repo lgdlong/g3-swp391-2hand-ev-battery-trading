@@ -258,16 +258,17 @@ export class PostsController {
   //------------ POST ENDPOINTS -------------
   //-----------------------------------------
 
-  @Post('deduct-fee')
-  @ApiOperation({ summary: 'Trừ phí đặt cọc đăng bài từ ví người dùng' })
+  @Post('pay-fee')
+  @ApiOperation({ summary: 'Thanh toán phí đăng bài từ ví người dùng' })
   @ApiBearerAuth()
   @ApiCreatedResponse({
-    description: 'Trừ tiền thành công',
+    description: 'Thanh toán thành công',
     schema: {
       type: 'object',
       properties: {
         wallet: { type: 'object' },
         transaction: { type: 'object' },
+        postPayment: { type: 'object' },
       },
     },
   })
@@ -276,10 +277,10 @@ export class PostsController {
   @ApiBody({ type: DeductPostFeeDto })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.USER)
-  async deductPostFee(
+  async payPostFee(
     @Body() body: DeductPostFeeDto,
     @User() user: AuthUser,
-  ): Promise<{ wallet: any; transaction: any }> {
+  ): Promise<{ wallet: any; transaction: any; postPayment: any }> {
     return this.postsService.deductPostCreationFee(user.sub, body.priceVnd, body.postId);
   }
 

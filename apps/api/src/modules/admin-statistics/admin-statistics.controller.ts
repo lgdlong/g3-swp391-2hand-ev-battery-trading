@@ -221,4 +221,32 @@ export class AdminStatisticsController {
   async getFraudCount(): Promise<{ total: number; suspected: number; confirmed: number }> {
     return this.adminStatsService.getFraudCount();
   }
+
+  /**
+   * Get total revenue from post payments
+   */
+  @Get('total-revenue')
+  @ApiOperation({
+    summary: 'Get total revenue',
+    description:
+      'Get total revenue from all post payments. In the new business model, all fees are retained (no refunds).',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Total revenue retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        totalRevenue: {
+          type: 'string',
+          example: '15000000',
+          description: 'Total revenue from post payments in VND',
+        },
+      },
+    },
+  })
+  async getTotalRevenue(): Promise<{ totalRevenue: string }> {
+    const totalRevenue = await this.adminStatsService.getTotalRevenue();
+    return { totalRevenue };
+  }
 }
