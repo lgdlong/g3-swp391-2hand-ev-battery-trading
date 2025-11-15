@@ -10,21 +10,18 @@ import {
   deleteFeeTier,
   type FeeTier,
 } from '@/lib/api/feeTiersApi';
-import { getSingleRefundPolicy, type RefundPolicy } from '@/lib/api/refundPolicy';
 import { getSinglePostLifecycle, type PostLifecycle } from '@/lib/api/postLifecycleApi';
 import {
   FeeTierStatsCards,
   FeeTierTable,
   FeeTierDialog,
   FeeTierActions,
-  RefundPolicyCard,
   PostLifecycleCard,
 } from './_components';
 import type { FeeTierFormData } from './_components/FeeTierDialog';
 
 export default function AdminSettingsPage() {
   const [feeTiers, setFeeTiers] = useState<FeeTier[]>([]);
-  const [refundPolicy, setRefundPolicy] = useState<RefundPolicy | null>(null);
   const [postLifecycle, setPostLifecycle] = useState<PostLifecycle | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -39,9 +36,8 @@ export default function AdminSettingsPage() {
   const fetchAllData = async () => {
     try {
       setLoading(true);
-      const [feeTiersData, refundData, lifecycleData] = await Promise.all([
+      const [feeTiersData, lifecycleData] = await Promise.all([
         getAllFeeTiers(),
-        getSingleRefundPolicy(),
         getSinglePostLifecycle(),
       ]);
 
@@ -51,7 +47,6 @@ export default function AdminSettingsPage() {
       );
 
       setFeeTiers(sortedFeeTiers);
-      setRefundPolicy(refundData);
       setPostLifecycle(lifecycleData);
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -176,18 +171,15 @@ export default function AdminSettingsPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Cài Đặt Hệ Thống</h1>
         <p className="text-gray-600 mt-2">
-          Quản lý hoa hồng, chính sách hoàn tiền và vòng đời bài đăng
+          Quản lý phí đăng bài và vòng đời bài đăng
         </p>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="fee-tiers" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger className="data-[state=active]:bg-white" value="fee-tiers">
-            Hoa Hồng
-          </TabsTrigger>
-          <TabsTrigger className="data-[state=active]:bg-white" value="refund-policy">
-            Chính Sách Hoàn Tiền
+            Phí Đăng Bài
           </TabsTrigger>
           <TabsTrigger className="data-[state=active]:bg-white" value="listing-lifecycle">
             Vòng Đời Bài Đăng
@@ -203,11 +195,6 @@ export default function AdminSettingsPage() {
             onEditTier={handleOpenEditDialog}
             onDeleteTier={handleDeleteTier}
           />
-        </TabsContent>
-
-        {/* Refund Policy Tab */}
-        <TabsContent value="refund-policy" className="space-y-4">
-          <RefundPolicyCard refundPolicy={refundPolicy} onUpdate={fetchAllData} />
         </TabsContent>
 
         {/* Listing Lifecycle Tab */}
