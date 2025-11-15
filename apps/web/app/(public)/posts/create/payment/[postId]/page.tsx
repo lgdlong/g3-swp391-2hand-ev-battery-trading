@@ -5,15 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Coins, RefreshCw, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { getMyWallet } from '@/lib/api/walletApi';
 import { getPostById, deductPostCreationFee, publishPost } from '@/lib/api/postApi';
 import { getAllFeeTiers } from '@/lib/api/feeTiersApi';
+import { checkPostPayment } from '@/lib/api/postPaymentApi';
+import { PostInfoCard } from './_components/PostInfoCard';
+import { WalletBalanceCard } from './_components/WalletBalanceCard';
+import { PaymentSummary } from './_components/PaymentSummary';
+import { RepublishSection } from './_components/RepublishSection';
+import { PaymentButton } from './_components/PaymentButton';
+import { PaymentInfoNotes } from './_components/PaymentInfoNotes';
+import { PendingReviewBanner } from './_components/PendingReviewBanner';
 
 export default function PostPaymentPage() {
   const router = useRouter();
@@ -51,6 +58,13 @@ export default function PostPaymentPage() {
   const { data: feeTiers, isLoading: isLoadingFeeTiers } = useQuery({
     queryKey: ['feeTiers'],
     queryFn: getAllFeeTiers,
+  });
+
+  // Check if post has been paid before
+  const { data: paymentCheck, isLoading: isLoadingPaymentCheck } = useQuery({
+    queryKey: ['postPayment', 'check', postId],
+    queryFn: () => checkPostPayment(postId),
+    enabled: !!postId,
   });
 
   // Check if post was already paid - only redirect if status is not DRAFT and not PENDING_REVIEW
@@ -104,6 +118,48 @@ export default function PostPaymentPage() {
 
   // Check if post has already been paid - if status is PENDING_REVIEW, user should go to upload images
   const isPendingReview = post?.status === 'PENDING_REVIEW';
+  const isAlreadyPaid = paymentCheck?.isPaid || false;
+  const isDraftOrRejected = post?.status === 'DRAFT' || post?.status === 'REJECTED';
+
+  // Handler for re-publishing already paid posts (REJECTED posts)
+  const handleRepublish = async () => {
+    setIsProcessing(true);
+
+    try {
+      // Just update post status to PENDING_REVIEW (no payment needed)
+      await publishPost(postId);
+      toast.success('Bài đăng đã được gửi lại để chờ duyệt!');
+
+      // Invalidate query to refresh post data
+      await queryClient.invalidateQueries({ queryKey: ['post', postId] });
+
+      // Refresh post data to check images
+      const updatedPost = await queryClient.fetchQuery({
+        queryKey: ['post', postId],
+        queryFn: () => getPostById(postId),
+      });
+
+      // Check if post has images
+      const hasImages =
+        updatedPost?.images && Array.isArray(updatedPost.images) && updatedPost.images.length > 0;
+
+      if (hasImages) {
+        // Post already has images, go directly to my-posts
+        toast.success('Bài đăng đã sẵn sàng!');
+        router.push(`/my-posts`);
+      } else {
+        // No images, redirect to upload page
+        router.push(`/posts/create/upload-images/${postId}`);
+      }
+    } catch (error: unknown) {
+      console.error('Re-publish failed:', error);
+      const err = error as { response?: { data?: { message?: string } }; message?: string };
+      const errorMessage = err?.response?.data?.message || err?.message || 'Đăng lại thất bại';
+      toast.error(`Lỗi: ${errorMessage}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handlePayment = async () => {
     if (!hasEnoughCoins) {
@@ -161,7 +217,13 @@ export default function PostPaymentPage() {
     return new Intl.NumberFormat('vi-VN').format(amount);
   };
 
-  if (isLoadingPost || isLoadingWallet || isLoadingFeeTiers || isRefetchingPost) {
+  if (
+    isLoadingPost ||
+    isLoadingWallet ||
+    isLoadingFeeTiers ||
+    isRefetchingPost ||
+    isLoadingPaymentCheck
+  ) {
     return (
       <div className="min-h-screen bg-gray-50">
         <section className="relative bg-[#1a2332] text-white overflow-hidden">
@@ -253,160 +315,52 @@ export default function PostPaymentPage() {
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
             {/* Post Info */}
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-2">Bài đăng</h3>
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="font-medium text-gray-900">{post.title}</p>
-                <p className="text-sm text-gray-600 mt-1">Giá bán: {formatCurrency(postPrice)} ₫</p>
-                <Badge className="mt-2 bg-yellow-500">DRAFT</Badge>
-              </div>
-            </div>
+            <PostInfoCard title={post.title} priceVnd={postPrice} formatCurrency={formatCurrency} />
 
             <Separator />
 
             {/* Payment Method */}
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-3">Phương thức thanh toán</h3>
-              <div className="p-4 border-2 border-green-500 bg-green-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
-                      <Coins className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">Coin</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-zinc-600">
-                          Số dư:{' '}
-                          <strong
-                            className={`font-bold ${hasEnoughCoins ? 'text-green-600' : 'text-red-600'}`}
-                          >
-                            {isLoadingWallet ? '...' : formatCurrency(currentCoins)} ₫
-                          </strong>
-                        </p>
-                        <button
-                          onClick={() => refetchWallet()}
-                          className="text-blue-600 hover:text-blue-700"
-                          aria-label="Refresh wallet balance"
-                        >
-                          <RefreshCw className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {hasEnoughCoins && (
-                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                      <CheckCircle className="h-4 w-4 text-white" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {!hasEnoughCoins && (
-                <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-orange-900">Không đủ coin</p>
-                      <p className="text-sm text-orange-700 mt-1">
-                        Bạn cần nạp thêm {formatCurrency(depositFee - currentCoins)} ₫ để thanh
-                        toán.
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push('/wallet')}
-                        className="mt-2 border-orange-500 text-orange-700 hover:bg-orange-100"
-                      >
-                        Nạp coin ngay
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            <WalletBalanceCard
+              currentCoins={currentCoins}
+              depositFee={depositFee}
+              hasEnoughCoins={hasEnoughCoins}
+              isLoadingWallet={isLoadingWallet}
+              formatCurrency={formatCurrency}
+              refetchWallet={refetchWallet}
+            />
 
             <Separator />
 
-            {/* Payment Summary */}
-            <div>
-              <h3 className="font-semibold text-gray-700 mb-3">Chi tiết thanh toán</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-gray-600">
-                  <span>Phí đặt cọc đăng bài</span>
-                  <span className="font-medium">{formatCurrency(depositFee)} ₫</span>
-                </div>
-                <Separator className="my-2" />
-                <div className="flex justify-between text-lg font-bold text-gray-900">
-                  <span>Tổng cộng</span>
-                  <span className="text-green-600">{formatCurrency(depositFee)} ₫</span>
-                </div>
-              </div>
-            </div>
+            {/* Show different UI based on payment status */}
+            {isAlreadyPaid && isDraftOrRejected ? (
+              /* Already paid - just need to republish */
+              <RepublishSection
+                postStatus={post?.status || 'DRAFT'}
+                isProcessing={isProcessing}
+                onRepublish={handleRepublish}
+              />
+            ) : (
+              /* Not paid yet - show payment flow */
+              <>
+                <PaymentSummary depositFee={depositFee} formatCurrency={formatCurrency} />
 
-            {/* Payment Button */}
-            <Button
-              onClick={handlePayment}
-              className={`w-full h-14 text-lg font-semibold ${
-                hasEnoughCoins && !isPendingReview
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-gray-400 cursor-not-allowed'
-              }`}
-              disabled={isProcessing || !hasEnoughCoins || isLoadingWallet || isPendingReview}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : isPendingReview ? (
-                <>
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  Đã thanh toán - Tiếp tục upload ảnh
-                </>
-              ) : (
-                `${formatCurrency(depositFee)} ₫ - THANH TOÁN`
-              )}
-            </Button>
+                <PaymentButton
+                  depositFee={depositFee}
+                  hasEnoughCoins={hasEnoughCoins}
+                  isPendingReview={isPendingReview}
+                  isProcessing={isProcessing}
+                  isLoadingWallet={isLoadingWallet}
+                  formatCurrency={formatCurrency}
+                  onPayment={handlePayment}
+                />
+              </>
+            )}
 
-            {/* Info */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-900">
-                  <p className="font-medium mb-1">Lưu ý:</p>
-                  <ul className="list-disc list-inside space-y-1 text-blue-800">
-                    <li>Sau khi thanh toán, bài đăng sẽ chuyển sang trạng thái chờ duyệt</li>
-                    <li>Bạn có thể upload hình ảnh sau khi thanh toán thành công</li>
-                    <li>Phí đăng bài không được hoàn lại</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+            {/* Info - show different notes based on payment status */}
+            <PaymentInfoNotes isAlreadyPaid={isAlreadyPaid} isDraftOrRejected={isDraftOrRejected} />
 
             {/* Already Paid Warning */}
-            {isPendingReview && (
-              <div className="p-4 bg-green-50 border-2 border-green-500 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-green-900">Thanh toán thành công!</p>
-                    <p className="text-sm text-green-800 mt-1">
-                      Bài đăng của bạn đã được thanh toán. Vui lòng tiếp tục{' '}
-                      <Button
-                        variant="link"
-                        size="sm"
-                        onClick={() => router.push(`/posts/create/upload-images/${postId}`)}
-                        className="p-0 h-auto text-green-700 underline font-semibold"
-                      >
-                        upload hình ảnh
-                      </Button>{' '}
-                      để hoàn tất quá trình đăng bài.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            {isPendingReview && <PendingReviewBanner postId={postId} />}
           </CardContent>
         </Card>
       </div>
