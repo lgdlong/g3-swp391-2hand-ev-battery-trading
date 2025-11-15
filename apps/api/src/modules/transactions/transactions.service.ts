@@ -67,9 +67,9 @@ export class TransactionsService {
       throw new BadRequestException('Không tìm thấy bậc phí phù hợp với giá bài đăng');
     }
 
-    // Calculate deposit amount
-    const depositRate = applicableTier.depositRate;
-    const depositAmount = Math.round(priceVnd * depositRate);
+    // Get posting fee amount (fixed fee, not percentage-based)
+    const postingFee = Number(applicableTier.postingFee);
+    const depositAmount = Math.round(postingFee);
 
     // Execute wallet deduction and post payment creation in sequence
     // Note: WalletsService.deduct already uses a transaction internally

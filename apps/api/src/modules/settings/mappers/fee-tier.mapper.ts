@@ -7,7 +7,7 @@ export class FeeTierMapper {
       id: entity.id,
       minPrice: entity.minPrice,
       maxPrice: entity.maxPrice,
-      depositRate: entity.depositRate,
+      postingFee: entity.postingFee,
       active: entity.active,
       updatedAt: entity.updatedAt,
     };

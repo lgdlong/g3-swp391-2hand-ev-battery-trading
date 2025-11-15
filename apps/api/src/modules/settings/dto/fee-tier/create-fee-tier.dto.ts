@@ -22,14 +22,13 @@ export class CreateFeeTierDto {
   maxPrice?: number | null;
 
   @ApiProperty({
-    description: 'Deposit rate (0.0000 to 1.0000)',
+    description: 'Posting fee amount in VND (fixed amount, not percentage)',
     minimum: 0,
-    maximum: 1,
-    example: 0.1,
+    example: 20000,
   })
-  @IsNumber({ maxDecimalPlaces: 4 })
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  depositRate!: number;
+  postingFee!: number;
 
   @ApiPropertyOptional({
     description: 'Whether this tier is active',

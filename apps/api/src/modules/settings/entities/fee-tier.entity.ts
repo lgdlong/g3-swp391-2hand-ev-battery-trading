@@ -16,10 +16,10 @@ export class FeeTier {
   @Column({ name: 'max_price', type: 'numeric', precision: 15, scale: 0, nullable: true })
   maxPrice!: number | null;
 
-  @IsNumber({ maxDecimalPlaces: 4 })
+  @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
-  @Column({ name: 'deposit_rate', type: 'decimal', precision: 5, scale: 4 })
-  depositRate!: number;
+  @Column({ name: 'posting_fee', type: 'numeric', precision: 14, scale: 2 })
+  postingFee!: number;
 
   @Column({ name: 'active', type: 'boolean', default: true })
   active!: boolean;

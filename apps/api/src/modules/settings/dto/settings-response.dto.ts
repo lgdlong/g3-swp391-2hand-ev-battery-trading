@@ -10,8 +10,8 @@ export class FeeTierResponseDto {
   @ApiProperty({ example: 10000000, nullable: true })
   maxPrice!: number | null;
 
-  @ApiProperty({ example: 0.1 })
-  depositRate!: number;
+  @ApiProperty({ example: 20000 })
+  postingFee!: number;
 
   @ApiProperty({ example: true })
   active!: boolean;
