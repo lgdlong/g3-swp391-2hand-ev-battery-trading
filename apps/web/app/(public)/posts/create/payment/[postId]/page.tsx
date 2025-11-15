@@ -1,19 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
-import { getMyWallet } from '@/lib/api/walletApi';
-import { getPostById, deductPostCreationFee, publishPost } from '@/lib/api/postApi';
-import { getAllFeeTiers } from '@/lib/api/feeTiersApi';
-import { checkPostPayment } from '@/lib/api/postPaymentApi';
 import { PostInfoCard } from './_components/PostInfoCard';
 import { WalletBalanceCard } from './_components/WalletBalanceCard';
 import { PaymentSummary } from './_components/PaymentSummary';
@@ -21,209 +14,53 @@ import { RepublishSection } from './_components/RepublishSection';
 import { PaymentButton } from './_components/PaymentButton';
 import { PaymentInfoNotes } from './_components/PaymentInfoNotes';
 import { PendingReviewBanner } from './_components/PendingReviewBanner';
+import { usePostPaymentData, usePaymentHandlers, usePostRedirect } from './hooks';
+import { calculatePostingFee, formatCurrency, getPostPaymentStatus } from './helpers';
 
 export default function PostPaymentPage() {
   const router = useRouter();
   const params = useParams();
   const postId = params.postId as string;
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  // Fetch post details
+  // Fetch all data using custom hook
   const {
-    data: post,
-    isLoading: isLoadingPost,
-    error: postError,
-    isFetching: isRefetchingPost,
-  } = useQuery({
-    queryKey: ['post', postId],
-    queryFn: () => getPostById(postId),
-    enabled: !!postId,
-  });
+    post,
+    wallet,
+    feeTiers,
+    paymentCheck,
+    isLoading,
+    postError,
+    isRefetchingPost,
+    refetchWallet,
+  } = usePostPaymentData(postId, user?.id);
 
-  // Fetch wallet balance
-  const {
-    data: wallet,
-    isLoading: isLoadingWallet,
-    refetch: refetchWallet,
-  } = useQuery({
-    queryKey: ['wallet', 'me'],
-    queryFn: getMyWallet,
-    enabled: !!user,
-  });
+  // Redirect if post is already processed
+  usePostRedirect(post, isRefetchingPost);
 
-  // Fetch fee tiers
-  const { data: feeTiers, isLoading: isLoadingFeeTiers } = useQuery({
-    queryKey: ['feeTiers'],
-    queryFn: getAllFeeTiers,
-  });
-
-  // Check if post has been paid before
-  const { data: paymentCheck, isLoading: isLoadingPaymentCheck } = useQuery({
-    queryKey: ['postPayment', 'check', postId],
-    queryFn: () => checkPostPayment(postId),
-    enabled: !!postId,
-  });
-
-  // Check if post was already paid - only redirect if status is not DRAFT and not PENDING_REVIEW
-  // PENDING_REVIEW means payment was just completed, user should go to upload images
-  // Only redirect to my-posts when viewing an already published/approved post
-  useEffect(() => {
-    // Don't run the effect while the post is being refetched
-    if (isRefetchingPost) {
-      return;
-    }
-
-    if (post && post.status !== 'DRAFT' && post.status !== 'PENDING_REVIEW') {
-      // Post is already fully processed (APPROVED, REJECTED, etc.)
-      toast.info('Bài đăng này đã được xử lý', {
-        description: 'Bạn sẽ được chuyển hướng tới trang quản lý bài đăng',
-        duration: 3000,
-      });
-      router.push('/my-posts');
-    }
-  }, [post, router, isRefetchingPost]);
-
-  // Calculate fee based on fee tiers (matching backend logic)
+  // Calculate fees and balances
   const postPrice = post ? Number.parseFloat(post.priceVnd) : 0;
-  const depositFee = (() => {
-    if (!feeTiers || feeTiers.length === 0) return 0;
-
-    // Find applicable fee tier
-    const applicableTier = feeTiers.find((tier) => {
-      const minPrice =
-        typeof tier.minPrice === 'string' ? Number.parseFloat(tier.minPrice) : tier.minPrice;
-      const maxPrice = tier.maxPrice
-        ? typeof tier.maxPrice === 'string'
-          ? Number.parseFloat(tier.maxPrice)
-          : tier.maxPrice
-        : Infinity;
-      return postPrice >= minPrice && postPrice <= maxPrice;
-    });
-
-    if (!applicableTier) return 0;
-
-    // Get fixed posting fee from tier
-    const postingFee =
-      typeof applicableTier.postingFee === 'string'
-        ? Number.parseFloat(applicableTier.postingFee)
-        : applicableTier.postingFee;
-    return postingFee;
-  })();
-
+  const depositFee = calculatePostingFee(postPrice, feeTiers);
   const currentCoins = wallet ? Number.parseFloat(wallet.balance) : 0;
   const hasEnoughCoins = currentCoins >= depositFee;
 
-  // Check if post has already been paid - if status is PENDING_REVIEW, user should go to upload images
-  const isPendingReview = post?.status === 'PENDING_REVIEW';
-  const isAlreadyPaid = paymentCheck?.isPaid || false;
-  const isDraftOrRejected = post?.status === 'DRAFT' || post?.status === 'REJECTED';
+  // Get payment status flags
+  const { isPendingReview, isAlreadyPaid, isDraftOrRejected } = getPostPaymentStatus(
+    post?.status,
+    paymentCheck?.isPaid || false,
+  );
 
-  // Handler for re-publishing already paid posts (REJECTED posts)
-  const handleRepublish = async () => {
-    setIsProcessing(true);
+  // Payment handlers
+  const { isProcessing, handlePayment, handleRepublish } = usePaymentHandlers({
+    postId,
+    postPrice,
+    depositFee,
+    currentCoins,
+    hasEnoughCoins,
+    formatCurrency,
+  });
 
-    try {
-      // Just update post status to PENDING_REVIEW (no payment needed)
-      await publishPost(postId);
-      toast.success('Bài đăng đã được gửi lại để chờ duyệt!');
-
-      // Invalidate query to refresh post data
-      await queryClient.invalidateQueries({ queryKey: ['post', postId] });
-
-      // Refresh post data to check images
-      const updatedPost = await queryClient.fetchQuery({
-        queryKey: ['post', postId],
-        queryFn: () => getPostById(postId),
-      });
-
-      // Check if post has images
-      const hasImages =
-        updatedPost?.images && Array.isArray(updatedPost.images) && updatedPost.images.length > 0;
-
-      if (hasImages) {
-        // Post already has images, go directly to my-posts
-        toast.success('Bài đăng đã sẵn sàng!');
-        router.push(`/my-posts`);
-      } else {
-        // No images, redirect to upload page
-        router.push(`/posts/create/upload-images/${postId}`);
-      }
-    } catch (error: unknown) {
-      console.error('Re-publish failed:', error);
-      const err = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage = err?.response?.data?.message || err?.message || 'Đăng lại thất bại';
-      toast.error(`Lỗi: ${errorMessage}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handlePayment = async () => {
-    if (!hasEnoughCoins) {
-      toast.error('Không đủ coin', {
-        description: `Bạn cần ${formatCurrency(depositFee)} ₫ để đăng bài. Hiện tại bạn có ${formatCurrency(currentCoins)} ₫.`,
-        duration: 5000,
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      // Step 1: Deduct fee from wallet
-      await deductPostCreationFee(postPrice, postId);
-      toast.success('Thanh toán thành công!');
-
-      // Step 2: Update post status to PENDING_REVIEW
-      await publishPost(postId);
-      toast.success('Bài đăng đã được gửi để chờ duyệt!');
-
-      // Invalidate queries
-      await queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
-      await queryClient.invalidateQueries({ queryKey: ['post', postId] });
-
-      // Refresh post data to get updated images
-      const updatedPost = await queryClient.fetchQuery({
-        queryKey: ['post', postId],
-        queryFn: () => getPostById(postId),
-      });
-
-      // Check if post has images
-      const hasImages =
-        updatedPost?.images && Array.isArray(updatedPost.images) && updatedPost.images.length > 0;
-
-      if (hasImages) {
-        // Post already has images, go directly to my-posts
-        toast.success('Bài đăng đã sẵn sàng!');
-        router.push(`/my-posts`);
-      } else {
-        // No images, redirect to upload page
-        router.push(`/posts/create/upload-images/${postId}`);
-      }
-    } catch (error: unknown) {
-      console.error('Payment failed:', error);
-      const err = error as { response?: { data?: { message?: string } }; message?: string };
-      const errorMessage = err?.response?.data?.message || err?.message || 'Thanh toán thất bại';
-      toast.error(`Lỗi: ${errorMessage}`);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN').format(amount);
-  };
-
-  if (
-    isLoadingPost ||
-    isLoadingWallet ||
-    isLoadingFeeTiers ||
-    isRefetchingPost ||
-    isLoadingPaymentCheck
-  ) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <section className="relative bg-[#1a2332] text-white overflow-hidden">
@@ -324,7 +161,7 @@ export default function PostPaymentPage() {
               currentCoins={currentCoins}
               depositFee={depositFee}
               hasEnoughCoins={hasEnoughCoins}
-              isLoadingWallet={isLoadingWallet}
+              isLoadingWallet={false}
               formatCurrency={formatCurrency}
               refetchWallet={refetchWallet}
             />
@@ -349,7 +186,7 @@ export default function PostPaymentPage() {
                   hasEnoughCoins={hasEnoughCoins}
                   isPendingReview={isPendingReview}
                   isProcessing={isProcessing}
-                  isLoadingWallet={isLoadingWallet}
+                  isLoadingWallet={false}
                   formatCurrency={formatCurrency}
                   onPayment={handlePayment}
                 />
