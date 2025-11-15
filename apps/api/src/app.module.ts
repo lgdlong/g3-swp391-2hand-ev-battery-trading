@@ -16,7 +16,6 @@ import { AddressModule } from './modules/address/address.module';
 import { VerifyPostModule } from './modules/verifyPost/verify-post.module';
 import { PostReviewModule } from './modules/post-review/post-review.module';
 import { PayosModule } from './modules/payos/payos.module';
-import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { ServiceTypesModule } from './modules/service-types/service-types.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
@@ -73,7 +72,6 @@ import { AdminStatisticsModule } from './modules/admin-statistics/admin-statisti
     VerifyPostModule,
     PostReviewModule,
     PayosModule,
-    PostRatingModule,
     SettingsModule,
     ServiceTypesModule,
     WalletsModule,

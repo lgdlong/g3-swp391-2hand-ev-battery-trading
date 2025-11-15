@@ -11,7 +11,6 @@ import { useAuth } from '@/lib/auth-context';
 import { SellerInfo, PostHeader } from '@/app/(public)/posts/_components';
 import { Specifications } from './_components';
 import { DEFAULT_IMAGE } from '@/constants/images';
-import { RatingsList } from '@/components/RatingsList';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -121,7 +120,7 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Image Section */}
           <div className="lg:col-span-1 space-y-6">
-            <Card className="overflow-hidden shadow-lg">
+            <Card className="overflow-hidden shadow-none border-none">
               <CardContent className="p-0">
                 <div className="relative h-80 w-full bg-gray-50">
                   <Image
@@ -146,7 +145,7 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
             </Card>
 
             {/* Seller Info Section */}
-            <Card className="shadow-lg">
+            <Card className="shadow-none border-none">
               <CardContent className="p-6">
                 <SellerInfo account={seller} post={post} loading={sellerLoading} />
               </CardContent>
@@ -160,7 +159,7 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
 
             {/* Description */}
             {post.description && (
-              <Card className="shadow-lg">
+              <Card className="shadow-none border-none">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">Mô tả chi tiết</h2>
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
@@ -172,8 +171,6 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
 
             {/* Battery Specifications */}
             <Specifications post={post} />
-
-            <RatingsList postId={post.id} limit={10} />
           </div>
         </div>
       </div>
