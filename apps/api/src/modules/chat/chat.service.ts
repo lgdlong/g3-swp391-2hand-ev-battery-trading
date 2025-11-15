@@ -156,7 +156,6 @@ export class ChatService {
   /**
    * FR-CHAT-M3: Send a message in a conversation
    * Includes security check and returns the created message
-   * ✨ AUTO-UPDATE: hasMessages and messagesCount
    */
   async sendMessage(sendMessageDto: SendMessageDto, senderId: number): Promise<Message> {
     const { conversationId, content } = sendMessageDto;
@@ -183,10 +182,8 @@ export class ChatService {
 
     const savedMessage = await this.messageRepo.save(message);
 
-    // ✨ UPDATE: Increment messagesCount and set hasMessages to true
-    await this.conversationRepo.increment({ id: conversationId }, 'messagesCount', 1);
+    // Update conversation's updatedAt timestamp
     await this.conversationRepo.update(conversationId, {
-      hasMessages: true,
       updatedAt: new Date(),
     });
 
@@ -232,47 +229,35 @@ export class ChatService {
   }
 
   /**
-   * ✨ NEW: Get conversations filtered by hasMessages status
-   * Useful for finding conversations with/without messages
+   * Get unread message count for a user
+   * Counts messages in user's conversations where senderId !== userId
+   * and message was created after conversation's updatedAt (simple heuristic)
    */
-  async getConversationsByMessageStatus(
-    hasMessages: boolean,
-    page: number = 1,
-    limit: number = 20,
-  ): Promise<{ data: ConversationResponseDto[]; total: number }> {
-    const [conversations, total] = await this.conversationRepo.findAndCount({
-      where: { hasMessages },
-      relations: ['post', 'post.images', 'post.seller', 'buyer', 'seller'],
-      order: { updatedAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
+  async getUnreadMessageCount(userId: number): Promise<number> {
+    // Get all conversations for user
+    const conversations = await this.conversationRepo.find({
+      where: [{ buyerId: userId }, { sellerId: userId }],
+      select: ['id', 'updatedAt'],
     });
 
-    return {
-      data: conversations.map(mapConversationToDto),
-      total,
-    };
-  }
+    if (conversations.length === 0) {
+      return 0;
+    }
 
-  /**
-   * ✨ NEW: Get conversation statistics
-   * Returns counts of conversations with/without messages
-   */
-  async getConversationStats(): Promise<{
-    totalConversations: number;
-    conversationsWithMessages: number;
-    conversationsWithoutMessages: number;
-  }> {
-    const total = await this.conversationRepo.count();
-    const withMessages = await this.conversationRepo.count({
-      where: { hasMessages: true },
-    });
+    const conversationIds = conversations.map((conv) => conv.id);
 
-    return {
-      totalConversations: total,
-      conversationsWithMessages: withMessages,
-      conversationsWithoutMessages: total - withMessages,
-    };
+    // Count messages where:
+    // 1. Message is in user's conversations
+    // 2. Message sender is not the current user (someone else sent it)
+    // 3. Message was created after conversation's updatedAt (heuristic: if conversation was updated after message, user likely saw it)
+    // Actually, simpler: just count all messages from others in user's conversations
+    const unreadCount = await this.messageRepo
+      .createQueryBuilder('message')
+      .where('message.conversationId IN (:...conversationIds)', { conversationIds })
+      .andWhere('message.senderId != :userId', { userId })
+      .getCount();
+
+    return unreadCount;
   }
 
   /**
@@ -301,5 +286,29 @@ export class ChatService {
     return this.conversationRepo.count({
       where: { postId, hasMessages: true },
     });
+  }
+
+  /**
+   * Get conversation by ID with access check
+   * @param conversationId - Conversation ID
+   * @param userId - User ID to verify access
+   * @returns Conversation or null
+   */
+  async getConversationById(conversationId: number, userId: number): Promise<Conversation | null> {
+    const conversation = await this.conversationRepo.findOne({
+      where: { id: conversationId.toString() },
+      relations: ['post', 'buyer', 'seller'],
+    });
+
+    if (!conversation) {
+      return null;
+    }
+
+    // Verify user has access to this conversation
+    if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+      throw new ForbiddenException('You do not have access to this conversation');
+    }
+
+    return conversation;
   }
 }

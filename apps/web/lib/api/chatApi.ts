@@ -36,4 +36,10 @@ export const chatApi = {
       total: response.data.meta?.total ?? response.data.data?.length ?? 0,
     };
   },
+
+  // Get unread message count
+  getUnreadMessageCount: async (): Promise<number> => {
+    const response = await api.get(`${CHAT_API_URL}/unread/count`);
+    return response.data.data.count;
+  },
 };

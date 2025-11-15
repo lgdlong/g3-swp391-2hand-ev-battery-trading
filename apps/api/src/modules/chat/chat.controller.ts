@@ -86,6 +86,29 @@ export class ChatController {
   }
 
   /**
+   * Get unread message count for current user
+   * GET /conversations/unread/count
+   */
+  @Get('unread/count')
+  @ApiOperation({
+    summary: 'Get unread message count',
+    description: 'Get total count of unread messages for current user',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Unread count retrieved successfully',
+  })
+  async getUnreadMessageCount(@User() user: AuthUser) {
+    const count = await this.chatService.getUnreadMessageCount(user.sub);
+
+    return {
+      success: true,
+      data: { count },
+      message: 'Unread count retrieved successfully',
+    };
+  }
+
+  /**
    * FR-CHAT-M4: Get messages for a conversation
    * GET /conversations/:id/messages
    */
@@ -129,138 +152,6 @@ export class ChatController {
         totalPages: Math.ceil(result.total / limit),
       },
       message: 'Messages retrieved successfully',
-    };
-  }
-
-  /**
-   * ✨ NEW: Get conversations by message status
-   * GET /conversations/filter/by-status
-   */
-  @Get('filter/by-status')
-  @ApiOperation({
-    summary: 'Get conversations by message status',
-    description: `Filter conversations based on whether they contain messages or not.
-
-    Use Cases:
-    - Find empty conversations (hasMessages=false) for cleanup
-    - Find active conversations with messages (hasMessages=true)
-    - Analytics on conversation engagement
-
-    Query Parameters:
-    - hasMessages: true (conversations with at least 1 message) | false (conversations with 0 messages)
-    - page: Page number for pagination (default: 1)
-    - limit: Items per page (default: 20, max recommended: 50)`,
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Conversations retrieved successfully with pagination metadata',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/ConversationResponseDto' },
-        },
-        meta: {
-          type: 'object',
-          properties: {
-            total: { type: 'number', example: 45 },
-            page: { type: 'number', example: 1 },
-            limit: { type: 'number', example: 20 },
-            totalPages: { type: 'number', example: 3 },
-          },
-        },
-        message: { type: 'string', example: 'Conversations retrieved successfully' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Authentication token missing or invalid',
-  })
-  async getConversationsByStatus(
-    @Query('hasMessages') hasMessages: boolean = true,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
-  ) {
-    const result = await this.chatService.getConversationsByMessageStatus(hasMessages, page, limit);
-
-    return {
-      success: true,
-      data: result.data,
-      meta: {
-        total: result.total,
-        page,
-        limit,
-        totalPages: Math.ceil(result.total / limit),
-      },
-      message: 'Conversations retrieved successfully',
-    };
-  }
-
-  /**
-   * ✨ NEW: Get conversation statistics
-   * GET /conversations/stats/overview
-   */
-  @Get('stats/overview')
-  @ApiOperation({
-    summary: 'Get conversation statistics',
-    description: `Get comprehensive statistics about all conversations in the system.
-
-    Returns:
-    - Total number of conversations
-    - Count of conversations with messages (active)
-    - Count of conversations without messages (inactive/abandoned)
-
-    Use Cases:
-    - Admin dashboard analytics
-    - Monitor conversation engagement rate
-    - Identify cleanup opportunities (empty conversations)
-    - Track platform activity metrics`,
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Statistics retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            totalConversations: {
-              type: 'number',
-              example: 150,
-              description: 'Total number of conversations in the system',
-            },
-            conversationsWithMessages: {
-              type: 'number',
-              example: 120,
-              description: 'Conversations that have at least one message',
-            },
-            conversationsWithoutMessages: {
-              type: 'number',
-              example: 30,
-              description: 'Conversations that have never received any messages',
-            },
-          },
-        },
-        message: { type: 'string', example: 'Statistics retrieved successfully' },
-      },
-    },
-  })
-  @ApiResponse({
-    status: HttpStatus.UNAUTHORIZED,
-    description: 'Authentication token missing or invalid',
-  })
-  async getConversationStats() {
-    const stats = await this.chatService.getConversationStats();
-
-    return {
-      success: true,
-      data: stats,
-      message: 'Statistics retrieved successfully',
     };
   }
 }

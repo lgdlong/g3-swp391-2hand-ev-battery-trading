@@ -8,8 +8,12 @@ import { useAuth } from '@/lib/auth-context';
 import { useCreateConversation } from '@/hooks/useChat';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { getContractByBuyerAndListing } from '@/lib/api/transactionApi';
+import { BuyerContractInfo } from './BuyerContractInfo';
 import { SellerRatingDisplay } from '@/components/SellerRatingDisplay';
 import { useSellerRating } from '@/hooks/useSellerRating';
+
 
 interface SellerInfoProps {
   account: AccountUI | undefined;
@@ -59,6 +63,7 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
     }
   };
 
+
   if (!account) {
     return (
       <div className="text-center text-gray-500">
@@ -106,7 +111,7 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
           <Clock className="h-4 w-4" />
           <span>Hoạt động {relativeTime(account.updatedAt)}</span>
         </div> */}
-        {/* {account.email ? (
+        {account.email ? (
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span className="truncate">{account.email}</span>
@@ -127,11 +132,11 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
             <Phone className="h-4 w-4" />
             <span className="text-gray-400">Không rõ</span>
           </div>
-        )} */}
-        {/* <div className="flex items-center gap-2">
+        )}
+        <div className="flex items-center gap-2">
           <MapPin className="h-4 w-4" />
           <span>{String(post.provinceNameCached) || 'Không rõ'}</span>
-        </div> */}
+        </div>
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           <span>Tham gia {relativeTime(account.createdAt)}</span>
@@ -141,6 +146,15 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       {/* Only show contact buttons if the logged-in user is not the post owner */}
       {user?.id !== account?.id && (
         <div className="space-y-2">
+          {/* Show buyer's contract if exists */}
+          {isLoggedIn && user?.id && (
+            <BuyerContractInfo
+              listingId={post.id}
+              buyerId={user.id}
+              enabled={true}
+            />
+          )}
+
           <button
             onClick={handleContactSeller}
             disabled={createConversationMutation.isPending}
@@ -150,7 +164,7 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
               ? 'Đang tạo cuộc trò chuyện...'
               : 'Liên hệ người bán'}
           </button>
-          {/* {account.phone ? (
+          {account.phone ? (
             <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors">
               {account.phone}
             </button>
@@ -161,7 +175,7 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
             >
               Không có số điện thoại
             </button>
-          )} */}
+          )}
         </div>
       )}
     </div>

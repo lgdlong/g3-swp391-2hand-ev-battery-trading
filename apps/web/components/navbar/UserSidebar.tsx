@@ -2,13 +2,15 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Bookmark, Bell, Settings, LogOut, Wallet, Plus, Clock } from 'lucide-react';
+import { User, Bookmark, Bell, Settings, LogOut, Wallet, Plus, Clock, FileText, ShoppingBag } from 'lucide-react';
 import { Account } from '@/types/account';
 import Image from 'next/image';
 import { isValidAvatarUrl } from '@/lib/validation/file-validation';
 import { useQuery } from '@tanstack/react-query';
 import { getMyWallet } from '@/lib/api/walletApi';
 import { TopupModal } from '@/components/TopupModal';
+import { getBuyerContracts, ContractStatus } from '@/lib/api/transactionApi';
+import { Badge } from '@/components/ui/badge';
 
 interface UserSidebarProps {
   isOpen: boolean;
@@ -27,6 +29,20 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
     enabled: isOpen && !!user,
   });
 
+  // Fetch buyer contracts to count pending orders
+  const { data: buyerContracts } = useQuery({
+    queryKey: ['buyerContracts'],
+    queryFn: () => getBuyerContracts(),
+    enabled: isOpen && !!user,
+    retry: 1,
+    refetchInterval: 5000, // Refetch every 5 seconds
+  });
+
+  // Count contracts waiting for buyer confirmation
+  const pendingOrdersCount = (buyerContracts || []).filter(
+    (contract) => contract.status === ContractStatus.AWAITING_CONFIRMATION && !contract.buyerConfirmedAt,
+  ).length;
+
   // Reset modal state when sidebar closes
   React.useEffect(() => {
     if (!isOpen) {
@@ -44,6 +60,7 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
   const menuItems = [
     { label: 'Hồ sơ', href: '/profile', icon: User },
     { label: 'Bookmarks', href: '/bookmarks', icon: Bookmark },
+    { label: 'Quản lý đơn hàng', href: '/my-orders', icon: ShoppingBag },
     { label: 'Lịch sử giao dịch', href: '/wallet', icon: Clock },
     { label: 'Thông báo', href: '/notifications', icon: Bell },
     { label: 'Cài đặt', href: '/settings', icon: Settings },
@@ -125,17 +142,30 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
 
             {/* Menu Items */}
             <div className="py-2">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  onClick={onClose}
-                >
-                  <item.icon className="h-4 w-4 text-gray-500" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
+              {menuItems.map((item) => {
+                const isOrdersItem = item.href === '/my-orders';
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className="flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors relative"
+                    onClick={onClose}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon className="h-4 w-4 text-gray-500" />
+                      <span>{item.label}</span>
+                    </div>
+                    {isOrdersItem && pendingOrdersCount > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="h-5 min-w-5 px-1.5 flex items-center justify-center text-xs font-bold rounded-full"
+                      >
+                        {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
+                      </Badge>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Divider */}
