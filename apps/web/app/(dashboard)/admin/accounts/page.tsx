@@ -213,7 +213,7 @@ export default function AdminDashboard() {
     return (
       <div className="space-y-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản Lý Tài Khoản</h1>
           <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
         </div>
         <div className="flex items-center justify-center py-12">
@@ -230,7 +230,7 @@ export default function AdminDashboard() {
     return (
       <div className="space-y-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Quản Lý Tài Khoản</h1>
           <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
         </div>
         <div className="flex items-center justify-center py-12">
@@ -247,7 +247,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Quản Lý Tài Khoản</h1>
         <p className="text-gray-600 mt-2">Quản lý hệ thống và người dùng</p>
       </div>
 
@@ -255,7 +255,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-800">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium text-emerald-800">Tổng Số Tài Khoản</CardTitle>
             <Users className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
@@ -266,7 +266,7 @@ export default function AdminDashboard() {
 
         <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Admins</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-800">Quản Trị Viên</CardTitle>
             <Shield className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -277,7 +277,7 @@ export default function AdminDashboard() {
 
         <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800">Users</CardTitle>
+            <CardTitle className="text-sm font-medium text-purple-800">Người Dùng</CardTitle>
             <UserCheck className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
 
         <Card className="border-red-200 bg-gradient-to-br from-red-50 to-pink-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-red-800">Blocked</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-800">Tài Khoản Bị Chặn</CardTitle>
             <UserX className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>

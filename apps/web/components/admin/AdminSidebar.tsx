@@ -27,31 +27,31 @@ interface SidebarProps {
 
 const navigationItems = [
   {
-    name: 'Dashboard',
+    name: 'Tổng Quan',
     href: '/admin',
     icon: LayoutDashboard,
     badge: null,
   },
   {
-    name: 'Users',
+    name: 'Tài Khoản',
     href: '/admin/accounts',
     icon: Users,
     badge: null,
   },
   {
-    name: 'Posts',
+    name: 'Bài Đăng',
     href: '/admin/posts',
     icon: FileText,
     badge: null,
   },
   // {
-  //   name: 'Analytics',
+  //   name: 'Phân Tích',
   //   href: '/admin/analytics',
   //   icon: BarChart3,
   //   badge: null,
   // },
   {
-    name: 'Settings',
+    name: 'Cài Đặt',
     href: '/admin/settings',
     icon: Settings,
     badge: null,
@@ -107,8 +107,8 @@ export function AdminSidebar({ className }: SidebarProps) {
                 <Shield className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Admin Panel</h1>
-                <p className="text-sm text-gray-400">Management System</p>
+                <h1 className="text-xl font-bold text-white">Quản Trị Viên</h1>
+                <p className="text-sm text-gray-400">Hệ Thống Quản Lý</p>
               </div>
             </div>
           </div>
@@ -168,8 +168,8 @@ export function AdminSidebar({ className }: SidebarProps) {
                 <LogOut className="h-4 w-4 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-white">Logout</p>
-                <p className="text-xs text-red-200">Thoát khỏi admin panel</p>
+                <p className="text-sm font-medium text-white">Đăng Xuất</p>
+                <p className="text-xs text-red-200">Thoát khỏi trang quản trị</p>
               </div>
             </button>
           </div>

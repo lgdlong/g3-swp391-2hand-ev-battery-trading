@@ -79,7 +79,7 @@ export default function AdminDashboard() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">Bảng Điều Khiển Quản Trị</h1>
           <p className="text-muted-foreground mt-1">
             Tổng quan hệ thống quản lý EV Battery Trading
           </p>
