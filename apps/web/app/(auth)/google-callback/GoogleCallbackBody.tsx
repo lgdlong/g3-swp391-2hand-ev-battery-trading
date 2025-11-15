@@ -56,7 +56,6 @@ export function GoogleCallbackBody() {
         const existingToken = localStorage.getItem(ACCESS_TOKEN_KEY);
         if (existingToken && !accessToken) {
           // We already processed this, redirect immediately
-          console.log('Token already exists, redirecting...');
           router.replace('/');
           return;
         }
@@ -76,7 +75,6 @@ export function GoogleCallbackBody() {
 
         // 3. Save access token to localStorage
         localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-        console.log('✅ Access token saved to localStorage:', accessToken.substring(0, 20) + '...');
 
         setCallbackState({
           status: 'processing',
@@ -92,12 +90,7 @@ export function GoogleCallbackBody() {
         });
 
         try {
-          console.log(
-            '🧪 Testing /accounts/me API with token:',
-            accessToken.substring(0, 20) + '...',
-          );
           const userProfile = await getCurrentUser();
-          console.log('✅ API test successful, user profile:', userProfile);
 
           // 5. Update auth context with user data
           login(accessToken, {
@@ -130,9 +123,6 @@ export function GoogleCallbackBody() {
             router.replace(isAdmin ? '/admin' : '/');
           }, 2000);
         } catch (apiError: any) {
-          console.error('❌ API test failed:', apiError);
-          console.error('Response:', apiError?.response?.data);
-
           setCallbackState({
             status: 'error',
             message: 'API Connection Failed',
@@ -147,7 +137,6 @@ export function GoogleCallbackBody() {
           });
         }
       } catch (error: any) {
-        console.error('Google callback processing error:', error);
         setCallbackState({
           status: 'error',
           message: 'Processing Error',
