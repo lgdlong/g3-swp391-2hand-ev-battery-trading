@@ -159,7 +159,7 @@ export default function Home() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="border-gray-600 text-white hover:bg-amber-800 bg-amber-700"
+                  className="border-gray-600 text-white hover:text-white bg-blue-600 hover:bg-blue-600 cursor-pointer"
                 >
                   <Link href="/posts/ev" className="flex items-center gap-2">
                     <Car className="h-5 w-5" />
@@ -430,7 +430,8 @@ export default function Home() {
             <div className="flex-shrink-0">
               <h3 className="text-xl font-bold mb-4">EV Trading</h3>
               <p className="text-gray-300 mb-4 text-sm leading-relaxed max-w-sm">
-                Nền tảng mua bán xe điện và pin EV cũ hàng đầu Việt Nam. An toàn, nhanh chóng, hiệu quả.
+                Nền tảng mua bán xe điện và pin EV cũ hàng đầu Việt Nam. An toàn, nhanh chóng, hiệu
+                quả.
               </p>
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <CheckCircle className="h-4 w-4" />
@@ -448,7 +449,10 @@ export default function Home() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/posts/batteries" className="hover:text-emerald-400 transition-colors">
+                  <Link
+                    href="/posts/batteries"
+                    className="hover:text-emerald-400 transition-colors"
+                  >
                     Pin EV
                   </Link>
                 </li>
@@ -463,22 +467,20 @@ export default function Home() {
 
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <p className="text-sm text-gray-400">
-                &copy; 2025 EV Trading Platform.
-              </p>
+              <p className="text-sm text-gray-400">&copy; 2025 EV Trading Platform.</p>
               <div className="flex items-center gap-4">
                 <p className="text-sm text-gray-400">Theo dõi chúng tôi:</p>
                 <div className="flex gap-3">
                   <Link href="#" className="text-gray-400 hover:text-emerald-400 transition-colors">
                     <span className="sr-only">Facebook</span>
                     <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.39v-1.2h-2.84v8.37h2.84v-4.13c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.13h2.84M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.39v-1.2h-2.84v8.37h2.84v-4.13c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.13h2.84M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
                     </svg>
                   </Link>
                   <Link href="#" className="text-gray-400 hover:text-emerald-400 transition-colors">
                     <span className="sr-only">Twitter</span>
                     <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M22.46 6c-.87.39-1.8.65-2.77.77 1-1 1.77-2.6 2.14-4.5-1 .6-2.1 1-3.27 1.3-.94-1-2.28-1.6-3.76-1.6-2.85 0-5.15 2.3-5.15 5.15 0 .4.05.8.15 1.18-4.28-.2-8.08-2.27-10.62-5.4-.44.77-.7 1.67-.7 2.62 0 1.79.91 3.37 2.29 4.3-.84-.03-1.64-.26-2.34-.65v.06c0 2.5 1.78 4.58 4.14 5.05-.44.12-.9.18-1.37.18-.34 0-.67-.03-1-.1.67 2.1 2.62 3.63 4.92 3.67-1.76 1.38-4 2.2-6.42 2.2-.42 0-.83-.02-1.23-.07 2.29 1.47 5.02 2.32 7.94 2.32 9.53 0 14.73-7.9 14.73-14.73 0-.22 0-.45-.02-.67.88-.64 1.64-1.44 2.24-2.36"/>
+                      <path d="M22.46 6c-.87.39-1.8.65-2.77.77 1-1 1.77-2.6 2.14-4.5-1 .6-2.1 1-3.27 1.3-.94-1-2.28-1.6-3.76-1.6-2.85 0-5.15 2.3-5.15 5.15 0 .4.05.8.15 1.18-4.28-.2-8.08-2.27-10.62-5.4-.44.77-.7 1.67-.7 2.62 0 1.79.91 3.37 2.29 4.3-.84-.03-1.64-.26-2.34-.65v.06c0 2.5 1.78 4.58 4.14 5.05-.44.12-.9.18-1.37.18-.34 0-.67-.03-1-.1.67 2.1 2.62 3.63 4.92 3.67-1.76 1.38-4 2.2-6.42 2.2-.42 0-.83-.02-1.23-.07 2.29 1.47 5.02 2.32 7.94 2.32 9.53 0 14.73-7.9 14.73-14.73 0-.22 0-.45-.02-.67.88-.64 1.64-1.44 2.24-2.36" />
                     </svg>
                   </Link>
                 </div>
