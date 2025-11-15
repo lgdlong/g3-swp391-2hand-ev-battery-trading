@@ -9,11 +9,7 @@ import { searchPosts } from '@/lib/api/postApi';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-interface SearchBarProps {
-  className?: string;
-}
-
-export function SearchBar({ className }: SearchBarProps) {
+export function SearchBar() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -63,7 +59,7 @@ export function SearchBar({ className }: SearchBarProps) {
   };
 
   return (
-    <div className={`w-full relative overflow-visible z-10 ${className}`}>
+    <div className={`w-full relative overflow-visible z-10`}>
       {/* Clean Background */}
       <div className="absolute inset-0 bg-[#7EF2DD]/20"></div>
 
