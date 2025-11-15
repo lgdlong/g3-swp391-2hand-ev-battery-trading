@@ -88,11 +88,10 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
     return new Intl.NumberFormat('vi-VN').format(value);
   };
 
-  // Calculate deposit coin based on fee tier
+  // Get posting fee from fee tier (fixed amount, not percentage)
   const calculateDepositCoin = (): number => {
     if (!feeTier) return 0;
-    const depositRate = parseFloat(feeTier.depositRate);
-    return Math.round(priceVnd * depositRate);
+    return parseFloat(feeTier.postingFee);
   };
 
   const depositCoin = calculateDepositCoin();
@@ -118,11 +117,11 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
       // Deduct wallet
       await deductWallet(user.id, {
         amount: depositCoin,
-        description: 'Trừ tiền phí đặt cọc đăng bài',
+        description: 'Thanh toán phí đăng bài',
         paymentOrderId,
       });
 
-      toast.success('Đặt cọc thành công!');
+      toast.success('Thanh toán thành công!');
 
       // Update wallet balance in local state
       if (wallet) {
@@ -141,7 +140,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
       console.error('Deduct error:', error);
       type ApiError = { response?: { data?: { message?: string } }; message?: string };
       const err = error as ApiError;
-      toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi trừ cọc');
+      toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi thanh toán phí');
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +154,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">Đặt cọc đăng bài</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Thanh toán phí đăng bài</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -189,8 +188,8 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
               </div>
             </div>
 
-            {/* Deposit Calculation */}
-            <div className="bg-gradient-to-r from-amber-500/10 to-amber-500/5 rounded-xl p-4">
+            {/* Posting Fee Display */}
+            <div className="bg-gradient-to-r from-blue-500/10 to-blue-500/5 rounded-xl p-4">
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Giá bài đăng</span>
@@ -198,16 +197,20 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
                 </div>
                 {feeTier && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Tỷ lệ đặt cọc</span>
+                    <span className="text-gray-600">Khoảng giá áp dụng</span>
                     <span className="font-semibold text-gray-900">
-                      {(parseFloat(feeTier.depositRate) * 100).toFixed(2)}%
+                      {formatVND(parseFloat(feeTier.minPrice))} -{' '}
+                      {feeTier.maxPrice
+                        ? formatVND(parseFloat(feeTier.maxPrice))
+                        : 'Không giới hạn'}{' '}
+                      ₫
                     </span>
                   </div>
                 )}
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between">
-                    <span className="text-sm font-medium text-gray-700">Số coin đặt cọc</span>
-                    <span className="text-lg font-bold text-amber-600">
+                    <span className="text-sm font-medium text-gray-700">Phí đăng bài</span>
+                    <span className="text-lg font-bold text-blue-600">
                       {formatVND(depositCoin)} Coin
                     </span>
                   </div>

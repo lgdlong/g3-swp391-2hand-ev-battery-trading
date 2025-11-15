@@ -15,7 +15,7 @@ interface FeeTierTableProps {
   onDeleteTier: (tierId: number) => void;
 }
 
-type SortField = 'minPrice' | 'maxPrice' | 'depositRate';
+type SortField = 'minPrice' | 'maxPrice' | 'postingFee';
 type SortDirection = 'asc' | 'desc';
 
 export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: FeeTierTableProps) {
@@ -53,9 +53,9 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
         aValue = a.maxPrice ? parseFloat(a.maxPrice) : Number.MAX_SAFE_INTEGER;
         bValue = b.maxPrice ? parseFloat(b.maxPrice) : Number.MAX_SAFE_INTEGER;
         break;
-      case 'depositRate':
-        aValue = parseFloat(a.depositRate);
-        bValue = parseFloat(b.depositRate);
+      case 'postingFee':
+        aValue = parseFloat(a.postingFee);
+        bValue = parseFloat(b.postingFee);
         break;
       default:
         return 0;
@@ -72,12 +72,12 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Hoa Hồng</CardTitle>
-          <CardDescription>Quản lý tỷ lệ đặt cọc dựa trên khoảng giá</CardDescription>
+          <CardTitle>Phí Đăng Bài</CardTitle>
+          <CardDescription>Quản lý phí đăng bài cố định dựa trên khoảng giá</CardDescription>
         </div>
         <Button onClick={onAddTier} className="gap-2">
           <Plus className="h-4 w-4" />
-          Thêm Hoa Hồng
+          Thêm Phí
         </Button>
       </CardHeader>
       <CardContent>
@@ -105,11 +105,11 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
                 </th>
                 <th className="text-left p-3 font-medium">
                   <button
-                    onClick={() => handleSort('depositRate')}
+                    onClick={() => handleSort('postingFee')}
                     className="flex items-center gap-2 hover:text-blue-600 transition-colors"
                   >
-                    Tỷ Lệ Đặt Cọc
-                    {getSortIcon('depositRate')}
+                    Phí Đăng Bài
+                    {getSortIcon('postingFee')}
                   </button>
                 </th>
                 <th className="text-left p-3 font-medium">Trạng Thái</th>
@@ -129,7 +129,7 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
                   </td>
                   <td className="p-3">
                     <Badge className="bg-blue-100 text-blue-800">
-                      {(parseFloat(tier.depositRate) * 100).toFixed(1)}%
+                      {formatCurrency(tier.postingFee)}
                     </Badge>
                   </td>
                   <td className="p-3">
@@ -168,7 +168,7 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
               {feeTiers.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-gray-500">
-                    Chưa có hoa hồng nào. Nhấn &quot;Thêm Hoa Hồng&quot; để tạo mới.
+                    Chưa có phí nào. Nhấn &quot;Thêm Phí&quot; để tạo mới.
                   </td>
                 </tr>
               )}

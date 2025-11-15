@@ -91,12 +91,12 @@ export default function PostPaymentPage() {
 
     if (!applicableTier) return 0;
 
-    // Calculate deposit amount using depositRate
-    const depositRate =
-      typeof applicableTier.depositRate === 'string'
-        ? Number.parseFloat(applicableTier.depositRate)
-        : applicableTier.depositRate;
-    return Math.round(postPrice * depositRate);
+    // Get fixed posting fee from tier
+    const postingFee =
+      typeof applicableTier.postingFee === 'string'
+        ? Number.parseFloat(applicableTier.postingFee)
+        : applicableTier.postingFee;
+    return postingFee;
   })();
 
   const currentCoins = wallet ? Number.parseFloat(wallet.balance) : 0;

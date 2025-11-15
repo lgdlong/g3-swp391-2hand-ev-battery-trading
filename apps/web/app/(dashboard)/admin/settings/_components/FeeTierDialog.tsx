@@ -18,7 +18,7 @@ import { FeeTier } from '@/lib/api/feeTiersApi';
 export interface FeeTierFormData {
   minPrice: string;
   maxPrice: string;
-  depositRate: string;
+  postingFee: string;
   active: boolean;
 }
 
@@ -40,7 +40,7 @@ export function FeeTierDialog({
   const [formData, setFormData] = useState<FeeTierFormData>({
     minPrice: '',
     maxPrice: '',
-    depositRate: '',
+    postingFee: '',
     active: true,
   });
 
@@ -50,14 +50,14 @@ export function FeeTierDialog({
         setFormData({
           minPrice: editingTier.minPrice,
           maxPrice: editingTier.maxPrice || '',
-          depositRate: (parseFloat(editingTier.depositRate) * 100).toString(),
+          postingFee: editingTier.postingFee,
           active: editingTier.active,
         });
       } else {
         setFormData({
           minPrice: '',
           maxPrice: '',
-          depositRate: '',
+          postingFee: '',
           active: true,
         });
       }
@@ -74,11 +74,13 @@ export function FeeTierDialog({
       <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{editingTier ? 'Chỉnh Sửa Hoa Hồng' : 'Thêm Hoa Hồng Mới'}</DialogTitle>
+            <DialogTitle>
+              {editingTier ? 'Chỉnh Sửa Phí Đăng Bài' : 'Thêm Phí Đăng Bài Mới'}
+            </DialogTitle>
             <DialogDescription>
               {editingTier
-                ? 'Cập nhật thông tin hoa hồng'
-                : 'Tạo mới một mức hoa hồng với tỷ lệ đặt cọc theo khoảng giá'}
+                ? 'Cập nhật thông tin phí đăng bài'
+                : 'Tạo mới mức phí cố định theo khoảng giá bài đăng'}
             </DialogDescription>
           </DialogHeader>
 
@@ -110,21 +112,20 @@ export function FeeTierDialog({
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="depositRate">
-                Tỷ lệ đặt cọc (%) <span className="text-red-500">*</span>
+              <Label htmlFor="postingFee">
+                Phí đăng bài (VND) <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="depositRate"
+                id="postingFee"
                 type="number"
-                step="0.1"
+                step="1"
                 min="0"
-                max="100"
-                placeholder="10.0"
-                value={formData.depositRate}
-                onChange={(e) => setFormData({ ...formData, depositRate: e.target.value })}
+                placeholder="20000"
+                value={formData.postingFee}
+                onChange={(e) => setFormData({ ...formData, postingFee: e.target.value })}
                 required
               />
-              <p className="text-xs text-gray-500">Từ 0% đến 100%</p>
+              <p className="text-xs text-gray-500">Phí cố định theo VND</p>
             </div>
 
             <div className="flex items-center justify-between">

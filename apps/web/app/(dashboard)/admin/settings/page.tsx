@@ -78,14 +78,14 @@ export default function AdminSettingsPage() {
 
   const handleSubmit = async (formData: FeeTierFormData) => {
     // Validation
-    if (!formData.minPrice || !formData.depositRate) {
+    if (!formData.minPrice || !formData.postingFee) {
       toast.error('Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
     }
 
     const minPrice = parseFloat(formData.minPrice);
     const maxPrice = formData.maxPrice ? parseFloat(formData.maxPrice) : null;
-    const depositRate = parseFloat(formData.depositRate) / 100;
+    const postingFee = parseFloat(formData.postingFee);
 
     if (isNaN(minPrice) || minPrice < 0) {
       toast.error('Giá tối thiểu không hợp lệ');
@@ -97,8 +97,8 @@ export default function AdminSettingsPage() {
       return;
     }
 
-    if (isNaN(depositRate) || depositRate < 0 || depositRate > 1) {
-      toast.error('Tỷ lệ đặt cọc phải từ 0 đến 100%');
+    if (isNaN(postingFee) || postingFee < 0) {
+      toast.error('Phí đăng bài phải lớn hơn 0');
       return;
     }
 
@@ -108,23 +108,23 @@ export default function AdminSettingsPage() {
       const payload = {
         minPrice,
         maxPrice: maxPrice ?? 0,
-        depositRate,
+        postingFee,
         active: formData.active,
       };
 
       if (editingTier) {
         await updateFeeTier(editingTier.id, payload);
-        toast.success('Cập nhật hoa hồng thành công');
+        toast.success('Cập nhật phí đăng bài thành công');
       } else {
         await createFeeTier(payload);
-        toast.success('Tạo hoa hồng thành công');
+        toast.success('Tạo phí đăng bài thành công');
       }
 
       await fetchAllData();
       handleCloseDialog();
     } catch (err: unknown) {
       console.error('Error saving fee tier:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Không thể lưu hoa hồng';
+      const errorMessage = err instanceof Error ? err.message : 'Không thể lưu phí đăng bài';
       toast.error(errorMessage);
     } finally {
       setSubmitting(false);
@@ -136,12 +136,12 @@ export default function AdminSettingsPage() {
 
     try {
       await deleteFeeTier(deletingTierId);
-      toast.success('Xóa hoa hồng thành công');
+      toast.success('Xóa phí đăng bài thành công');
       await fetchAllData();
       setDeletingTierId(null);
     } catch (err: unknown) {
       console.error('Error deleting fee tier:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Không thể xóa hoa hồng';
+      const errorMessage = err instanceof Error ? err.message : 'Không thể xóa phí đăng bài';
       toast.error(errorMessage);
     }
   };
