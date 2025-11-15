@@ -314,8 +314,7 @@ export default function PostListItem({
               </Tooltip>
             )}
 
-            {/* Delete button - visible for DRAFT, REJECTED */}
-            {/* {(post.status === 'DRAFT' || post.status === 'REJECTED') && ( */}
+            {/* Delete button - visible for ARCHIVED */}
             {post.status === 'ARCHIVED' && (
               <Tooltip>
                 <TooltipTrigger asChild>
