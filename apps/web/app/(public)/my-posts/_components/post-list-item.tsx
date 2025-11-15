@@ -315,7 +315,8 @@ export default function PostListItem({
             )}
 
             {/* Delete button - visible for DRAFT, REJECTED */}
-            {(post.status === 'DRAFT' || post.status === 'REJECTED') && (
+            {/* {(post.status === 'DRAFT' || post.status === 'REJECTED') && ( */}
+            {post.status === 'ARCHIVED' && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="destructive" size="sm" onClick={() => onDelete?.(post.id)}>
