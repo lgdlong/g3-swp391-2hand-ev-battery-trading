@@ -50,7 +50,10 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
         <div className="flex h-full flex-col">
           {/* User Profile Section */}
           <div className="border-b p-6">
-            <button onClick={onClose} className="mb-4 text-gray-600 hover:text-gray-800">
+            <button
+              onClick={onClose}
+              className="mb-4 text-gray-600 hover:text-gray-800 cursor-pointer"
+            >
               ✕
             </button>
 
@@ -77,11 +80,11 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
 
             {/* Wallet Balance */}
             {wallet && (
-              <div className="mt-4 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 p-4">
+              <div className="mt-4 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 p-4 border border-green-200">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-gray-600">Số dư ví</p>
-                    <p className="text-lg font-bold text-primary">
+                    <p className="text-lg font-bold text-red-600">
                       {isLoadingWallet
                         ? '...'
                         : `${Number(wallet.balance).toLocaleString('vi-VN')} ₫`}
@@ -89,7 +92,7 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
                   </div>
                   <button
                     onClick={() => setIsTopupModalOpen(true)}
-                    className="flex items-center space-x-1 rounded-full bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                    className="flex items-center space-x-1 rounded-full bg-[#048C73] hover:bg-[#037A66] px-4 py-2 text-sm font-medium text-white"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Nạp</span>
@@ -136,24 +139,6 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
               >
                 <Wallet className="h-5 w-5" />
                 <span>Ví của tôi</span>
-              </Link>
-
-              <Link
-                href="/notifications"
-                onClick={onClose}
-                className="flex items-center space-x-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
-              >
-                <Bell className="h-5 w-5" />
-                <span>Thông báo</span>
-              </Link>
-
-              <Link
-                href="/settings"
-                onClick={onClose}
-                className="flex items-center space-x-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
-              >
-                <Settings className="h-5 w-5" />
-                <span>Cài đặt</span>
               </Link>
             </div>
           </nav>

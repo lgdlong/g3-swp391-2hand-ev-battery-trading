@@ -59,44 +59,6 @@ export function UserActions({
                 <Bookmark className="h-5 w-5" />
               </Link>
             </Button>
-
-            {/* Notifications Button - Dropdown with message notification */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 group relative rounded-full p-2 h-9 w-9"
-                  title="Thông báo"
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 flex items-center justify-center text-[10px] font-bold rounded-full animate-pulse"
-                    >
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </Badge>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {unreadCount > 0 ? (
-                  <DropdownMenuItem
-                    onClick={() => router.push('/chat')}
-                    className="cursor-pointer"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    <span>Bạn có tin nhắn</span>
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem disabled className="text-gray-500">
-                    <Bell className="h-4 w-4 mr-2" />
-                    <span>Không có thông báo mới</span>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         )}
 

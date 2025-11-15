@@ -240,7 +240,11 @@ export default function ProfilePage() {
                     variant={editing ? 'outline' : 'default'}
                     size="sm"
                     onClick={() => (editing ? handleCancel() : setEditing(true))}
-                    className="flex items-center gap-2"
+                    className={
+                      editing
+                        ? 'flex items-center gap-2'
+                        : 'flex items-center gap-2 bg-[#048C73] hover:bg-[#037A66] disabled:bg-[#048C73]/60 text-white'
+                    }
                   >
                     {editing ? (
                       <>
