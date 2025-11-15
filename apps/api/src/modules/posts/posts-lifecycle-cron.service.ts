@@ -27,7 +27,6 @@ export class PostsLifecycleCronService {
    * Điều kiện tự động archive:
    * - Status = PUBLISHED
    * - reviewedAt + expirationDays <= now
-   * - Chưa có refund record (để tránh xung đột với cron refund)
    */
   @Cron(CronExpression.EVERY_MINUTE, {
     name: 'auto-archive-expired-posts',

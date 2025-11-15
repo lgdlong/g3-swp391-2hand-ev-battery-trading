@@ -83,20 +83,16 @@ export class AdminStatisticsService {
 
     const totalVerificationFees = verificationResult?.total || '0';
 
-    // Calculate total fees collected
+    // Calculate total fees collected (post creation deposits + verification fees)
     const totalFeesCollected = (
       Number.parseFloat(totalDepositCollected) + Number.parseFloat(totalVerificationFees)
     ).toString();
 
-    // Get total refund amount (from wallet transactions with positive amounts after post creation)
-    // This would need to track refund transactions specifically
-    // For now, we'll calculate based on refund-related transactions
-    const totalRefundAmount = '0'; // TODO: Implement refund tracking
+    // No refunds in new business model - all fees are retained
+    const totalRefundAmount = '0';
 
-    // Calculate net revenue
-    const netRevenue = (
-      Number.parseFloat(totalFeesCollected) - Number.parseFloat(totalRefundAmount)
-    ).toString();
+    // Net revenue = total fees collected (no refunds subtracted)
+    const netRevenue = totalFeesCollected;
 
     return {
       totalWalletBalance,
