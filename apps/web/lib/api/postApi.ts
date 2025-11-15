@@ -111,7 +111,7 @@ export async function deductPostCreationFee(
   postId: string,
 ): Promise<{ wallet: any; transaction: any }> {
   const { data } = await api.post(
-    '/posts/deduct-fee',
+    '/posts/pay-fee',
     { priceVnd, postId },
     {
       headers: getAuthHeaders(),

@@ -286,7 +286,7 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
         </Button>
 
         <Button
-          type="submit"
+          type="button"
           disabled={updateMutation.isPending}
           onClick={() => handleSubmit(undefined, 'DRAFT')}
         >
@@ -298,15 +298,6 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
           ) : (
             <>Lưu nháp</>
           )}
-        </Button>
-
-        <Button
-          type="button"
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-          disabled={updateMutation.isPending}
-          onClick={() => handleSubmit(undefined, 'PENDING_REVIEW')}
-        >
-          {updateMutation.isPending ? 'Đang xử lý...' : 'Đăng tin'}
         </Button>
       </div>
     </form>

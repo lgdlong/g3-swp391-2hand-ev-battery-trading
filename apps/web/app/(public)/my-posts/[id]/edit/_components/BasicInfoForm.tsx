@@ -97,7 +97,7 @@ export default function BasicInfoForm({
                 onChange={(e) => onInputChange('priceVnd', e.target.value)}
                 placeholder="150000000"
                 min="0"
-                required
+                readOnly
               />
             </div>
 
