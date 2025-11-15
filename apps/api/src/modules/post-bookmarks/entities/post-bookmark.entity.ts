@@ -26,7 +26,7 @@ export class PostBookmark {
   @JoinColumn({ name: 'account_id' }) // FK column snake_case
   account!: Account;
 
-  @Column({ name: 'post_id', type: 'int' })
+  @Column({ name: 'post_id', type: 'bigint' })
   postId!: number;
 
   @ManyToOne(() => Post, { onDelete: 'CASCADE' })

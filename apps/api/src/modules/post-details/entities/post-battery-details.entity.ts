@@ -13,7 +13,7 @@ export class PostBatteryDetails {
   postId!: string;
 
   // Thương hiệu (FK, optional)
-  @Column({ type: 'bigint', name: 'brand_id', nullable: true })
+  @Column({ type: 'int', name: 'brand_id', nullable: true })
   brandId?: number | null;
 
   // ========== Thông số kỹ thuật chính ==========
