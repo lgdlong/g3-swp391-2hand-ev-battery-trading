@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { Wallet } from '../wallets/entities/wallet.entity';
 import { WalletTransaction } from '../wallets/entities/wallet-transaction.entity';
 import { PostPayment } from '../transactions/entities';
-import { PostFraudFlag } from '../post-fraud-flags/entities/post-fraud-flag.entity';
 import { ServiceType } from '../service-types/entities/service-type.entity';
 import {
   FinancialOverviewDto,
@@ -22,8 +21,6 @@ export class AdminStatisticsService {
     private readonly walletTransactionRepo: Repository<WalletTransaction>,
     @InjectRepository(PostPayment)
     private readonly postPaymentRepo: Repository<PostPayment>,
-    @InjectRepository(PostFraudFlag)
-    private readonly fraudFlagRepo: Repository<PostFraudFlag>,
     @InjectRepository(ServiceType)
     private readonly serviceTypeRepo: Repository<ServiceType>,
   ) {}
@@ -116,37 +113,16 @@ export class AdminStatisticsService {
 
   /**
    * Get fraud and risk statistics
+   * Note: Fraud detection has been removed from the system
    */
   async getFraudOverview(): Promise<FraudOverviewDto> {
-    // Get total fraud flags
-    const totalFraudFlags = await this.fraudFlagRepo.count();
-
-    // Get suspected fraud count
-    const suspectedCount = await this.fraudFlagRepo.count({
-      where: { status: 'SUSPECTED' },
-    });
-
-    // Get confirmed fraud count
-    const confirmedCount = await this.fraudFlagRepo.count({
-      where: { status: 'CONFIRMED' },
-    });
-
-    // Calculate refund rate
-    // Total posts with payments
-    const totalPostPayments = await this.postPaymentRepo.count();
-
-    // Total refunded posts (this would need a refund tracking table)
-    // For now, we'll estimate based on cancelled posts with fraud flags
-    const totalRefundedPosts = 0; // TODO: Implement refund tracking
-
-    const refundRate = totalPostPayments > 0 ? (totalRefundedPosts / totalPostPayments) * 100 : 0;
-
+    // Fraud detection feature removed - return zero values
     return {
-      totalFraudFlags,
-      suspectedCount,
-      confirmedCount,
-      refundRate: Number(refundRate.toFixed(2)),
-      totalRefundedPosts,
+      totalFraudFlags: 0,
+      suspectedCount: 0,
+      confirmedCount: 0,
+      refundRate: 0,
+      totalRefundedPosts: 0,
     };
   }
 
@@ -262,16 +238,10 @@ export class AdminStatisticsService {
 
   /**
    * Get fraud count
+   * Note: Fraud detection has been removed from the system
    */
   async getFraudCount(): Promise<{ total: number; suspected: number; confirmed: number }> {
-    const total = await this.fraudFlagRepo.count();
-    const suspected = await this.fraudFlagRepo.count({
-      where: { status: 'SUSPECTED' },
-    });
-    const confirmed = await this.fraudFlagRepo.count({
-      where: { status: 'CONFIRMED' },
-    });
-
-    return { total, suspected, confirmed };
+    // Fraud detection feature removed - return zero values
+    return { total: 0, suspected: 0, confirmed: 0 };
   }
 }
