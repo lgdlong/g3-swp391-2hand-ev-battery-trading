@@ -10,7 +10,7 @@ import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
 import { useAuth } from '@/lib/auth-context';
 import { Specifications } from './_components';
-import { PostHeader, SellerInfo, PostContractsList } from '@/app/(public)/posts/_components';
+import { PostHeader, SellerInfo } from '@/app/(public)/posts/_components';
 import { VerificationBadge } from '@/components/VerificationBadge';
 import { RatingsList } from '@/components/RatingsList';
 
@@ -152,15 +152,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 )}
               </CardContent>
             </Card>
-
-            {/* Contracts List for Seller */}
-            {post && (
-              <PostContractsList
-                listingId={post.id}
-                sellerId={post.seller.id}
-                currentUserId={user?.id}
-              />
-            )}
           </div>
 
           <div className="lg:col-span-2 space-y-6">

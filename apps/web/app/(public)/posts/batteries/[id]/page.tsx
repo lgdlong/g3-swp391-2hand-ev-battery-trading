@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../../ev/_queries';
 import { useAuth } from '@/lib/auth-context';
-import { SellerInfo, PostHeader, PostContractsList } from '@/app/(public)/posts/_components';
+import { SellerInfo, PostHeader } from '@/app/(public)/posts/_components';
 import { Specifications } from './_components';
 import { DEFAULT_IMAGE } from '@/constants/images';
 import { RatingsList } from '@/components/RatingsList';
@@ -135,11 +135,11 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
                     <Badge className="bg-gray-900 text-white border-0">PIN EV</Badge>
                   </div>
                   {post.status !== 'SOLD' && (
-                  <div className="absolute top-4 right-4">
-                    <Badge className={`border ${getStatusColor(post.status)}`}>
+                    <div className="absolute top-4 right-4">
+                      <Badge className={`border ${getStatusColor(post.status)}`}>
                         {getStatusLabel(post.status)}
-                    </Badge>
-                  </div>
+                      </Badge>
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -151,15 +151,6 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
                 <SellerInfo account={seller} post={post} loading={sellerLoading} />
               </CardContent>
             </Card>
-
-            {/* Contracts List for Seller */}
-            {post && (
-              <PostContractsList
-                listingId={post.id}
-                sellerId={post.seller.id}
-                currentUserId={user?.id}
-              />
-            )}
           </div>
 
           {/* Details Section */}

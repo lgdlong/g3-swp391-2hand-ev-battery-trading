@@ -1,13 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import {
-  StatsCards,
-  DashboardCharts,
-  RecentTables,
-  FinancialStatsCards,
-  FraudStatsCards,
-} from './_components';
+import { StatsCards, DashboardCharts, RecentTables, FinancialStatsCards } from './_components';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Database, Shield, AlertCircle } from 'lucide-react';
@@ -117,11 +111,6 @@ export default function AdminDashboard() {
       {/* Financial Statistics Cards */}
       {adminStats?.financial && (
         <FinancialStatsCards financial={adminStats.financial} isLoading={adminStatsLoading} />
-      )}
-
-      {/* Fraud & Risk Statistics Cards */}
-      {adminStats?.fraud && (
-        <FraudStatsCards fraud={adminStats.fraud} isLoading={adminStatsLoading} />
       )}
 
       {/* Charts Section */}

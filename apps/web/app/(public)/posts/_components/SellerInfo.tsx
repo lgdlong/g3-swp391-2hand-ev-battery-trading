@@ -8,12 +8,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useCreateConversation } from '@/hooks/useChat';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
-import { getContractByBuyerAndListing } from '@/lib/api/transactionApi';
-import { BuyerContractInfo } from './BuyerContractInfo';
 import { SellerRatingDisplay } from '@/components/SellerRatingDisplay';
 import { useSellerRating } from '@/hooks/useSellerRating';
-
 
 interface SellerInfoProps {
   account: AccountUI | undefined;
@@ -28,11 +24,13 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
   const { user, isLoggedIn } = useAuth();
   const router = useRouter();
   const createConversationMutation = useCreateConversation();
-  
+
   // Lấy rating của seller
-  const { averageRating, totalReviews, isLoading: ratingLoading } = useSellerRating(
-    account?.id?.toString()
-  );
+  const {
+    averageRating,
+    totalReviews,
+    isLoading: ratingLoading,
+  } = useSellerRating(account?.id?.toString());
 
   const handleContactSeller = async () => {
     // Check if user is logged in
@@ -62,7 +60,6 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       toast.error('Có lỗi xảy ra khi tạo cuộc trò chuyện');
     }
   };
-
 
   if (!account) {
     return (
@@ -97,10 +94,7 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
             </div>
             {/* ⭐ Rating Display */}
             {!ratingLoading && (
-              <SellerRatingDisplay
-                averageRating={averageRating}
-                totalReviews={totalReviews}
-              />
+              <SellerRatingDisplay averageRating={averageRating} totalReviews={totalReviews} />
             )}
           </div>
         </div>
@@ -146,15 +140,6 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       {/* Only show contact buttons if the logged-in user is not the post owner */}
       {user?.id !== account?.id && (
         <div className="space-y-2">
-          {/* Show buyer's contract if exists */}
-          {isLoggedIn && user?.id && (
-            <BuyerContractInfo
-              listingId={post.id}
-              buyerId={user.id}
-              enabled={true}
-            />
-          )}
-
           <button
             onClick={handleContactSeller}
             disabled={createConversationMutation.isPending}
