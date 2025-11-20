@@ -2,62 +2,55 @@
 
 import React from 'react';
 import { PriceFilterDropdown } from '../PriceFilterDropdown';
-import { RangeFilterDropdown } from '../RangeFilterDropdown';
+import { OdoKmFilterDropdown } from '../OdoKmFilterDropdown';
 import { BrandFilterDropdown } from '../BrandFilterDropdown';
 import { CapacityFilterDropdown } from '../CapacityFilterDropdown';
 import { CyclesFilterDropdown } from '../CyclesFilterDropdown';
-import { HealthFilterDropdown } from '../HealthFilterDropdown';
 import { BatteryBrandFilterDropdown } from '../BatteryBrandFilterDropdown';
 import { FILTER_LABELS } from '../constants/filterConstants';
 
 interface DropdownManagerProps {
   showPriceDropdown: boolean;
-  showRangeDropdown: boolean;
+  showOdoKmDropdown: boolean;
   showBrandDropdown: boolean;
   showCapacityDropdown: boolean;
   showCyclesDropdown: boolean;
-  showHealthDropdown: boolean;
   showBatteryBrandDropdown: boolean;
   appliedFilters: any;
   setShowPriceDropdown: (show: boolean) => void;
-  setShowRangeDropdown: (show: boolean) => void;
+  setShowOdoKmDropdown: (show: boolean) => void;
   setShowBrandDropdown: (show: boolean) => void;
   setShowCapacityDropdown: (show: boolean) => void;
   setShowCyclesDropdown: (show: boolean) => void;
-  setShowHealthDropdown: (show: boolean) => void;
   setShowBatteryBrandDropdown: (show: boolean) => void;
   handlePriceApply: (priceRange: { min: number; max: number }) => void;
-  handleRangeApply: (range: string) => void;
+  handleOdoKmApply: (odoKm: string) => void;
   handleBrandApply: (brandId: number | null) => void;
   handleCapacityApply: (capacity: string) => void;
   handleCyclesApply: (cycles: string) => void;
-  handleHealthApply: (health: string) => void;
   handleBatteryBrandApply: (brand: string) => void;
   type?: 'ev' | 'battery';
 }
 
 export function DropdownManager({
   showPriceDropdown,
-  showRangeDropdown,
+  showOdoKmDropdown,
   showBrandDropdown,
   showCapacityDropdown,
   showCyclesDropdown,
-  showHealthDropdown,
   showBatteryBrandDropdown,
   appliedFilters,
   setShowPriceDropdown,
-  setShowRangeDropdown,
+  setShowOdoKmDropdown,
   setShowBrandDropdown,
   setShowCapacityDropdown,
   setShowCyclesDropdown,
-  setShowHealthDropdown,
   setShowBatteryBrandDropdown,
   handlePriceApply,
-  handleRangeApply,
+  handleOdoKmApply,
   handleBrandApply,
   handleCapacityApply,
   handleCyclesApply,
-  handleHealthApply,
   handleBatteryBrandApply,
   type = 'ev',
 }: DropdownManagerProps) {
@@ -104,15 +97,6 @@ export function DropdownManager({
           currentCycles: appliedFilters.cycles,
         },
       },
-      [FILTER_LABELS.HEALTH]: {
-        show: showHealthDropdown,
-        component: HealthFilterDropdown,
-        props: {
-          onApply: handleHealthApply,
-          onClose: () => setShowHealthDropdown(false),
-          currentHealth: appliedFilters.health,
-        },
-      },
       [FILTER_LABELS.BATTERY_BRAND]: {
         show: showBatteryBrandDropdown,
         component: BatteryBrandFilterDropdown,
@@ -122,13 +106,13 @@ export function DropdownManager({
           currentBrand: appliedFilters.batteryBrand,
         },
       },
-      [FILTER_LABELS.RANGE]: {
-        show: showRangeDropdown,
-        component: RangeFilterDropdown,
+      [FILTER_LABELS.ODO_KM]: {
+        show: showOdoKmDropdown,
+        component: OdoKmFilterDropdown,
         props: {
-          onApply: handleRangeApply,
-          onClose: () => setShowRangeDropdown(false),
-          currentRange: appliedFilters.range,
+          onApply: handleOdoKmApply,
+          onClose: () => setShowOdoKmDropdown(false),
+          currentOdoKm: appliedFilters.odoKm,
         },
       },
     };

@@ -26,19 +26,17 @@ export function ButtonRenderer({
   const isFilterApplied = (filterKey: string): boolean => {
     switch (filterKey) {
       case 'price':
-        return !!(appliedFilters.priceMin && appliedFilters.priceMax);
+        return !!(appliedFilters.priceMin || appliedFilters.priceMax);
       case 'brand':
         return !!appliedFilters.brandId;
+      case 'odoKm':
+        return !!appliedFilters.odoKm;
       case 'capacity':
         return !!appliedFilters.capacity;
       case 'cycles':
         return !!appliedFilters.cycles;
-      case 'health':
-        return !!appliedFilters.health;
       case 'batteryBrand':
         return !!appliedFilters.batteryBrand;
-      case 'range':
-        return !!appliedFilters.range;
       case 'new-arrivals':
         return !!appliedFilters.sortBy;
       default:

@@ -20,6 +20,15 @@ export const RANGE_OPTIONS = [
   { value: '>600', label: 'Trên 600km/lần sạc' },
 ] as const;
 
+export const ODO_KM_OPTIONS = [
+  { value: '<1000', label: 'Dưới 1,000 km' },
+  { value: '1000-5000', label: '1,000 - 5,000 km' },
+  { value: '5000-10000', label: '5,000 - 10,000 km' },
+  { value: '10000-50000', label: '10,000 - 50,000 km' },
+  { value: '50000-100000', label: '50,000 - 100,000 km' },
+  { value: '>100000', label: 'Trên 100,000 km' },
+] as const;
+
 export const HEALTH_OPTIONS = [
   { value: 'excellent', label: 'Xuất sắc (90-100%)' },
   { value: 'very-good', label: 'Rất tốt (80-89%)' },
@@ -69,6 +78,7 @@ export const DROPDOWN_TITLES = {
   CYCLES: 'Số chu kỳ',
   CAPACITY: 'Dung lượng pin',
   RANGE: 'Quãng đường di chuyển trên 1 lần sạc',
+  ODO_KM: 'Số km đã đi',
   HEALTH: 'Tình trạng pin',
   PRICE: 'Chọn khoảng giá',
   BRAND: 'Hãng xe điện',

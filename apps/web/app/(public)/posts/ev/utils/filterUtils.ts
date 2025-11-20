@@ -9,8 +9,7 @@ export interface EVAppliedFilters {
   priceMax?: number;
   brandId?: number; // Brand ID for exact matching
   modelId?: string; // Model ID for exact matching
-  odoMin?: number; // Minimum odometer reading
-  odoMax?: number; // Maximum odometer reading
+  odoKm?: string; // Odometer range string (e.g., '<1000', '1000-5000', '>100000')
   sortBy?: string;
 }
 
@@ -86,48 +85,56 @@ export function filterByModel(posts: Post[], modelId?: string): Post[] {
 }
 
 /**
- * Filter by odometer range
+ * Helper function to extract odometer value from FlexibleField
  */
-export function filterByOdometer(posts: Post[], odoMin?: number, odoMax?: number): Post[] {
-  let filtered = [...posts];
+function getOdoValue(
+  odoKm: number | string | { value: number | string | null } | null,
+): number | null {
+  if (odoKm === null || odoKm === undefined) return null;
 
-  if (odoMin !== undefined) {
-    filtered = filtered.filter((post) => {
-      const odoKm = post.carDetails?.odo_km ?? post.bikeDetails?.odo_km ?? null;
-      if (odoKm === null) return false;
-
-      const odoValue =
-        typeof odoKm === 'number'
-          ? odoKm
-          : typeof odoKm === 'string'
-            ? Number.parseFloat(odoKm)
-            : typeof odoKm === 'object' && odoKm.value !== null
-              ? Number.parseFloat(String(odoKm.value))
-              : 0;
-
-      return odoValue >= odoMin;
-    });
+  if (typeof odoKm === 'number') return odoKm;
+  if (typeof odoKm === 'string') return Number.parseFloat(odoKm);
+  if (typeof odoKm === 'object' && odoKm.value !== null) {
+    return Number.parseFloat(String(odoKm.value));
   }
 
-  if (odoMax !== undefined) {
-    filtered = filtered.filter((post) => {
-      const odoKm = post.carDetails?.odo_km ?? post.bikeDetails?.odo_km ?? null;
-      if (odoKm === null) return false;
+  return null;
+}
 
-      const odoValue =
-        typeof odoKm === 'number'
-          ? odoKm
-          : typeof odoKm === 'string'
-            ? Number.parseFloat(odoKm)
-            : typeof odoKm === 'object' && odoKm.value !== null
-              ? Number.parseFloat(String(odoKm.value))
-              : 0;
+/**
+ * Filter by odometer range using string format (e.g., '<1000', '1000-5000', '>100000')
+ */
+export function filterByOdometer(posts: Post[], odoKmRange?: string): Post[] {
+  if (!odoKmRange) return posts;
 
-      return odoValue <= odoMax;
-    });
-  }
+  return posts.filter((post) => {
+    const odoKm = post.carDetails?.odo_km ?? post.bikeDetails?.odo_km ?? null;
+    const odoValue = getOdoValue(odoKm);
 
-  return filtered;
+    if (odoValue === null) return false;
+
+    // Handle range formats
+    if (odoKmRange.startsWith('<')) {
+      const max = Number.parseInt(odoKmRange.substring(1), 10);
+      return odoValue < max;
+    }
+
+    if (odoKmRange.startsWith('>')) {
+      const min = Number.parseInt(odoKmRange.substring(1), 10);
+      return odoValue > min;
+    }
+
+    if (odoKmRange.includes('-')) {
+      const [minStr, maxStr] = odoKmRange.split('-');
+      if (minStr && maxStr) {
+        const min = Number.parseInt(minStr, 10);
+        const max = Number.parseInt(maxStr, 10);
+        return odoValue >= min && odoValue <= max;
+      }
+    }
+
+    return true;
+  });
 }
 
 /**
@@ -162,8 +169,10 @@ export function filterByAppliedFilters(posts: Post[], appliedFilters: EVAppliedF
   // Model filter
   filtered = filterByModel(filtered, appliedFilters.modelId);
 
-  // Odometer filters
-  filtered = filterByOdometer(filtered, appliedFilters.odoMin, appliedFilters.odoMax);
+  // Odometer filter using string range
+  if (appliedFilters.odoKm) {
+    filtered = filterByOdometer(filtered, appliedFilters.odoKm);
+  }
 
   return filtered;
 }

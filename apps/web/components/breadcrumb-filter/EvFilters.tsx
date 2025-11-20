@@ -1,4 +1,4 @@
-import { DollarSign, Car } from 'lucide-react';
+import { DollarSign, Car, Gauge } from 'lucide-react';
 import { FILTER_LABELS } from './constants/filterConstants';
 
 export const evFilterButtons = [
@@ -8,7 +8,7 @@ export const evFilterButtons = [
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
+    onClick: () => {},
   },
   {
     label: FILTER_LABELS.BRAND,
@@ -16,13 +16,14 @@ export const evFilterButtons = [
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
+    onClick: () => {},
   },
   {
-    label: FILTER_LABELS.RANGE,
+    label: FILTER_LABELS.ODO_KM,
+    icon: <Gauge className="h-4 w-4" />,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
-  }
+    onClick: () => {},
+  },
 ];

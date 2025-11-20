@@ -3,22 +3,20 @@ import { useState } from 'react';
 export interface FilterState {
   appliedFilters: any;
   showPriceDropdown: boolean;
-  showRangeDropdown: boolean;
+  showOdoKmDropdown: boolean;
   showBrandDropdown: boolean;
   showCapacityDropdown: boolean;
   showCyclesDropdown: boolean;
-  showHealthDropdown: boolean;
   showBatteryBrandDropdown: boolean;
 }
 
 export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
   const [appliedFilters, setAppliedFilters] = useState<any>({});
   const [showPriceDropdown, setShowPriceDropdown] = useState(false);
-  const [showRangeDropdown, setShowRangeDropdown] = useState(false);
+  const [showOdoKmDropdown, setShowOdoKmDropdown] = useState(false);
   const [showBrandDropdown, setShowBrandDropdown] = useState(false);
   const [showCapacityDropdown, setShowCapacityDropdown] = useState(false);
   const [showCyclesDropdown, setShowCyclesDropdown] = useState(false);
-  const [showHealthDropdown, setShowHealthDropdown] = useState(false);
   const [showBatteryBrandDropdown, setShowBatteryBrandDropdown] = useState(false);
 
   // Handle filter changes
@@ -41,15 +39,15 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     }
   };
 
-  const handleRangeApply = (range: string) => {
-    if (range === '') {
-      // Clear range filter
+  const handleOdoKmApply = (odoKm: string) => {
+    if (odoKm === '') {
+      // Clear odoKm filter
       const newFilters = { ...appliedFilters };
-      delete newFilters.range;
+      delete newFilters.odoKm;
       setAppliedFilters(newFilters);
       onFilterChange?.(newFilters);
     } else {
-      updateFilters({ range });
+      updateFilters({ odoKm });
     }
   };
 
@@ -89,18 +87,6 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     }
   };
 
-  const handleHealthApply = (health: string) => {
-    if (health === '') {
-      // Clear health filter
-      const newFilters = { ...appliedFilters };
-      delete newFilters.health;
-      setAppliedFilters(newFilters);
-      onFilterChange?.(newFilters);
-    } else {
-      updateFilters({ health });
-    }
-  };
-
   const handleBatteryBrandApply = (brand: string) => {
     if (brand === '') {
       // Clear battery brand filter
@@ -117,11 +103,10 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     setAppliedFilters({});
     // Close all dropdowns
     setShowPriceDropdown(false);
-    setShowRangeDropdown(false);
+    setShowOdoKmDropdown(false);
     setShowBrandDropdown(false);
     setShowCapacityDropdown(false);
     setShowCyclesDropdown(false);
-    setShowHealthDropdown(false);
     setShowBatteryBrandDropdown(false);
     onFilterChange?.({});
   };
@@ -137,9 +122,8 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
         brand: setShowBrandDropdown,
         capacity: setShowCapacityDropdown,
         cycles: setShowCyclesDropdown,
-        health: setShowHealthDropdown,
         batteryBrand: setShowBatteryBrandDropdown,
-        range: setShowRangeDropdown,
+        odoKm: setShowOdoKmDropdown,
       };
 
       const currentDropdownSetter = dropdownStates[filterKey as keyof typeof dropdownStates];
@@ -159,25 +143,22 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
   return {
     appliedFilters,
     showPriceDropdown,
-    showRangeDropdown,
+    showOdoKmDropdown,
     showBrandDropdown,
     showCapacityDropdown,
     showCyclesDropdown,
-    showHealthDropdown,
     showBatteryBrandDropdown,
     setShowPriceDropdown,
-    setShowRangeDropdown,
+    setShowOdoKmDropdown,
     setShowBrandDropdown,
     setShowCapacityDropdown,
     setShowCyclesDropdown,
-    setShowHealthDropdown,
     setShowBatteryBrandDropdown,
     handlePriceApply,
-    handleRangeApply,
+    handleOdoKmApply,
     handleBrandApply,
     handleCapacityApply,
     handleCyclesApply,
-    handleHealthApply,
     handleBatteryBrandApply,
     handleClearAllFilters,
     handleFilterClick,
