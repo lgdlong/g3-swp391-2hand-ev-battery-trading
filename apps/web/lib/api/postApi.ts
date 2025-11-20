@@ -15,7 +15,6 @@ import type {
   ArchivePostResponse,
 } from '@/types/api/post';
 
-// Re-export types for backward compatibility
 export type {
   Post,
   PostsResponse,
@@ -44,37 +43,6 @@ export async function countPosts(
       headers: getAuthHeaders(),
     },
   );
-  return data;
-}
-
-/**
- * Create a new post
- * Requires authentication token in headers
- */
-export async function createPost(payload: CreatePostDto): Promise<Post> {
-  const { data } = await api.post<Post>('/posts', payload, {
-    headers: getAuthHeaders(),
-  });
-  return data;
-}
-
-/**
- * Get posts with optional query parameters
- * Supports filtering, pagination, and search
- */
-export async function getPosts(query: GetPostsQuery = {}): Promise<PostsResponse> {
-  const params = new URLSearchParams();
-
-  if (query.q) params.append('q', query.q);
-  if (query.offset !== undefined) params.append('offset', query.offset.toString());
-  if (query.limit !== undefined) params.append('limit', query.limit.toString());
-  if (query.order) params.append('order', query.order);
-  if (query.sort) params.append('sort', query.sort);
-  if (query.page !== undefined) params.append('page', query.page.toString());
-  if (query.postType) params.append('postType', query.postType);
-  if (query.status) params.append('status', query.status);
-
-  const { data } = await api.get<PostsResponse>(`/posts?${params.toString()}`);
   return data;
 }
 
@@ -170,37 +138,6 @@ export async function publishPost(postId: string): Promise<Post> {
 }
 
 /**
- * Get posts by specific type (car, bike, battery)
- */
-export async function getPostsByType(
-  postType: 'EV_CAR' | 'EV_BIKE' | 'BATTERY',
-  query: Omit<GetPostsQuery, 'postType'> = {},
-): Promise<PostsResponse> {
-  return getPosts({ ...query, postType });
-}
-
-/**
- * Get car posts specifically
- */
-export async function getCarPosts(query: GetPostsQuery = {}): Promise<PostsResponse> {
-  return getPostsByType('EV_CAR', query);
-}
-
-/**
- * Get bike posts specifically
- */
-export async function getBikePosts(query: GetPostsQuery = {}): Promise<PostsResponse> {
-  return getPostsByType('EV_BIKE', query);
-}
-
-/**
- * Get battery posts specifically
- */
-export async function getBatteryPosts(query: GetPostsQuery = {}): Promise<PostsResponse> {
-  return getPostsByType('BATTERY', query);
-}
-
-/**
  * Search posts by title
  * Supports filtering by province and post type
  * Public endpoint - no authentication required
@@ -233,28 +170,6 @@ export async function searchPosts(
  */
 export async function getPostById(id: string): Promise<Post> {
   const { data } = await api.get<Post>(`/posts/${id}`);
-  return data;
-}
-
-/**
- * Get detailed information of a post by ID
- * This endpoint provides comprehensive post details including seller info,
- * vehicle details, and images
- * Public endpoint - no authentication required
- */
-export async function getPostDetail(id: string): Promise<Post> {
-  const { data } = await api.get<Post>(`/posts/${id}`);
-  return data;
-}
-
-/**
- * Update a post by ID (Admin only)
- * Requires authentication token in headers
- */
-export async function updatePost(id: string, payload: UpdatePostDto): Promise<Post> {
-  const { data } = await api.patch<Post>(`/posts/${id}`, payload, {
-    headers: getAuthHeaders(),
-  });
   return data;
 }
 
@@ -311,21 +226,6 @@ export async function getMyPosts(query: GetPostsQuery = {}): Promise<Post[]> {
   const { data } = await api.get<Post[]>(`/posts/me?${params.toString()}`, {
     headers: getAuthHeaders(),
   });
-  return data;
-}
-
-/**
- * Submit a post for review (change status from DRAFT to PENDING)
- * Requires authentication token in headers
- */
-export async function submitPost(id: string): Promise<Post> {
-  const { data } = await api.patch<Post>(
-    `/posts/${id}/submit`,
-    {},
-    {
-      headers: getAuthHeaders(),
-    },
-  );
   return data;
 }
 
@@ -443,18 +343,6 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
 }
 
 // ==================== BIKE SPECIFIC API FUNCTIONS ====================
-
-/**
- * Create a new bike post
- * Requires authentication token in headers
- */
-export async function createBikePost(payload: CreateBikePostDto): Promise<Post> {
-  const { data } = await api.post<Post>('/posts/bike', payload, {
-    headers: getAuthHeaders(),
-  });
-  return data;
-}
-
 /**
  * Get bike posts with query parameters
  * Supports filtering, pagination, and search specifically for bikes
@@ -474,33 +362,7 @@ export async function getBikePostsWithQuery(query: GetPostsQuery = {}): Promise<
   return data;
 }
 
-/**
- * Get a single bike post by ID
-
-/**
- * Update a bike post by ID
- * Requires authentication token in headers
- */
-export async function updateBikePost(id: string, payload: UpdatePostDto): Promise<Post> {
-  const { data } = await api.patch<Post>(`/posts/bike/${id}`, payload, {
-    headers: getAuthHeaders(),
-  });
-  return data;
-}
-
-/**
- * Delete a bike post by ID
- * Requires authentication token in headers
- */
-// TODO: Unused?
-export async function deleteBikePost(id: string): Promise<void> {
-  await api.delete(`/posts/bike/${id}`, {
-    headers: getAuthHeaders(),
-  });
-}
-
 // ==================== BATTERY SPECIFIC API FUNCTIONS ====================
-
 /**
  * Get battery posts with query parameters
  * Supports filtering, pagination, and search specifically for batteries
@@ -520,57 +382,7 @@ export async function getBatteryPostsWithQuery(query: GetPostsQuery = {}): Promi
   return data;
 }
 
-/**
- * Create a new battery post
- * Requires authentication token in headers
- */
-export async function createBatteryPost(payload: CreateBatteryPostDto): Promise<Post> {
-  const { data } = await api.post<Post>('/posts/battery', payload, {
-    headers: getAuthHeaders(),
-  });
-  return data;
-}
-
 // ==================== CAR SPECIFIC API FUNCTIONS ====================
-
-/**
- * Create a new car post
- * Requires authentication token in headers
- */
-export async function createCarPost(payload: CreateCarPostDto): Promise<Post> {
-  try {
-    // Check authentication first
-    const authHeaders = getAuthHeaders();
-
-    const { data } = await api.post<Post>('/posts/car', payload, {
-      headers: authHeaders,
-    });
-
-    return data;
-  } catch (error: any) {
-    console.error('Error creating car post:', error);
-    console.error('Error details:', {
-      status: error?.response?.status,
-      statusText: error?.response?.statusText,
-      message: error?.response?.data?.message,
-      data: error?.response?.data,
-    });
-
-    // Provide more specific error messages
-    if (error?.response?.status === 401) {
-      throw new Error('Authentication required. Please login first.');
-    } else if (error?.response?.status === 400) {
-      throw new Error(error?.response?.data?.message || 'Invalid request data.');
-    } else if (error?.response?.status === 403) {
-      throw new Error('You do not have permission to create posts.');
-    } else if (!error?.response) {
-      throw new Error('Network error. Please check your connection.');
-    }
-
-    throw error;
-  }
-}
-
 /**
  * Get car posts with query parameters
  * Supports filtering, pagination, and search specifically for cars
@@ -588,32 +400,6 @@ export async function getCarPostsWithQuery(query: GetPostsQuery = {}): Promise<P
 
   const { data } = await api.get<Post[]>(`/posts/car?${params.toString()}`);
   return data;
-}
-
-/**
- * Get a single car post by ID
- */
-
-/**
- * Update a car post by ID
- * Requires authentication token in headers
- */
-export async function updateCarPost(id: string, payload: UpdatePostDto): Promise<Post> {
-  const { data } = await api.patch<Post>(`/posts/car/${id}`, payload, {
-    headers: getAuthHeaders(),
-  });
-  return data;
-}
-
-/**
- * Delete a car post by ID
- * Requires authentication token in headers
- */
-// TODO: Unused?
-export async function deleteCarPost(id: string): Promise<void> {
-  await api.delete(`/posts/car/${id}`, {
-    headers: getAuthHeaders(),
-  });
 }
 
 /**
