@@ -53,7 +53,7 @@ export const BATTERY_BRAND_OPTIONS = [
 // Constants cho price range (EV vehicles)
 export const PRICE_CONSTANTS = {
   MIN_PRICE: 0,
-  MAX_PRICE: 1500000000,
+  MAX_PRICE: 10000000000,
   DEFAULT_MAX_PRICE: 150000000000,
   STEP: 10000000,
 } as const;
