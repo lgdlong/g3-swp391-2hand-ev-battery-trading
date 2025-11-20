@@ -207,7 +207,7 @@ export default function TransactionDetailPage() {
                 <Hash className="h-5 w-5 text-gray-500" />
                 <div>
                   <p className="text-sm text-gray-500">Mã giao dịch</p>
-                  <p className="font-semibold text-gray-900">#{transaction.id}</p>
+                  <p className="font-semibold text-gray-900">{transaction.id}</p>
                 </div>
               </div>
               <Button
@@ -265,18 +265,6 @@ export default function TransactionDetailPage() {
                 <p className="font-semibold text-gray-900">{transaction.walletUserId}</p>
               </div>
             </div>
-
-            {/* Related Entity */}
-            {transaction.relatedEntityType && transaction.relatedEntityId && (
-              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-gray-500 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm text-gray-500">Liên quan đến</p>
-                  <p className="font-semibold text-gray-900">{transaction.relatedEntityType}</p>
-                  <p className="text-xs text-gray-500 mt-1">ID: {transaction.relatedEntityId}</p>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
