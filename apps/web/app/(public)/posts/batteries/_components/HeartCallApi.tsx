@@ -55,7 +55,7 @@ export function HeartCallApi({
             router.push('/login');
             setTimeout(() => window.location.assign('/login'), 300); //ép buộc chuyển trang vì push phế
           } else {
-            console.log(err);
+            console.error(err);
             console.warn('[Create] failed:', err);
           }
         }
