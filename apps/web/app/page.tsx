@@ -37,7 +37,6 @@ export default function Home() {
       icon: Car,
       href: '/posts/ev',
       color: 'bg-blue-50 text-blue-600',
-      count: '1,234 tin đăng',
     },
     {
       title: 'Pin EV',
@@ -45,7 +44,6 @@ export default function Home() {
       icon: Battery,
       href: '/posts/batteries',
       color: 'bg-green-50 text-green-600',
-      count: '567 tin đăng',
     },
   ];
 
@@ -196,8 +194,7 @@ export default function Home() {
                         <h3 className="text-xl font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
                           {category.title}
                         </h3>
-                        <p className="text-gray-600 mb-2">{category.description}</p>
-                        <p className="text-sm text-gray-500">{category.count}</p>
+                        <p className="text-gray-600">{category.description}</p>
                       </div>
                       <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
                     </div>
