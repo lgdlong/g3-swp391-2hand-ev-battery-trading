@@ -139,7 +139,6 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
         // This requires a backend endpoint to reorder images
         // Example: await updateImagePositions({ postId: post.id, images: imageDiff.toKeep });
         if (imageDiff.toKeep.length > 0) {
-          console.log('Images to keep with positions:', imageDiff.toKeep);
           // Backend needs to implement: PATCH /posts/:id/images/positions
         }
 

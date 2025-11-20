@@ -64,7 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!token) return;
 
       const fullUserData = await getCurrentAccount();
-      console.log('[AuthContext] Fetched user profile from /accounts/me:', fullUserData);
 
       localStorage.setItem('user_data', JSON.stringify(fullUserData));
       setUser(fullUserData);
@@ -84,7 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Fetch complete user profile including avatarUrl
     try {
       const fullUserData = await getCurrentAccount();
-      console.log('[AuthContext] Fetched complete user profile:', fullUserData);
       localStorage.setItem('user_data', JSON.stringify(fullUserData));
       setUser(fullUserData);
       setUserRole(fullUserData.role || 'user');

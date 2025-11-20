@@ -29,8 +29,6 @@ export function SearchBar() {
         order: 'DESC',
       });
 
-      console.log('Search results:', results);
-
       // Store search results and navigate to results page
       // You can either:
       // 1. Navigate to a dedicated search results page with query params

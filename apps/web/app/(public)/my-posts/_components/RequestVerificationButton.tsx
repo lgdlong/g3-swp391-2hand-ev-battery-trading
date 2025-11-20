@@ -27,13 +27,6 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
   // Mutation để gửi yêu cầu kiểm định
   const requestVerificationMutation = useMutation({
     mutationFn: (postId: string) => {
-      console.log('Requesting verification for post:', {
-        postId,
-        postStatus: post.status,
-        verificationRequest: post.verificationRequest,
-        userId: user?.id,
-        sellerId: post.seller.id,
-      });
       return requestPostVerification(postId);
     },
     onSuccess: () => {
@@ -89,12 +82,6 @@ export function RequestVerificationButton({ post, onSuccess }: RequestVerificati
   // 4. Bài đăng chưa được kiểm định
   // 5. Bài đăng chưa có yêu cầu kiểm định nào
   if (!isOwner || !isLoggedIn) {
-    console.log('RequestVerificationButton: User is not owner or not logged in', {
-      isOwner,
-      isLoggedIn,
-      userId: user?.id,
-      sellerId: post.seller.id,
-    });
     return null;
   }
 

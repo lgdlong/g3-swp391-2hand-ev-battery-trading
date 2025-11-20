@@ -24,7 +24,6 @@ export default function UpdatePostPage() {
   // Memoize the onImagesUpdate callback to prevent infinite loops
   const handleImagesUpdate = useCallback((diff: ImageDiffPayload) => {
     setImageDiff(diff);
-    console.log('Image diff payload:', diff);
   }, []);
 
   // Redirect if not logged in

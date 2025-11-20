@@ -246,13 +246,6 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {allFeaturedPosts.map((post) => {
-              // Debug verification status
-              console.log('Homepage post verification status:', {
-                id: post.id,
-                title: post.title,
-                verificationRequest: post.verificationRequest,
-              });
-
               const isCarPost = !!post.carDetails;
               const location =
                 [

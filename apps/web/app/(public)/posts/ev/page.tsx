@@ -141,7 +141,6 @@ function EvPostsContent() {
         status: POST_STATUS.PUBLISHED,
       };
       const response = await getCarPostsWithQuery(queryParams);
-      console.log('Car posts response:', response);
 
       // Check for duplicates
       const postIds = response.map((post: any) => post.id);
@@ -238,7 +237,6 @@ function EvPostsContent() {
     }
 
     // Apply new filter system
-    console.log('Applied filters:', appliedFilters);
     if (appliedFilters.status) {
       data = data.filter((p) => (p as any).status === appliedFilters.status);
     }
@@ -277,7 +275,6 @@ function EvPostsContent() {
     }
 
     if (appliedFilters.capacity) {
-      console.log('Filtering by capacity:', appliedFilters.capacity);
       switch (appliedFilters.capacity) {
         case BATTERY_CAPACITY_RANGES.UNDER_30:
           data = data.filter((p) => (p as any).batteryCapacityKWh < 30);
@@ -298,10 +295,9 @@ function EvPostsContent() {
           );
           break;
         case BATTERY_CAPACITY_RANGES.OVER_100:
-          data = data.filter((p) => (p as any).batteryCapacityKWh > 100);
+          data.filter((p) => (p as any).batteryCapacityKWh > 100);
           break;
       }
-      console.log('After capacity filtering, data length:', data.length);
     }
 
     if (appliedFilters.cycles) {

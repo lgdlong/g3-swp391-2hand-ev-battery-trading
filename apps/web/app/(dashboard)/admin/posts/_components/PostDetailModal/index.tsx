@@ -31,21 +31,6 @@ export function PostDetailModal({
 }: PostDetailModalProps) {
   if (!post) return null;
 
-  // Debug log để kiểm tra dữ liệu
-  console.log('PostDetailModal - Post data:', {
-    id: post.id,
-    title: post.title,
-    description: post.description,
-    images: post.images,
-    imagesLength: post.images?.length,
-    provinceNameCached: post.provinceNameCached,
-    districtNameCached: post.districtNameCached,
-    wardNameCached: post.wardNameCached,
-    seller: post.seller,
-    carDetails: post.carDetails,
-    bikeDetails: post.bikeDetails,
-  });
-
   return (
     <>
       {isOpen && (

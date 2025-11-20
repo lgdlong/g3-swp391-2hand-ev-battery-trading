@@ -11,14 +11,12 @@ import {
   UserCheck,
   UserX,
   Shield,
-  FileText,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
   MoreHorizontal,
   Eye,
-  Trash2,
   UserPlus,
   Ban,
   CheckCircle,
@@ -53,7 +51,6 @@ export default function AdminDashboard() {
         setLoading(true);
         setError(null);
         const data = await getAccounts();
-        console.log(data.length);
         setAccounts(data);
       } catch (err) {
         setError('Không thể tải danh sách tài khoản');
@@ -116,27 +113,9 @@ export default function AdminDashboard() {
     setCurrentPage(page);
   };
 
-  // const handleDeleteAccount = async (accountId: number) => {
-  //   if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-  //     try {
-  //       await deleteAccount(accountId);
-  //       setAccounts((prev) => prev.filter((account) => account.id !== accountId));
-  //       alert('Tài khoản đã được xóa thành công');
-  //     } catch (err) {
-  //       console.error('Error deleting account:', err);
-  //       alert('Không thể xóa tài khoản');
-  //     }
-  //   }
-  // };
-
   // Promote
   const handlePromoteToAdmin = async (accountId: number) => {
     setPendingPromoteId(accountId);
-  };
-
-  // Demote
-  const handleDemoteToMember = async (accountId: number) => {
-    setPendingDemoteId(accountId);
   };
 
   const confirmPromote = async () => {
@@ -466,18 +445,6 @@ export default function AdminDashboard() {
                                   </>
                                 )}
                               </button>
-
-                              {/* KHONG XOA
-                              <button
-                                onClick={() => {
-                                  handleDeleteAccount(account.id);
-                                  setSelectedAccount(null);
-                                }}
-                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Xóa tài khoản342
-                              */}
                             </div>
                           </div>
                         )}
