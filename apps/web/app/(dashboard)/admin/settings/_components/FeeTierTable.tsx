@@ -119,7 +119,7 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
             <tbody>
               {sortedFeeTiers.map((tier) => (
                 <tr key={tier.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3 font-medium">{formatCurrency(tier.minPrice)}</td>
+                  <td className="p-3">{formatCurrency(tier.minPrice)}</td>
                   <td className="p-3">
                     {tier.maxPrice && parseFloat(tier.maxPrice) > 0 ? (
                       formatCurrency(tier.maxPrice)

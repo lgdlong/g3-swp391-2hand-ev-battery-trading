@@ -16,8 +16,12 @@ export interface PostDetailModalProps {
   post: Post | null;
   onApprove: (postId: number | string) => void;
   onReject: (postId: number | string, reason: string) => void;
+  onVerify?: (postId: string) => void;
+  onRejectVerification?: (postId: string, reason: string) => void;
   isApproving?: boolean;
   isRejecting?: boolean;
+  isVerifying?: boolean;
+  isRejectingVerification?: boolean;
 }
 
 export function PostDetailModal({
@@ -26,8 +30,12 @@ export function PostDetailModal({
   post,
   onApprove,
   onReject,
+  onVerify,
+  onRejectVerification,
   isApproving = false,
   isRejecting = false,
+  isVerifying = false,
+  isRejectingVerification = false,
 }: PostDetailModalProps) {
   if (!post) return null;
 
@@ -76,11 +84,16 @@ export function PostDetailModal({
               <PostDetailActions
                 postId={post.id}
                 postStatus={post.status}
+                verificationRequest={post.verificationRequest}
                 onApprove={onApprove}
                 onReject={onReject}
+                onVerify={onVerify}
+                onRejectVerification={onRejectVerification}
                 onClose={onClose}
                 isApproving={isApproving}
                 isRejecting={isRejecting}
+                isVerifying={isVerifying}
+                isRejectingVerification={isRejectingVerification}
               />
             </div>
           </div>

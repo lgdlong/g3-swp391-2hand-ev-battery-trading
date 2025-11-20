@@ -21,6 +21,9 @@ interface RejectDialogProps {
   isRejecting?: boolean;
   triggerVariant?: 'sm' | 'lg';
   triggerClassName?: string;
+  triggerText?: string;
+  dialogTitle?: string;
+  dialogDescription?: string;
   children?: React.ReactNode;
 }
 
@@ -29,6 +32,9 @@ export function RejectDialog({
   isRejecting = false,
   triggerVariant = 'sm',
   triggerClassName = '',
+  triggerText,
+  dialogTitle,
+  dialogDescription,
   children,
 }: RejectDialogProps) {
   const [rejectReason, setRejectReason] = useState('');
@@ -59,7 +65,7 @@ export function RejectDialog({
       >
         <X className={`${triggerVariant === 'sm' ? 'w-3 h-3' : 'w-3 h-3'} text-red-600`} />
       </div>
-      {isRejecting ? 'Đang từ chối...' : 'Từ chối bài đăng'}
+      {isRejecting ? 'Đang từ chối...' : triggerText || 'Từ chối bài đăng'}
     </Button>
   );
 
@@ -68,9 +74,10 @@ export function RejectDialog({
       <DialogTrigger asChild>{children || defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Từ chối bài đăng</DialogTitle>
+          <DialogTitle>{dialogTitle || 'Từ chối bài đăng'}</DialogTitle>
           <DialogDescription>
-            Vui lòng nhập lý do từ chối bài đăng này. Lý do sẽ được gửi đến người đăng.
+            {dialogDescription ||
+              'Vui lòng nhập lý do từ chối bài đăng này. Lý do sẽ được gửi đến người đăng.'}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -99,7 +106,7 @@ export function RejectDialog({
             disabled={!rejectReason.trim() || isRejecting}
             className="bg-red-600 hover:bg-red-700"
           >
-            {isRejecting ? 'Đang từ chối...' : 'Từ chối bài đăng'}
+            {isRejecting ? 'Đang từ chối...' : triggerText || 'Từ chối bài đăng'}
           </Button>
         </DialogFooter>
       </DialogContent>
