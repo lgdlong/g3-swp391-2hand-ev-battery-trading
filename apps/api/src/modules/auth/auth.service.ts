@@ -25,14 +25,6 @@ export class AuthService {
     private readonly logger: Logger,
   ) {}
 
-  /** seconds */
-  // getAccessTokenTtlSeconds(): number {
-  //   const s = this.configService.get('JWT_EXPIRATION_TIME') || DEFAULT_JWT_EXPIRATION_TIME; // e.g. "15m" or "900s"
-  //   // Nếu bạn đang dùng dạng số giây trong env thì parseInt trả sẵn, nếu dùng "15m" thì nên chuẩn hoá.
-  //   // Ở đây giả định bạn dùng số giây:
-  //   return Number(s) || 900;
-  // }
-
   private async signTokens(payload: JwtPayload) {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(payload, {

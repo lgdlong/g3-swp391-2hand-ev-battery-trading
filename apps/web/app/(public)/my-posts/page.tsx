@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Plus } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
 import { getMyPosts, deleteMyPostById, archivePost } from '@/lib/api/postApi';
 import { useAuth } from '@/lib/auth-context';
 import { updateMyPost } from '@/lib/api/postApi';
-import SearchBar from './_components/search-bar';
 import PostListItem from './_components/post-list-item';
 import PostDetailDialog from './_components/post-detail-dialog';
 import DeleteConfirmDialog from './_components/delete-confirm-dialog';
@@ -40,7 +41,6 @@ export default function MyPostsPage() {
   }, [isLoggedIn, loading, router]);
 
   const [activeTab, setActiveTab] = useState<PostStatus>('PUBLISHED');
-  const [searchQuery, setSearchQuery] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -163,9 +163,7 @@ export default function MyPostsPage() {
   const markAsSoldMutation = useMutation({
     mutationFn: (postId: string) => updateMyPost(postId, { status: 'SOLD' }),
     onSuccess: () => {
-      toast.success(
-        'Đã đánh dấu bài đăng là đã bán. Bài đăng đã được chuyển vào tab "Đã bán" trong Quản lý đơn hàng.',
-      );
+      toast.success('Đã đánh dấu bài đăng là đã bán.');
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
     onError: (error: any) => {
@@ -177,35 +175,23 @@ export default function MyPostsPage() {
 
   const archiveMutation = useMutation({
     mutationFn: (postId: string) => archivePost(postId),
-    onSuccess: () => {
-      toast.success('Đã thu hồi bài viết thành công');
+    onSuccess: (data) => {
+      toast.success(data.message || 'Đã thu hồi bài viết thành công');
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
       setArchiveDialogOpen(false);
       setPostToArchive(null);
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Thu hồi bài viết thất bại. Vui lòng thử lại.');
+    onError: (error: any) => {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Thu hồi bài viết thất bại. Vui lòng thử lại.';
+      toast.error(errorMessage);
     },
   });
 
-  // const archiveMutation = useMutation({
-  //   mutationFn: (postId: string) => archivePost(postId),
-  //   onSuccess: () => {
-  //     toast.success('Đã thu hồi bài viết thành công');
-  //     queryClient.invalidateQueries({ queryKey: ['myPosts'] });
-  //     setArchiveDialogOpen(false);
-  //     setPostToArchive(null);
-  //   },
-  //   onError: (error: Error) => {
-  //     toast.error(error.message || 'Thu hồi bài viết thất bại. Vui lòng thử lại.');
-  //   },
-  // });
-
   const handleTabChange = (value: string) => {
     setActiveTab(value as PostStatus);
-  };
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
   };
   const handleDelete = (postId: string) => {
     setPostToDelete(postId);
@@ -269,13 +255,12 @@ export default function MyPostsPage() {
     <TooltipProvider>
       <div className="min-h-screen bg-background md:p-8">
         <div className="mx-auto max-w-6xl p-6 bg-white rounded-2xl shadow">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-6">Quản lý tin đăng</h1>
-            <SearchBar
-              searchQuery={searchQuery}
-              onSearchChange={handleSearchChange}
-              onCreateNew={handleCreateNew}
-            />
+          <div className="mb-8 flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-foreground">Quản lý tin đăng</h1>
+            <Button className="gap-2" onClick={handleCreateNew}>
+              <Plus className="h-4 w-4" />
+              Đăng tin mới
+            </Button>
           </div>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-auto grid-cols-6 mb-8 p-1 h-auto bg-background">

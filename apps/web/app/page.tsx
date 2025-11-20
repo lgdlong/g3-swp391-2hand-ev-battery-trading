@@ -138,7 +138,7 @@ export default function Home() {
                   className="bg-white text-gray-900 hover:bg-gray-50 hover:shadow-lg active:scale-95 transition-all duration-200 flex items-center gap-2 cursor-pointer"
                 >
                   <TrendingUp className="h-5 w-5" />
-                  Đăng tin miễn phí
+                  Đăng tin ngay
                 </Button>
                 <Button
                   asChild
