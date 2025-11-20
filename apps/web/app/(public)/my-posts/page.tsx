@@ -163,9 +163,7 @@ export default function MyPostsPage() {
   const markAsSoldMutation = useMutation({
     mutationFn: (postId: string) => updateMyPost(postId, { status: 'SOLD' }),
     onSuccess: () => {
-      toast.success(
-        'Đã đánh dấu bài đăng là đã bán. Bài đăng đã được chuyển vào tab "Đã bán" trong Quản lý đơn hàng.',
-      );
+      toast.success('Đã đánh dấu bài đăng là đã bán.');
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
     onError: (error: any) => {
@@ -177,14 +175,18 @@ export default function MyPostsPage() {
 
   const archiveMutation = useMutation({
     mutationFn: (postId: string) => archivePost(postId),
-    onSuccess: () => {
-      toast.success('Đã thu hồi bài viết thành công');
+    onSuccess: (data) => {
+      toast.success(data.message || 'Đã thu hồi bài viết thành công');
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
       setArchiveDialogOpen(false);
       setPostToArchive(null);
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Thu hồi bài viết thất bại. Vui lòng thử lại.');
+    onError: (error: any) => {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Thu hồi bài viết thất bại. Vui lòng thử lại.';
+      toast.error(errorMessage);
     },
   });
 
