@@ -14,12 +14,6 @@ export const CAPACITY_OPTIONS = [
   { value: '>80', label: 'Trên 80Ah' },
 ] as const;
 
-export const RANGE_OPTIONS = [
-  { value: '<300', label: 'Dưới 300km/lần sạc' },
-  { value: '300-600', label: '300km - 600km/lần sạc' },
-  { value: '>600', label: 'Trên 600km/lần sạc' },
-] as const;
-
 export const ODO_KM_OPTIONS = [
   { value: '<1000', label: 'Dưới 1,000 km' },
   { value: '1000-5000', label: '1,000 - 5,000 km' },
@@ -29,31 +23,10 @@ export const ODO_KM_OPTIONS = [
   { value: '>100000', label: 'Trên 100,000 km' },
 ] as const;
 
-export const HEALTH_OPTIONS = [
-  { value: 'excellent', label: 'Xuất sắc (90-100%)' },
-  { value: 'very-good', label: 'Rất tốt (80-89%)' },
-  { value: 'good', label: 'Tốt (70-79%)' },
-  { value: 'fair', label: 'Khá (60-69%)' },
-  { value: 'poor', label: 'Kém (dưới 60%)' },
-] as const;
-
-export const BATTERY_BRAND_OPTIONS = [
-  { value: 'panasonic', label: 'Panasonic' },
-  { value: 'lg-chem', label: 'LG Chem' },
-  { value: 'samsung-sdi', label: 'Samsung SDI' },
-  { value: 'catl', label: 'CATL' },
-  { value: 'tesla', label: 'Tesla' },
-  { value: 'byd', label: 'BYD' },
-  { value: 'sk-innovation', label: 'SK Innovation' },
-  { value: 'northvolt', label: 'Northvolt' },
-  { value: 'calb', label: 'CALB' },
-  { value: 'eve-energy', label: 'EVE Energy' },
-] as const;
-
 // Constants cho price range (EV vehicles)
 export const PRICE_CONSTANTS = {
   MIN_PRICE: 0,
-  MAX_PRICE: 10000000000,
+  MAX_PRICE: 10000000000, // 10 billion VND max for EV vehicles
   DEFAULT_MAX_PRICE: 150000000000,
   STEP: 10000000,
 } as const;
@@ -77,9 +50,7 @@ export const BUTTON_LABELS = {
 export const DROPDOWN_TITLES = {
   CYCLES: 'Số chu kỳ',
   CAPACITY: 'Dung lượng pin',
-  RANGE: 'Quãng đường di chuyển trên 1 lần sạc',
   ODO_KM: 'Số km đã đi',
-  HEALTH: 'Tình trạng pin',
   PRICE: 'Chọn khoảng giá',
   BRAND: 'Hãng xe điện',
   BATTERY_BRAND: 'Thương hiệu pin',
