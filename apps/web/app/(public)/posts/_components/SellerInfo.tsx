@@ -19,38 +19,7 @@ interface SellerInfoProps {
  * Seller Information Component
  */
 export function SellerInfo({ account, post }: SellerInfoProps) {
-  const { user, isLoggedIn } = useAuth();
-  const router = useRouter();
-  const createConversationMutation = useCreateConversation();
-
-  const handleContactSeller = async () => {
-    // Check if user is logged in
-    if (!isLoggedIn) {
-      toast.error('Vui lòng đăng nhập để liên hệ người bán');
-      router.push('/login');
-      return;
-    }
-
-    // Check if user is trying to contact themselves
-    if (user?.id === account?.id) {
-      toast.error('Bạn không thể liên hệ với chính mình');
-      return;
-    }
-
-    try {
-      // Create or get existing conversation
-      const conversation = await createConversationMutation.mutateAsync({
-        postId: post.id,
-      });
-
-      // Navigate to chat page with conversation ID
-      router.push(`/chat/${conversation.id}`);
-      toast.success('Đang chuyển đến cuộc trò chuyện...');
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      toast.error('Có lỗi xảy ra khi tạo cuộc trò chuyện');
-    }
-  };
+  const { user } = useAuth();
 
   if (!account) {
     return (
@@ -88,10 +57,6 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       </div>
 
       <div className="space-y-2 text-sm text-gray-600 mb-4">
-        {/* <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          <span>Hoạt động {relativeTime(account.updatedAt)}</span>
-        </div> */}
         {account.email ? (
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -127,15 +92,6 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       {/* Only show contact buttons if the logged-in user is not the post owner */}
       {user?.id !== account?.id && (
         <div className="space-y-2">
-          <button
-            onClick={handleContactSeller}
-            disabled={createConversationMutation.isPending}
-            className="w-full bg-[#048C73] hover:bg-[#037A66] text-white py-2 px-4 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {createConversationMutation.isPending
-              ? 'Đang tạo cuộc trò chuyện...'
-              : 'Liên hệ người bán'}
-          </button>
           {account.phone ? (
             <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors">
               {account.phone}
