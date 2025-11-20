@@ -45,38 +45,6 @@ export class WalletsService {
   }
 
   /**
-   * Create a wallet transaction
-   * @param userId - User account ID
-   * @param amount - Transaction amount (positive for credit, negative for debit)
-   * @param serviceTypeCode - Service type code (e.g., 'WALLET_TOPUP')
-   * @param description - Transaction description
-   * @param relatedEntityId - Related entity ID (optional)
-   * @returns Created wallet transaction
-   */
-  private async createWalletTransaction(
-    userId: number,
-    amount: string,
-    serviceTypeCode: string,
-    description?: string,
-    relatedEntityId?: string,
-  ): Promise<WalletTransaction> {
-    const serviceType = await this.serviceTypesService.findByCode(serviceTypeCode);
-    if (!serviceType) {
-      throw new NotFoundException(`Service type with code '${serviceTypeCode}' not found`);
-    }
-
-    const transaction = this.walletTransactionRepo.create({
-      walletUserId: userId,
-      amount,
-      serviceTypeId: serviceType.id,
-      description,
-      relatedEntityId,
-    });
-
-    return this.walletTransactionRepo.save(transaction);
-  }
-
-  /**
    * Top up wallet - Creates transaction and updates balance atomically
    * @param userId - User account ID
    * @param amount - Amount to top up

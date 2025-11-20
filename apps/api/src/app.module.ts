@@ -21,7 +21,6 @@ import { ServiceTypesModule } from './modules/service-types/service-types.module
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { AdminStatisticsModule } from './modules/admin-statistics/admin-statistics.module';
-// import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
   imports: [
@@ -45,7 +44,6 @@ import { AdminStatisticsModule } from './modules/admin-statistics/admin-statisti
           username: config.get<string>('USERNAME'),
           password: config.get<string>('PASSWORD'),
           database: config.get<string>('DB_NAME'),
-          // entities: [Account, CarBrand, CarModel, CarTrim],
           autoLoadEntities: true,
           synchronize: isDev, // chỉ tự động đồng bộ hóa CSDL ở môi trường development
           retryAttempts: 5,
@@ -82,8 +80,3 @@ import { AdminStatisticsModule } from './modules/admin-statistics/admin-statisti
   providers: [],
 })
 export class AppModule {}
-// export class AppModule implements NestModule {
-//   configure(consumer: MiddlewareConsumer) {
-//     consumer.apply(DebugMiddleware).forRoutes('*');
-//   }
-// }
