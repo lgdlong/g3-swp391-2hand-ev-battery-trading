@@ -1,12 +1,12 @@
 'use client';
 
 import { PostDetailModalHeader } from './PostDetailModalHeader';
-import { PostDebugPanel } from './PostDebugPanel';
 import { PostImagesGallery } from './PostImagesGallery';
 import { PostBasicInfo } from './PostBasicInfo';
 import { PostSellerInfo } from './PostSellerInfo';
 import { PostTimeInfo } from './PostTimeInfo';
 import { PostVehicleDetails } from './PostVehicleDetails';
+import { PostBatteryDetails } from './PostBatteryDetails';
 import { PostDetailActions } from './PostDetailActions';
 import { Post } from '@/types/post';
 
@@ -39,9 +39,6 @@ export function PostDetailModal({
             {/* Header */}
             <PostDetailModalHeader onClose={onClose} />
 
-            {/* Debug Panel - Remove this in production */}
-            <PostDebugPanel post={post} />
-
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
               {/* Hero Section - Main Info */}
@@ -68,8 +65,12 @@ export function PostDetailModal({
                 />
               </div>
 
-              {/* Chi tiết xe (nếu có) */}
-              <PostVehicleDetails carDetails={post.carDetails} bikeDetails={post.bikeDetails} />
+              {/* Chi tiết xe hoặc pin (tùy theo loại) */}
+              {post.postType === 'BATTERY' ? (
+                <PostBatteryDetails batteryDetails={post.batteryDetails} />
+              ) : (
+                <PostVehicleDetails carDetails={post.carDetails} bikeDetails={post.bikeDetails} />
+              )}
 
               {/* Action Footer */}
               <PostDetailActions
