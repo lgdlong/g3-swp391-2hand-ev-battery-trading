@@ -122,10 +122,9 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
             <div className="text-center lg:text-left">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">EV Trading</h1>
-              <h2 className="text-xl md:text-2xl text-gray-300 mb-4">
-                Chợ Mua Bán Xe Điện Và Pin Cũ EV Hàng Đầu Việt Nam
-              </h2>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">Nền Tảng Mua Bán Xe Điện/
+              Pin Ev Cũ</h1>
+
               <p className="text-lg text-gray-400 mb-8">
                 Nền tảng uy tín kết nối người mua với người bán xe điện và pin EV cũ. Giao dịch an
                 toàn, nhanh chóng, hiệu quả.
@@ -253,7 +252,7 @@ export default function Home() {
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Tại sao chọn EV Trading?</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Tại sao chọn Nền Tảng Xe Điện Cũ?</h2>
             <p className="text-gray-600">Nền tảng uy tín cho cộng đồng xe điện Việt Nam</p>
           </div>
 
@@ -274,11 +273,11 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
-          {/* Top Section - EV Trading and Categories Side by Side */}
+          {/* Top Section - Nền Tảng Xe Điện Cũ and Categories Side by Side */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-center gap-150 mb-8 px-6">
             {/* About Section */}
             <div className="flex-shrink-0">
-              <h3 className="text-xl font-bold mb-4">EV Trading</h3>
+              <h3 className="text-xl font-bold mb-4">Nền Tảng Mua Bán Xe Điện Cũ</h3>
               <p className="text-gray-300 mb-4 text-sm leading-relaxed max-w-sm">
                 Nền tảng mua bán xe điện và pin EV cũ hàng đầu Việt Nam. An toàn, nhanh chóng, hiệu
                 quả.
@@ -317,7 +316,7 @@ export default function Home() {
 
           <div className="border-t border-gray-800 pt-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <p className="text-sm text-gray-400">&copy; 2025 EV Trading Platform.</p>
+              <p className="text-sm text-gray-400">&copy; 2025 Nền Tảng Mua Bán Xe Điện Cũ.</p>
             </div>
           </div>
         </div>
