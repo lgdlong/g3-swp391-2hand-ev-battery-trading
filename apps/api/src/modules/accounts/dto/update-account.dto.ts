@@ -1,5 +1,6 @@
 import { IsOptional, IsString, Length, Matches, IsUrl } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { VIETNAMESE_PHONE_REGEX } from 'src/shared/regex';
 
 export class UpdateAccountDto {
   @ApiPropertyOptional({ example: 'Nguyen Van A' })
@@ -11,7 +12,7 @@ export class UpdateAccountDto {
   @ApiPropertyOptional({ example: '+84 912 345 678' })
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[0-9\- ]{7,20}$/, { message: 'Phone is invalid' })
+  @Matches(VIETNAMESE_PHONE_REGEX, { message: 'Số điện thoại không phù hợp' })
   phone?: string;
 
   @ApiPropertyOptional({

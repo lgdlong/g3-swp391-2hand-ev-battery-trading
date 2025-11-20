@@ -17,7 +17,7 @@ import { GoogleStrategy } from './google.strategy';
         return {
           secret: jwtSecret,
           signOptions: {
-            expiresIn: configService.get<string>('JWT_EXPIRATION_TIME', '15m'),
+            expiresIn: configService.get<string>('JWT_EXPIRATION_TIME', '1h'),
           },
         };
       },

@@ -4,12 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Wallet,
-  TrendingUp,
-  DollarSign,
   CreditCard,
-  ShieldCheck,
   ArrowUpCircle,
-  ArrowDownCircle,
   Coins,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
@@ -26,7 +22,7 @@ export function FinancialStatsCards({ financial, isLoading }: FinancialStatsCard
       <div>
         <div className="h-7 bg-muted rounded w-48 mb-4 animate-pulse"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <Card key={i} className="bg-card border-border animate-pulse">
               <CardHeader className="pb-2">
                 <div className="h-4 bg-muted rounded w-24"></div>
@@ -69,14 +65,6 @@ export function FinancialStatsCards({ financial, isLoading }: FinancialStatsCard
       color: 'text-green-500',
     },
     {
-      title: 'Tổng Tiền Rút',
-      value: formatCurrency(financial.totalWithdrawalAmount),
-      icon: ArrowDownCircle,
-      badge: 'Chưa hỗ trợ',
-      badgeVariant: 'outline',
-      color: 'text-orange-500',
-    },
-    {
       title: 'Số Giao Dịch',
       value: financial.totalTransactions.toLocaleString(),
       icon: CreditCard,
@@ -85,36 +73,12 @@ export function FinancialStatsCards({ financial, isLoading }: FinancialStatsCard
       color: 'text-purple-500',
     },
     {
-      title: 'Tổng Phí Thu Được',
-      value: formatCurrency(financial.totalFeesCollected),
-      icon: DollarSign,
-      badge: 'Deposits + Verification',
-      badgeVariant: 'default',
-      color: 'text-emerald-500',
-    },
-    {
-      title: 'Tiền Cọc Thu Được',
-      value: formatCurrency(financial.totalDepositCollected),
-      icon: ShieldCheck,
-      badge: 'Post deposits',
-      badgeVariant: 'outline',
-      color: 'text-cyan-500',
-    },
-    {
-      title: 'Phí Kiểm Định',
+      title: 'Tổng Phí Kiểm Định',
       value: formatCurrency(financial.totalVerificationFees),
       icon: Coins,
       badge: 'Verification fees',
       badgeVariant: 'outline',
       color: 'text-indigo-500',
-    },
-    {
-      title: 'Doanh Thu Ròng',
-      value: formatCurrency(financial.netRevenue),
-      icon: TrendingUp,
-      badge: 'Sau refund',
-      badgeVariant: 'default',
-      color: 'text-green-600',
     },
   ];
 

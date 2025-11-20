@@ -39,9 +39,16 @@ export function useCreatePost() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => {
+      let actualValue: string | boolean = value;
+
+      // Convert string 'true'/'false' to boolean for isNegotiable
+      if (field === 'isNegotiable') {
+        actualValue = value === 'true';
+      }
+
       const newData = {
         ...prev,
-        [field]: value,
+        [field]: actualValue,
       };
 
       // Auto-set seats to "2" when vehicleType changes to "xe_may"
@@ -123,7 +130,7 @@ export function useCreatePost() {
             wardNameCached: formData.wardNameCached || '',
             addressTextCached: formData.addressTextCached || formData.addressText || '',
             priceVnd: unformatNumber(formData.priceVnd),
-            isNegotiable: false,
+            isNegotiable: formData.isNegotiable,
             status: 'DRAFT' as const,
             carDetails: {
               ...(formData.brandId !== 'other' && formData.brandId
@@ -163,7 +170,7 @@ export function useCreatePost() {
             wardNameCached: formData.wardNameCached || '',
             addressTextCached: formData.addressTextCached || formData.addressText || '',
             priceVnd: unformatNumber(formData.priceVnd),
-            isNegotiable: false,
+            isNegotiable: formData.isNegotiable,
             status: 'DRAFT' as const,
             bikeDetails: {
               ...(formData.brandId !== 'other' && formData.brandId

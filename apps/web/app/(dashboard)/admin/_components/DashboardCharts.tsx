@@ -181,7 +181,7 @@ export function DashboardCharts({ stats, timeSeriesData, isLoading }: DashboardC
               <YAxis stroke="#9ca3af" />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#1f2937',
+                  backgroundColor: '#ffff',
                   border: '1px solid #374151',
                   borderRadius: '6px',
                 }}
