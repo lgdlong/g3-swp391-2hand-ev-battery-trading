@@ -2,13 +2,24 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Bookmark, Bell, Settings, LogOut, Wallet, Plus, FileText } from 'lucide-react';
+import {
+  User,
+  Bookmark,
+  Bell,
+  Settings,
+  LogOut,
+  Wallet,
+  Plus,
+  FileText,
+  ChevronLeft,
+} from 'lucide-react';
 import { Account } from '@/types/account';
 import Image from 'next/image';
 import { isValidAvatarUrl } from '@/lib/validation/file-validation';
 import { useQuery } from '@tanstack/react-query';
 import { getMyWallet } from '@/lib/api/walletApi';
 import { TopupModal } from '@/components/TopupModal';
+import { Button } from '@/components/ui/button';
 
 interface UserSidebarProps {
   isOpen: boolean;
@@ -50,12 +61,15 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
         <div className="flex h-full flex-col">
           {/* User Profile Section */}
           <div className="border-b p-6">
-            <button
+            <Button
               onClick={onClose}
-              className="mb-4 text-gray-600 hover:text-gray-800 cursor-pointer"
+              variant="ghost"
+              size="sm"
+              className="mb-4 flex items-center space-x-1"
             >
-              ✕
-            </button>
+              <ChevronLeft className="h-5 w-5" />
+              <span>Trở về</span>
+            </Button>
 
             <div className="flex items-start space-x-4">
               <div className="relative h-16 w-16 overflow-hidden rounded-full bg-gray-200">
@@ -90,13 +104,14 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
                         : `${Number(wallet.balance).toLocaleString('vi-VN')} ₫`}
                     </p>
                   </div>
-                  <button
+                  <Button
                     onClick={() => setIsTopupModalOpen(true)}
-                    className="flex items-center space-x-1 rounded-full bg-[#048C73] hover:bg-[#037A66] px-4 py-2 text-sm font-medium text-white"
+                    size="sm"
+                    className="flex items-center space-x-1 bg-[#048C73] hover:bg-[#037A66]"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Nạp</span>
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
@@ -145,16 +160,17 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
 
           {/* Logout Button */}
           <div className="border-t p-4">
-            <button
+            <Button
               onClick={() => {
                 onLogout?.();
                 onClose();
               }}
-              className="flex w-full items-center space-x-3 rounded-lg px-4 py-3 text-red-600 hover:bg-red-50"
+              variant="ghost"
+              className="flex w-full items-center space-x-3 text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               <LogOut className="h-5 w-5" />
               <span>Đăng xuất</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
