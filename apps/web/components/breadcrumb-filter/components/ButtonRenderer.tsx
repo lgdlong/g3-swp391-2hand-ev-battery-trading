@@ -17,7 +17,7 @@ export function ButtonRenderer({
   type,
   appliedFilters,
   handleFilterClick,
-  renderDropdownContent
+  renderDropdownContent,
 }: ButtonRendererProps) {
   // Get filter buttons based on type
   const filterButtons = type === 'battery' ? batteryFilterButtons : evFilterButtons;
@@ -28,7 +28,7 @@ export function ButtonRenderer({
       case 'price':
         return !!(appliedFilters.priceMin && appliedFilters.priceMax);
       case 'brand':
-        return !!appliedFilters.brand;
+        return !!appliedFilters.brandId;
       case 'capacity':
         return !!appliedFilters.capacity;
       case 'cycles':
@@ -47,13 +47,13 @@ export function ButtonRenderer({
   };
 
   // Update button states with applied filters
-  const buttonsWithState = filterButtons.map(button => {
+  const buttonsWithState = filterButtons.map((button) => {
     const filterKey = LABEL_TO_FILTER_KEY[button.label] || 'all';
 
     return {
       ...button,
       isActive: isFilterApplied(filterKey),
-      onClick: () => handleFilterClick(filterKey)
+      onClick: () => handleFilterClick(filterKey),
     };
   });
 

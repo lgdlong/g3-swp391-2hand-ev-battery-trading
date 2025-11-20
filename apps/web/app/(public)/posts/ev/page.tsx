@@ -5,7 +5,15 @@ import { getCarPostsWithQuery, getBikePostsWithQuery, searchPosts } from '@/lib/
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FilterButtons } from '@/components/breadcrumb-filter';
-import { LoadingGrid, EmptyState, PageHeader, PostGrid, toStringValue } from './_components';
+import { LoadingGrid, EmptyState, PageHeader, PostGrid } from './_components';
+import {
+  filterByLocation,
+  filterByPrice,
+  filterByBrand,
+  filterByAppliedFilters,
+  sortPosts,
+  type EVAppliedFilters,
+} from './utils/filterUtils';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
@@ -36,56 +44,15 @@ const SORT_OPTIONS = {
   PRICE_DESC: 'price-desc',
 } as const;
 
-const FILTER_RANGES = {
-  RANGE_UNDER_300: '<300',
-  RANGE_300_600: '300-600',
-  RANGE_OVER_600: '>600',
-} as const;
-
-const BATTERY_CAPACITY_RANGES = {
-  UNDER_30: '<30',
-  RANGE_30_50: '30-50',
-  RANGE_50_70: '50-70',
-  RANGE_70_100: '70-100',
-  OVER_100: '>100',
-} as const;
-
-const CYCLES_RANGES = {
-  UNDER_1000: '<1000',
-  RANGE_1000_2000: '1000-2000',
-  RANGE_2000_3000: '2000-3000',
-  RANGE_3000_4000: '3000-4000',
-  OVER_4000: '>4000',
-} as const;
-
-const HEALTH_RANGES = {
-  EXCELLENT: 'excellent',
-  VERY_GOOD: 'very-good',
-  GOOD: 'good',
-  FAIR: 'fair',
-  POOR: 'poor',
-} as const;
-
-const HEALTH_THRESHOLDS = {
-  EXCELLENT_MIN: 90,
-  VERY_GOOD_MIN: 80,
-  VERY_GOOD_MAX: 90,
-  GOOD_MIN: 70,
-  GOOD_MAX: 80,
-  FAIR_MIN: 60,
-  FAIR_MAX: 70,
-  POOR_MAX: 60,
-} as const;
-
 function EvPostsContent() {
   const [sort, setSort] = useState<SortKey>(SORT_OPTIONS.NEWEST);
   const searchParams = useSearchParams();
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
-  const [brand, setBrand] = useState('');
+  const [brandId, setBrandId] = useState<number | null>(null);
   const [min, setMin] = useState<number | null>(null);
   const [max, setMax] = useState<number | null>(null);
-  const [appliedFilters, setAppliedFilters] = useState<any>({});
+  const [appliedFilters, setAppliedFilters] = useState<EVAppliedFilters>({});
 
   // Breadcrumb function reference
   const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
@@ -94,7 +61,8 @@ function EvPostsContent() {
     setQuery(searchParams.get('q') || '');
     // Support both 'loc' and 'location' params for backward compatibility
     setLocation(searchParams.get('location') || searchParams.get('loc') || '');
-    setBrand(searchParams.get('brand') || '');
+    const brandParam = searchParams.get('brandId');
+    setBrandId(brandParam ? Number(brandParam) : null);
     const minParam = searchParams.get('min');
     const maxParam = searchParams.get('max');
     setMin(minParam ? Number(minParam) : null);
@@ -140,20 +108,7 @@ function EvPostsContent() {
         sort: sort === 'newest' ? 'createdAt' : 'priceVnd',
         status: POST_STATUS.PUBLISHED,
       };
-      const response = await getCarPostsWithQuery(queryParams);
-
-      // Check for duplicates
-      const postIds = response.map((post: any) => post.id);
-      const uniqueIds = [...new Set(postIds)];
-      if (postIds.length !== uniqueIds.length) {
-        console.warn('Duplicate posts detected!', {
-          total: postIds.length,
-          unique: uniqueIds.length,
-          duplicates: postIds.filter((id, index) => postIds.indexOf(id) !== index)
-        });
-      }
-
-      return response;
+      return await getCarPostsWithQuery(queryParams);
     },
     enabled: !shouldUseSearch, // Only fetch when not searching
     staleTime: CACHE_TIME.STALE_TIME, // 5 minutes
@@ -209,191 +164,33 @@ function EvPostsContent() {
     return [...carPosts, ...bikePosts];
   }, [carPosts, bikePosts, searchResults, shouldUseSearch]);
 
-  // Client-side filtering (additional filtering beyond API)
+  // Client-side filtering using modular filter utilities
   const filtered = useMemo(() => {
     let data = [...allEvPosts];
 
-    // Additional client-side filtering for location and brand
+    // Apply location filter (from URL params)
     if (location) {
-      data = data.filter(
-        (p) =>
-          toStringValue(p.provinceNameCached).toLowerCase().includes(location.toLowerCase()) ||
-          toStringValue(p.districtNameCached).toLowerCase().includes(location.toLowerCase()) ||
-          toStringValue(p.wardNameCached).toLowerCase().includes(location.toLowerCase()) ||
-          toStringValue(p.addressTextCached).toLowerCase().includes(location.toLowerCase()),
-      );
+      data = filterByLocation(data, location);
     }
 
-    if (brand) {
-      data = data.filter((p) => p.title.toLowerCase().includes(brand.toLowerCase()));
+    // Apply legacy URL param filters (brand ID, price)
+    if (brandId) {
+      data = filterByBrand(data, brandId);
     }
 
-    // Price filtering (client-side for more precise control)
-    if (min !== null) {
-      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') >= min);
-    }
-    if (max !== null) {
-      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') <= max);
+    if (min !== null || max !== null) {
+      data = filterByPrice(data, min ?? undefined, max ?? undefined);
     }
 
-    // Apply new filter system
-    if (appliedFilters.status) {
-      data = data.filter((p) => (p as any).status === appliedFilters.status);
-    }
-
-    if (appliedFilters.priceMin !== undefined) {
-      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') >= appliedFilters.priceMin);
-    }
-    if (appliedFilters.priceMax !== undefined) {
-      data = data.filter((p) => parseFloat((p as any).priceVnd || '0') <= appliedFilters.priceMax);
-    }
-
-    if (appliedFilters.range) {
-      switch (appliedFilters.range) {
-        case FILTER_RANGES.RANGE_UNDER_300:
-          data = data.filter((p) => {
-            const rangeKm = p.carDetails?.range_km || p.bikeDetails?.range_km;
-            const range = parseFloat(rangeKm?.toString() || '0');
-            return range > 0 && range < 300; // Chỉ hiển thị post có range > 0 và < 300
-          });
-          break;
-        case FILTER_RANGES.RANGE_300_600:
-          data = data.filter((p) => {
-            const rangeKm = p.carDetails?.range_km || p.bikeDetails?.range_km;
-            const range = parseFloat(rangeKm?.toString() || '0');
-            return range >= 300 && range <= 600;
-          });
-          break;
-        case FILTER_RANGES.RANGE_OVER_600:
-          data = data.filter((p) => {
-            const rangeKm = p.carDetails?.range_km || p.bikeDetails?.range_km;
-            const range = parseFloat(rangeKm?.toString() || '0');
-            return range > 600;
-          });
-          break;
-      }
-    }
-
-    if (appliedFilters.capacity) {
-      switch (appliedFilters.capacity) {
-        case BATTERY_CAPACITY_RANGES.UNDER_30:
-          data = data.filter((p) => (p as any).batteryCapacityKWh < 30);
-          break;
-        case BATTERY_CAPACITY_RANGES.RANGE_30_50:
-          data = data.filter(
-            (p) => (p as any).batteryCapacityKWh >= 30 && (p as any).batteryCapacityKWh <= 50,
-          );
-          break;
-        case BATTERY_CAPACITY_RANGES.RANGE_50_70:
-          data = data.filter(
-            (p) => (p as any).batteryCapacityKWh > 50 && (p as any).batteryCapacityKWh <= 70,
-          );
-          break;
-        case BATTERY_CAPACITY_RANGES.RANGE_70_100:
-          data = data.filter(
-            (p) => (p as any).batteryCapacityKWh > 70 && (p as any).batteryCapacityKWh <= 100,
-          );
-          break;
-        case BATTERY_CAPACITY_RANGES.OVER_100:
-          data.filter((p) => (p as any).batteryCapacityKWh > 100);
-          break;
-      }
-    }
-
-    if (appliedFilters.cycles) {
-      switch (appliedFilters.cycles) {
-        case CYCLES_RANGES.UNDER_1000:
-          data = data.filter((p) => (p as any).cyclesUsed < 1000);
-          break;
-        case CYCLES_RANGES.RANGE_1000_2000:
-          data = data.filter((p) => (p as any).cyclesUsed >= 1000 && (p as any).cyclesUsed <= 2000);
-          break;
-        case CYCLES_RANGES.RANGE_2000_3000:
-          data = data.filter((p) => (p as any).cyclesUsed > 2000 && (p as any).cyclesUsed <= 3000);
-          break;
-        case CYCLES_RANGES.RANGE_3000_4000:
-          data = data.filter((p) => (p as any).cyclesUsed > 3000 && (p as any).cyclesUsed <= 4000);
-          break;
-        case CYCLES_RANGES.OVER_4000:
-          data = data.filter((p) => (p as any).cyclesUsed > 4000);
-          break;
-      }
-    }
-
-    if (appliedFilters.health) {
-      switch (appliedFilters.health) {
-        case HEALTH_RANGES.EXCELLENT:
-          data = data.filter((p) => (p as any).batteryHealthPct >= HEALTH_THRESHOLDS.EXCELLENT_MIN);
-          break;
-        case HEALTH_RANGES.VERY_GOOD:
-          data = data.filter(
-            (p) =>
-              (p as any).batteryHealthPct >= HEALTH_THRESHOLDS.VERY_GOOD_MIN &&
-              (p as any).batteryHealthPct < HEALTH_THRESHOLDS.VERY_GOOD_MAX,
-          );
-          break;
-        case HEALTH_RANGES.GOOD:
-          data = data.filter(
-            (p) =>
-              (p as any).batteryHealthPct >= HEALTH_THRESHOLDS.GOOD_MIN &&
-              (p as any).batteryHealthPct < HEALTH_THRESHOLDS.GOOD_MAX,
-          );
-          break;
-        case HEALTH_RANGES.FAIR:
-          data = data.filter(
-            (p) =>
-              (p as any).batteryHealthPct >= HEALTH_THRESHOLDS.FAIR_MIN &&
-              (p as any).batteryHealthPct < HEALTH_THRESHOLDS.FAIR_MAX,
-          );
-          break;
-        case HEALTH_RANGES.POOR:
-          data = data.filter((p) => (p as any).batteryHealthPct < HEALTH_THRESHOLDS.POOR_MAX);
-          break;
-      }
-    }
-
-    if (appliedFilters.batteryBrand) {
-      data = data.filter((p) =>
-        (p as any).batteryBrand?.toLowerCase().includes(appliedFilters.batteryBrand.toLowerCase()),
-      );
-    }
-
-    if (appliedFilters.brand) {
-      data = data.filter((p) =>
-        (p as any).title?.toLowerCase().includes(appliedFilters.brand.toLowerCase()),
-      );
-    }
+    // Apply filters from FilterButtons component (appliedFilters)
+    data = filterByAppliedFilters(data, appliedFilters);
 
     // Apply sorting
-    if (appliedFilters.sortBy === 'newest') {
-      data.sort(
-        (a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime(),
-      );
-    } else {
-      switch (sort) {
-        case 'price-asc':
-          data.sort(
-            (a, b) =>
-              parseFloat((a as any).priceVnd || '0') - parseFloat((b as any).priceVnd || '0'),
-          );
-          break;
-        case 'price-desc':
-          data.sort(
-            (a, b) =>
-              parseFloat((b as any).priceVnd || '0') - parseFloat((a as any).priceVnd || '0'),
-          );
-          break;
-        default:
-          data.sort(
-            (a, b) => ((b as any).manufactureYear || 0) - ((a as any).manufactureYear || 0),
-          );
-      }
-    }
+    const sortKey = appliedFilters.sortBy || sort;
+    data = sortPosts(data, sortKey);
 
     return data;
-  }, [allEvPosts, location, brand, min, max, sort, appliedFilters]);
-
-  // Loading state
+  }, [allEvPosts, location, brandId, min, max, sort, appliedFilters]); // Loading state
   if (isLoading) {
     return <LoadingGrid />;
   }

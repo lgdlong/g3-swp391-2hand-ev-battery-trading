@@ -28,7 +28,7 @@ interface DropdownManagerProps {
   setShowBatteryBrandDropdown: (show: boolean) => void;
   handlePriceApply: (priceRange: { min: number; max: number }) => void;
   handleRangeApply: (range: string) => void;
-  handleBrandApply: (brand: string) => void;
+  handleBrandApply: (brandId: number | null) => void;
   handleCapacityApply: (capacity: string) => void;
   handleCyclesApply: (cycles: string) => void;
   handleHealthApply: (health: string) => void;
@@ -83,7 +83,7 @@ export function DropdownManager({
         props: {
           onApply: handleBrandApply,
           onClose: () => setShowBrandDropdown(false),
-          currentBrand: appliedFilters.brand,
+          currentBrandId: appliedFilters.brandId,
         },
       },
       [FILTER_LABELS.CAPACITY]: {

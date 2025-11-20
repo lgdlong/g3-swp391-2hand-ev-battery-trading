@@ -89,7 +89,7 @@ export interface PostSeller {
 // ===== CarDetail =====
 /** Car details interface matching backend CarDetailsResponseDto */
 export interface CarDetail {
-  brandId: FlexibleField;
+  brand_id: FlexibleField;
   model_id: FlexibleField;
   manufacture_year: FlexibleField;
   body_style: string;
@@ -109,7 +109,7 @@ export interface CarDetail {
 // ===== BikeDetail =====
 /** Bike details interface matching backend BikeDetailsResponseDto */
 export interface BikeDetail {
-  brandId: FlexibleField;
+  brand_id: FlexibleField;
   model_id: FlexibleField;
   manufacture_year: FlexibleField;
   bike_style: string;
@@ -150,6 +150,8 @@ export interface SellerLite {
 
 /** Car detail specifications for UI */
 export interface CarDetailUI {
+  brand_id: number | null;
+  model_id: number | null;
   manufacture_year: number;
   odo_km: number;
   battery_capacity_kwh: string;
@@ -163,6 +165,8 @@ export interface CarDetailUI {
 
 /** Bike detail specifications for UI */
 export interface BikeDetailUI {
+  brand_id: number | null;
+  model_id: number | null;
   manufacture_year: number;
   odo_km: number;
   battery_capacity_kwh: string;

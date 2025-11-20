@@ -5,13 +5,17 @@ import { useQuery } from '@tanstack/react-query';
 import { getCarBrands, getBikeBrands } from '@/lib/api/catalogApi';
 
 interface BrandFilterDropdownProps {
-  onApply: (brand: string) => void;
+  onApply: (brandId: number | null) => void;
   onClose: () => void;
-  currentBrand?: string;
+  currentBrandId?: number;
 }
 
-export function BrandFilterDropdown({ onApply, onClose, currentBrand = '' }: BrandFilterDropdownProps) {
-  const [selectedBrand, setSelectedBrand] = useState(currentBrand);
+export function BrandFilterDropdown({
+  onApply,
+  onClose,
+  currentBrandId,
+}: BrandFilterDropdownProps) {
+  const [selectedBrandId, setSelectedBrandId] = useState<number | null>(currentBrandId ?? null);
 
   // Fetch car brands
   const { data: carBrands = [] } = useQuery({
@@ -27,21 +31,23 @@ export function BrandFilterDropdown({ onApply, onClose, currentBrand = '' }: Bra
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Combine and deduplicate brands
+  // Combine and deduplicate brands by ID
   const brands = React.useMemo(() => {
     const allBrands = [...carBrands, ...bikeBrands];
-    const uniqueBrands = Array.from(new Set(allBrands.map(brand => brand.name)));
-    return uniqueBrands.sort();
+    const uniqueBrands = allBrands.filter(
+      (brand, index, self) => index === self.findIndex((b) => b.id === brand.id),
+    );
+    return uniqueBrands.sort((a, b) => a.name.localeCompare(b.name));
   }, [carBrands, bikeBrands]);
 
   const handleApply = () => {
-    onApply(selectedBrand);
+    onApply(selectedBrandId);
     onClose();
   };
 
   const handleClear = () => {
-    setSelectedBrand('');
-    onApply('');
+    setSelectedBrandId(null);
+    onApply(null);
     onClose();
   };
 
@@ -54,16 +60,19 @@ export function BrandFilterDropdown({ onApply, onClose, currentBrand = '' }: Bra
           <div className="grid grid-cols-2 gap-2">
             {brands.length > 0 ? (
               brands.map((brand) => (
-                <label key={brand} className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-emerald-50 transition-colors">
+                <label
+                  key={brand.id}
+                  className="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-emerald-50 transition-colors"
+                >
                   <input
                     type="radio"
                     name="brand"
-                    value={brand}
-                    checked={selectedBrand === brand}
-                    onChange={(e) => setSelectedBrand(e.target.value)}
+                    value={brand.id}
+                    checked={selectedBrandId === brand.id}
+                    onChange={() => setSelectedBrandId(brand.id)}
                     className="w-3 h-3 text-emerald-600"
                   />
-                  <span className="text-sm text-gray-700">{brand}</span>
+                  <span className="text-sm text-gray-700">{brand.name}</span>
                 </label>
               ))
             ) : (

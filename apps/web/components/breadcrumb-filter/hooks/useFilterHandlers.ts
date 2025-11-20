@@ -53,15 +53,15 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     }
   };
 
-  const handleBrandApply = (brand: string) => {
-    if (brand === '') {
+  const handleBrandApply = (brandId: number | null) => {
+    if (brandId === null) {
       // Clear brand filter
       const newFilters = { ...appliedFilters };
-      delete newFilters.brand;
+      delete newFilters.brandId;
       setAppliedFilters(newFilters);
       onFilterChange?.(newFilters);
     } else {
-      updateFilters({ brand });
+      updateFilters({ brandId });
     }
   };
 
@@ -139,12 +139,12 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
         cycles: setShowCyclesDropdown,
         health: setShowHealthDropdown,
         batteryBrand: setShowBatteryBrandDropdown,
-        range: setShowRangeDropdown
+        range: setShowRangeDropdown,
       };
 
       const currentDropdownSetter = dropdownStates[filterKey as keyof typeof dropdownStates];
       if (currentDropdownSetter) {
-        currentDropdownSetter(prev => !prev);
+        currentDropdownSetter((prev) => !prev);
 
         // Close all other dropdowns
         Object.entries(dropdownStates).forEach(([key, setter]) => {
@@ -180,6 +180,6 @@ export function useFilterHandlers(onFilterChange?: (filters: any) => void) {
     handleHealthApply,
     handleBatteryBrandApply,
     handleClearAllFilters,
-    handleFilterClick
+    handleFilterClick,
   };
 }

@@ -64,12 +64,18 @@ export function filterByLocation(posts: Post[], location: string): Post[] {
 }
 
 /**
- * Filter posts by brand (matches title)
+ * Filter posts by brand ID (matches brandId in batteryDetails)
  */
-export function filterByBrand(posts: Post[], brand: string): Post[] {
-  if (!brand) return posts;
+export function filterByBrand(posts: Post[], brandId: string): Post[] {
+  if (!brandId) return posts;
 
-  return posts.filter((post) => post.title.toLowerCase().includes(brand.toLowerCase()));
+  const numericBrandId = Number.parseInt(brandId, 10);
+  if (Number.isNaN(numericBrandId)) return posts;
+
+  return posts.filter((post) => {
+    // Match by brandId in batteryDetails
+    return post.batteryDetails?.brandId === numericBrandId;
+  });
 }
 
 /**

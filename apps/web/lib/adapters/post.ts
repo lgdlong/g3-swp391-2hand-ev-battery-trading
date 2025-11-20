@@ -48,6 +48,8 @@ function adaptCarDetails(dto: PostDtoRaw['carDetails']): CarDetailUI | undefined
   if (!dto) return undefined;
 
   return {
+    brand_id: dto.brand_id ? toNumber(dto.brand_id) : null,
+    model_id: dto.model_id ? toNumber(dto.model_id) : null,
     manufacture_year: toNumber(dto.manufacture_year),
     odo_km: toNumber(dto.odo_km),
     battery_capacity_kwh: toString(dto.battery_capacity_kwh),
@@ -67,6 +69,8 @@ function adaptBikeDetails(dto: PostDtoRaw['bikeDetails']): BikeDetailUI | undefi
   if (!dto) return undefined;
 
   return {
+    brand_id: dto.brand_id ? toNumber(dto.brand_id) : null,
+    model_id: dto.model_id ? toNumber(dto.model_id) : null,
     manufacture_year: toNumber(dto.manufacture_year),
     odo_km: toNumber(dto.odo_km),
     battery_capacity_kwh: toString(dto.battery_capacity_kwh),
