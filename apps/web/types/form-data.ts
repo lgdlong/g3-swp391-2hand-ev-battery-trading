@@ -47,7 +47,20 @@ export interface EvFormData {
   manufactureYear: string;
   bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE' | 'OTHER';
   bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED' | 'OTHER';
-  color: 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER';
+  color:
+    | 'OTHER'
+    | 'BLACK'
+    | 'WHITE'
+    | 'RED'
+    | 'BLUE'
+    | 'SILVER'
+    | 'GRAY'
+    | 'GREEN'
+    | 'YELLOW'
+    | 'ORANGE'
+    | 'PURPLE'
+    | 'BROWN'
+    | 'PINK';
   seats: string;
   trimName: string;
   licensePlate: string;
@@ -128,10 +141,10 @@ export const initialFormData: FormData = {
   brandId: '',
   modelId: '',
   manufactureYear: '',
-  bodyStyle: 'SEDAN',
-  bikeStyle: 'SCOOTER',
+  bodyStyle: 'OTHER',
+  bikeStyle: 'OTHER',
   origin: Origin.NOI_DIA,
-  color: 'BLACK',
+  color: 'OTHER',
   seats: '',
   trimName: '',
   licensePlate: '',

@@ -17,6 +17,9 @@ export function useModeration(currentFilter?: string, currentPage?: number) {
     qc.invalidateQueries({ queryKey: ['admin-posts-count', 'PENDING_REVIEW'] });
     qc.invalidateQueries({ queryKey: ['admin-posts-count', 'REJECTED'] });
     qc.invalidateQueries({ queryKey: ['admin-posts-count', 'PUBLISHED'] });
+    // invalidate verification requests
+    qc.invalidateQueries({ queryKey: ['admin-verification-requests'] });
+    qc.invalidateQueries({ queryKey: ['admin-rejected-verification-requests'] });
   };
 
   const approve = useMutation({

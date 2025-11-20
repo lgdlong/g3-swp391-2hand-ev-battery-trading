@@ -16,7 +16,20 @@ interface EVDetailsFormProps {
     bodyStyle: 'SEDAN' | 'SUV' | 'HATCHBACK' | 'COUPE' | 'OTHER';
     bikeStyle: 'SCOOTER' | 'UNDERBONE' | 'MOTORCYCLE' | 'MOPED' | 'OTHER';
     origin: Origin;
-    color: 'BLACK' | 'WHITE' | 'RED' | 'BLUE' | 'SILVER';
+    color:
+      | 'OTHER'
+      | 'BLACK'
+      | 'WHITE'
+      | 'RED'
+      | 'BLUE'
+      | 'SILVER'
+      | 'GRAY'
+      | 'GREEN'
+      | 'YELLOW'
+      | 'ORANGE'
+      | 'PURPLE'
+      | 'BROWN'
+      | 'PINK';
     seats: string;
     trimName: string;
     licensePlate: string;
@@ -254,7 +267,7 @@ export default function EVDetailsForm({
               onChange={(e) => onInputChange('color', e.target.value)}
               className="w-full px-3 py-2 border border-input rounded-md text-base"
             >
-              <option value="">Chọn màu sắc</option>
+              <option value="OTHER">Khác</option>
               <option value="WHITE">Trắng</option>
               <option value="BLACK">Đen</option>
               <option value="GRAY">Xám</option>
@@ -267,7 +280,6 @@ export default function EVDetailsForm({
               <option value="PURPLE">Tím</option>
               <option value="BROWN">Nâu</option>
               <option value="PINK">Hồng</option>
-              <option value="OTHER">Khác</option>
             </select>
           </div>
 

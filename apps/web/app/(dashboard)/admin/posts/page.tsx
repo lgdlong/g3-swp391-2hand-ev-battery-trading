@@ -272,6 +272,8 @@ export default function AdminPostsPage() {
     if (pendingApproveId) {
       approve(pendingApproveId);
       setPendingApproveId(null);
+      // Close modal after approval
+      closeModal();
     }
   };
 
@@ -279,6 +281,8 @@ export default function AdminPostsPage() {
     if (pendingRejectData) {
       reject(pendingRejectData.postId, pendingRejectData.reason);
       setPendingRejectData(null);
+      // Close modal after rejection
+      closeModal();
     }
   };
 

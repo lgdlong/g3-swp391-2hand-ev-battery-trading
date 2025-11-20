@@ -30,7 +30,6 @@ export function PostDetailActions({
               <Button
                 onClick={() => {
                   onApprove(postId);
-                  onClose();
                 }}
                 disabled={isApproving}
                 size="lg"
@@ -44,7 +43,6 @@ export function PostDetailActions({
               <RejectDialog
                 onReject={async (reason: string) => {
                   await onReject(postId, reason);
-                  onClose();
                 }}
                 isRejecting={isRejecting}
                 triggerVariant="lg"
