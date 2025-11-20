@@ -10,12 +10,6 @@ export class CarDetailsService {
     private readonly repo: Repository<PostEvCarDetails>,
   ) {}
 
-  // dùng khi không có transaction bên ngoài
-  async createOne(payload: Partial<PostEvCarDetails>) {
-    const entity = this.repo.create(payload);
-    return this.repo.save(entity);
-  }
-
   // dùng trong 1 transaction do PostsService truyền vào
   // tạo bản ghi trong một transaction được mở bên ngoài (trx)
   async createWithTrx(trx: EntityManager, payload: Partial<PostEvCarDetails>) {
