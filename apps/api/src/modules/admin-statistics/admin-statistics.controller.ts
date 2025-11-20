@@ -219,7 +219,7 @@ export class AdminStatisticsController {
     },
   })
   async getFraudCount(): Promise<{ total: number; suspected: number; confirmed: number }> {
-    return this.adminStatsService.getFraudCount();
+    return await this.adminStatsService.getFraudCount();
   }
 
   /**
