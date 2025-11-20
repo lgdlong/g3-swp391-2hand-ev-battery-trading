@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Navbar } from '@/components/navbar/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { getPublicPostCountByType } from '@/lib/api/postApi';
 
 export default function Home() {
   const router = useRouter();
@@ -30,6 +32,34 @@ export default function Home() {
     router.push('/posts/create');
   };
 
+  const [carCount, setCarCount] = useState<number | null>(null);
+  const [batteryCount, setBatteryCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchCounts() {
+      try {
+        const [carRes, batteryRes] = await Promise.all([
+          getPublicPostCountByType('EV_CAR'),
+          getPublicPostCountByType('BATTERY'),
+        ]);
+
+        if (!mounted) return;
+
+        setCarCount(carRes?.count ?? null);
+        setBatteryCount(batteryRes?.count ?? null);
+      } catch (e) {
+        console.error('Error fetching public post counts', e);
+      }
+    }
+
+    fetchCounts();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const categories = [
     {
       title: 'Xe điện',
@@ -37,7 +67,7 @@ export default function Home() {
       icon: Car,
       href: '/posts/ev',
       color: 'bg-blue-50 text-blue-600',
-      count: '1,234 tin đăng',
+      count: carCount !== null ? `${carCount.toLocaleString()} tin đăng` : '... tin đăng',
     },
     {
       title: 'Pin EV',
@@ -45,7 +75,7 @@ export default function Home() {
       icon: Battery,
       href: '/posts/batteries',
       color: 'bg-green-50 text-green-600',
-      count: '567 tin đăng',
+      count: batteryCount !== null ? `${batteryCount.toLocaleString()} tin đăng` : '... tin đăng',
     },
   ];
 
