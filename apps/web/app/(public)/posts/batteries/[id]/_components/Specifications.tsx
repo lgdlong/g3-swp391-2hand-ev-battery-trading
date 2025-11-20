@@ -53,11 +53,11 @@ export function Specifications({ post }: SpecificationsProps) {
           Thông số kỹ thuật pin
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {batteryDetails.brand_id && (
+          {batteryDetails.brandId && (
             <SpecItem
               icon={<Hash className="h-4 w-4 text-muted-foreground" />}
               label="ID Thương hiệu"
-              value={batteryDetails.brand_id.toString()}
+              value={batteryDetails.brandId.toString()}
             />
           )}
 

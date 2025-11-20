@@ -82,7 +82,7 @@ export interface EvFormData {
  * Synced with backend CreateBatteryDetailsDto
  */
 export interface BatteryFormData {
-  brand_id: string;
+  brandId: string;
   voltageV: string;
   capacityAh: string;
   chargeTimeHours: string;
@@ -158,7 +158,7 @@ export const initialFormData: FormData = {
   batteryHealthPct: '',
 
   // Battery specific fields (from BatteryFormData)
-  brand_id: '',
+  // Note: brandId is shared with EV fields above
   voltageV: '',
   capacityAh: '',
   chargeTimeHours: '',

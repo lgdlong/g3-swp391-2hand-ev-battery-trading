@@ -8,7 +8,7 @@ export function useBatteryFormState(post: Post) {
     if (post.postType === 'BATTERY') {
       const detail = post.batteryDetails;
       return {
-        brand_id: detail?.brand_id?.toString() || '',
+        brandId: detail?.brandId?.toString() || '',
         voltageV: detail?.voltageV?.toString() || '',
         capacityAh: detail?.capacityAh?.toString() || '',
         chargeTimeHours: detail?.chargeTimeHours?.toString() || '',
@@ -21,7 +21,7 @@ export function useBatteryFormState(post: Post) {
       };
     }
     return {
-      brand_id: '',
+      brandId: '',
       voltageV: '',
       capacityAh: '',
       chargeTimeHours: '',

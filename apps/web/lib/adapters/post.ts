@@ -85,7 +85,7 @@ function adaptBatteryDetails(dto: PostDtoRaw['batteryDetails']): BatteryDetail |
   if (!dto) return undefined;
 
   return {
-    brand_id: dto.brand_id ? toNumber(dto.brand_id) : null,
+    brandId: dto.brandId ? toNumber(dto.brandId) : null,
     voltageV: dto.voltageV ? toNumber(dto.voltageV) : null,
     capacityAh: dto.capacityAh ? toNumber(dto.capacityAh) : null,
     chargeTimeHours: dto.chargeTimeHours ? toNumber(dto.chargeTimeHours) : null,
@@ -175,11 +175,15 @@ export function adaptPostDto(dto: PostDtoRaw): PostUI {
     submittedAt: toStringOrUndefined(dto.submittedAt),
     reviewedAt: toStringOrUndefined(dto.reviewedAt),
     // Verification data from relation
-    verificationRequest: dto.verificationRequest ? {
-      status: dto.verificationRequest.status as 'PENDING' | 'APPROVED' | 'REJECTED',
-      requestedAt: dto.verificationRequest.requestedAt,
-      reviewedAt: dto.verificationRequest.reviewedAt ? new Date(dto.verificationRequest.reviewedAt).toISOString() : undefined,
-      rejectReason: dto.verificationRequest.rejectReason || undefined,
-    } : undefined,
+    verificationRequest: dto.verificationRequest
+      ? {
+          status: dto.verificationRequest.status as 'PENDING' | 'APPROVED' | 'REJECTED',
+          requestedAt: dto.verificationRequest.requestedAt,
+          reviewedAt: dto.verificationRequest.reviewedAt
+            ? new Date(dto.verificationRequest.reviewedAt).toISOString()
+            : undefined,
+          rejectReason: dto.verificationRequest.rejectReason || undefined,
+        }
+      : undefined,
   };
 }

@@ -73,6 +73,7 @@ export function FilterButtons({
     handleCyclesApply,
     handleHealthApply,
     handleBatteryBrandApply,
+    type,
   });
 
   // Initialize breadcrumb on mount

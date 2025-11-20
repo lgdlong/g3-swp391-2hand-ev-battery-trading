@@ -93,8 +93,8 @@ export function useCreatePost() {
           isNegotiable: formData.isNegotiable,
           status: 'DRAFT' as const,
           batteryDetails: {
-            ...(formData.brand_id && formData.brand_id !== ''
-              ? { brand_id: parseInt(formData.brand_id) }
+            ...(formData.brandId && formData.brandId !== ''
+              ? { brand_id: parseInt(formData.brandId) }
               : {}),
             voltageV: parseFloat(formData.voltageV) || 0,
             capacityAh: parseFloat(formData.capacityAh) || 0,

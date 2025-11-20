@@ -14,7 +14,7 @@ export function useEVFormState(post: Post) {
       const detail = post.postType === 'EV_CAR' ? post.carDetails : post.bikeDetails;
       return {
         vehicleType: post.postType === 'EV_CAR' ? ('xe_hoi' as const) : ('xe_may' as const),
-        brandId: getFlexibleFieldValue(detail?.brand_id) || '',
+        brandId: getFlexibleFieldValue(detail?.brandId) || '',
         modelId: getFlexibleFieldValue(detail?.model_id) || '',
         manufactureYear: getFlexibleFieldValue(detail?.manufacture_year) || '',
         bodyStyle:

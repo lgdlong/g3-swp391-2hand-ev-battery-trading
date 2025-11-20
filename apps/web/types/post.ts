@@ -89,7 +89,7 @@ export interface PostSeller {
 // ===== CarDetail =====
 /** Car details interface matching backend CarDetailsResponseDto */
 export interface CarDetail {
-  brand_id: FlexibleField;
+  brandId: FlexibleField;
   model_id: FlexibleField;
   manufacture_year: FlexibleField;
   body_style: string;
@@ -109,7 +109,7 @@ export interface CarDetail {
 // ===== BikeDetail =====
 /** Bike details interface matching backend BikeDetailsResponseDto */
 export interface BikeDetail {
-  brand_id: FlexibleField;
+  brandId: FlexibleField;
   model_id: FlexibleField;
   manufacture_year: FlexibleField;
   bike_style: string;
@@ -128,7 +128,7 @@ export interface BikeDetail {
 // ===== BatteryDetail =====
 /** Battery details interface */
 export interface BatteryDetail {
-  brand_id: number | null;
+  brandId: number | null;
   voltageV: number | null;
   capacityAh: number | null;
   chargeTimeHours: number | null;

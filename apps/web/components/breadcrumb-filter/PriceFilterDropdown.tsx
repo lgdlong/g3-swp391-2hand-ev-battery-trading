@@ -1,26 +1,38 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PRICE_CONSTANTS, DROPDOWN_TITLES } from './constants/dropdownConstants';
+import {
+  PRICE_CONSTANTS,
+  BATTERY_PRICE_CONSTANTS,
+  DROPDOWN_TITLES,
+} from './constants/dropdownConstants';
 import { DropdownButtons } from './components/DropdownButtons';
 
 interface PriceFilterDropdownProps {
   onApply: (priceRange: { min: number | null; max: number | null }) => void;
   onClose: () => void;
   currentRange?: { min: number; max: number };
+  type?: 'ev' | 'battery';
 }
 
-export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFilterDropdownProps) {
+export function PriceFilterDropdown({
+  onApply,
+  onClose,
+  currentRange,
+  type = 'ev',
+}: PriceFilterDropdownProps) {
+  const priceConstants = type === 'battery' ? BATTERY_PRICE_CONSTANTS : PRICE_CONSTANTS;
+
   const [priceRange, setPriceRange] = useState({
-    min: currentRange?.min || PRICE_CONSTANTS.MIN_PRICE,
-    max: currentRange?.max || PRICE_CONSTANTS.DEFAULT_MAX_PRICE
+    min: currentRange?.min || priceConstants.MIN_PRICE,
+    max: currentRange?.max || priceConstants.DEFAULT_MAX_PRICE,
   });
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(price);
   };
 
@@ -50,30 +62,30 @@ export function PriceFilterDropdown({ onApply, onClose, currentRange }: PriceFil
             <div className="space-y-2">
               <input
                 type="range"
-                min={PRICE_CONSTANTS.MIN_PRICE}
-                max={PRICE_CONSTANTS.MAX_PRICE}
-                step={PRICE_CONSTANTS.STEP}
+                min={priceConstants.MIN_PRICE}
+                max={priceConstants.MAX_PRICE}
+                step={priceConstants.STEP}
                 value={priceRange.min}
-                onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) }))}
+                onChange={(e) =>
+                  setPriceRange((prev) => ({ ...prev, min: parseInt(e.target.value) }))
+                }
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
               <input
                 type="range"
-                min={PRICE_CONSTANTS.MIN_PRICE}
-                max={PRICE_CONSTANTS.MAX_PRICE}
-                step={PRICE_CONSTANTS.STEP}
+                min={priceConstants.MIN_PRICE}
+                max={priceConstants.MAX_PRICE}
+                step={priceConstants.STEP}
                 value={priceRange.max}
-                onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
+                onChange={(e) =>
+                  setPriceRange((prev) => ({ ...prev, max: parseInt(e.target.value) }))
+                }
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
               />
             </div>
           </div>
 
-          <DropdownButtons
-            onClear={handleClear}
-            onCancel={onClose}
-            onApply={handleApply}
-          />
+          <DropdownButtons onClear={handleClear} onCancel={onClose} onApply={handleApply} />
         </div>
       </div>
     </div>

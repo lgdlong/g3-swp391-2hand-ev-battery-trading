@@ -23,7 +23,7 @@ const RETRY_TIMES = 2;
 
 // Form field names (matching formData property names)
 const FIELD_NAMES = {
-  BRAND_ID: 'brand_id',
+  BRAND_ID: 'brandId',
   VOLTAGE_V: 'voltageV',
   CAPACITY_AH: 'capacityAh',
   CHARGE_TIME_HOURS: 'chargeTimeHours',
@@ -71,7 +71,7 @@ export default function BatteryDetailsForm({ formData, onInputChange }: BatteryD
           <div>
             <Label htmlFor={FIELD_NAMES.BRAND_ID}>Hãng pin</Label>
             <Select
-              value={formData.brand_id}
+              value={formData.brandId}
               onValueChange={(value) => onInputChange(FIELD_NAMES.BRAND_ID, value)}
               disabled={loadingBrands}
             >

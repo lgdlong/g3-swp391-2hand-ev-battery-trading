@@ -8,7 +8,7 @@ export const batteryFilterButtons = [
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
+    onClick: () => {},
   },
   {
     label: FILTER_LABELS.CAPACITY,
@@ -16,27 +16,20 @@ export const batteryFilterButtons = [
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
-  },
-  {
-    label: FILTER_LABELS.HEALTH,
-    hasDropdown: true,
-    hasInfo: true,
-    isActive: false,
-    onClick: () => {}
+    onClick: () => {},
   },
   {
     label: FILTER_LABELS.CYCLES,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
+    onClick: () => {},
   },
   {
     label: FILTER_LABELS.BATTERY_BRAND,
     hasDropdown: true,
     hasInfo: true,
     isActive: false,
-    onClick: () => {}
-  }
+    onClick: () => {},
+  },
 ];

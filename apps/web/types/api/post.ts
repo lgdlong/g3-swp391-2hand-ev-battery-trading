@@ -48,7 +48,7 @@ export interface CreateCarPostDto {
   priceVnd: string;
   isNegotiable: boolean;
   carDetails: {
-    brand_id?: number;
+    brandId?: number;
     model_id?: number;
     manufacture_year: number;
     body_style?: string;
@@ -78,7 +78,7 @@ export interface CreateBikePostDto {
   priceVnd: string;
   isNegotiable: boolean;
   bikeDetails: {
-    brand_id?: number;
+    brandId?: number;
     model_id?: number;
     manufacture_year: number;
     bike_style?: string;
@@ -107,7 +107,7 @@ export interface CreateBatteryPostDto {
   priceVnd: string;
   isNegotiable: boolean;
   batteryDetails: {
-    brand_id?: number;
+    brandId?: number;
     voltageV: number;
     capacityAh: number;
     chargeTimeHours: number;

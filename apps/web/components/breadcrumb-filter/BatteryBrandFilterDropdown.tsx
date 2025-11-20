@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { BATTERY_BRAND_OPTIONS, DROPDOWN_TITLES } from './constants/dropdownConstants';
+import React, { useState, useEffect } from 'react';
+import { DROPDOWN_TITLES } from './constants/dropdownConstants';
 import { DropdownButtons } from './components/DropdownButtons';
+import { getBatteryBrands } from '@/lib/api/catalogApi';
+import { Brand } from '@/types/catalog';
 
 interface BrandFilterDropdownProps {
   onApply: (brand: string) => void;
@@ -10,8 +12,29 @@ interface BrandFilterDropdownProps {
   currentBrand?: string;
 }
 
-export function BatteryBrandFilterDropdown({ onApply, onClose, currentBrand = '' }: BrandFilterDropdownProps) {
+export function BatteryBrandFilterDropdown({
+  onApply,
+  onClose,
+  currentBrand = '',
+}: BrandFilterDropdownProps) {
   const [selectedBrand, setSelectedBrand] = useState(currentBrand);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const data = await getBatteryBrands();
+        setBrands(data);
+      } catch (error) {
+        console.error('Error fetching battery brands:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBrands();
+  }, []);
 
   const handleApply = () => {
     onApply(selectedBrand);
@@ -30,27 +53,31 @@ export function BatteryBrandFilterDropdown({ onApply, onClose, currentBrand = ''
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-gray-900">{DROPDOWN_TITLES.BATTERY_BRAND}</h3>
 
-          <div className="space-y-2">
-            {BATTERY_BRAND_OPTIONS.map((brand) => (
-              <label key={brand.value} className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="brand"
-                  value={brand.value}
-                  checked={selectedBrand === brand.value}
-                  onChange={(e) => setSelectedBrand(e.target.value)}
-                  className="w-3 h-3 text-emerald-600"
-                />
-                <span className="text-sm text-gray-700">{brand.label}</span>
-              </label>
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-sm text-gray-500 py-2">Đang tải...</div>
+          ) : (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {brands.length === 0 ? (
+                <div className="text-sm text-gray-500 py-2">Không có thương hiệu nào</div>
+              ) : (
+                brands.map((brand) => (
+                  <label key={brand.id} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="brand"
+                      value={brand.id.toString()}
+                      checked={selectedBrand === brand.id.toString()}
+                      onChange={(e) => setSelectedBrand(e.target.value)}
+                      className="w-3 h-3 text-emerald-600"
+                    />
+                    <span className="text-sm text-gray-700">{brand.name}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          )}
 
-          <DropdownButtons
-            onClear={handleClear}
-            onCancel={onClose}
-            onApply={handleApply}
-          />
+          <DropdownButtons onClear={handleClear} onCancel={onClose} onApply={handleApply} />
         </div>
       </div>
     </div>

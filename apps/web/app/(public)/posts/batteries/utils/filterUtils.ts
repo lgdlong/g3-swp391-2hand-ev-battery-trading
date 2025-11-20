@@ -14,6 +14,7 @@ export interface AppliedFilters {
   health?: string;
   cycles?: string;
   brand?: string;
+  batteryBrand?: string;
   sortBy?: string;
 }
 
@@ -96,6 +97,75 @@ export function filterByMaxPrice(posts: Post[], maxPrice: number | null): Post[]
 }
 
 /**
+ * Filter posts by battery brand
+ * Matches against brandId in batteryDetails
+ */
+export function filterByBatteryBrand(posts: Post[], brandId: string): Post[] {
+  if (!brandId) return posts;
+
+  const numericBrandId = Number.parseInt(brandId, 10);
+  if (Number.isNaN(numericBrandId)) return posts;
+
+  return posts.filter((post) => {
+    // Match by brandId in batteryDetails
+    return post.batteryDetails?.brandId === numericBrandId;
+  });
+}
+
+/**
+ * Filter posts by battery capacity ranges (now using Ah instead of kWh)
+ */
+export function filterByCapacity(posts: Post[], capacityRange: string): Post[] {
+  return posts.filter((post) => {
+    // Skip if batteryDetails or capacityAh is null/undefined
+    if (!post.batteryDetails?.capacityAh) return false;
+
+    const capacity = post.batteryDetails.capacityAh;
+
+    switch (capacityRange) {
+      case '<30':
+        return capacity < 30;
+      case '30-50':
+        return capacity >= 30 && capacity <= 50;
+      case '50-80':
+        return capacity >= 50 && capacity <= 80;
+      case '>80':
+        return capacity > 80;
+      default:
+        return true;
+    }
+  });
+}
+
+/**
+ * Filter posts by battery cycle life ranges
+ * Note: Using cycleLife (total expected cycles) instead of cycles_used
+ */
+export function filterByCycles(posts: Post[], cyclesRange: string): Post[] {
+  return posts.filter((post) => {
+    // Skip if batteryDetails or cycleLife is null/undefined
+    if (!post.batteryDetails?.cycleLife) return false;
+
+    const cycles = post.batteryDetails.cycleLife;
+
+    switch (cyclesRange) {
+      case '<1000':
+        return cycles < 1000;
+      case '1000-2000':
+        return cycles >= 1000 && cycles <= 2000;
+      case '2000-3000':
+        return cycles >= 2000 && cycles <= 3000;
+      case '3000-4000':
+        return cycles >= 3000 && cycles <= 4000;
+      case '>4000':
+        return cycles > 4000;
+      default:
+        return true;
+    }
+  });
+}
+
+/**
  * Filter posts by applied filters from FilterButtons component
  */
 export function filterByAppliedFilters(posts: Post[], appliedFilters: AppliedFilters): Post[] {
@@ -126,79 +196,17 @@ export function filterByAppliedFilters(posts: Post[], appliedFilters: AppliedFil
     filteredPosts = filterByCapacity(filteredPosts, appliedFilters.capacity);
   }
 
-  // Battery health filter
-  if (appliedFilters.health) {
-    filteredPosts = filterByHealth(filteredPosts, appliedFilters.health);
-  }
-
   // Battery cycles filter
   if (appliedFilters.cycles) {
     filteredPosts = filterByCycles(filteredPosts, appliedFilters.cycles);
   }
 
-  // Brand filter
-  if (appliedFilters.brand) {
-    filteredPosts = filteredPosts.filter((post) =>
-      post.title.toLowerCase().includes(appliedFilters.brand!.toLowerCase()),
-    );
+  // Battery brand filter - match by brand ID from batteryDetails
+  if (appliedFilters.batteryBrand) {
+    filteredPosts = filterByBatteryBrand(filteredPosts, appliedFilters.batteryBrand);
   }
 
   return filteredPosts;
-}
-
-/**
- * Filter posts by battery capacity ranges (now using Ah instead of kWh)
- */
-export function filterByCapacity(posts: Post[], capacityRange: string): Post[] {
-  return posts.filter((post) => {
-    const capacity = post.batteryDetails?.capacityAh || 0;
-
-    switch (capacityRange) {
-      case '<30':
-        return capacity < 30;
-      case '30-50':
-        return capacity >= 30 && capacity <= 50;
-      case '50-80':
-        return capacity >= 50 && capacity <= 80;
-      case '>80':
-        return capacity > 80;
-      default:
-        return true;
-    }
-  });
-}
-
-/**
- * Filter posts by battery health percentage ranges
- * Note: health_percent is not available in the current API, returning all posts
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function filterByHealth(posts: Post[], _healthRange: string): Post[] {
-  // Since health_percent is not available in the new API, return all posts
-  return posts;
-}
-
-/**
- * Filter posts by battery cycle life ranges
- * Note: Using cycleLife (total expected cycles) instead of cycles_used
- */
-export function filterByCycles(posts: Post[], cyclesRange: string): Post[] {
-  return posts.filter((post) => {
-    const cycles = post.batteryDetails?.cycleLife || 0;
-
-    switch (cyclesRange) {
-      case '<500':
-        return cycles < 500;
-      case '500-1000':
-        return cycles >= 500 && cycles <= 1000;
-      case '1000-2000':
-        return cycles >= 1000 && cycles <= 2000;
-      case '>2000':
-        return cycles > 2000;
-      default:
-        return true;
-    }
-  });
 }
 
 /**

@@ -221,7 +221,7 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
       };
     } else if (post.postType === 'BATTERY') {
       updateData.batteryDetails = {
-        brand_id: batteryFormData.brand_id ? parseInt(batteryFormData.brand_id) : undefined,
+        brand_id: batteryFormData.brandId ? parseInt(batteryFormData.brandId) : undefined,
         voltageV: batteryFormData.voltageV ? parseFloat(batteryFormData.voltageV) : undefined,
         capacityAh: batteryFormData.capacityAh ? parseFloat(batteryFormData.capacityAh) : undefined,
         chargeTimeHours: batteryFormData.chargeTimeHours
