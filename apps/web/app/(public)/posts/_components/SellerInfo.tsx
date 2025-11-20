@@ -5,9 +5,6 @@ import type { PostUI } from '@/types/post';
 import type { AccountUI } from '@/types/account';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth-context';
-import { useCreateConversation } from '@/hooks/useChat';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 
 interface SellerInfoProps {
   account: AccountUI | undefined;

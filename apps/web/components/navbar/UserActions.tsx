@@ -4,20 +4,10 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { User, Bookmark, Bell, ChevronDown, MessageCircle } from 'lucide-react';
+import { User, Bookmark, ChevronDown } from 'lucide-react';
 import { Account } from '@/types/account';
 import { isValidAvatarUrl } from '@/lib/validation/file-validation';
-import { useQuery } from '@tanstack/react-query';
-import { chatApi } from '@/lib/api/chatApi';
-import { useRouter } from 'next/navigation';
 
 interface UserActionsProps {
   className?: string;
@@ -32,16 +22,6 @@ export function UserActions({
   user,
   onUserMenuToggle,
 }: UserActionsProps) {
-  const router = useRouter();
-  // Fetch unread message count
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unreadMessageCount'],
-    queryFn: () => chatApi.getUnreadMessageCount(),
-    enabled: isLoggedIn && !!user,
-    refetchInterval: 30000, // Refetch every 30 seconds
-    retry: 1,
-  });
-
   if (isLoggedIn) {
     return (
       <div className={cn('flex items-center gap-2 sm:gap-3 flex-wrap', className)}>
