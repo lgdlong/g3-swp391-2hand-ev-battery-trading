@@ -1,19 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LocationSelector } from './LocationSelector';
 import { searchPosts } from '@/lib/api/postApi';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 
 export function SearchBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState('/posts/ev');
+
+  // Detect current route (ev, batteries, bikes)
+  useEffect(() => {
+    if (pathname.includes('/posts/batteries')) {
+      setCurrentRoute('/posts/batteries');
+    } else if (pathname.includes('/posts/bikes')) {
+      setCurrentRoute('/posts/bikes');
+    } else if (pathname.includes('/posts/ev')) {
+      setCurrentRoute('/posts/ev');
+    }
+  }, [pathname]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -36,7 +49,7 @@ export function SearchBar() {
       params.append('q', searchQuery);
       if (selectedLocation) params.append('location', selectedLocation);
 
-      router.push(`/posts/ev?${params.toString()}`);
+      router.push(`${currentRoute}?${params.toString()}`);
 
       // 2. Or show results in a modal/dropdown (implement later)
       toast.success(`Tìm thấy ${results.length} kết quả`);
@@ -51,8 +64,8 @@ export function SearchBar() {
   const handleClearSearch = () => {
     setSearchQuery('');
     setSelectedLocation('');
-    // Navigate back to default list
-    router.push('/posts/ev');
+    // Navigate back to current route
+    router.push(currentRoute);
     toast.success('Đã xóa bộ lọc tìm kiếm');
   };
 
