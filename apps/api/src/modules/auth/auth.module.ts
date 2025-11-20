@@ -14,7 +14,6 @@ import { GoogleStrategy } from './google.strategy';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const jwtSecret = configService.get<string>('JWT_SECRET');
-        console.log('[DEBUG] AuthModule - JWT Secret in module:', jwtSecret);
         return {
           secret: jwtSecret,
           signOptions: {

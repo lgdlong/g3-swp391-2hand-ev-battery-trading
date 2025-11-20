@@ -42,7 +42,6 @@ export class PayosService {
 
   async create(createPayOSDto: CreatePayosDto): Promise<PayosCreatePaymentResponse> {
     const signature = this.signcreate(createPayOSDto);
-    console.log('Creating PayO payment request with data:', { ...createPayOSDto, signature });
     const res = await axios.post(
       `${this.payosBaseUrl}/v2/payment-requests`,
       {
@@ -144,7 +143,6 @@ export class PayosService {
 
         webhookLog.processingStatus = WebhookProcessingStatus.PROCESSED;
         webhookLog.processingNotes = 'Payment completed successfully';
-        console.log(`Payment completed successfully for orderCode: ${orderCode}`);
       } else {
         // Payment failed or cancelled
         paymentOrder.status = PaymentStatus.FAILED;
@@ -152,7 +150,6 @@ export class PayosService {
 
         webhookLog.processingStatus = WebhookProcessingStatus.PROCESSED;
         webhookLog.processingNotes = `Payment failed: ${webhookDto.desc}`;
-        console.log(`Payment failed for orderCode: ${orderCode}, reason: ${webhookDto.desc}`);
       }
 
       await this.webhookLogRepo.save(webhookLog);
