@@ -14,7 +14,6 @@ import { PostsQueryDto } from './dto/posts-query.dto';
 import { PostMapper } from './mappers/post.mapper';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PostImage } from './entities/post-image.entity';
-import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { PostImageResponseDto } from './dto/post-image-response.dto';
 import { PostImageMapper } from './mappers/post-image.mapper';
@@ -26,8 +25,6 @@ import { PostReviewService } from '../post-review/post-review.service';
 import { ReviewActionEnum } from 'src/shared/enums/review.enum';
 import { DEFAULT_PAGE_SIZE } from 'src/shared/constants';
 import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
-import { WalletsService } from '../wallets/wallets.service';
-import { FeeTierService } from '../settings/service/fee-tier.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
 
@@ -61,10 +58,7 @@ export class PostsService {
     private readonly carDetailsService: CarDetailsService,
     private readonly batteryDetailsService: BatteryDetailsService,
     private readonly addressService: AddressService,
-    private readonly cloudinary: CloudinaryService,
     private readonly postReviewService: PostReviewService,
-    private readonly walletsService: WalletsService,
-    private readonly feeTierService: FeeTierService,
     private readonly transactionsService: TransactionsService,
     private readonly dataSource: DataSource,
   ) {}
@@ -422,14 +416,6 @@ export class PostsService {
     }
   }
 
-  async listImages(postId: string): Promise<PostImageResponseDto[]> {
-    const images = await this.imagesRepo.find({
-      where: { post_id: postId },
-      order: { position: 'ASC', id: 'ASC' },
-    });
-    return PostImageMapper.toResponseDtoArray(images);
-  }
-
   async getPostsByUserId(userId: number, query: PostsQueryDto): Promise<BasePostResponseDto[]> {
     const where: any = {
       seller: { id: userId },
@@ -630,7 +616,8 @@ export class PostsService {
     const isOnlyStatusUpdate =
       post.status === PostStatus.PUBLISHED &&
       updateDto.status === PostStatus.SOLD &&
-      Object.keys(updateDto).filter((key) => updateDto[key as keyof typeof updateDto] !== undefined).length === 1 &&
+      Object.keys(updateDto).filter((key) => updateDto[key as keyof typeof updateDto] !== undefined)
+        .length === 1 &&
       updateDto.status !== undefined;
 
     // Only allow updating posts in DRAFT or REJECTED status, or PUBLISHED -> SOLD status update
