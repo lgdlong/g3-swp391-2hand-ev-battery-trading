@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
-import { useAuth } from '@/lib/auth-context';
 import { Specifications } from './_components';
 import { PostHeader, SellerInfo } from '@/app/(public)/posts/_components';
 import { VerificationBadge } from '@/components/VerificationBadge';
@@ -22,7 +21,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
   const [id, setId] = useState<string>('');
   const [title, setTitle] = useState<string>('all');
   const [mainImage, setMainImage] = useState<string>('');
-  const { user } = useAuth();
 
   useEffect(() => {
     params.then((p) => setId(p.id));
