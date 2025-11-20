@@ -75,20 +75,6 @@ export class WalletsController {
     return wallet;
   }
 
-  // @Post('update-balance/:userId')
-  // @UseGuards(RolesGuard)
-  // @Roles(AccountRole.ADMIN)
-  // async updateBalance(
-  //   @Param('userId', new ParseIntPipe({ errorHttpStatusCode: 400 })) userId: number,
-  //   @Body() dto: TopUpWalletDto,
-  // ): Promise<TopUpResponseDto> {
-  //   const result = await this.walletsService.updateWalletBalance(
-  //     userId,
-  //     dto.amount.toString(),
-  //   );
-  //   return result;
-  // }
-
   @Post('deduct/:userId')
   @UseGuards(RolesGuard)
   @ApiOperation({
@@ -161,36 +147,6 @@ export class WalletsController {
     );
     return result;
   }
-
-  // Purpose: Direct wallet topup (manual/internal)
-  // Input: TopUpWalletDto with amount, description, paymentOrderId
-  // Action: Directly adds funds to wallet balance
-  // Use Case: Internal system topup or admin manual topup
-  // Returns: TopUpResponseDto with wallet and transaction info
-  // ==========================================================================================
-  // @Post('top-up')
-  // @ApiOperation({
-  //   summary: 'Top up wallet',
-  //   description: 'Add funds to wallet. Automatically initializes wallet if not exists.',
-  // })
-  // @ApiResponse({
-  //   status: HttpStatus.CREATED,
-  //   description: 'Wallet topped up successfully',
-  //   type: TopUpResponseDto,
-  // })
-  // @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
-  // async topUp(
-  //   @CurrentUser() user: ReqUser,
-  //   @Body() dto: TopUpWalletDto,
-  // ): Promise<TopUpResponseDto> {
-  //   const result = await this.walletsService.topUp(
-  //     user.sub,
-  //     dto.amount.toString(),
-  //     dto.description,
-  //     dto.paymentOrderId,
-  //   );
-  //   return result;
-  // }
 
   @Post('topup/payment')
   @ApiOperation({

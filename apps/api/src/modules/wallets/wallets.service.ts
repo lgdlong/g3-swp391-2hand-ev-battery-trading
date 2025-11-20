@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { Wallet } from './entities/wallet.entity';
-import { WalletTransaction } from './entities/wallet-transaction.entity';
+import { Wallet } from './entities';
+import { WalletTransaction } from './entities';
 import { ServiceTypesService } from '../service-types/service-types.service';
-import { PaymentOrder } from '../payos/entities/payment-order.entity';
+import { PaymentOrder } from '../payos/entities';
 import { PaymentStatus } from '../../shared/enums/payment-status.enum';
 import { CreateTopupDto } from './dto/create-topup.dto';
 import { CreatePayosDto } from '../payos/dto';
 import { WalletTransactionMapper } from './mappers/wallet-transaction.mapper';
-import { WalletTransactionResponseDto } from './dto/wallet-transaction-response.dto';
+import { WalletTransactionResponseDto } from './dto';
 import { ensureWalletInTx } from 'src/shared/helpers/wallet.helper';
 
 @Injectable()
@@ -45,15 +45,6 @@ export class WalletsService {
   }
 
   /**
-   * Get wallet by user ID
-   * @param userId - User account ID
-   * @returns Wallet entity or null
-   */
-  async getWallet(userId: number): Promise<Wallet | null> {
-    return this.walletRepo.findOne({ where: { userId } });
-  }
-
-  /**
    * Create a wallet transaction
    * @param userId - User account ID
    * @param amount - Transaction amount (positive for credit, negative for debit)
@@ -84,43 +75,6 @@ export class WalletsService {
 
     return this.walletTransactionRepo.save(transaction);
   }
-
-  /**
-   * Update wallet balance
-   * @param userId - User account ID
-   * @param amount - Amount to add (positive) or subtract (negative)
-   * @returns Updated wallet
-   */
-  //   async updateWalletBalance(userId: number, amount: string, description?: string, relatedEntityId?: string): Promise<{ wallet: Wallet; transaction: WalletTransaction }> {
-  //   return this.dataSource.transaction(async (manager) => {
-  //     //const walletRepo = manager.getRepository(Wallet);
-  //     const transactionRepo = manager.getRepository(WalletTransaction);
-
-  //    const wallet = await ensureWalletInTx(manager, userId);
-
-  //     const currentBalance = parseFloat(wallet.balance);
-  //     const delta = parseInt(amount, 10);
-  //     const newBalance = currentBalance + delta;
-
-  //     if (newBalance < 0) {
-  //       throw new Error('Insufficient balance');
-  //     }
-
-  //     const serviceType = await this.serviceTypesService.findByCode('ADJUSTMENT');
-  //     const transaction = transactionRepo.create({
-  //       walletUserId: userId,
-  //       amount: delta.toString(),
-  //       serviceTypeId: serviceType?.id,
-  //       description: description || (delta >= 0 ? 'Admin credit' : 'Admin debit'),
-  //       relatedEntityId,
-  //     });
-  //     await transactionRepo.save(transaction);
-
-  //     wallet.balance = newBalance.toFixed(2);
-  //     await this.walletRepo.save(wallet);
-  //     return { wallet, transaction };
-  //   });
-  // }
 
   /**
    * Top up wallet - Creates transaction and updates balance atomically
