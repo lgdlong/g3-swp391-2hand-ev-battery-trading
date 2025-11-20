@@ -7,6 +7,5 @@ export { useBreadcrumb } from './useBreadcrumb';
 export { BrandFilterDropdown } from './BrandFilterDropdown';
 export { CapacityFilterDropdown } from './CapacityFilterDropdown';
 export { CyclesFilterDropdown } from './CyclesFilterDropdown';
-export { HealthFilterDropdown } from './HealthFilterDropdown';
 export { BatteryBrandFilterDropdown } from './BatteryBrandFilterDropdown';
 export * from './types';

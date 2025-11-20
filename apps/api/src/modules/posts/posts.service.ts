@@ -610,22 +610,15 @@ export class PostsService {
       throw new NotFoundException('Post not found or you do not have permission to update it');
     }
 
-    // Allow updating status from PUBLISHED to SOLD (only status field)
-    const isOnlyStatusUpdate =
-      post.status === PostStatus.PUBLISHED &&
-      updateDto.status === PostStatus.SOLD &&
-      Object.keys(updateDto).filter((key) => updateDto[key as keyof typeof updateDto] !== undefined)
-        .length === 1 &&
-      updateDto.status !== undefined;
+    // Only allow updates for DRAFT/REJECTED posts, or marking PUBLISHED as SOLD
+    const canUpdate =
+      post.status === PostStatus.DRAFT ||
+      post.status === PostStatus.REJECTED ||
+      (post.status === PostStatus.PUBLISHED && updateDto.status === PostStatus.SOLD);
 
-    // Only allow updating posts in DRAFT or REJECTED status, or PUBLISHED -> SOLD status update
-    if (
-      post.status !== PostStatus.DRAFT &&
-      post.status !== PostStatus.REJECTED &&
-      !isOnlyStatusUpdate
-    ) {
+    if (!canUpdate) {
       throw new BadRequestException(
-        `Cannot update post with status ${post.status}. Only DRAFT or REJECTED posts can be updated, or PUBLISHED posts can be marked as SOLD.`,
+        `Không thể cập nhật bài đăng với trạng thái ${post.status}. Chỉ có thể cập nhật bài đăng ở trạng thái DRAFT hoặc REJECTED, hoặc đánh dấu bài PUBLISHED là SOLD.`,
       );
     }
 

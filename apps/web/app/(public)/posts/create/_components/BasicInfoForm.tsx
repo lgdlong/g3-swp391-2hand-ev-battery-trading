@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { FileText } from 'lucide-react';
 import { useProvinces, useDistricts, useWards } from '@/hooks/useGeo';
 
@@ -90,6 +91,19 @@ export default function BasicInfoForm({
               className="text-base"
               required
             />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="isNegotiable"
+              checked={formData.isNegotiable}
+              onCheckedChange={(checked) =>
+                onInputChange('isNegotiable', checked === true ? 'true' : 'false')
+              }
+            />
+            <Label htmlFor="isNegotiable" className="cursor-pointer mb-0">
+              Có thể thương lượng
+            </Label>
           </div>
 
           {/* Address selectors */}

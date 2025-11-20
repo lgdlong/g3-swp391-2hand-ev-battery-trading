@@ -20,7 +20,7 @@ const SAMPLE_TOPUP_STR = '10000';
 export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) {
   const [amount, setAmount] = useState<number>(initialAmount || SAMPLE_TOPUP);
   const [customAmount, setCustomAmount] = useState<string>(
-    initialAmount ? initialAmount.toString() : SAMPLE_TOPUP_STR
+    initialAmount ? initialAmount.toString() : SAMPLE_TOPUP_STR,
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -66,7 +66,7 @@ export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) 
         cancelUrl: `${window.location.origin}/wallet`,
       });
 
-      if (response?.data?.checkoutUrl) {
+      if (response.data?.checkoutUrl) {
         // Redirect to PayOS checkout page
         window.location.href = response.data.checkoutUrl;
       } else {

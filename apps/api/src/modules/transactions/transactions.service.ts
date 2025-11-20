@@ -77,7 +77,7 @@ export class TransactionsService {
       userId,
       depositAmount.toString(),
       'POST_PAYMENT',
-      `Phí đặt cọc đăng bài #${postId}`,
+      `Phí đăng bài #${postId}`,
       'posts',
       postId,
     );

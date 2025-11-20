@@ -14,6 +14,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { UserSidebar } from '@/components/navbar/UserSidebar';
 import { AvatarChangeDialog } from './_components/AvatarChangeDialog';
+import { AxiosError } from 'axios';
 
 export default function ProfilePage() {
   const { isLoggedIn, user, logout, refreshUser } = useAuth();
@@ -51,8 +52,19 @@ export default function ProfilePage() {
         });
       } catch (error) {
         console.error('Error fetching profile:', error);
-        const errorMessage =
-          error instanceof Error ? error.message : 'Không thể tải thông tin cá nhân';
+        let errorMessage = 'Không thể tải thông tin cá nhân';
+
+        if (error instanceof AxiosError) {
+          const data = error.response?.data;
+          errorMessage =
+            (Array.isArray(data?.message) ? data.message[0] : data?.message) ||
+            data?.error ||
+            error.message ||
+            'Không thể tải thông tin cá nhân';
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+
         if (!String(errorMessage).includes('hết hạn')) {
           toast.error(errorMessage);
         }
@@ -102,7 +114,19 @@ export default function ProfilePage() {
       toast.success('Cập nhật thông tin thành công');
     } catch (error) {
       console.error('Error updating profile:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Không thể cập nhật thông tin';
+      let errorMessage = 'Không thể cập nhật thông tin';
+
+      if (error instanceof AxiosError) {
+        const data = error.response?.data;
+        errorMessage =
+          (Array.isArray(data?.message) ? data.message[0] : data?.message) ||
+          data?.error ||
+          error.message ||
+          'Không thể cập nhật thông tin';
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       toast.error(errorMessage);
     } finally {
       setSaving(false);
