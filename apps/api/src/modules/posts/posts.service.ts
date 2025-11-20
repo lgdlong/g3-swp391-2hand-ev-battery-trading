@@ -15,8 +15,6 @@ import { PostMapper } from './mappers/post.mapper';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PostImage } from './entities/post-image.entity';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
-import { PostImageResponseDto } from './dto/post-image-response.dto';
-import { PostImageMapper } from './mappers/post-image.mapper';
 import { AddressService } from '../address/address.service';
 import { buildAddressText } from 'src/shared/helpers/address.helper';
 import { CarDetailsService } from '../post-details/services/car-details.service';
