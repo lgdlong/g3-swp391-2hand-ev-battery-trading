@@ -84,9 +84,7 @@ export function PostBatteryDetails({ batteryDetails }: PostBatteryDetailsProps) 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Chu kỳ sử dụng:</span>
                   <span className="font-medium">
-                    {batteryDetails.cycleLife
-                      ? `${batteryDetails.cycleLife} chu kỳ`
-                      : 'N/A'}
+                    {batteryDetails.cycleLife ? `${batteryDetails.cycleLife} chu kỳ` : 'N/A'}
                   </span>
                 </div>
                 <div className="flex justify-between">
