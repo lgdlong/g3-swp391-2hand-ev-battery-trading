@@ -47,54 +47,6 @@ export async function countPosts(
 }
 
 /**
- * Public: get post count filtered by postType (if supported by backend)
- * This does not send auth headers and is intended for public homepage stats.
- */
-export async function getPublicPostCountByType(
-  postType?: 'EV_CAR' | 'EV_BIKE' | 'BATTERY',
-): Promise<{ count: number; postType?: string }> {
-  const params = new URLSearchParams();
-  if (postType) params.append('postType', postType);
-
-  try {
-    const { data } = await api.get<{ count: number; postType?: string }>(
-      `/posts/count${params.toString() ? `?${params.toString()}` : ''}`,
-    );
-    return data;
-  } catch (err: any) {
-    const status = err?.response?.status;
-    // If backend requires auth for /posts/count, fallback to public list endpoints
-    if (status === 401 || status === 403) {
-      try {
-        if (postType === 'EV_CAR') {
-          const cars = await getCarPostsWithQuery({ limit: 1000 });
-          return { count: cars.length };
-        }
-
-        if (postType === 'BATTERY') {
-          const batteries = await getBatteryPostsWithQuery({ limit: 1000 });
-          return { count: batteries.length };
-        }
-
-        if (postType === 'EV_BIKE') {
-          const bikes = await getBikePostsWithQuery({ limit: 1000 });
-          return { count: bikes.length };
-        }
-
-        // Generic fallback
-        const posts = await searchPosts('', { limit: 1000 });
-        return { count: posts.length };
-      } catch (fallbackErr) {
-        // Rethrow original error for visibility
-        throw err;
-      }
-    }
-
-    throw err;
-  }
-}
-
-/**
  * Get all posts for admin with optional query parameters
  * Supports filtering by status, postType, pagination, and search
  */
