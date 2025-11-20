@@ -15,6 +15,7 @@ interface PostCardProps {
 }
 
 export function PostCard({ item, onTitleClick }: PostCardProps) {
+  const isCarPost = item.postType === 'EV_CAR';
   const location =
     [
       // displayValue(item.wardNameCached),
@@ -48,9 +49,9 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
             />
             <div className="absolute left-4 top-4 flex flex-col gap-2">
               <Badge
-                className={`${item.carDetails ? 'bg-[#048C73]' : 'bg-[#2563EB]'} text-white border-0`}
+                className={`${isCarPost ? 'bg-[#048C73]' : 'bg-[#2563EB]'} text-white border-0`}
               >
-                {item.carDetails ? 'Ô tô điện' : 'Xe máy điện'}
+                {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
               </Badge>
             </div>
             {/* Verification badge - góc trên bên phải */}
