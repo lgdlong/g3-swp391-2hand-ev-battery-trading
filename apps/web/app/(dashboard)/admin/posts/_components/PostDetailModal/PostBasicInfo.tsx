@@ -32,7 +32,9 @@ export function PostBasicInfo({ post }: PostBasicInfoProps) {
 
         <div>
           <div className="text-sm font-medium text-gray-600 mb-1">Giá bán</div>
-          <div className="text-2xl font-bold text-green-600">{formatPrice(post.priceVnd)}</div>
+          <div className="text-2xl font-bold text-green-600">
+            {post.isNegotiable ? 'Liên hệ' : formatPrice(post.priceVnd)}
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

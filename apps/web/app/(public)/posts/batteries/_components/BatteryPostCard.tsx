@@ -91,7 +91,9 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
 
             {/* Price */}
             <div className="flex items-center justify-between">
-              <div className="text-lg font-bold text-red-600">{formatVnd(item.priceVnd)}</div>
+              <div className="text-lg font-bold text-red-600">
+                {item.isNegotiable ? 'Liên hệ' : formatVnd(item.priceVnd)}
+              </div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                 <svg
                   className="h-5 w-5 text-green-600"

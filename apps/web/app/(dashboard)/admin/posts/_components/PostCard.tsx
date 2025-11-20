@@ -25,12 +25,8 @@ interface PostCardProps {
 export function PostCard({
   post,
   onViewDetails,
-  // onApprove,
-  // onReject,
   onVerify,
   onRejectVerification,
-  // isApproving = false,
-  // isRejecting = false,
   isVerifying = false,
   isRejectingVerification = false,
   currentFilter,
@@ -161,7 +157,9 @@ export function PostCard({
             )}
 
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold text-red-600">{formatPrice(post.priceVnd)}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {post.isNegotiable ? 'Liên hệ' : formatPrice(post.priceVnd)}
+              </div>
             </div>
           </div>
 

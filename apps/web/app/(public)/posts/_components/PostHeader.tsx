@@ -24,7 +24,9 @@ export function PostHeader({ post, details }: PostHeaderProps) {
             <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
             <HeartCallApi postId={Number(post.id)} initialBookmark={null} />
           </div>
-          <div className="text-2xl font-bold text-red-600 mb-2">{formatVnd(post.priceVnd)}</div>
+          <div className="text-2xl font-bold text-red-600 mb-2">
+            {post.isNegotiable ? 'Liên hệ' : formatVnd(post.priceVnd)}
+          </div>
         </div>
         <div className="mb-6">{details?.origin && <Badge>{originText(details.origin)}</Badge>}</div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
