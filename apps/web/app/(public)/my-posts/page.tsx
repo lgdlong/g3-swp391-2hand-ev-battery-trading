@@ -41,7 +41,6 @@ export default function MyPostsPage() {
 
   const [activeTab, setActiveTab] = useState<PostStatus>('PUBLISHED');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price-asc' | 'price-desc'>('newest');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -131,7 +130,7 @@ export default function MyPostsPage() {
         return rejectedQuery.data || [];
       case 'SOLD':
         return soldPosts;
-        // return soldQuery.data || [];
+      // return soldQuery.data || [];
       case 'ARCHIVED':
         return archivedQuery.data || [];
       default:
@@ -164,11 +163,14 @@ export default function MyPostsPage() {
   const markAsSoldMutation = useMutation({
     mutationFn: (postId: string) => updateMyPost(postId, { status: 'SOLD' }),
     onSuccess: () => {
-      toast.success('Đã đánh dấu bài đăng là đã bán. Bài đăng đã được chuyển vào tab "Đã bán" trong Quản lý đơn hàng.');
+      toast.success(
+        'Đã đánh dấu bài đăng là đã bán. Bài đăng đã được chuyển vào tab "Đã bán" trong Quản lý đơn hàng.',
+      );
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || 'Đánh dấu đã bán thất bại. Vui lòng thử lại.';
+      const errorMessage =
+        error?.response?.data?.message || 'Đánh dấu đã bán thất bại. Vui lòng thử lại.';
       toast.error(errorMessage);
     },
   });
@@ -272,8 +274,6 @@ export default function MyPostsPage() {
             <SearchBar
               searchQuery={searchQuery}
               onSearchChange={handleSearchChange}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
               onCreateNew={handleCreateNew}
             />
           </div>
