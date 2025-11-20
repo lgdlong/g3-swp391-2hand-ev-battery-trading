@@ -234,7 +234,9 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-800">Tổng Số Tài Khoản</CardTitle>
+            <CardTitle className="text-sm font-medium text-emerald-800">
+              Tổng Số Tài Khoản
+            </CardTitle>
             <Users className="h-4 w-4 text-emerald-600" />
           </CardHeader>
           <CardContent>
@@ -406,7 +408,7 @@ export default function AdminDashboard() {
                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               >
                                 <Eye className="h-4 w-4 mr-2" />
-                                Details
+                                Chi tiết
                               </button>
 
                               {account.role === RoleEnum.USER && (
@@ -418,7 +420,7 @@ export default function AdminDashboard() {
                                   className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                 >
                                   <UserPlus className="h-4 w-4 mr-2" />
-                                  Promote Admin
+                                  Thăng cấp Admin
                                 </button>
                               )}
 
@@ -436,12 +438,12 @@ export default function AdminDashboard() {
                                 {account.status === StatusEnum.ACTIVE ? (
                                   <>
                                     <Ban className="h-4 w-4 mr-2" />
-                                    Ban account
+                                    Cấm tài khoản
                                   </>
                                 ) : (
                                   <>
                                     <CheckCircle className="h-4 w-4 mr-2" />
-                                    Unban account
+                                    Bỏ cấm tài khoản
                                   </>
                                 )}
                               </button>
