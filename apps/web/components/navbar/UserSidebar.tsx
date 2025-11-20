@@ -160,17 +160,16 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
 
           {/* Logout Button */}
           <div className="border-t p-4">
-            <Button
+            <button
               onClick={() => {
                 onLogout?.();
                 onClose();
               }}
-              variant="ghost"
-              className="flex w-full items-center space-x-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="flex w-full items-center space-x-3 text-red-600 cursor-pointer hover:bg-red-50 rounded-lg px-4 py-3 font-medium"
             >
               <LogOut className="h-5 w-5" />
               <span>Đăng xuất</span>
-            </Button>
+            </button>
           </div>
         </div>
       </div>
