@@ -6,11 +6,11 @@ export class LoginRequestDto {
     example: 'long@gmail.com',
     description: 'Email hoặc số điện thoại dùng để đăng nhập',
   })
-  @IsNotEmpty({ message: 'Email or phone is required' })
+  @IsNotEmpty({ message: 'Phải nhập email hoặc số điện thoại' })
   identifier!: string; // người dùng nhập email hoặc số điện thoại
 
   @ApiProperty({ example: 'Abcd1234@', minLength: 6 })
   @IsNotEmpty({ message: 'Password is required!' })
-  @MinLength(6, { message: 'Password must be at least 6 characters.' })
+  @MinLength(6, { message: 'Mật khẩu tối thiểu 6 ký tự' })
   password!: string;
 }
