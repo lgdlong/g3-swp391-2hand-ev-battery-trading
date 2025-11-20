@@ -287,16 +287,22 @@ export default function AdminPostsPage() {
   };
 
   const handleVerify = (postId: string) => {
-    if (confirm('Bạn có chắc chắn muốn kiểm định bài viết này?')) {
-      verifyMutation.mutate(postId);
-    }
+    verifyMutation.mutate(postId, {
+      onSuccess: () => {
+        closeModal();
+      },
+    });
   };
 
-  const handleRejectVerification = (postId: string) => {
-    const reason = prompt('Lý do từ chối yêu cầu kiểm định (tùy chọn):');
-    if (confirm('Bạn có chắc chắn muốn từ chối yêu cầu kiểm định bài viết này?')) {
-      rejectVerificationMutation.mutate({ postId, reason: reason || '' });
-    }
+  const handleRejectVerification = (postId: string, reason: string) => {
+    rejectVerificationMutation.mutate(
+      { postId, reason: reason || '' },
+      {
+        onSuccess: () => {
+          closeModal();
+        },
+      },
+    );
   };
 
   const handleViewDetails = (post: Post) => {
@@ -426,12 +432,8 @@ export default function AdminPostsPage() {
                     onViewDetails={handleViewDetails}
                     onApprove={handleApprove}
                     onReject={handleReject}
-                    onVerify={handleVerify}
-                    onRejectVerification={handleRejectVerification}
                     isApproving={approveMutation.isPending}
                     isRejecting={rejectMutation.isPending}
-                    isVerifying={verifyMutation.isPending}
-                    isRejectingVerification={rejectVerificationMutation.isPending}
                     currentFilter={currentFilter}
                   />
                 ))}
@@ -455,8 +457,12 @@ export default function AdminPostsPage() {
           post={selectedPost}
           onApprove={handleApprove}
           onReject={handleReject}
+          onVerify={handleVerify}
+          onRejectVerification={handleRejectVerification}
           isApproving={isApproving}
           isRejecting={isRejecting}
+          isVerifying={verifyMutation.isPending}
+          isRejectingVerification={rejectVerificationMutation.isPending}
         />
 
         {/* Confirmation Dialogs */}
