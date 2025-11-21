@@ -59,7 +59,7 @@ export class UploadController {
   @UseInterceptors(SingleImageUploadInterceptor)
   async uploadSingleImage(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
-      throw new BadRequestException('No file uploaded');
+      throw new BadRequestException('Không có file nào được tải lên');
     }
 
     const cloudinaryResult = await this.uploadService.uploadImage(file, {
@@ -116,7 +116,7 @@ export class UploadController {
   @UseInterceptors(MultipleImageUploadInterceptor(10))
   async uploadMultipleImages(@UploadedFiles() files: Express.Multer.File[]) {
     if (!files || files.length === 0) {
-      throw new BadRequestException('No files uploaded');
+      throw new BadRequestException('Không có file nào được tải lên');
     }
 
     const uploaded = await Promise.all(

@@ -55,7 +55,7 @@ export class PostBookmarksController {
   })
   async create(@CurrentUser() user: ReqUser, @Body() createPostBookmarkDto: CreatePostBookmarkDto) {
     if (!user || !user.sub) {
-      throw new UnauthorizedException('User authentication failed');
+      throw new UnauthorizedException('Xác thực người dùng thất bại');
     }
     return this.postBookmarksService.create(user.sub, createPostBookmarkDto);
   }
@@ -72,7 +72,7 @@ export class PostBookmarksController {
   })
   async getAll(@CurrentUser() user: ReqUser) {
     if (!user || !user.sub) {
-      throw new UnauthorizedException('User authentication failed');
+      throw new UnauthorizedException('Xác thực người dùng thất bại');
     }
     return this.postBookmarksService.getAll(user.sub);
   }
@@ -104,7 +104,7 @@ export class PostBookmarksController {
   })
   async findOne(@CurrentUser() user: ReqUser, @Param('id', ParseIntPipe) id: number) {
     if (!user || !user.sub) {
-      throw new UnauthorizedException('User authentication failed');
+      throw new UnauthorizedException('Xác thực người dùng thất bại');
     }
 
     // First get the bookmark to check ownership
@@ -112,7 +112,7 @@ export class PostBookmarksController {
 
     // Check if the bookmark belongs to the current user
     if (bookmark.accountId !== user.sub) {
-      throw new ForbiddenException("Cannot access other users' bookmarks");
+      throw new ForbiddenException('Không thể truy cập bài đăng đã lưu của người dùng khác');
     }
 
     return bookmark;
@@ -154,7 +154,7 @@ export class PostBookmarksController {
   })
   async remove(@CurrentUser() user: ReqUser, @Param('id', ParseIntPipe) id: number) {
     if (!user || !user.sub) {
-      throw new UnauthorizedException('User authentication failed');
+      throw new UnauthorizedException('Xác thực người dùng thất bại');
     }
 
     // Lấy bookmark để verify ownership
@@ -162,7 +162,7 @@ export class PostBookmarksController {
 
     // Double-check ownership (defense in depth)
     if (bookmark.accountId !== user.sub) {
-      throw new ForbiddenException("Cannot delete other users' bookmarks");
+      throw new ForbiddenException('Không thể xóa bài đăng đã lưu của người dùng khác');
     }
 
     // Chỉ xóa khi đã confirm ownership

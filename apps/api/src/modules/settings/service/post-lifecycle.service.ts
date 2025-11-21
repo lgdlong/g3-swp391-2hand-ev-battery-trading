@@ -29,7 +29,7 @@ export class PostLifecycleService {
   async findOne(id: number) {
     const lifecycle = await this.postLifecycleRepository.findOne({ where: { id } });
     if (!lifecycle) {
-      throw new NotFoundException(`Post lifecycle with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy vòng đời bài đăng với ID ${id}`);
     }
     return PostLifecycleMapper.toResponseDto(lifecycle);
   }
@@ -37,7 +37,7 @@ export class PostLifecycleService {
   async update(id: number, updatePostLifecycleDto: UpdatePostLifecycleDto) {
     const lifecycle = await this.postLifecycleRepository.findOne({ where: { id } });
     if (!lifecycle) {
-      throw new NotFoundException(`Post lifecycle with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy vòng đời bài đăng với ID ${id}`);
     }
 
     Object.assign(lifecycle, updatePostLifecycleDto);
@@ -48,7 +48,7 @@ export class PostLifecycleService {
   async remove(id: number) {
     const lifecycle = await this.postLifecycleRepository.findOne({ where: { id } });
     if (!lifecycle) {
-      throw new NotFoundException(`Post lifecycle with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy vòng đời bài đăng với ID ${id}`);
     }
 
     await this.postLifecycleRepository.remove(lifecycle);

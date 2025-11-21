@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/utils/error-handler';
 import {
   getAllFeeTiers,
   createFeeTier,
@@ -119,8 +120,7 @@ export default function AdminSettingsPage() {
       handleCloseDialog();
     } catch (err: unknown) {
       console.error('Error saving fee tier:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Không thể lưu phí đăng bài';
-      toast.error(errorMessage);
+      toast.error(getErrorMessage(err, 'Không thể lưu phí đăng bài'));
     } finally {
       setSubmitting(false);
     }
@@ -136,8 +136,7 @@ export default function AdminSettingsPage() {
       setDeletingTierId(null);
     } catch (err: unknown) {
       console.error('Error deleting fee tier:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Không thể xóa phí đăng bài';
-      toast.error(errorMessage);
+      toast.error(getErrorMessage(err, 'Không thể xóa phí đăng bài'));
     }
   };
 
@@ -170,9 +169,7 @@ export default function AdminSettingsPage() {
     <div className="space-y-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Cài Đặt Hệ Thống</h1>
-        <p className="text-gray-600 mt-2">
-          Quản lý phí đăng bài và vòng đời bài đăng
-        </p>
+        <p className="text-gray-600 mt-2">Quản lý phí đăng bài và vòng đời bài đăng</p>
       </div>
 
       {/* Tabs */}

@@ -34,7 +34,7 @@ export class CarCatalogService {
   async getModelsByBrand(brandId: number, query: ListQueryDto): Promise<LiteItem[]> {
     // Đảm bảo brand tồn tại (tuỳ bạn, có thể bỏ check này cho nhanh)
     const exists = await this.brandRepo.exists({ where: { id: brandId } });
-    if (!exists) throw new NotFoundException(`Brand ${brandId} not found`);
+    if (!exists) throw new NotFoundException(`Không tìm thấy thương hiệu ${brandId}`);
 
     const qb = this.modelRepo
       .createQueryBuilder('m')
@@ -68,10 +68,10 @@ export class CarCatalogService {
 
   async createModel(dto: CreateModelDto): Promise<LiteItem> {
     const brandId = dto.brandId;
-    if (!brandId) throw new BadRequestException('brandId is required');
+    if (!brandId) throw new BadRequestException('brandId là bắt buộc');
 
     const brand = await this.brandRepo.findOne({ where: { id: brandId } });
-    if (!brand) throw new NotFoundException(`Brand ${brandId} not found`);
+    if (!brand) throw new NotFoundException(`Không tìm thấy thương hiệu ${brandId}`);
 
     try {
       const model = this.modelRepo.create({
@@ -102,14 +102,14 @@ export class CarCatalogService {
   async deleteBrand(brandId: number): Promise<void> {
     const result = await this.brandRepo.delete(brandId);
     if (result.affected === 0) {
-      throw new NotFoundException(`Brand ${brandId} not found`);
+      throw new NotFoundException(`Không tìm thấy thương hiệu ${brandId}`);
     }
   }
 
   async deleteModel(modelId: number): Promise<void> {
     const result = await this.modelRepo.delete(modelId);
     if (result.affected === 0) {
-      throw new NotFoundException(`Model ${modelId} not found`);
+      throw new NotFoundException(`Không tìm thấy dòng xe ${modelId}`);
     }
   }
 }

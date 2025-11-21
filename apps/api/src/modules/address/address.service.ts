@@ -23,9 +23,9 @@ export class AddressService {
       if (response?.data) {
         return response.data;
       }
-      throw new Error('No data returned from address API');
+      throw new Error('Không nhận được dữ liệu từ API địa chỉ');
     } catch (error) {
-      throw new Error(`Failed to fetch address: ${(error as Error).message}`);
+      throw new Error(`Lấy địa chỉ thất bại: ${(error as Error).message}`);
     }
   }
 }

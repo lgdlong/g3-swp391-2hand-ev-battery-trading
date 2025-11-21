@@ -127,7 +127,7 @@ export class WalletsService {
       const amountToDeduct = parseFloat(amount);
 
       if (currentBalance < amountToDeduct) {
-        throw new Error('Insufficient balance');
+        throw new Error('Số dư không đủ');
       }
 
       // Get service type (auto-create if not exists)
@@ -229,7 +229,7 @@ export class WalletsService {
     });
 
     if (!transaction) {
-      throw new NotFoundException('Transaction not found');
+      throw new NotFoundException('Không tìm thấy giao dịch');
     }
 
     return WalletTransactionMapper.toResponseDto(transaction);
@@ -302,7 +302,7 @@ export class WalletsService {
     });
 
     if (!paymentOrder) {
-      throw new NotFoundException(`Payment order not found: ${paymentOrderId}`);
+      throw new NotFoundException(`Không tìm thấy đơn thanh toán: ${paymentOrderId}`);
     }
 
     if (paymentOrder.status !== PaymentStatus.COMPLETED) {
@@ -342,7 +342,7 @@ export class WalletsService {
       // Get wallet - throw error if not exists
       const wallet = await walletRepo.findOne({ where: { userId } });
       if (!wallet) {
-        throw new NotFoundException(`Wallet not found for user ${userId}`);
+        throw new NotFoundException(`Không tìm thấy ví cho người dùng ${userId}`);
       }
 
       // Check balance
@@ -350,7 +350,7 @@ export class WalletsService {
       const amountToDeduct = parseFloat(amount);
 
       if (currentBalance < amountToDeduct) {
-        throw new Error('Insufficient balance');
+        throw new Error('Số dư không đủ');
       }
 
       // Get service type for deduction (auto-create if not exists)
@@ -400,7 +400,7 @@ export class WalletsService {
 
     if (!transaction) {
       throw new NotFoundException(
-        `Transaction with orderCode ${orderCode} not found${userId ? ' or access denied' : ''}`,
+        `Không tìm thấy giao dịch với mã đơn hàng ${orderCode}${userId ? ' hoặc quyền truy cập bị từ chối' : ''}`,
       );
     }
 

@@ -5,6 +5,7 @@ import { X, Coins, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createTopupPayment } from '@/lib/api/walletApi';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/utils/error-handler';
 
 interface TopupModalProps {
   isOpen: boolean;
@@ -72,9 +73,9 @@ export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) 
       } else {
         toast.error('Không thể tạo link thanh toán');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Topup error:', error);
-      toast.error(error?.response?.data?.message || 'Có lỗi xảy ra khi nạp coin');
+      toast.error(getErrorMessage(error, 'Có lỗi xảy ra khi nạp coin'));
     } finally {
       setIsLoading(false);
     }
@@ -186,7 +187,7 @@ export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) 
             <span className="text-[#048C73] font-medium cursor-pointer hover:underline">
               Điều khoản sử dụng
             </span>{' '}
-            của
+            của chúng tôi
           </div>
         </div>
 

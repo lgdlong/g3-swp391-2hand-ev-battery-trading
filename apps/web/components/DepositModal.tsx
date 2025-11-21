@@ -8,6 +8,7 @@ import { getAllFeeTiers, FeeTier } from '@/lib/api/feeTiersApi';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { TopupModal } from '@/components/TopupModal';
+import { getErrorMessage } from '@/lib/utils/error-handler';
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -55,9 +56,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
         }
       } catch (error: unknown) {
         console.error('Error loading data:', error);
-        type ApiError = { response?: { data?: { message?: string } }; message?: string };
-        const err = error as ApiError;
-        toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi tải dữ liệu');
+        toast.error(getErrorMessage(error, 'Có lỗi xảy ra khi tải dữ liệu'));
         onClose();
       } finally {
         setIsLoadingData(false);
@@ -138,9 +137,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
       onClose();
     } catch (error: unknown) {
       console.error('Deduct error:', error);
-      type ApiError = { response?: { data?: { message?: string } }; message?: string };
-      const err = error as ApiError;
-      toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi thanh toán phí');
+      toast.error(getErrorMessage(error, 'Có lỗi xảy ra khi thanh toán phí'));
     } finally {
       setIsLoading(false);
     }

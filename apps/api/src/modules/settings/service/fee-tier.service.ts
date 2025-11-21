@@ -19,7 +19,7 @@ export class FeeTierService {
       createFeeTierDto.maxPrice !== undefined &&
       createFeeTierDto.minPrice > createFeeTierDto.maxPrice
     ) {
-      throw new BadRequestException('maxPrice must be greater than or equal to minPrice');
+      throw new BadRequestException('Giá tối đa phải lớn hơn hoặc bằng giá tối thiểu');
     }
     // Check for overlapping tiers
     await this.validateTierRange(createFeeTierDto.minPrice, createFeeTierDto.maxPrice ?? null);
@@ -43,7 +43,7 @@ export class FeeTierService {
   async findOne(id: number) {
     const feeTier = await this.feeTierRepository.findOne({ where: { id } });
     if (!feeTier) {
-      throw new NotFoundException(`Fee tier with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy mức phí với ID ${id}`);
     }
     return FeeTierMapper.toResponseDto(feeTier);
   }
@@ -51,7 +51,7 @@ export class FeeTierService {
   async update(id: number, updateFeeTierDto: UpdateFeeTierDto) {
     const feeTier = await this.feeTierRepository.findOne({ where: { id } });
     if (!feeTier) {
-      throw new NotFoundException(`Fee tier with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy mức phí với ID ${id}`);
     }
 
     // Check for overlapping tiers if range is being updated
@@ -69,7 +69,7 @@ export class FeeTierService {
   async remove(id: number) {
     const feeTier = await this.feeTierRepository.findOne({ where: { id } });
     if (!feeTier) {
-      throw new NotFoundException(`Fee tier with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy mức phí với ID ${id}`);
     }
 
     await this.feeTierRepository.remove(feeTier);
@@ -112,7 +112,7 @@ export class FeeTierService {
 
     const overlapping = await query.getOne();
     if (overlapping) {
-      throw new BadRequestException('Fee tier price range overlaps with existing tier');
+      throw new BadRequestException('Khoảng giá mức phí bị trùng lắp với mức phí hiện tại');
     }
   }
 }
