@@ -1,7 +1,13 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { StatsCards, DashboardCharts, RecentTables, FinancialStatsCards } from './_components';
+import {
+  StatsCards,
+  DashboardCharts,
+  RecentTables,
+  FinancialStatsCards,
+  MonthlyRevenueChart,
+} from './_components';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Database, Shield, AlertCircle } from 'lucide-react';
@@ -121,6 +127,9 @@ export default function AdminDashboard() {
           isLoading={timeSeriesLoading}
         />
       )}
+
+      {/* Monthly Revenue Chart */}
+      <MonthlyRevenueChart />
 
       {/* System Status Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
