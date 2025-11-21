@@ -69,7 +69,7 @@ export class ServiceTypesService {
   async findOne(id: number): Promise<ServiceType> {
     const serviceType = await this.serviceTypeRepo.findOne({ where: { id } });
     if (!serviceType) {
-      throw new NotFoundException(`Service type with ID ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy loại dịch vụ với ID ${id}`);
     }
     return serviceType;
   }
@@ -81,9 +81,7 @@ export class ServiceTypesService {
     });
 
     if (existingServiceType) {
-      throw new ConflictException(
-        `Service type with code '${createServiceTypeDto.code}' already exists`,
-      );
+      throw new ConflictException(`Loại dịch vụ với mã '${createServiceTypeDto.code}' đã tồn tại`);
     }
 
     const serviceType = this.serviceTypeRepo.create({
@@ -105,7 +103,7 @@ export class ServiceTypesService {
 
       if (existingServiceType) {
         throw new ConflictException(
-          `Service type with code '${updateServiceTypeDto.code}' already exists`,
+          `Loại dịch vụ với mã '${updateServiceTypeDto.code}' đã tồn tại`,
         );
       }
     }

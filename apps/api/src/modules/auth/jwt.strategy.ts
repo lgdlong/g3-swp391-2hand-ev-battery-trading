@@ -8,7 +8,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private readonly configService: ConfigService) {
     const jwtSecret = configService.get<string>('JWT_SECRET');
-    if (!jwtSecret) throw new Error('JWT_SECRET is not configured');
+    if (!jwtSecret) throw new Error('JWT_SECRET chưa được cấu hình');
 
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -40,7 +40,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const userId: number = payload.sub;
 
     if (isNaN(userId) || userId <= 0) {
-      throw new Error('Invalid user ID');
+      throw new Error('ID người dùng không hợp lệ');
     }
 
     // Return the JWT payload directly - it contains all we need for role checking

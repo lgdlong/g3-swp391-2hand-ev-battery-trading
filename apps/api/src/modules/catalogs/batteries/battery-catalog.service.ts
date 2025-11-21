@@ -50,7 +50,7 @@ export class BatteryCatalogService {
   async deleteBrand(id: number): Promise<void> {
     const result = await this.brandRepo.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Battery brand with id ${id} not found`);
+      throw new NotFoundException(`Không tìm thấy thương hiệu pin với ID ${id}`);
     }
   }
 

@@ -30,7 +30,7 @@ export class PostBookmarksService {
       });
 
       if (existing) {
-        throw new ConflictException('Post is already bookmarked by this user');
+        throw new ConflictException('Bài đăng đã được lưu bởi người dùng này');
       }
 
       const bookmark = this.bookmarkRepository.create({
@@ -49,16 +49,16 @@ export class PostBookmarksService {
         const dbError = error as any;
         if (dbError.code === '23505') {
           // Unique constraint violation
-          throw new ConflictException('Post is already bookmarked by this user');
+          throw new ConflictException('Bài đăng đã được lưu bởi người dùng này');
         }
         if (dbError.code === '23503') {
           // Foreign key constraint
-          throw new BadRequestException('Invalid post ID or account ID');
+          throw new BadRequestException('ID bài đăng hoặc ID tài khoản không hợp lệ');
         }
       }
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to create bookmark: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : 'Lỗi không xác định';
+      throw new Error(`Tạo lưu bài đăng thất bại: ${errorMessage}`);
     }
   }
 
@@ -73,7 +73,9 @@ export class PostBookmarksService {
     });
 
     if (!bookmark) {
-      throw new NotFoundException(`Bookmark with ID ${id} not found or access denied`);
+      throw new NotFoundException(
+        `Không tìm thấy bài đăng đã lưu với ID ${id} hoặc quyền truy cập bị từ chối`,
+      );
     }
 
     return bookmark;
@@ -82,7 +84,7 @@ export class PostBookmarksService {
   async remove(id: number, accountId: number) {
     //BẮT BUỘC phải có accountId để kiểm tra ownership
     if (!accountId) {
-      throw new BadRequestException('User authentication required');
+      throw new BadRequestException('Yêu cầu xác thực người dùng');
     }
 
     //Kiểm tra bookmark có thuộc về user này không

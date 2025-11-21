@@ -35,7 +35,7 @@ export class PayosService {
   private signcreate(createPayosDto: CreatePayosDto) {
     const str = `amount=${createPayosDto.amount}&cancelUrl=${createPayosDto.cancelUrl}&description=${createPayosDto.description}&orderCode=${createPayosDto.orderCode}&returnUrl=${createPayosDto.returnUrl}`;
     if (!this.payosChecksumKey) {
-      throw new Error('PAYOS_CHECKSUM_KEY is not configured');
+      throw new Error('PAYOS_CHECKSUM_KEY chưa được cấu hình');
     }
     return createHmac('sha256', this.payosChecksumKey).update(str).digest('hex');
   }

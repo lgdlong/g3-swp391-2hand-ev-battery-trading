@@ -179,7 +179,7 @@ export class PostsService {
       (dto instanceof CreateBikePostDto && dto.postType !== PostType.EV_BIKE) ||
       (dto instanceof CreateBatteryPostDto && dto.postType !== PostType.BATTERY)
     ) {
-      throw new Error('Invalid postType for this endpoint');
+      throw new Error('Loại bài đăng không hợp lệ cho endpoint này');
     }
 
     // Fetch address names if not provided
@@ -247,7 +247,7 @@ export class PostsService {
 
         default:
           // TypeScript exhaustiveness check - this should never be reached
-          throw new Error('Unsupported postType');
+          throw new Error('Loại bài đăng không được hỗ trợ');
       }
 
       // 3) Fetch created post with appropriate relations based on postType
@@ -380,7 +380,7 @@ export class PostsService {
 
     // đảm bảo post tồn tại (đơn giản, không transaction)
     const exists = await this.postsRepo.exists({ where: { id: postId } });
-    if (!exists) throw new NotFoundException('Post not found');
+    if (!exists) throw new NotFoundException('Không tìm thấy bài đăng');
 
     // lấy vị trí hiện tại để append (đơn giản)
     const last = await this.imagesRepo
@@ -408,7 +408,7 @@ export class PostsService {
       return await this.imagesRepo.save(entities);
     } catch (e: any) {
       if (e.code === '23505') {
-        throw new BadRequestException(`public_id is already exists`);
+        throw new BadRequestException('public_id đã tồn tại');
       }
       throw e;
     }
@@ -459,7 +459,7 @@ export class PostsService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException('Không tìm thấy bài đăng');
     }
 
     return PostMapper.toBasePostResponseDto(post);
@@ -488,7 +488,7 @@ export class PostsService {
       if (allowedAdminStatuses.includes(query.status)) {
         where.status = query.status;
       } else {
-        throw new BadRequestException(`Invalid status value: ${query.status}`);
+        throw new BadRequestException(`Giá trị trạng thái không hợp lệ: ${query.status}`);
       }
     }
 
@@ -583,7 +583,7 @@ export class PostsService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found or you do not have permission to delete it');
+      throw new NotFoundException('Không tìm thấy bài đăng hoặc bạn không có quyền xóa');
     }
 
     const deletedAt = new Date();
@@ -607,7 +607,7 @@ export class PostsService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found or you do not have permission to update it');
+      throw new NotFoundException('Không tìm thấy bài đăng hoặc bạn không có quyền cập nhật');
     }
 
     // Only allow updates for DRAFT/REJECTED posts, or marking PUBLISHED as SOLD
@@ -730,7 +730,7 @@ export class PostsService {
 
       // 2. Validation
       if (!post) {
-        throw new NotFoundException('Post not found or you do not have permission to recall it');
+        throw new NotFoundException('Không tìm thấy bài đăng hoặc bạn không có quyền thu hồi');
       }
 
       if (post.status !== PostStatus.PUBLISHED) {

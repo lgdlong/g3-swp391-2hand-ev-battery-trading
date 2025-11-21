@@ -92,7 +92,7 @@ export class AccountsController {
     @CurrentUser() user: ReqUser,
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<SafeAccountDto> {
-    if (!file) throw new BadRequestException('Missing avatar file');
+    if (!file) throw new BadRequestException('Thiếu file ảnh đại diện');
     return this.accountsService.updateAvatar(user.sub, file);
   }
 
