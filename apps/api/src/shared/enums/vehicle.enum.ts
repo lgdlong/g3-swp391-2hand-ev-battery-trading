@@ -35,4 +35,5 @@ export enum VehicleColor {
   BEIGE = 'BEIGE',
   PURPLE = 'PURPLE',
   PINK = 'PINK',
+  OTHER = 'OTHER',
 }
