@@ -315,7 +315,7 @@ export default function PostListItem({
             )}
 
             {/* Delete button - visible for ARCHIVED */}
-            {post.status === 'ARCHIVED' && (
+            {(post.status === 'DRAFT' || post.status === 'ARCHIVED') && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="destructive" size="sm" onClick={() => onDelete?.(post.id)}>
