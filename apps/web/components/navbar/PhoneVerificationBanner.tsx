@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
 import { X, AlertCircle, Phone } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 
