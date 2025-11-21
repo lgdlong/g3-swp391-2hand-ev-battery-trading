@@ -27,6 +27,7 @@ import { getAccounts, toggleBan, demoteAccount, promoteAccount } from '@/lib/api
 import { toast } from 'sonner';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { AccountDetailsDialog } from './_components/AccountDetailsDialog';
+import { getErrorMessage } from '@/lib/utils/error-handler';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -127,7 +128,7 @@ export default function AdminDashboard() {
       setPendingPromoteId(null);
     } catch (e) {
       console.error('Promote failed:', e);
-      toast.error((e as Error).message || 'Không thể thăng cấp');
+      toast.error(getErrorMessage(e, 'Không thể thăng cấp'));
       setPendingPromoteId(null);
     }
   };
@@ -141,7 +142,7 @@ export default function AdminDashboard() {
       setPendingDemoteId(null);
     } catch (e) {
       console.error('Demote failed:', e);
-      toast.error((e as Error).message || 'Không thể hạ quyền');
+      toast.error(getErrorMessage(e, 'Không thể hạ quyền'));
       setPendingDemoteId(null);
     }
   };
@@ -155,7 +156,7 @@ export default function AdminDashboard() {
       setAccounts((prev) => prev.map((a) => (a.id === accountId ? updated : a)));
     } catch (e) {
       console.error('Toggle ban failed:', e);
-      toast.error((e as Error).message || 'Không thể cập nhật trạng thái');
+      toast.error(getErrorMessage(e, 'Không thể cập nhật trạng thái'));
     }
   };
 
