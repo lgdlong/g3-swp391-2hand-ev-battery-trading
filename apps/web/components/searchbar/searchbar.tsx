@@ -8,6 +8,7 @@ import { LocationSelector } from './LocationSelector';
 import { searchPosts } from '@/lib/api/postApi';
 import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
+import { PostType } from '@/types/enums';
 
 export function SearchBar() {
   const router = useRouter();
@@ -36,22 +37,48 @@ export function SearchBar() {
 
     setIsSearching(true);
     try {
-      const results = await searchPosts(searchQuery, {
-        provinceNameCached: selectedLocation || undefined,
-        limit: 20,
-        order: 'DESC',
-      });
+      let results: unknown[] = [];
 
-      // Store search results and navigate to results page
-      // You can either:
-      // 1. Navigate to a dedicated search results page with query params
+      if (currentRoute === '/posts/batteries') {
+        // Search only BATTERY
+        results = await searchPosts(searchQuery, {
+          provinceNameCached: selectedLocation || undefined,
+          postType: PostType.BATTERY,
+          limit: 20,
+          order: 'DESC',
+        });
+      } else if (currentRoute === '/posts/ev') {
+        // Search both EV_CAR and EV_BIKE - make 2 API calls
+        const [carResults, bikeResults] = await Promise.all([
+          searchPosts(searchQuery, {
+            provinceNameCached: selectedLocation || undefined,
+            postType: PostType.EV_CAR,
+            limit: 20,
+            order: 'DESC',
+          }),
+          searchPosts(searchQuery, {
+            provinceNameCached: selectedLocation || undefined,
+            postType: PostType.EV_BIKE,
+            limit: 20,
+            order: 'DESC',
+          }),
+        ]);
+        results = [...carResults, ...bikeResults];
+      }
+
+      // Build query params for URL
       const params = new URLSearchParams();
       params.append('q', searchQuery);
       if (selectedLocation) params.append('location', selectedLocation);
 
-      router.push(`${currentRoute}?${params.toString()}`);
+      // Pass postType info based on current route
+      if (currentRoute === '/posts/batteries') {
+        params.append('postType', 'BATTERY');
+      } else if (currentRoute === '/posts/ev') {
+        params.append('postType', 'EV');
+      }
 
-      // 2. Or show results in a modal/dropdown (implement later)
+      router.push(`${currentRoute}?${params.toString()}`);
       toast.success(`Tìm thấy ${results.length} kết quả`);
     } catch (error) {
       console.error('Search error:', error);

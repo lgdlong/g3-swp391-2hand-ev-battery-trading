@@ -53,6 +53,7 @@ function EvPostsContent() {
   const [min, setMin] = useState<number | null>(null);
   const [max, setMax] = useState<number | null>(null);
   const [appliedFilters, setAppliedFilters] = useState<EVAppliedFilters>({});
+  const [searchPostType, setSearchPostType] = useState<string | null>(null);
 
   // Breadcrumb function reference
   const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
@@ -67,6 +68,10 @@ function EvPostsContent() {
     const maxParam = searchParams.get('max');
     setMin(minParam ? Number(minParam) : null);
     setMax(maxParam ? Number(maxParam) : null);
+
+    // Read postType from URL to know which types to search
+    const postTypeParam = searchParams.get('postType');
+    setSearchPostType(postTypeParam);
   }, [searchParams]);
 
   // Use search API when query exists, otherwise fetch regular posts
@@ -78,9 +83,30 @@ function EvPostsContent() {
     isLoading: isLoadingSearch,
     error: searchError,
   } = useQuery({
-    queryKey: [QUERY_KEYS.SEARCH_POSTS, query, location, sort],
+    queryKey: [QUERY_KEYS.SEARCH_POSTS, query, location, sort, searchPostType],
     queryFn: async () => {
       if (!query) return [];
+
+      // When searching from EV page (postType='EV'), search both CAR and BIKE
+      if (searchPostType === 'EV') {
+        const [carResults, bikeResults] = await Promise.all([
+          searchPosts(query, {
+            provinceNameCached: location || undefined,
+            postType: 'EV_CAR',
+            limit: PAGINATION.SEARCH_LIMIT,
+            order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+          }),
+          searchPosts(query, {
+            provinceNameCached: location || undefined,
+            postType: 'EV_BIKE',
+            limit: PAGINATION.SEARCH_LIMIT,
+            order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+          }),
+        ]);
+        return [...carResults, ...bikeResults];
+      }
+
+      // For other pages or no specific postType, search all
       return await searchPosts(query, {
         provinceNameCached: location || undefined,
         limit: PAGINATION.SEARCH_LIMIT,
