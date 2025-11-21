@@ -1,11 +1,12 @@
-import { Controller, Get, HttpStatus, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, HttpStatus, UseGuards, Query, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AdminStatisticsService } from './admin-statistics.service';
 import {
   FinancialOverviewDto,
   FraudOverviewDto,
   TransactionStatsDto,
   AdminDashboardStatsDto,
+  MonthlyDailyRevenueDto,
 } from './dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
@@ -248,5 +249,59 @@ export class AdminStatisticsController {
   async getTotalRevenue(): Promise<{ totalRevenue: string }> {
     const totalRevenue = await this.adminStatsService.getTotalRevenue();
     return { totalRevenue };
+  }
+
+  /**
+   * Get daily revenue breakdown for a specific month
+   */
+  @Get('daily-revenue')
+  @ApiOperation({
+    summary: 'Get daily fees collected for a specific month',
+    description: `Get daily fees breakdown for a specific month.
+    Fees are calculated from WalletTransaction (POST_PAYMENT + POST_VERIFICATION service types).
+    These represent platform fees deducted from user wallets (negative amounts).
+    Note: This is NOT actual revenue - real revenue comes from WALLET_TOPUP (money entering the system).
+    Returns fees grouped by day within the specified month.`,
+  })
+  @ApiQuery({
+    name: 'year',
+    required: true,
+    type: Number,
+    description: 'Year (YYYY format)',
+    example: 2024,
+  })
+  @ApiQuery({
+    name: 'month',
+    required: true,
+    type: Number,
+    description: 'Month (1-12)',
+    example: 11,
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Daily revenue retrieved successfully',
+    type: MonthlyDailyRevenueDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Invalid year or month parameter',
+  })
+  async getDailyRevenue(
+    @Query('year') yearStr: string,
+    @Query('month') monthStr: string,
+  ): Promise<MonthlyDailyRevenueDto> {
+    const year = Number.parseInt(yearStr, 10);
+    const month = Number.parseInt(monthStr, 10);
+
+    // Validate year and month
+    if (Number.isNaN(year) || year < 2000 || year > 2100) {
+      throw new BadRequestException('Năm không hợp lệ. Vui lòng nhập năm từ 2000 đến 2100.');
+    }
+
+    if (Number.isNaN(month) || month < 1 || month > 12) {
+      throw new BadRequestException('Tháng không hợp lệ. Vui lòng nhập tháng từ 1 đến 12.');
+    }
+
+    return this.adminStatsService.getDailyRevenueForMonth(year, month);
   }
 }

@@ -6,6 +6,27 @@ import type { Post } from '@/types/api/post';
 import type { PostPayment, PostPaymentListResponse } from '@/types/post-payment';
 
 /**
+ * Daily Revenue Item
+ */
+export interface DailyRevenueItem {
+  day: number;
+  date: string;
+  revenue: string;
+  transactionCount: number;
+}
+
+/**
+ * Monthly Daily Revenue Response
+ */
+export interface MonthlyDailyRevenue {
+  year: number;
+  month: number;
+  totalMonthRevenue: string;
+  totalTransactions: number;
+  dailyRevenue: DailyRevenueItem[];
+}
+
+/**
  * Paginated response from backend
  */
 export interface PaginatedPostsResponse {
@@ -378,4 +399,22 @@ export async function getAllPostPayments(): Promise<PostPayment[]> {
   }
 
   return allPayments;
+}
+
+/**
+ * Get daily revenue breakdown for a specific month
+ * @param year Year (YYYY format)
+ * @param month Month (1-12)
+ * @returns Daily revenue data for the specified month
+ */
+export async function getDailyRevenueForMonth(
+  year: number,
+  month: number,
+): Promise<MonthlyDailyRevenue> {
+  const response = await api.get<MonthlyDailyRevenue>('/admin/statistics/daily-revenue', {
+    params: { year, month },
+    headers: getAuthHeaders(),
+  });
+
+  return response.data;
 }

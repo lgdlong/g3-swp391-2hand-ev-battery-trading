@@ -13,8 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { PostPayment } from '@/types/post-payment';
-import { getAllPostPayments } from '@/lib/api/adminDashboardApi';
+import { getDailyRevenueForMonth } from '@/lib/api/adminDashboardApi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, Calendar } from 'lucide-react';
 import {
@@ -25,152 +24,91 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface DailyRevenueData {
-  day: string;
-  date: string;
-  revenue: number;
-  dayNumber: number;
-}
+const monthNames = [
+  'Tháng 1',
+  'Tháng 2',
+  'Tháng 3',
+  'Tháng 4',
+  'Tháng 5',
+  'Tháng 6',
+  'Tháng 7',
+  'Tháng 8',
+  'Tháng 9',
+  'Tháng 10',
+  'Tháng 11',
+  'Tháng 12',
+];
 
 /**
- * Get available months from payments data
+ * Generate last 12 months options for dropdown
  */
-function getAvailableMonths(payments: PostPayment[]): Array<{ value: string; label: string }> {
-  const monthSet = new Set<string>();
+function getAvailableMonths(): Array<{
+  value: string;
+  label: string;
+  year: number;
+  month: number;
+}> {
+  const months = [];
+  const now = new Date();
 
-  payments.forEach((payment) => {
-    const date = new Date(payment.createdAt);
-    const month = date.getMonth() + 1;
+  for (let i = 0; i < 12; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const year = date.getFullYear();
-    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
-    monthSet.add(monthKey);
-  });
+    const month = date.getMonth() + 1;
 
-  const monthNames = [
-    'Tháng 1',
-    'Tháng 2',
-    'Tháng 3',
-    'Tháng 4',
-    'Tháng 5',
-    'Tháng 6',
-    'Tháng 7',
-    'Tháng 8',
-    'Tháng 9',
-    'Tháng 10',
-    'Tháng 11',
-    'Tháng 12',
-  ];
-
-  return Array.from(monthSet)
-    .map((monthKey) => {
-      const parts = monthKey.split('-');
-      const year = parts[0] || '';
-      const month = parts[1] || '1';
-      const monthNum = parseInt(month, 10) || 1;
-      return {
-        value: monthKey,
-        label: `${monthNames[monthNum - 1]}/${year}`,
-      };
-    })
-    .sort((a, b) => {
-      // Sort descending (newest first)
-      return b.value.localeCompare(a.value);
+    months.push({
+      value: `${year}-${String(month).padStart(2, '0')}`,
+      label: `${monthNames[month - 1]}/${year}`,
+      year,
+      month,
     });
-}
-
-/**
- * Group post payments by day in selected month and calculate revenue
- */
-function calculateDailyRevenue(payments: PostPayment[], selectedMonth: string): DailyRevenueData[] {
-  const parts = selectedMonth.split('-');
-  const year = parseInt(parts[0] || '0', 10) || new Date().getFullYear();
-  const month = parseInt(parts[1] || '1', 10) || 1;
-  const daysInMonth = new Date(year, month, 0).getDate();
-
-  // Initialize all days in month with 0 revenue
-  const dailyMap = new Map<number, number>();
-  for (let day = 1; day <= daysInMonth; day++) {
-    dailyMap.set(day, 0);
   }
 
-  // Filter payments for selected month and group by day
-  payments.forEach((payment) => {
-    // Parse date - use local time to match user's timezone
-    const paymentDate = new Date(payment.createdAt);
-    const paymentYear = paymentDate.getFullYear();
-    const paymentMonth = paymentDate.getMonth() + 1;
-    const paymentDay = paymentDate.getDate();
-
-    // Check if payment is in selected month
-    if (paymentYear === year && paymentMonth === month) {
-      const amount = parseFloat(payment.amountPaid || '0') || 0;
-      const currentRevenue = dailyMap.get(paymentDay) || 0;
-      dailyMap.set(paymentDay, currentRevenue + amount);
-    }
-  });
-
-  // Convert to array and sort by day
-  const dailyData: DailyRevenueData[] = Array.from(dailyMap.entries())
-    .map(([day, revenue]) => {
-      return {
-        day: `Ngày ${day}`,
-        date: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`,
-        revenue: Math.round(revenue),
-        dayNumber: day,
-      };
-    })
-    .sort((a, b) => a.dayNumber - b.dayNumber);
-
-  return dailyData;
+  return months;
 }
 
 export function MonthlyRevenueChart() {
-  const {
-    data: payments,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['admin-monthly-revenue'],
-    queryFn: getAllPostPayments,
-    refetchInterval: 300000, // Refetch every 5 minutes
-    staleTime: 60000, // Consider data stale after 1 minute
-  });
+  // Get available months (last 12 months)
+  const availableMonths = useMemo(() => getAvailableMonths(), []);
 
-  // Get available months from payments
-  const availableMonths = useMemo(() => {
-    if (!payments || payments.length === 0) return [];
-    return getAvailableMonths(payments);
-  }, [payments]);
-
-  // Set default selected month to current month or latest available month
+  // Set default selected month to current month
   const getDefaultMonth = (): string => {
-    if (availableMonths.length > 0 && availableMonths[0]) {
-      return availableMonths[0].value; // Latest month (first in sorted descending list)
-    }
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   };
 
   const [selectedMonth, setSelectedMonth] = useState<string>(getDefaultMonth);
 
-  // Update selected month when available months change
-  useMemo(() => {
-    if (
-      availableMonths.length > 0 &&
-      !availableMonths.find((m) => m && m.value === selectedMonth)
-    ) {
-      const firstMonth = availableMonths[0];
-      if (firstMonth) {
-        setSelectedMonth(firstMonth.value);
-      }
-    }
-  }, [availableMonths, selectedMonth]);
+  // Parse selected month to year and month
+  const { year, month } = useMemo(() => {
+    const parts = selectedMonth.split('-');
+    return {
+      year: parseInt(parts[0] || '0', 10) || new Date().getFullYear(),
+      month: parseInt(parts[1] || '1', 10) || 1,
+    };
+  }, [selectedMonth]);
 
-  // Calculate daily revenue for selected month
+  // Fetch daily revenue for selected month
+  const {
+    data: revenueData,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['admin-daily-revenue', year, month],
+    queryFn: () => getDailyRevenueForMonth(year, month),
+    refetchInterval: 300000, // Refetch every 5 minutes
+    staleTime: 60000, // Consider data stale after 1 minute
+  });
+
+  // Transform backend data for chart
   const dailyData = useMemo(() => {
-    if (!payments || payments.length === 0) return [];
-    return calculateDailyRevenue(payments, selectedMonth);
-  }, [payments, selectedMonth]);
+    if (!revenueData?.dailyRevenue) return [];
+
+    return revenueData.dailyRevenue.map((item) => ({
+      ...item,
+      revenueNum: Number.parseFloat(item.revenue || '0'),
+    }));
+  }, [revenueData]);
 
   // Format revenue for display
   const formatRevenue = (value: number) => {
@@ -181,7 +119,7 @@ export function MonthlyRevenueChart() {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
-          <Skeleton className="h-6 w-48" />
+          <CardTitle className="text-foreground">Phí Thu Được Theo Ngày</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[300px] w-full" />
@@ -194,26 +132,26 @@ export function MonthlyRevenueChart() {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Doanh Thu Theo Ngày</CardTitle>
+          <CardTitle className="text-foreground">Phí Thu Được Theo Ngày</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            Không thể tải dữ liệu doanh thu
+            Không thể tải dữ liệu phí
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  if (!payments || payments.length === 0) {
+  if (!revenueData) {
     return (
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Doanh Thu Theo Ngày</CardTitle>
+          <CardTitle className="text-foreground">Phí Thu Được Theo Ngày</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            Chưa có dữ liệu doanh thu
+            Chưa có dữ liệu phí
           </div>
         </CardContent>
       </Card>
@@ -229,7 +167,7 @@ export function MonthlyRevenueChart() {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-foreground">
             <TrendingUp className="h-5 w-5 text-primary" />
-            Doanh Thu Theo Ngày
+            Phí Thu Được Theo Ngày
           </CardTitle>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -251,7 +189,7 @@ export function MonthlyRevenueChart() {
       <CardContent>
         {dailyData.length === 0 ? (
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            Không có dữ liệu doanh thu cho {selectedMonthLabel}
+            Không có dữ liệu phí cho {selectedMonthLabel}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
@@ -269,7 +207,7 @@ export function MonthlyRevenueChart() {
                 tickFormatter={(value, index) => {
                   const dayData = dailyData[index];
                   // Show label if has revenue or every 3rd day
-                  if ((dayData && dayData.revenue > 0) || index % 3 === 0) {
+                  if ((dayData && dayData.revenueNum > 0) || index % 3 === 0) {
                     return value;
                   }
                   return '';
@@ -300,8 +238,8 @@ export function MonthlyRevenueChart() {
               <Legend />
               <Line
                 type="monotone"
-                dataKey="revenue"
-                name="Doanh Thu (₫)"
+                dataKey="revenueNum"
+                name="Phí Thu Được (₫)"
                 stroke="#3b82f6"
                 strokeWidth={2}
                 dot={{ r: 4, fill: '#3b82f6' }}

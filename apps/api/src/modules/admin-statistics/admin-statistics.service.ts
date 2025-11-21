@@ -254,4 +254,105 @@ export class AdminStatisticsService {
 
     return result?.total || '0';
   }
+
+  /**
+   * Get daily fees collected for a specific month
+   * Fees are calculated from WalletTransaction (POST_PAYMENT + POST_VERIFICATION service types)
+   * These are platform fees deducted from user wallets, NOT actual revenue
+   * Actual revenue comes from WALLET_TOPUP (money coming into the system)
+   * Groups transactions by day within the specified month
+   */
+  async getDailyRevenueForMonth(
+    year: number,
+    month: number,
+  ): Promise<{
+    year: number;
+    month: number;
+    totalMonthRevenue: string;
+    totalTransactions: number;
+    dailyRevenue: Array<{
+      day: number;
+      date: string;
+      revenue: string;
+      transactionCount: number;
+    }>;
+  }> {
+    // Get POST_PAYMENT and POST_VERIFICATION service types
+    const [postPaymentService, postVerificationService] = await Promise.all([
+      this.serviceTypeRepo.findOne({ where: { code: 'POST_PAYMENT' } }),
+      this.serviceTypeRepo.findOne({ where: { code: 'POST_VERIFICATION' } }),
+    ]);
+
+    if (!postPaymentService || !postVerificationService) {
+      throw new Error('Required service types not found');
+    }
+
+    // Calculate start and end dates for the month
+    const startDate = new Date(year, month - 1, 1); // month is 0-indexed in Date
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999); // Last day of month
+
+    // Get all transactions for this month with POST_PAYMENT and POST_VERIFICATION service types
+    const transactions = await this.walletTransactionRepo
+      .createQueryBuilder('wt')
+      .select([
+        'DATE(wt.created_at) as date',
+        'SUM(ABS(CAST(wt.amount AS DECIMAL))) as revenue',
+        'COUNT(*) as count',
+      ])
+      .where('wt.service_type_id IN (:...serviceTypeIds)', {
+        serviceTypeIds: [postPaymentService.id, postVerificationService.id],
+      })
+      .andWhere('wt.created_at >= :startDate', { startDate })
+      .andWhere('wt.created_at <= :endDate', { endDate })
+      .andWhere('CAST(wt.amount AS DECIMAL) < 0') // Negative amounts are deductions (fees collected)
+      .groupBy('DATE(wt.created_at)')
+      .orderBy('DATE(wt.created_at)', 'ASC')
+      .getRawMany();
+
+    // Get total days in month
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // Create a map of day -> fees
+    const feesMap = new Map<number, { revenue: string; count: number }>();
+
+    // Initialize all days with 0 fees
+    for (let day = 1; day <= daysInMonth; day++) {
+      feesMap.set(day, { revenue: '0', count: 0 });
+    }
+
+    // Populate map with actual transaction data
+    let totalMonthFees = 0;
+    let totalTransactions = 0;
+
+    transactions.forEach((transaction) => {
+      const transactionDate = new Date(transaction.date as string);
+      const day = transactionDate.getDate();
+      const fees = Number.parseFloat((transaction.revenue as string) || '0');
+      const count = Number.parseInt((transaction.count as string) || '0', 10);
+
+      feesMap.set(day, {
+        revenue: Math.round(fees).toString(),
+        count,
+      });
+
+      totalMonthFees += fees;
+      totalTransactions += count;
+    });
+
+    // Convert map to array
+    const dailyRevenue = Array.from(feesMap.entries()).map(([day, data]) => ({
+      day,
+      date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      revenue: data.revenue,
+      transactionCount: data.count,
+    }));
+
+    return {
+      year,
+      month,
+      totalMonthRevenue: Math.round(totalMonthFees).toString(),
+      totalTransactions,
+      dailyRevenue,
+    };
+  }
 }
