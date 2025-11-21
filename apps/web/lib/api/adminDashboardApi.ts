@@ -3,6 +3,7 @@ import { api } from '@/lib/axios';
 import { getAuthHeaders } from '@/lib/auth';
 import type { Account } from '@/types/account';
 import type { Post } from '@/types/api/post';
+import type { PostPayment, PostPaymentListResponse } from '@/types/post-payment';
 
 /**
  * Paginated response from backend
@@ -316,4 +317,65 @@ export async function getPostCount(
     console.error('Error fetching post count:', error);
     throw error;
   }
+}
+
+/**
+ * Fetch all post payments by paginating through all pages
+ * Requires admin authentication
+ * @returns Array of all post payments
+ */
+export async function getAllPostPayments(): Promise<PostPayment[]> {
+  const allPayments: PostPayment[] = [];
+  let page = 1;
+  const limit = 1000; // Fetch 1000 at a time
+  let total = 0;
+
+  while (true) {
+    try {
+      const response = await api.get<PostPaymentListResponse>('/transactions/post-payments', {
+        params: { page, limit },
+        headers: getAuthHeaders(),
+      });
+
+      // Extract data from response
+      // Response structure: { data: PostPayment[], total: number, page: number, limit: number }
+      const responseData = response.data;
+      const data = responseData?.data || [];
+      const responseTotal = responseData?.total || 0;
+
+      // Set total from first response
+      if (total === 0 && responseTotal > 0) {
+        total = responseTotal;
+      }
+
+      // Add all data from this page
+      if (Array.isArray(data) && data.length > 0) {
+        allPayments.push(...data);
+      }
+
+      // Check if we've fetched all payments
+      // Stop conditions:
+      // 1. No data returned
+      // 2. We've collected all items based on total count
+      // 3. We got less data than limit (means we're at the last page)
+      if (data.length === 0) {
+        break;
+      }
+
+      if (total > 0 && allPayments.length >= total) {
+        break;
+      }
+
+      if (data.length < limit) {
+        break;
+      }
+
+      // Move to next page
+      page++;
+    } catch {
+      break;
+    }
+  }
+
+  return allPayments;
 }

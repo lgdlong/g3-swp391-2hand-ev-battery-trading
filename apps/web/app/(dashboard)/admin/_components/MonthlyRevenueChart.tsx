@@ -13,9 +13,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { getAuthHeaders } from '@/lib/auth';
-import { api } from '@/lib/axios';
-import type { PostPayment, PostPaymentListResponse } from '@/types/post-payment';
+import type { PostPayment } from '@/types/post-payment';
+import { getAllPostPayments } from '@/lib/api/adminDashboardApi';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, Calendar } from 'lucide-react';
 import {
@@ -31,65 +30,6 @@ interface DailyRevenueData {
   date: string;
   revenue: number;
   dayNumber: number;
-}
-
-/**
- * Fetch all post payments by paginating through all pages
- */
-async function fetchAllPostPayments(): Promise<PostPayment[]> {
-  const allPayments: PostPayment[] = [];
-  let page = 1;
-  const limit = 1000; // Fetch 1000 at a time
-  let total = 0;
-
-  while (true) {
-    try {
-      const response = await api.get<PostPaymentListResponse>('/transactions/post-payments', {
-        params: { page, limit },
-        headers: getAuthHeaders(),
-      });
-
-      // Extract data from response
-      // Response structure: { data: PostPayment[], total: number, page: number, limit: number }
-      const responseData = response.data;
-      const data = responseData?.data || [];
-      const responseTotal = responseData?.total || 0;
-
-      // Set total from first response
-      if (total === 0 && responseTotal > 0) {
-        total = responseTotal;
-      }
-
-      // Add all data from this page
-      if (Array.isArray(data) && data.length > 0) {
-        allPayments.push(...data);
-      }
-
-      // Check if we've fetched all payments
-      // Stop conditions:
-      // 1. No data returned
-      // 2. We've collected all items based on total count
-      // 3. We got less data than limit (means we're at the last page)
-      if (data.length === 0) {
-        break;
-      }
-
-      if (total > 0 && allPayments.length >= total) {
-        break;
-      }
-
-      if (data.length < limit) {
-        break;
-      }
-
-      // Move to next page
-      page++;
-    } catch {
-      break;
-    }
-  }
-
-  return allPayments;
 }
 
 /**
@@ -191,7 +131,7 @@ export function MonthlyRevenueChart() {
     error,
   } = useQuery({
     queryKey: ['admin-monthly-revenue'],
-    queryFn: fetchAllPostPayments,
+    queryFn: getAllPostPayments,
     refetchInterval: 300000, // Refetch every 5 minutes
     staleTime: 60000, // Consider data stale after 1 minute
   });
