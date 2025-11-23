@@ -2,24 +2,35 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Scale } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { useComparison } from '@/hooks/useComparison';
 
 export function CompareButton() {
   const { count } = useComparison();
+  const pathname = usePathname();
+  const isActive = pathname === '/compare';
 
   return (
     <Link
       href="/compare"
-      className="relative flex items-center gap-2 px-4 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 group"
+      className={cn(
+        'relative text-sm font-semibold transition-all duration-300 group px-4 py-3 rounded-xl',
+        isActive
+          ? 'text-[#048C73]'
+          : 'text-gray-600 hover:text-gray-900'
+      )}
       title="So sánh sản phẩm"
     >
-      <Scale className="h-5 w-5" />
-      {count > 0 && (
-        <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
-          {count}
-        </span>
-      )}
+      <span className="relative z-10">So sánh</span>
+      <div
+        className={cn(
+          'absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-[#048C73] rounded-full transition-all duration-400',
+          isActive
+            ? 'w-3/4'
+            : 'w-0 group-hover:w-3/4'
+        )}
+      />
     </Link>
   );
 }
