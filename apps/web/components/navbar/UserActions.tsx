@@ -18,6 +18,7 @@ import { isValidAvatarUrl } from '@/lib/validation/file-validation';
 import { useQuery } from '@tanstack/react-query';
 import { chatApi } from '@/lib/api/chatApi';
 import { useRouter } from 'next/navigation';
+import { CompareButton } from './CompareButton';
 
 interface UserActionsProps {
   className?: string;
@@ -59,6 +60,9 @@ export function UserActions({
                 <Bookmark className="h-5 w-5" />
               </Link>
             </Button>
+
+            {/* Compare Button */}
+            <CompareButton />
 
             {/* Notifications Button - Dropdown with message notification */}
             <DropdownMenu>
