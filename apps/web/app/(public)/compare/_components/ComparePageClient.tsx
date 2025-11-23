@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { X, ArrowLeft, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useComparison } from '@/hooks/useComparison';
 import { getPostById } from '@/lib/api/postApi';
+import { Breadcrumb } from '@/components/Breadcrumb';
 import Image from 'next/image';
 import { CarModal } from './CarModal';
 import { BikeModal } from './BikeModal';
@@ -71,14 +72,13 @@ export function ComparePageClient() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/')}
-            className="mb-8 text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Quay lại
-          </Button>
+          {/* Breadcrumb */}
+          <Breadcrumb
+            items={[
+              { label: 'Trang chủ', href: '/' },
+              { label: 'So sánh sản phẩm' },
+            ]}
+          />
 
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="mb-6">
@@ -154,6 +154,14 @@ export function ComparePageClient() {
   return (
     <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: 'Trang chủ', href: '/' },
+            { label: 'So sánh sản phẩm' },
+          ]}
+        />
+
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>

@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { Post } from '@/types/post';
 import type { ComparisonItem } from '@/types/comparison';
 
+const MAX_COMPARISON_ITEMS = 8;
+
 export function useComparison() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,6 +26,13 @@ export function useComparison() {
       if (prev.some((item) => item.id === post.id)) {
         return prev;
       }
+      
+      // Check if reached max limit
+      const currentCount = prev.length || selectedIdsFromUrl.size;
+      if (currentCount >= MAX_COMPARISON_ITEMS) {
+        return prev;
+      }
+      
       return [
         ...prev,
         {
@@ -34,10 +43,13 @@ export function useComparison() {
       ];
     });
 
-    // Update URL
-    const newIds = [...selectedIdsFromUrl, post.id];
-    router.push(`/compare?ids=${newIds.join(',')}`);
-  }, [selectedIdsFromUrl, router]);
+    // Update URL only if not at max
+    const currentCount = items.length || selectedIdsFromUrl.size;
+    if (currentCount < MAX_COMPARISON_ITEMS) {
+      const newIds = [...selectedIdsFromUrl, post.id];
+      router.push(`/compare?ids=${newIds.join(',')}`);
+    }
+  }, [selectedIdsFromUrl, router, items.length]);
 
   // Remove item from comparison
   const removeItem = useCallback((postId: string) => {
@@ -66,6 +78,9 @@ export function useComparison() {
   // Get count
   const count = useMemo(() => items.length || selectedIdsFromUrl.size, [items, selectedIdsFromUrl]);
 
+  // Check if at max limit
+  const isAtMaxLimit = useMemo(() => count >= MAX_COMPARISON_ITEMS, [count]);
+
   return {
     items,
     selectedIds: selectedIdsFromUrl,
@@ -74,5 +89,7 @@ export function useComparison() {
     clearAll,
     isSelected,
     count,
+    isAtMaxLimit,
+    maxItems: MAX_COMPARISON_ITEMS,
   };
 }

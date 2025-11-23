@@ -18,7 +18,7 @@ interface BatteryModalProps {
 
 export function BatteryModal({ open, onOpenChange }: BatteryModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const { addItem, isSelected } = useComparison();
+  const { addItem, isSelected, isAtMaxLimit } = useComparison();
 
   const { data: batteries = [] } = useQuery({
     queryKey: ['batteryPosts'],
@@ -35,6 +35,12 @@ export function BatteryModal({ open, onOpenChange }: BatteryModalProps) {
   );
 
   const handleAddProduct = (product: Post) => {
+    if (isAtMaxLimit) {
+      toast.error('Giới hạn so sánh', {
+        description: 'Bạn chỉ có thể so sánh tối đa 8 sản phẩm',
+      });
+      return;
+    }
     addItem(product, 'BATTERY');
     toast.success(`Đã thêm "${product.title}" vào so sánh`);
   };
@@ -44,6 +50,11 @@ export function BatteryModal({ open, onOpenChange }: BatteryModalProps) {
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Thêm pin để so sánh</DialogTitle>
+          {isAtMaxLimit && (
+            <p className="text-sm text-amber-600 mt-2">
+              Bạn đã đạt giới hạn tối đa 8 sản phẩm. Hãy xóa một sản phẩm trước khi thêm sản phẩm mới.
+            </p>
+          )}
         </DialogHeader>
 
         <div className="px-4 py-3 flex-shrink-0 border-b">
@@ -97,12 +108,13 @@ export function BatteryModal({ open, onOpenChange }: BatteryModalProps) {
 
                       <Button
                         onClick={() => handleAddProduct(product)}
-                        disabled={alreadySelected}
+                        disabled={alreadySelected || isAtMaxLimit}
                         variant={alreadySelected ? 'outline' : 'default'}
                         size="sm"
                         className="ml-3 flex-shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white disabled:bg-gray-200 disabled:text-gray-600"
+                        title={isAtMaxLimit ? 'Giới hạn tối đa 8 sản phẩm' : ''}
                       >
-                        {alreadySelected ? '✓ Đã thêm' : 'Thêm'}
+                        {alreadySelected ? '✓ Đã thêm' : isAtMaxLimit ? 'Giới hạn' : 'Thêm'}
                       </Button>
                     </div>
                   </div>
