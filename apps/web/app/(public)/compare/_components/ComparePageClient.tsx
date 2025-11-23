@@ -14,6 +14,7 @@ import { BikeModal } from './BikeModal';
 import { BatteryModal } from './BatteryModal';
 import { DEFAULT_IMAGE } from '@/constants/images';
 import type { Post } from '@/types/post';
+import type { BreadcrumbItem } from '@/components/Breadcrumb';
 
 interface PostWithType extends Post {
   type: 'CAR' | 'BIKE' | 'BATTERY';
@@ -68,17 +69,37 @@ export function ComparePageClient() {
     return DEFAULT_IMAGE;
   };
 
+  const getProductTypeLabel = (): string => {
+    if (posts.length === 0) return '';
+    const types = new Set(posts.map(p => p.type));
+    if (types.size === 1) {
+      const type = Array.from(types)[0];
+      if (type === 'CAR') return 'Xe điện';
+      if (type === 'BIKE') return 'Xe máy điện';
+      if (type === 'BATTERY') return 'Pin';
+    }
+    return '';
+  };
+
+  const getBreadcrumbItems = (): BreadcrumbItem[] => {
+    const items: BreadcrumbItem[] = [
+      { label: 'So sánh sản phẩm', onClick: () => router.push('/compare') },
+    ];
+    
+    const productTypeLabel = getProductTypeLabel();
+    if (productTypeLabel) {
+      items.push({ label: productTypeLabel });
+    }
+    
+    return items;
+  };
+
   if (selectedIds.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Breadcrumb */}
-          <Breadcrumb
-            items={[
-              { label: 'Trang chủ', href: '/' },
-              { label: 'So sánh sản phẩm' },
-            ]}
-          />
+          <Breadcrumb items={[{ label: 'So sánh sản phẩm', onClick: () => router.push('/compare') }]} />
 
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="mb-6">
@@ -155,12 +176,7 @@ export function ComparePageClient() {
     <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            { label: 'Trang chủ', href: '/' },
-            { label: 'So sánh sản phẩm' },
-          ]}
-        />
+        <Breadcrumb items={getBreadcrumbItems()} />
 
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

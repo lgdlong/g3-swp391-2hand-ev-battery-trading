@@ -2,7 +2,7 @@ import { Home, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-interface BreadcrumbItem {
+export interface BreadcrumbItem {
   label: string;
   href?: string;
   onClick?: () => void;
@@ -21,8 +21,9 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
       <button
         onClick={() => window.location.href = '/'}
         className="hover:text-gray-700 transition-colors duration-200"
+        title="Trang chủ"
       >
-        <Home className="h-4 w-4 text-gray-500" />
+        <Home className="h-4 w-4 text-gray-500 hover:text-gray-700" />
       </button>
       {items.map((item, index) => (
         <div key={index} className="flex items-center space-x-1">
