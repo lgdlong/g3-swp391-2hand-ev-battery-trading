@@ -12,7 +12,6 @@ import { SellerInfo, PostHeader, PostContractsList } from '@/app/(public)/posts/
 import { Specifications } from './_components';
 import { DEFAULT_IMAGE } from '@/constants/images';
 import { RatingsList } from '@/components/RatingsList';
-import { AddToCompareButton } from '@/components/AddToCompareButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -167,14 +166,6 @@ export default function BatteryDetailPage({ params, searchParams }: Props) {
           <div className="lg:col-span-2 space-y-6">
             {/* Header */}
             <PostHeader post={post} details={undefined} />
-
-            {/* Add to Compare Button */}
-            <div className="flex gap-3">
-              <AddToCompareButton 
-                post={post as any} 
-                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 hover:border-blue-400"
-              />
-            </div>
 
             {/* Description */}
             {post.description && (

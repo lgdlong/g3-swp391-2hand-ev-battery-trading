@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useComparison } from '@/hooks/useComparison';
+import { getBatteryPostsWithQuery } from '@/lib/api/postApi';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import type { Post } from '@/types/post';
@@ -18,10 +20,17 @@ export function BatteryModal({ open, onOpenChange }: BatteryModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const { addItem, isSelected } = useComparison();
 
-  // TODO: Replace with actual battery API call when available
-  const products: Post[] = [];
+  const { data: batteries = [] } = useQuery({
+    queryKey: ['batteryPosts'],
+    queryFn: () =>
+      getBatteryPostsWithQuery({
+        limit: 50,
+        offset: 0,
+      }),
+    enabled: open,
+  });
 
-  const filteredProducts = products.filter((product) =>
+  const products = batteries.filter((product) =>
     product.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -48,12 +57,12 @@ export function BatteryModal({ open, onOpenChange }: BatteryModalProps) {
 
         <div className="flex-1 overflow-y-auto">
           <div className="space-y-3 px-4 py-3">
-            {filteredProducts.length === 0 ? (
+            {products.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p>Không tìm thấy sản phẩm</p>
               </div>
             ) : (
-              filteredProducts.map((product) => {
+              products.map((product) => {
                 const alreadySelected = isSelected(product.id);
                 return (
                   <div

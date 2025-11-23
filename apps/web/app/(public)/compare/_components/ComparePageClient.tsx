@@ -26,6 +26,7 @@ export function ComparePageClient() {
   const [carModalOpen, setCarModalOpen] = useState(false);
   const [bikeModalOpen, setBikeModalOpen] = useState(false);
   const [batteryModalOpen, setBatteryModalOpen] = useState(false);
+  const [lastProductType, setLastProductType] = useState<'CAR' | 'BIKE' | 'BATTERY'>('CAR');
 
   const selectedIds = useMemo(() => {
     const ids = searchParams.get('ids')?.split(',').filter(Boolean) || [];
@@ -72,7 +73,7 @@ export function ComparePageClient() {
         <div className="max-w-6xl mx-auto">
           <Button
             variant="ghost"
-            onClick={() => router.back()}
+            onClick={() => router.push('/')}
             className="mb-8 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -100,19 +101,28 @@ export function ComparePageClient() {
               </p>
               <div className="flex gap-3 justify-center flex-wrap">
                 <Button
-                  onClick={() => setCarModalOpen(true)}
+                  onClick={() => {
+                    setLastProductType('CAR');
+                    setCarModalOpen(true);
+                  }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6 py-2 font-semibold"
                 >
                   Thêm xe
                 </Button>
                 <Button
-                  onClick={() => setBikeModalOpen(true)}
+                  onClick={() => {
+                    setLastProductType('BIKE');
+                    setBikeModalOpen(true);
+                  }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6 py-2 font-semibold"
                 >
                   Xe máy
                 </Button>
                 <Button
-                  onClick={() => setBatteryModalOpen(true)}
+                  onClick={() => {
+                    setLastProductType('BATTERY');
+                    setBatteryModalOpen(true);
+                  }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6 py-2 font-semibold"
                 >
                   Pin
@@ -153,7 +163,7 @@ export function ComparePageClient() {
           </div>
           <Button
             variant="ghost"
-            onClick={() => router.back()}
+            onClick={() => router.push('/compare')}
             className="text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -175,10 +185,14 @@ export function ComparePageClient() {
                         {posts.length} xe đã được so sánh
                       </p>
                       <Button
-                        onClick={() => setCarModalOpen(true)}
+                        onClick={() => {
+                          if (lastProductType === 'CAR') setCarModalOpen(true);
+                          else if (lastProductType === 'BIKE') setBikeModalOpen(true);
+                          else setBatteryModalOpen(true);
+                        }}
                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-full py-2 text-sm font-bold"
                       >
-                        Thêm xe
+                        {lastProductType === 'CAR' ? 'Thêm xe' : lastProductType === 'BIKE' ? 'Thêm xe máy' : 'Thêm pin'}
                       </Button>
                     </div>
                   </td>

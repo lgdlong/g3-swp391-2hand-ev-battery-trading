@@ -11,6 +11,7 @@ import {
   Gauge,
 } from 'lucide-react';
 import { SpecItem } from './SpecItem';
+import { AddToCompareButton } from '@/components/AddToCompareButton';
 import { PostUI } from '@/types/post';
 
 interface SpecificationsProps {
@@ -130,6 +131,11 @@ export function Specifications({ post }: SpecificationsProps) {
               />
             </div>
           )}
+        </div>
+
+        {/* Compare Button */}
+        <div className="mt-6 pt-6 border-t">
+          <AddToCompareButton post={post as any} />
         </div>
       </CardContent>
     </Card>

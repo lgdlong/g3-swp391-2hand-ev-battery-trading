@@ -13,7 +13,6 @@ import { Specifications } from './_components';
 import { PostHeader, SellerInfo, PostContractsList } from '@/app/(public)/posts/_components';
 import { VerificationBadge } from '@/components/VerificationBadge';
 import { RatingsList } from '@/components/RatingsList';
-import { AddToCompareButton } from '@/components/AddToCompareButton';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -166,14 +165,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
 
           <div className="lg:col-span-2 space-y-6">
             <PostHeader post={post} details={details} />
-
-            {/* Add to Compare Button */}
-            <div className="flex gap-3">
-              <AddToCompareButton 
-                post={post as any} 
-                className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 hover:border-blue-400"
-              />
-            </div>
 
             {post.description && (
               <Card key={`post-description-${post.id}`} className="border-none shadow-none">
