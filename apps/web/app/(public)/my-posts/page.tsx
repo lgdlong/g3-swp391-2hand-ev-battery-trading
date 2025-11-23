@@ -117,26 +117,58 @@ export default function MyPostsPage() {
     ARCHIVED: archivedQuery.data?.length || 0,
   };
 
-  // Get current posts based on active tab
+  // Get current posts based on active tab, filter by search query, and sort
   const getCurrentPosts = () => {
+    let posts: Post[] = [];
     switch (activeTab) {
       case 'DRAFT':
-        return draftQuery.data || [];
+        posts = draftQuery.data || [];
+        break;
       case 'PENDING_REVIEW':
-        return pendingQuery.data || [];
+        posts = pendingQuery.data || [];
+        break;
       case 'PUBLISHED':
         // Exclude sold posts from PUBLISHED tab
-        return publishedPostsExcludingSold;
+        posts = publishedPostsExcludingSold;
+        break;
       case 'REJECTED':
-        return rejectedQuery.data || [];
+        posts = rejectedQuery.data || [];
+        break;
       case 'SOLD':
-        return soldPosts;
-        // return soldQuery.data || [];
+        posts = soldPosts;
+        break;
       case 'ARCHIVED':
-        return archivedQuery.data || [];
+        posts = archivedQuery.data || [];
+        break;
       default:
-        return [];
+        posts = [];
     }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      posts = posts.filter(
+        (post) =>
+          post.title.toLowerCase().includes(query) ||
+          post.description.toLowerCase().includes(query),
+      );
+    }
+
+    // Apply sorting
+    return [...posts].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        case 'oldest':
+          return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+        case 'price-asc':
+          return parseFloat(a.priceVnd || '0') - parseFloat(b.priceVnd || '0');
+        case 'price-desc':
+          return parseFloat(b.priceVnd || '0') - parseFloat(a.priceVnd || '0');
+        default:
+          return 0;
+      }
+    });
   };
 
   const posts = getCurrentPosts();

@@ -16,9 +16,17 @@ interface SearchBarProps {
   onCreateNew?: () => void;
 }
 
+const SORT_LABELS: Record<NonNullable<SearchBarProps['sortBy']>, string> = {
+  newest: 'Mới nhất',
+  oldest: 'Cũ nhất',
+  'price-asc': 'Giá tăng dần',
+  'price-desc': 'Giá giảm dần',
+};
+
 export default function SearchBar({
   searchQuery,
   onSearchChange,
+  sortBy = 'newest',
   onSortChange,
   onCreateNew,
 }: SearchBarProps) {
@@ -39,16 +47,32 @@ export default function SearchBar({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2 bg-transparent">
               <ArrowUpDown className="h-4 w-4" />
-              Sắp xếp
+              {SORT_LABELS[sortBy]}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onSortChange('newest')}>Mới nhất</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange('oldest')}>Cũ nhất</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange('price-asc')}>
+            <DropdownMenuItem
+              onClick={() => onSortChange('newest')}
+              className={sortBy === 'newest' ? 'bg-accent' : ''}
+            >
+              Mới nhất
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onSortChange('oldest')}
+              className={sortBy === 'oldest' ? 'bg-accent' : ''}
+            >
+              Cũ nhất
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onSortChange('price-asc')}
+              className={sortBy === 'price-asc' ? 'bg-accent' : ''}
+            >
               Giá tăng dần
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onSortChange('price-desc')}>
+            <DropdownMenuItem
+              onClick={() => onSortChange('price-desc')}
+              className={sortBy === 'price-desc' ? 'bg-accent' : ''}
+            >
               Giá giảm dần
             </DropdownMenuItem>
           </DropdownMenuContent>
