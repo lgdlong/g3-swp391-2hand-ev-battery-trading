@@ -28,7 +28,7 @@ export function OrderInformation({
   // Set main image when post loads
   useEffect(() => {
     if (post?.images?.[0]?.url) {
-      setMainImage(post.images[0].url);
+      setMainImage(post.images[0]!.url);
     } else if (post) {
       setMainImage('/asset/phu-tung-o-to-27.png');
     }
@@ -58,12 +58,12 @@ export function OrderInformation({
             </div>
 
             {/* Post Images Gallery */}
-            {post.images && post.images.length > 0 && (
+            {post.images && post.images.length > 0 && post.images[0] && (
               <div className="space-y-3">
                 {/* Main Image */}
                 <div className="relative w-full h-96 bg-gray-50 rounded-lg overflow-hidden">
                   <Image
-                    src={mainImage || post.images[0].url || '/asset/phu-tung-o-to-27.png'}
+                    src={mainImage || post.images[0]?.url || '/asset/phu-tung-o-to-27.png'}
                     alt={post.title}
                     fill
                     sizes="(max-width:768px) 100vw, 66vw"

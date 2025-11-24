@@ -118,9 +118,8 @@ export function RatingForm({ postId, onSuccess }: RatingFormProps) {
           {/* Submit Button */}
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-[#048C73] text-white hover:bg-[#048C73]/90 disabled:opacity-50"
             disabled={submitRatingMutation.isPending || rating === 0}
-            style={{ backgroundColor: '#048C73' }}
           >
             {submitRatingMutation.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}
           </Button>
