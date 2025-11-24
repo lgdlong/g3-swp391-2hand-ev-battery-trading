@@ -23,7 +23,7 @@ interface PaymentDialogProps {
   onPaymentSuccess: () => void;
 }
 
-type PaymentMethod = 'coin' | 'bank' | 'momo';
+type PaymentMethod = 'wallet' | 'bank' | 'momo';
 
 export function PaymentDialog({
   open,
@@ -35,7 +35,7 @@ export function PaymentDialog({
   onPaymentSuccess,
 }: PaymentDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('coin');
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('wallet');
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -53,14 +53,14 @@ export function PaymentDialog({
     enabled: !!user && open,
   });
 
-  // Get current coin balance from wallet (database)
-  const currentCoins = wallet ? parseFloat(wallet.balance) : 0;
-  const hasEnoughCoins = currentCoins >= totalAmount;
+  // Get current balance from wallet (database)
+  const currentBalance = wallet ? parseFloat(wallet.balance) : 0;
+  const hasEnoughBalance = currentBalance >= totalAmount;
 
   const handlePayment = async () => {
-    if (selectedMethod === 'coin' && !hasEnoughCoins) {
-      toast.error('Không đủ coin', {
-        description: `Bạn cần ${new Intl.NumberFormat('vi-VN').format(totalAmount)} ₫ để kiểm định. Hiện tại bạn có ${new Intl.NumberFormat('vi-VN').format(currentCoins)} ₫.`,
+    if (selectedMethod === 'wallet' && !hasEnoughBalance) {
+      toast.error('Không đủ tiền', {
+        description: `Bạn cần ${new Intl.NumberFormat('vi-VN').format(totalAmount)} ₫ để kiểm định. Hiện tại bạn có ${new Intl.NumberFormat('vi-VN').format(currentBalance)} ₫.`,
         duration: 5000,
       });
       return;
@@ -163,27 +163,27 @@ export function PaymentDialog({
           <div>
             <h3 className="font-semibold mb-3">Chọn hình thức thanh toán</h3>
             <div className="space-y-3">
-              {/* (Coin) */}
+              {/* Wallet */}
               <button
                 type="button"
-                onClick={() => setSelectedMethod('coin')}
+                onClick={() => setSelectedMethod('wallet')}
                 className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
-                  selectedMethod === 'coin'
+                  selectedMethod === 'wallet'
                     ? 'border-green-500 bg-green-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
                     <Coins className="h-5 w-5 text-white" />
                   </div>
                   <div className="text-left">
-                    <p className="font-semibold">Coin</p>
+                    <p className="font-semibold">Ví</p>
                     <div className="flex items-center gap-2">
                       <p className="text-sm text-zinc-600">
                         Số dư:{' '}
                         <strong className="text-red-600 font-bold">
-                          {isLoadingWallet ? '...' : formatCurrency(currentCoins)} ₫
+                          {isLoadingWallet ? '...' : formatCurrency(currentBalance)} ₫
                         </strong>
                       </p>
                       <span
@@ -198,12 +198,12 @@ export function PaymentDialog({
                     </div>
                   </div>
                 </div>
-                {selectedMethod === 'coin' && hasEnoughCoins && (
+                {selectedMethod === 'wallet' && hasEnoughBalance && (
                   <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                     <CheckCircle className="h-4 w-4 text-white" />
                   </div>
                 )}
-                {selectedMethod === 'coin' && !hasEnoughCoins && !isLoadingWallet && (
+                {selectedMethod === 'wallet' && !hasEnoughBalance && !isLoadingWallet && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -211,7 +211,7 @@ export function PaymentDialog({
                     onClick={(e) => {
                       e.stopPropagation();
                       // TODO: Navigate to top-up page or open top-up modal
-                      toast.info('Chức năng nạp coin sẽ sớm được cập nhật');
+                      toast.info('Chức năng nạp tiền sẽ sớm được cập nhật');
                     }}
                   >
                     Nạp thêm
@@ -283,14 +283,14 @@ export function PaymentDialog({
           <Button
             onClick={handlePayment}
             className={`w-full h-14 text-lg font-semibold ${
-              selectedMethod === 'coin' && hasEnoughCoins
+              selectedMethod === 'wallet' && hasEnoughBalance
                 ? 'bg-green-600 hover:bg-green-700'
-                : selectedMethod !== 'coin'
+                : selectedMethod !== 'wallet'
                   ? 'bg-green-600 hover:bg-green-700'
                   : 'bg-gray-400 cursor-not-allowed'
             }`}
             disabled={
-              isProcessing || (selectedMethod === 'coin' && !hasEnoughCoins) || isLoadingWallet
+              isProcessing || (selectedMethod === 'wallet' && !hasEnoughBalance) || isLoadingWallet
             }
           >
             {isProcessing ? (
