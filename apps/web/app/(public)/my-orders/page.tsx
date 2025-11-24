@@ -10,6 +10,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { CheckCircle, Package } from 'lucide-react';
 import Link from 'next/link';
 import { ContractCard } from './_components/ContractCard';
@@ -17,9 +24,17 @@ import { ContractCard } from './_components/ContractCard';
 export default function MyOrdersPage() {
   const router = useRouter();
   const { user, isLoggedIn, loading } = useAuth();
+  const [orderTypeFilter, setOrderTypeFilter] = useState<'buy' | 'sell'>('buy');
   const [activeTab, setActiveTab] = useState<
-    'buy-pending' | 'buy-completed' | 'sell-pending' | 'sell-completed'
-  >('buy-pending');
+    | 'buy-awaiting'
+    | 'buy-success'
+    | 'buy-forfeited'
+    | 'buy-pending-refund'
+    | 'sell-awaiting'
+    | 'sell-success'
+    | 'sell-forfeited'
+    | 'sell-pending-refund'
+  >('buy-awaiting');
 
   // Redirect if not logged in
   useEffect(() => {
@@ -55,23 +70,44 @@ export default function MyOrdersPage() {
     refetchOnWindowFocus: true,
   });
 
-  // Filter buyer contracts (Đơn mua)
-  const buyPendingContracts = (buyerContracts || []).filter(
+  // Filter buyer contracts (Đơn mua) by status
+  const buyAwaitingContracts = (buyerContracts || []).filter(
     (contract) => contract.status === ContractStatus.AWAITING_CONFIRMATION,
   );
-  const buyCompletedContracts = (buyerContracts || []).filter(
+  const buySuccessContracts = (buyerContracts || []).filter(
     (contract) => contract.status === ContractStatus.SUCCESS,
+  );
+  const buyForfeitedContracts = (buyerContracts || []).filter(
+    (contract) => contract.status === ContractStatus.FORFEITED_EXTERNAL,
+  );
+  const buyPendingRefundContracts = (buyerContracts || []).filter(
+    (contract) => contract.status === ContractStatus.PENDING_REFUND,
   );
 
-  // Filter seller contracts (Đơn bán)
-  const sellPendingContracts = (sellerContracts || []).filter(
+  // Filter seller contracts (Đơn bán) by status
+  const sellAwaitingContracts = (sellerContracts || []).filter(
     (contract) => contract.status === ContractStatus.AWAITING_CONFIRMATION,
   );
-  const sellCompletedContracts = (sellerContracts || []).filter(
+  const sellSuccessContracts = (sellerContracts || []).filter(
     (contract) => contract.status === ContractStatus.SUCCESS,
+  );
+  const sellForfeitedContracts = (sellerContracts || []).filter(
+    (contract) => contract.status === ContractStatus.FORFEITED_EXTERNAL,
+  );
+  const sellPendingRefundContracts = (sellerContracts || []).filter(
+    (contract) => contract.status === ContractStatus.PENDING_REFUND,
   );
 
   const isLoading = isLoadingBuyer || isLoadingSeller;
+
+  // Update active tab when filter changes
+  useEffect(() => {
+    if (orderTypeFilter === 'buy' && !activeTab.startsWith('buy-')) {
+      setActiveTab('buy-awaiting');
+    } else if (orderTypeFilter === 'sell' && !activeTab.startsWith('sell-')) {
+      setActiveTab('sell-awaiting');
+    }
+  }, [orderTypeFilter, activeTab]);
 
   // Show loading state while auth is initializing
   if (loading) {
@@ -90,7 +126,21 @@ export default function MyOrdersPage() {
       <div className="mx-auto max-w-6xl p-6 bg-white rounded-2xl shadow">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Quản lý đơn hàng</h1>
-          <p className="text-muted-foreground">Theo dõi và quản lý tất cả các đơn hàng của bạn</p>
+          <p className="text-muted-foreground mb-4">
+            Theo dõi và quản lý tất cả các đơn hàng của bạn
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground">Lọc theo:</span>
+            <Select value={orderTypeFilter} onValueChange={(v) => setOrderTypeFilter(v as typeof orderTypeFilter)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Chọn loại đơn hàng" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="buy">Đơn mua</SelectItem>
+                <SelectItem value="sell">Đơn bán</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Tabs
@@ -99,22 +149,42 @@ export default function MyOrdersPage() {
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="buy-pending">
-              Đơn mua - Đang nhận ({buyPendingContracts.length})
-            </TabsTrigger>
-            <TabsTrigger value="buy-completed">
-              Đơn mua - Hoàn thành ({buyCompletedContracts.length})
-            </TabsTrigger>
-            <TabsTrigger value="sell-pending">
-              Đơn bán - Đang giao ({sellPendingContracts.length})
-            </TabsTrigger>
-            <TabsTrigger value="sell-completed">
-              Đơn bán - Hoàn thành ({sellCompletedContracts.length})
-            </TabsTrigger>
+            {orderTypeFilter === 'buy' && (
+              <>
+                <TabsTrigger value="buy-awaiting">
+                  Đang chờ xác nhận ({buyAwaitingContracts.length})
+                </TabsTrigger>
+                <TabsTrigger value="buy-success">
+                  Thành công ({buySuccessContracts.length})
+                </TabsTrigger>
+                <TabsTrigger value="buy-forfeited">
+                  Đã hủy ({buyForfeitedContracts.length})
+                </TabsTrigger>
+                <TabsTrigger value="buy-pending-refund">
+                  Chờ hoàn tiền ({buyPendingRefundContracts.length})
+                </TabsTrigger>
+              </>
+            )}
+            {orderTypeFilter === 'sell' && (
+              <>
+                <TabsTrigger value="sell-awaiting">
+                  Đang chờ xác nhận ({sellAwaitingContracts.length})
+                </TabsTrigger>
+                <TabsTrigger value="sell-success">
+                  Thành công ({sellSuccessContracts.length})
+                </TabsTrigger>
+                <TabsTrigger value="sell-forfeited">
+                  Đã hủy ({sellForfeitedContracts.length})
+                </TabsTrigger>
+                <TabsTrigger value="sell-pending-refund">
+                  Chờ hoàn tiền ({sellPendingRefundContracts.length})
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
-          {/* Đơn mua - Đang nhận hàng */}
-          <TabsContent value="buy-pending" className="mt-6">
+          {/* Đơn mua - Đang chờ xác nhận */}
+          <TabsContent value="buy-awaiting" className="mt-6">
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
@@ -127,15 +197,15 @@ export default function MyOrdersPage() {
                   </Card>
                 ))}
               </div>
-            ) : buyPendingContracts.length === 0 ? (
+            ) : buyAwaitingContracts.length === 0 ? (
               <Card className="shadow-lg">
                 <CardContent className="p-12 text-center">
                   <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Chưa có đơn mua đang nhận
+                    Chưa có đơn mua đang chờ xác nhận
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    Các đơn hàng bạn mua sẽ xuất hiện ở đây sau khi người bán chốt giao dịch.
+                    Các đơn hàng bạn mua đang chờ xác nhận sẽ xuất hiện ở đây.
                   </p>
                   <Button asChild>
                     <Link href="/chat">Đi đến Chat</Link>
@@ -144,15 +214,15 @@ export default function MyOrdersPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {buyPendingContracts.map((contract) => (
+                {buyAwaitingContracts.map((contract) => (
                   <ContractCard key={contract.id} contract={contract} />
                 ))}
               </div>
             )}
           </TabsContent>
 
-          {/* Đơn mua - Đã hoàn thành */}
-          <TabsContent value="buy-completed" className="mt-6">
+          {/* Đơn mua - Thành công */}
+          <TabsContent value="buy-success" className="mt-6">
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
@@ -165,29 +235,29 @@ export default function MyOrdersPage() {
                   </Card>
                 ))}
               </div>
-            ) : buyCompletedContracts.length === 0 ? (
+            ) : buySuccessContracts.length === 0 ? (
               <Card className="shadow-lg">
                 <CardContent className="p-12 text-center">
                   <CheckCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Chưa có đơn mua hoàn thành
+                    Chưa có đơn mua thành công
                   </h3>
                   <p className="text-muted-foreground">
-                    Các đơn hàng bạn mua đã hoàn thành sẽ xuất hiện ở đây.
+                    Các đơn hàng bạn mua đã hoàn thành thành công sẽ xuất hiện ở đây.
                   </p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
-                {buyCompletedContracts.map((contract) => (
+                {buySuccessContracts.map((contract) => (
                   <ContractCard key={contract.id} contract={contract} />
                 ))}
               </div>
             )}
           </TabsContent>
 
-          {/* Đơn bán - Đang giao */}
-          <TabsContent value="sell-pending" className="mt-6">
+          {/* Đơn mua - Đã hủy */}
+          <TabsContent value="buy-forfeited" className="mt-6">
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
@@ -200,12 +270,82 @@ export default function MyOrdersPage() {
                   </Card>
                 ))}
               </div>
-            ) : sellPendingContracts.length === 0 ? (
+            ) : buyForfeitedContracts.length === 0 ? (
               <Card className="shadow-lg">
                 <CardContent className="p-12 text-center">
                   <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Chưa có đơn bán đang giao
+                    Chưa có đơn mua đã hủy
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Các đơn hàng bạn mua đã bị hủy sẽ xuất hiện ở đây.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {buyForfeitedContracts.map((contract) => (
+                  <ContractCard key={contract.id} contract={contract} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Đơn mua - Chờ hoàn tiền */}
+          <TabsContent value="buy-pending-refund" className="mt-6">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="shadow-lg">
+                    <CardContent className="p-6">
+                      <Skeleton className="h-6 w-1/3 mb-4" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : buyPendingRefundContracts.length === 0 ? (
+              <Card className="shadow-lg">
+                <CardContent className="p-12 text-center">
+                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Chưa có đơn mua chờ hoàn tiền
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Các đơn hàng bạn mua đang chờ hoàn tiền sẽ xuất hiện ở đây.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {buyPendingRefundContracts.map((contract) => (
+                  <ContractCard key={contract.id} contract={contract} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Đơn bán - Đang chờ xác nhận */}
+          <TabsContent value="sell-awaiting" className="mt-6">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="shadow-lg">
+                    <CardContent className="p-6">
+                      <Skeleton className="h-6 w-1/3 mb-4" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : sellAwaitingContracts.length === 0 ? (
+              <Card className="shadow-lg">
+                <CardContent className="p-12 text-center">
+                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Chưa có đơn bán đang chờ xác nhận
                   </h3>
                   <p className="text-muted-foreground">
                     Các đơn hàng bạn bán đang chờ người mua xác nhận sẽ xuất hiện ở đây.
@@ -214,15 +354,15 @@ export default function MyOrdersPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {sellPendingContracts.map((contract) => (
+                {sellAwaitingContracts.map((contract) => (
                   <ContractCard key={contract.id} contract={contract} />
                 ))}
               </div>
             )}
           </TabsContent>
 
-          {/* Đơn bán - Đã hoàn thành */}
-          <TabsContent value="sell-completed" className="mt-6">
+          {/* Đơn bán - Thành công */}
+          <TabsContent value="sell-success" className="mt-6">
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
@@ -235,21 +375,91 @@ export default function MyOrdersPage() {
                   </Card>
                 ))}
               </div>
-            ) : sellCompletedContracts.length === 0 ? (
+            ) : sellSuccessContracts.length === 0 ? (
               <Card className="shadow-lg">
                 <CardContent className="p-12 text-center">
                   <CheckCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Chưa có đơn bán hoàn thành
+                    Chưa có đơn bán thành công
                   </h3>
                   <p className="text-muted-foreground">
-                    Các đơn hàng bạn bán đã hoàn thành sẽ xuất hiện ở đây.
+                    Các đơn hàng bạn bán đã hoàn thành thành công sẽ xuất hiện ở đây.
                   </p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
-                {sellCompletedContracts.map((contract) => (
+                {sellSuccessContracts.map((contract) => (
+                  <ContractCard key={contract.id} contract={contract} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Đơn bán - Đã hủy */}
+          <TabsContent value="sell-forfeited" className="mt-6">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="shadow-lg">
+                    <CardContent className="p-6">
+                      <Skeleton className="h-6 w-1/3 mb-4" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : sellForfeitedContracts.length === 0 ? (
+              <Card className="shadow-lg">
+                <CardContent className="p-12 text-center">
+                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Chưa có đơn bán đã hủy
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Các đơn hàng bạn bán đã bị hủy sẽ xuất hiện ở đây.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {sellForfeitedContracts.map((contract) => (
+                  <ContractCard key={contract.id} contract={contract} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Đơn bán - Chờ hoàn tiền */}
+          <TabsContent value="sell-pending-refund" className="mt-6">
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="shadow-lg">
+                    <CardContent className="p-6">
+                      <Skeleton className="h-6 w-1/3 mb-4" />
+                      <Skeleton className="h-4 w-full mb-2" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : sellPendingRefundContracts.length === 0 ? (
+              <Card className="shadow-lg">
+                <CardContent className="p-12 text-center">
+                  <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Chưa có đơn bán chờ hoàn tiền
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Các đơn hàng bạn bán đang chờ hoàn tiền sẽ xuất hiện ở đây.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {sellPendingRefundContracts.map((contract) => (
                   <ContractCard key={contract.id} contract={contract} />
                 ))}
               </div>
