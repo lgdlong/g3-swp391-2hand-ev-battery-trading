@@ -1,7 +1,7 @@
 import type { Account, CreateAccountDto } from '@/types/account';
 import { api } from '@/lib/axios';
 import { getAuthHeaders } from '../auth';
-import { AccountRole as RoleEnum, AccountStatus as StatusEnum } from '@/types/enums/account-enum';
+import { AccountStatus as StatusEnum } from '@/types/enums/account-enum';
 import { validateAvatarFile } from '@/lib/validation/file-validation';
 import { AxiosError } from 'axios';
 
@@ -27,49 +27,10 @@ export async function getAccounts(limit?: number, offset?: number): Promise<Acco
   return data;
 }
 
-// Count accounts with optional status filter (Admin only)
-export async function countAccounts(
-  status?: 'active' | 'banned',
-): Promise<{ count: number; status?: string }> {
-  const params = new URLSearchParams();
-  if (status) {
-    params.append('status', status);
-  }
-
-  const { data } = await api.get<{ count: number; status?: string }>(
-    `/accounts/count?${params.toString()}`,
-    {
-      headers: getAuthHeaders(),
-    },
-  );
-  return data;
-}
-
 // Get account by ID (public) - accepts string or number
 export async function getAccountById(id: string | number): Promise<Account> {
   const { data } = await api.get<Account>(`/accounts/${id}`);
   return data;
-}
-
-// Get account by email (public)
-export async function getAccountByEmail(email: string): Promise<Account> {
-  const { data } = await api.get<Account>(`/accounts/email/${email}`);
-  return data;
-}
-
-// Update account (auth)
-export async function updateAccount(id: number, payload: Partial<Account>): Promise<Account> {
-  const { data } = await api.patch<Account>(`/accounts/${id}`, payload, {
-    headers: getAuthHeaders(),
-  });
-  return data;
-}
-
-// Delete account (Admin only)
-export async function deleteAccount(id: number): Promise<void> {
-  await api.delete(`/accounts/${id}`, {
-    headers: getAuthHeaders(),
-  });
 }
 
 // Get current user account (auth)
@@ -139,13 +100,6 @@ export async function unbanAccount(id: number): Promise<Account> {
 // ===== Helpers tiện dùng trong UI ====
 export async function toggleBan(id: number, current: StatusEnum): Promise<Account> {
   return current === StatusEnum.BANNED ? unbanAccount(id) : banAccount(id);
-}
-
-export async function setRole(id: number, role: RoleEnum): Promise<Account> {
-  if (role === RoleEnum.ADMIN) return promoteAccount(id);
-  if (role === RoleEnum.USER) return demoteAccount(id);
-  // Throw an error for unhandled roles to avoid unexpected behavior
-  throw new Error(`Role change to "${role}" is not supported.`);
 }
 
 /////////////////////////////////////////////////////////////

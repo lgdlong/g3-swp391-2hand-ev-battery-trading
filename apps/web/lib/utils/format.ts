@@ -32,25 +32,6 @@ export function formatCurrency(amount: number | string): string {
 }
 
 /**
- * Formats date to Vietnamese format
- * @param date Date string or Date object
- * @param formatStr Format string (default: 'dd/MM/yyyy')
- * @returns Formatted date string
- */
-export function formatDate(date: string | Date, formatStr = 'dd/MM/yyyy'): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-
-  if (formatStr === 'dd/MM/yyyy') {
-    return `${day}/${month}/${year}`;
-  }
-
-  return `${day}/${month}/${year}`;
-}
-
-/**
  * Formats date and time to Vietnamese format
  * @param dateString Date string
  * @returns Formatted datetime string (e.g., "15/11/2024 14:30")
@@ -107,41 +88,6 @@ export function formatDistanceToNow(date: Date): string {
 }
 
 /**
- * Formats message time for chat bubbles
- * @param date Date object
- * @returns Formatted time string (e.g., "10:30" for today, "08:59 23/4/2024" for older)
- */
-export function formatMessageTime(date: Date): string {
-  const now = new Date();
-  const messageDate = new Date(date);
-
-  // Check if the message is from today
-  const isToday = now.toDateString() === messageDate.toDateString();
-
-  if (isToday) {
-    // Show only time for today's messages (e.g., "10:30")
-    return messageDate.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  } else {
-    // Show time and date for older messages (e.g., "08:59 23/4/2024")
-    const time = messageDate.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    const dateStr = messageDate.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'numeric',
-      year: 'numeric',
-    });
-    return `${time} ${dateStr}`;
-  }
-}
-
-/**
  * Returns the Vietnamese text for post origin
  * @param origin Origin code
  * @returns Vietnamese text
@@ -173,40 +119,3 @@ export function getLocation(post: PostUI): string {
 
   return post.addressTextCached || 'Không rõ';
 }
-
-/**
- * Status chip configuration for post status
- */
-export const statusChip = {
-  /**
-   * Gets CSS classes for post status
-   * @param status Post status
-   * @returns CSS class string for status styling
-   */
-  getColor(status: string): string {
-    const statusColors = {
-      APPROVED: 'bg-green-100 text-green-800 border-green-200',
-      PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      DRAFT: 'bg-gray-100 text-gray-800 border-gray-200',
-      REJECTED: 'bg-red-100 text-red-800 border-red-200',
-    } as const;
-
-    return statusColors[status as keyof typeof statusColors] || statusColors.DRAFT;
-  },
-
-  /**
-   * Gets Vietnamese text for post status
-   * @param status Post status
-   * @returns Vietnamese status text
-   */
-  getText(status: string): string {
-    const statusTexts = {
-      APPROVED: 'Đã duyệt',
-      PENDING: 'Chờ duyệt',
-      DRAFT: 'Nháp',
-      REJECTED: 'Từ chối',
-    } as const;
-
-    return statusTexts[status as keyof typeof statusTexts] || status;
-  },
-} as const;

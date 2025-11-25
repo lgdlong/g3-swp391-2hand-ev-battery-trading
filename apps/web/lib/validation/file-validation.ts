@@ -113,18 +113,3 @@ export function isValidAvatarUrl(url: string | null | undefined): boolean {
     return false;
   }
 }
-
-/**
- * Sanitizes avatar URL for safe rendering
- * Returns safe URL or fallback
- *
- * @param url - URL to sanitize
- * @param fallback - Fallback URL if validation fails
- * @returns Safe URL or fallback
- */
-export function sanitizeAvatarUrl(
-  url: string | null | undefined,
-  fallback: string = '/default-avatar.png',
-): string {
-  return isValidAvatarUrl(url) ? url! : fallback;
-}

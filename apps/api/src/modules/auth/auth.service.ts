@@ -73,9 +73,6 @@ export class AuthService {
 
     const tokens: Tokens = await this.signTokens(payload);
 
-    // TODO: lưu refreshToken đã hash vào DB
-    // const hashedRefreshToken = tokens.refresh_token;
-
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
