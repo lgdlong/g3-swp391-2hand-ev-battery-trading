@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Coins, ArrowRight, Loader2 } from 'lucide-react';
+import { X, Coins, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { createTopupPayment } from '@/lib/api/walletApi';
+import { createTopupPayment, PayosCreatePaymentResponse } from '@/lib/api/walletApi';
 import { toast } from 'sonner';
 
 interface TopupModalProps {
@@ -21,7 +21,7 @@ const QUICK_ADD_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
 export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) {
   const [amount, setAmount] = useState<number>(initialAmount || SAMPLE_TOPUP);
   const [customAmount, setCustomAmount] = useState<string>(
-    initialAmount ? initialAmount.toString() : SAMPLE_TOPUP_STR
+    initialAmount ? initialAmount.toString() : SAMPLE_TOPUP_STR,
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,12 +55,12 @@ export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) 
   const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
     const numValue = parseInt(value) || 0;
-    
+
     if (numValue > MAX_TOPUP_AMOUNT) {
       toast.error(`Số tiền tối đa là ${formatVND(MAX_TOPUP_AMOUNT)} ₫`);
       return;
     }
-    
+
     setCustomAmount(value);
     setAmount(numValue);
   };
@@ -78,14 +78,15 @@ export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) 
 
     setIsLoading(true);
     try {
-      const response = await createTopupPayment({
+      const response: PayosCreatePaymentResponse = await createTopupPayment({
         amount,
         returnUrl: `${window.location.origin}/checkout/result`,
         cancelUrl: `${window.location.origin}/wallet`,
       });
 
+      console.log('Topup response:', response);
+
       if (response?.data?.checkoutUrl) {
-        // Redirect to PayOS checkout page
         window.location.href = response.data.checkoutUrl;
       } else {
         toast.error('Không thể tạo link thanh toán');
@@ -151,8 +152,6 @@ export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) 
               </button>
             ))}
           </div>
-
-
 
           {/* Note */}
           <div className="text-xs text-gray-500 text-center leading-tight">
