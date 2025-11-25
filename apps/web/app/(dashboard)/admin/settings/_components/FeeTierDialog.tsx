@@ -13,7 +13,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { FeeTier } from '@/lib/api/feeTiersApi';
+import type { FeeTier } from '@/types/api/fee-tier';
+import {
+  FEE_TIER_PRICE_CONSTANTS,
+  FEE_TIER_DEPOSIT_RATE_CONSTANTS,
+} from './constants';
 
 export interface FeeTierFormData {
   minPrice: string;
@@ -21,6 +25,16 @@ export interface FeeTierFormData {
   depositRate: string;
   active: boolean;
 }
+
+// Helper functions for number formatting
+const formatNumberWithDots = (value: string | number): string => {
+  const numValue = typeof value === 'string' ? value.replace(/\./g, '') : value.toString();
+  return numValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+const parseNumberFromFormatted = (value: string): string => {
+  return value.replace(/\./g, '');
+};
 
 interface FeeTierDialogProps {
   open: boolean;
@@ -44,25 +58,67 @@ export function FeeTierDialog({
     active: true,
   });
 
+  // Display values with formatting (for UI)
+  const [displayMinPrice, setDisplayMinPrice] = useState('');
+  const [displayMaxPrice, setDisplayMaxPrice] = useState('');
+
   useEffect(() => {
     if (open) {
       if (editingTier) {
+        const minPrice = editingTier.minPrice;
+        const maxPrice = editingTier.maxPrice || '';
+        const depositRate = (editingTier as any).depositRate || '0';
+
         setFormData({
-          minPrice: editingTier.minPrice,
-          maxPrice: editingTier.maxPrice || '',
-          depositRate: (parseFloat(editingTier.depositRate) * 100).toString(),
+          minPrice,
+          maxPrice,
+          depositRate: (parseFloat(depositRate) * 100).toString(),
           active: editingTier.active,
         });
+
+        setDisplayMinPrice(formatNumberWithDots(minPrice));
+        setDisplayMaxPrice(maxPrice ? formatNumberWithDots(maxPrice) : '');
       } else {
+        const defaultMinPrice = FEE_TIER_PRICE_CONSTANTS.MIN_PRICE.toString();
         setFormData({
-          minPrice: '',
+          minPrice: defaultMinPrice,
           maxPrice: '',
           depositRate: '',
           active: true,
         });
+        setDisplayMinPrice(formatNumberWithDots(defaultMinPrice));
+        setDisplayMaxPrice('');
       }
     }
   }, [open, editingTier]);
+
+  const handleMinPriceChange = (value: string) => {
+    // Remove dots and non-numeric characters
+    const cleanedValue = parseNumberFromFormatted(value);
+
+    // Update display with formatting
+    setDisplayMinPrice(formatNumberWithDots(cleanedValue));
+
+    // Update form data with raw number
+    setFormData({ ...formData, minPrice: cleanedValue });
+  };
+
+  const handleMaxPriceChange = (value: string) => {
+    if (value === '') {
+      setDisplayMaxPrice('');
+      setFormData({ ...formData, maxPrice: '' });
+      return;
+    }
+
+    // Remove dots and non-numeric characters
+    const cleanedValue = parseNumberFromFormatted(value);
+
+    // Update display with formatting
+    setDisplayMaxPrice(formatNumberWithDots(cleanedValue));
+
+    // Update form data with raw number
+    setFormData({ ...formData, maxPrice: cleanedValue });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,22 +145,27 @@ export function FeeTierDialog({
               </Label>
               <Input
                 id="minPrice"
-                type="number"
-                placeholder="0"
-                value={formData.minPrice}
-                onChange={(e) => setFormData({ ...formData, minPrice: e.target.value })}
+                type="text"
+                inputMode="numeric"
+                placeholder={formatNumberWithDots(FEE_TIER_PRICE_CONSTANTS.MIN_PRICE.toString())}
+                value={displayMinPrice}
+                onChange={(e) => handleMinPriceChange(e.target.value)}
                 required
               />
+              <p className="text-xs text-gray-500">
+                Tối thiểu: {formatNumberWithDots(FEE_TIER_PRICE_CONSTANTS.MIN_PRICE.toString())} VND
+              </p>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="maxPrice">Giá tối đa (VND)</Label>
               <Input
                 id="maxPrice"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 placeholder="Để trống = không giới hạn"
-                value={formData.maxPrice}
-                onChange={(e) => setFormData({ ...formData, maxPrice: e.target.value })}
+                value={displayMaxPrice}
+                onChange={(e) => handleMaxPriceChange(e.target.value)}
               />
               <p className="text-xs text-gray-500">Để trống nếu không có giới hạn trên</p>
             </div>
@@ -116,15 +177,17 @@ export function FeeTierDialog({
               <Input
                 id="depositRate"
                 type="number"
-                step="0.1"
-                min="0"
-                max="100"
+                step={FEE_TIER_DEPOSIT_RATE_CONSTANTS.STEP}
+                min={FEE_TIER_DEPOSIT_RATE_CONSTANTS.MIN}
+                max={FEE_TIER_DEPOSIT_RATE_CONSTANTS.MAX}
                 placeholder="10.0"
                 value={formData.depositRate}
                 onChange={(e) => setFormData({ ...formData, depositRate: e.target.value })}
                 required
               />
-              <p className="text-xs text-gray-500">Từ 0% đến 100%</p>
+              <p className="text-xs text-gray-500">
+                Từ {FEE_TIER_DEPOSIT_RATE_CONSTANTS.MIN}% đến {FEE_TIER_DEPOSIT_RATE_CONSTANTS.MAX}% (có thể nhập 0.01, 0.001, v.v.)
+              </p>
             </div>
 
             <div className="flex items-center justify-between">
