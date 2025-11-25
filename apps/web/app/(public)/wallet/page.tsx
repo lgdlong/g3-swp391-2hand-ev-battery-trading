@@ -93,7 +93,7 @@ export default function WalletPage() {
               </Link>
             </Button>
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">Ví Coin của tôi</h1>
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">Ví của tôi</h1>
               <p className="text-gray-300">Quản lý số dư và lịch sử giao dịch</p>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function WalletPage() {
                 <div>
                   <CardTitle className="text-xl text-gray-900">Lịch sử giao dịch</CardTitle>
                   <CardDescription className="text-gray-600">
-                    Xem tất cả giao dịch nạp và sử dụng coin
+                    Xem tất cả giao dịch nạp và sử dụng tiền
                   </CardDescription>
                 </div>
               </div>
@@ -189,7 +189,7 @@ export default function WalletPage() {
                               className={`text-xl font-bold ${transactionType.color} whitespace-nowrap`}
                             >
                               {parseFloat(transaction.amount) > 0 ? '+' : '-'}{' '}
-                              {formatAmount(transaction.amount)} Coin
+                              {formatAmount(transaction.amount)} ₫
                             </p>
                           </div>
                           <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-[#048C73] transition-colors flex-shrink-0" />
@@ -206,7 +206,7 @@ export default function WalletPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">Chưa có giao dịch</h3>
                 <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  Bạn chưa có giao dịch nào. Hãy nạp coin để sử dụng các dịch vụ kiểm định bài đăng.
+                  Bạn chưa có giao dịch nào. Hãy nạp tiền để sử dụng các dịch vụ kiểm định bài đăng.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
@@ -215,7 +215,7 @@ export default function WalletPage() {
                     className="bg-[#048C73] hover:bg-[#037060] text-white shadow-lg"
                   >
                     <Plus className="h-5 w-5 mr-2" />
-                    Nạp coin ngay
+                    Nạp tiền ngay
                   </Button>
                   <Button
                     variant="outline"
@@ -242,7 +242,7 @@ export default function WalletPage() {
                 <div className="p-2 bg-[#048C73] rounded-lg">
                   <CheckCircle className="h-5 w-5 text-white" />
                 </div>
-                <CardTitle className="text-lg text-gray-900">Cách sử dụng coin</CardTitle>
+                <CardTitle className="text-lg text-gray-900">Cách sử dụng ví</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
@@ -283,7 +283,7 @@ export default function WalletPage() {
                 <li className="flex items-start gap-3 p-3 bg-white rounded-lg border border-orange-200">
                   <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-gray-700 font-medium">
-                    Coin không thể hoàn lại sau khi sử dụng
+                    Tiền không thể hoàn lại sau khi sử dụng
                   </span>
                 </li>
                 <li className="flex items-start gap-3 p-3 bg-white rounded-lg border border-orange-200">

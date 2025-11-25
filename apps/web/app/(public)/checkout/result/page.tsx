@@ -3,7 +3,11 @@
 import { Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getTransactionByOrderCode, type WalletTransaction } from '@/lib/api/walletApi';
+import {
+  verifyAndProcessTopup,
+  getTransactionByOrderCode,
+  type WalletTransaction,
+} from '@/lib/api/walletApi';
 
 function CheckoutResultContent() {
   const router = useRouter();
@@ -20,14 +24,27 @@ function CheckoutResultContent() {
   const isPaymentSuccessful =
     paymentStatus === 'PAID' && paymentCode === '00' && cancelFlag === 'false';
 
-  // Fetch transaction details by orderCode
+  // Verify and fetch transaction details
+  // If payment is successful, call verify first to ensure transaction is created
   const {
     data: transaction,
     isLoading,
     error,
   } = useQuery<WalletTransaction>({
-    queryKey: ['transaction', 'orderCode', orderCode],
-    queryFn: () => getTransactionByOrderCode(orderCode!),
+    queryKey: ['transaction', 'orderCode', orderCode, isPaymentSuccessful],
+    queryFn: async () => {
+      // If payment was successful, verify and process first
+      if (isPaymentSuccessful) {
+        try {
+          return await verifyAndProcessTopup(orderCode!);
+        } catch {
+          // If verify fails, try to get existing transaction
+          return await getTransactionByOrderCode(orderCode!);
+        }
+      }
+      // Otherwise just fetch the transaction
+      return await getTransactionByOrderCode(orderCode!);
+    },
     enabled: isValidOrderCode,
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -64,8 +81,8 @@ function CheckoutResultContent() {
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <p className="text-gray-600">
               {!isValidOrderCode
-                ? `Mã đơn hàng &quot;${orderCode || 'không có'}&quot; không hợp lệ.`
-                : `Giao dịch với mã đơn hàng &quot;${orderCode}&quot; không tồn tại hoặc bạn không có quyền truy cập.`}
+                ? `Mã đơn hàng ${orderCode || 'không có'} không hợp lệ.`
+                : `Giao dịch với mã đơn hàng ${orderCode} không tồn tại hoặc bạn không có quyền truy cập.`}
             </p>
             <button
               onClick={() => router.back()}
