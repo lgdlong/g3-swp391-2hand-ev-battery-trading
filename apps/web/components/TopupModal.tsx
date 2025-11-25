@@ -10,6 +10,7 @@ interface TopupModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialAmount?: number; // Amount in VND to pre-fill
+  returnUrl?: string; // Custom return URL after payment
 }
 
 const MIN_TOPUP_AMOUNT = 2000;
@@ -18,7 +19,7 @@ const SAMPLE_TOPUP = 10000;
 const SAMPLE_TOPUP_STR = '10000';
 const QUICK_ADD_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
 
-export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) {
+export function TopupModal({ isOpen, onClose, initialAmount, returnUrl }: TopupModalProps) {
   const [amount, setAmount] = useState<number>(initialAmount || SAMPLE_TOPUP);
   const [customAmount, setCustomAmount] = useState<string>(
     initialAmount ? initialAmount.toString() : SAMPLE_TOPUP_STR,
@@ -80,7 +81,7 @@ export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) 
     try {
       const response: PayosCreatePaymentResponse = await createTopupPayment({
         amount,
-        returnUrl: `${window.location.origin}/checkout/result`,
+        returnUrl: returnUrl || `${window.location.origin}/checkout/result`,
         cancelUrl: `${window.location.origin}/wallet`,
       });
 
@@ -91,9 +92,13 @@ export function TopupModal({ isOpen, onClose, initialAmount }: TopupModalProps) 
       } else {
         toast.error('Không thể tạo link thanh toán');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Topup error:', error);
-      toast.error(error?.response?.data?.message || 'Có lỗi xảy ra khi nạp tiền');
+      const errorMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(errorMessage || 'Có lỗi xảy ra khi nạp tiền');
     } finally {
       setIsLoading(false);
     }
