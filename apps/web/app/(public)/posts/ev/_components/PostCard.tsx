@@ -7,7 +7,6 @@ import { displayValue, formatVnd } from './utils';
 import type { Post } from '@/types/api/post';
 import { HeartCallApi } from './HeartCallApi';
 import { DEFAULT_IMAGE } from '@/constants/images';
-import { VerificationBadge } from '@/components/VerificationBadge';
 
 interface PostCardProps {
   item: Post;
@@ -54,9 +53,6 @@ export function PostCard({ item, onTitleClick }: PostCardProps) {
               </Badge>
             </div>
             {/* Verification badge - góc trên bên phải */}
-            {item.verificationRequest?.status === 'APPROVED' && (
-              <VerificationBadge className="absolute top-3 right-3" />
-            )}
             {/* Status badge removed */}
             {(item.carDetails?.origin === 'NOI_DIA' || item.bikeDetails?.origin === 'NOI_DIA') && (
               <div className="absolute right-4 bottom-4">

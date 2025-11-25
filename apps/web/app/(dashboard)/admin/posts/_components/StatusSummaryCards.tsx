@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, CheckCircle, XCircle, Shield } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
 
 interface StatusSummaryCardsProps {
   counts: {
@@ -9,12 +9,11 @@ interface StatusSummaryCardsProps {
     pendingReviewCount: number;
     publishedCount: number;
     rejectedCount: number;
-    verificationRequestsCount: number;
   };
 }
 
 export function StatusSummaryCards({ counts }: StatusSummaryCardsProps) {
-  const { draftCount, pendingReviewCount, publishedCount, rejectedCount, verificationRequestsCount } = counts;
+  const { draftCount, pendingReviewCount, publishedCount, rejectedCount } = counts;
 
   return (
     <>
@@ -42,12 +41,12 @@ export function StatusSummaryCards({ counts }: StatusSummaryCardsProps) {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-green-700 mb-1">Đã đăng</h3>
-                <div className="text-3xl font-bold text-green-800">{publishedCount}</div>
-                <p className="text-xs text-green-600 mt-1">Đã được duyệt</p>
+                <h3 className="text-sm font-medium text-green-700 mb-1">Bản nháp</h3>
+                <div className="text-3xl font-bold text-green-800">{draftCount}</div>
+                <p className="text-xs text-green-600 mt-1">Chưa thanh toán</p>
               </div>
               <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center group-hover:bg-green-300 transition-colors">
-                <CheckCircle className="w-6 h-6 text-green-700" />
+                <FileText className="w-6 h-6 text-green-700" />
               </div>
             </div>
           </CardContent>
@@ -57,12 +56,12 @@ export function StatusSummaryCards({ counts }: StatusSummaryCardsProps) {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-medium text-blue-700 mb-1">Yêu cầu kiểm định</h3>
-                <div className="text-3xl font-bold text-blue-800">{verificationRequestsCount}</div>
-                <p className="text-xs text-blue-600 mt-1">Cần kiểm định</p>
+                <h3 className="text-sm font-medium text-blue-700 mb-1">Đã đăng</h3>
+                <div className="text-3xl font-bold text-blue-800">{publishedCount}</div>
+                <p className="text-xs text-blue-600 mt-1">Đang hiển thị</p>
               </div>
               <div className="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center group-hover:bg-blue-300 transition-colors">
-                <Shield className="w-6 h-6 text-blue-700" />
+                <CheckCircle className="w-6 h-6 text-blue-700" />
               </div>
             </div>
           </CardContent>

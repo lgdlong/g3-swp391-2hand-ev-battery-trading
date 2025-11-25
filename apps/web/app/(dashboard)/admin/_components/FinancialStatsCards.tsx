@@ -2,16 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import {
-  Wallet,
-  TrendingUp,
-  DollarSign,
-  CreditCard,
-  ShieldCheck,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Coins,
-} from 'lucide-react';
+import { Wallet, TrendingUp, DollarSign, CreditCard, ShieldCheck, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
 import type { FinancialOverview } from '@/types/admin-statistics';
 
@@ -88,7 +79,7 @@ export function FinancialStatsCards({ financial, isLoading }: FinancialStatsCard
       title: 'Tổng Phí Thu Được',
       value: formatCurrency(financial.totalFeesCollected),
       icon: DollarSign,
-      badge: 'Deposits + Verification',
+      badge: 'Phí đăng bài',
       badgeVariant: 'default',
       color: 'text-emerald-500',
     },
@@ -99,14 +90,6 @@ export function FinancialStatsCards({ financial, isLoading }: FinancialStatsCard
       badge: 'Post deposits',
       badgeVariant: 'outline',
       color: 'text-cyan-500',
-    },
-    {
-      title: 'Phí Kiểm Định',
-      value: formatCurrency(financial.totalVerificationFees),
-      icon: Coins,
-      badge: 'Verification fees',
-      badgeVariant: 'outline',
-      color: 'text-indigo-500',
     },
     {
       title: 'Doanh Thu Ròng',

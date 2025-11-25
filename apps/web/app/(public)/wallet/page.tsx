@@ -206,7 +206,7 @@ export default function WalletPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">Chưa có giao dịch</h3>
                 <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  Bạn chưa có giao dịch nào. Hãy nạp tiền để sử dụng các dịch vụ kiểm định bài đăng.
+                  Bạn chưa có giao dịch nào. Hãy nạp tiền để thanh toán phí đăng bài và các dịch vụ nâng cao.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
@@ -250,7 +250,7 @@ export default function WalletPage() {
                 <li className="flex items-start gap-3 p-3 bg-white rounded-lg border border-[#048C73]/10">
                   <CheckCircle className="h-5 w-5 text-[#048C73] flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-gray-700 font-medium">
-                    Thanh toán phí kiểm định bài đăng
+                    Thanh toán phí đăng bài & duyệt hồ sơ
                   </span>
                 </li>
                 <li className="flex items-start gap-3 p-3 bg-white rounded-lg border border-[#048C73]/10">

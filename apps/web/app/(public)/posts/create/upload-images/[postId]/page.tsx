@@ -3,12 +3,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { getPostById, uploadPostImages } from '@/lib/api/postApi';
+import { getPostById, uploadPostImages, uploadPostDocuments, getPostDocuments } from '@/lib/api/postApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, X, Image as ImageIcon, Loader2, CheckCircle } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { PostDocumentType } from '@/types/post';
+import { Badge } from '@/components/ui/badge';
+
+const DOCUMENT_LABELS: Record<PostDocumentType, string> = {
+  REGISTRATION: 'Cà vẹt / Đăng ký',
+  VEHICLE_PAPER: 'Giấy tờ xe',
+  OWNERSHIP: 'Giấy chứng nhận sở hữu',
+  INSURANCE: 'Bảo hiểm',
+  OTHER: 'Khác',
+};
 
 export default function UploadImagesPage() {
   const params = useParams();
@@ -18,15 +29,30 @@ export default function UploadImagesPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [documentType, setDocumentType] = useState<PostDocumentType>('REGISTRATION');
+  const [selectedDocFiles, setSelectedDocFiles] = useState<File[]>([]);
+  const [docPreviewUrls, setDocPreviewUrls] = useState<string[]>([]);
+  const [isUploadingDocs, setIsUploadingDocs] = useState(false);
 
   // Fetch post data
   const {
     data: post,
     isLoading: isLoadingPost,
     error: postError,
+    refetch: refetchPost,
   } = useQuery({
     queryKey: ['post', postId],
     queryFn: () => getPostById(postId),
+    enabled: !!postId,
+  });
+
+  const {
+    data: documents,
+    isLoading: isLoadingDocuments,
+    refetch: refetchDocuments,
+  } = useQuery({
+    queryKey: ['post-documents', postId],
+    queryFn: () => getPostDocuments(postId),
     enabled: !!postId,
   });
 
@@ -82,6 +108,68 @@ export default function UploadImagesPage() {
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleDocumentFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (selectedDocFiles.length + files.length > 5) {
+      toast.error('Chỉ được chọn tối đa 5 giấy tờ mỗi lần tải lên');
+      return;
+    }
+
+    const validFiles = files.filter((file) => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} không phải là tệp hình ảnh`);
+        return false;
+      }
+      if (file.size > 4 * 1024 * 1024) {
+        toast.error(`${file.name} vượt quá kích thước 4MB`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
+    setSelectedDocFiles((prev) => [...prev, ...validFiles]);
+    setDocPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+  };
+
+  const removeDocumentPreview = (index: number) => {
+    if (docPreviewUrls[index]) {
+      URL.revokeObjectURL(docPreviewUrls[index]);
+    }
+
+    setSelectedDocFiles((prev) => prev.filter((_, i) => i !== index));
+    setDocPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadDocuments = async () => {
+    if (selectedDocFiles.length === 0) {
+      toast.error('Vui lòng chọn ít nhất 1 giấy tờ');
+      return;
+    }
+
+    setIsUploadingDocs(true);
+    try {
+      await uploadPostDocuments(postId, selectedDocFiles, documentType);
+      toast.success('Tải giấy tờ thành công!');
+      docPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+      setSelectedDocFiles([]);
+      setDocPreviewUrls([]);
+      await refetchDocuments();
+    } catch (error: unknown) {
+      console.error('Failed to upload documents:', error);
+      type ApiError = { response?: { data?: { message?: string } }; message?: string };
+      const err = error as ApiError;
+      const errorMessage = err?.response?.data?.message || err?.message || 'Tải giấy tờ thất bại';
+      toast.error(`Tải giấy tờ thất bại: ${errorMessage}`);
+    } finally {
+      setIsUploadingDocs(false);
+    }
+  };
+
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
       toast.error('Vui lòng chọn ít nhất 1 hình ảnh');
@@ -93,9 +181,10 @@ export default function UploadImagesPage() {
     try {
       await uploadPostImages(postId, selectedFiles);
       toast.success('Tải ảnh lên thành công!');
-
-      // Redirect to my posts page
-      router.push(`/my-posts`);
+      await refetchPost();
+      setSelectedFiles([]);
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+      setPreviewUrls([]);
     } catch (error: unknown) {
       console.error('Failed to upload images:', error);
       type ApiError = { response?: { data?: { message?: string } }; message?: string };
@@ -154,8 +243,8 @@ export default function UploadImagesPage() {
                 <div>
                   <h3 className="font-semibold text-green-900 mb-1">Thanh toán thành công!</h3>
                   <p className="text-sm text-green-700">
-                    Bài đăng của bạn đã được tạo và đang chờ phê duyệt. Vui lòng tải ảnh lên để hoàn
-                    tất.
+                    Bài đăng của bạn đang chờ phê duyệt. Hãy tải ảnh và giấy tờ xe để đội ngũ kiểm
+                    duyệt xử lý nhanh hơn.
                   </p>
                 </div>
               </div>
@@ -335,6 +424,179 @@ export default function UploadImagesPage() {
               </p>
             </CardContent>
           </Card>
+
+          {/* Document Upload Section */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Giấy tờ xe (bắt buộc)
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                Các giấy tờ như cà vẹt, đăng ký xe, bảo hiểm sẽ chỉ hiển thị với quản trị viên.
+                Bạn có thể làm mờ thông tin nhạy cảm trước khi tải lên.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {isLoadingDocuments ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Đang tải giấy tờ hiện có...
+                </div>
+              ) : documents && documents.length > 0 ? (
+                <div>
+                  <h4 className="text-sm font-medium mb-3">
+                    Giấy tờ đã tải ({documents.length})
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="space-y-2">
+                        <div className="relative aspect-[4/3] rounded-lg overflow-hidden border">
+                          <Image
+                            src={doc.url}
+                            alt={DOCUMENT_LABELS[doc.documentType] || doc.documentType}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <Badge variant="outline" className="text-xs w-fit">
+                          {DOCUMENT_LABELS[doc.documentType] || doc.documentType}
+                        </Badge>
+                        <p className="text-[11px] text-muted-foreground">
+                          {new Date(doc.uploadedAt).toLocaleString('vi-VN')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="border border-dashed border-gray-300 rounded-lg p-4 text-sm text-muted-foreground">
+                  Chưa có giấy tờ nào. Vui lòng tải ít nhất 1 giấy tờ xe để bài đăng được duyệt.
+                </div>
+              )}
+
+              <div className="grid gap-4">
+                <div>
+                  <p className="text-sm font-medium mb-2">Loại giấy tờ</p>
+                  <Select
+                    value={documentType}
+                    onValueChange={(value) => setDocumentType(value as PostDocumentType)}
+                  >
+                    <SelectTrigger className="w-full sm:w-72">
+                      <SelectValue placeholder="Chọn loại giấy tờ" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(DOCUMENT_LABELS).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input
+                    id="document-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleDocumentFileSelect}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="document-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    <Shield className="h-8 w-8 text-gray-400" />
+                    <span className="font-semibold text-gray-700">Chọn giấy tờ</span>
+                    <span className="text-xs text-muted-foreground">
+                      PNG, JPG, JPEG (tối đa 4MB mỗi ảnh)
+                    </span>
+                  </label>
+                </div>
+
+                {docPreviewUrls.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">
+                      Đã chọn {selectedDocFiles.length} giấy tờ (
+                      {DOCUMENT_LABELS[documentType]})
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {docPreviewUrls.map((url, index) => (
+                        <div key={url} className="relative group aspect-[4/3]">
+                          <Image
+                            src={url}
+                            alt={`Document preview ${index + 1}`}
+                            fill
+                            className="object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeDocumentPreview(index)}
+                            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            disabled={isUploadingDocs}
+                            aria-label="Xóa giấy tờ"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={handleUploadDocuments}
+                    disabled={isUploadingDocs || selectedDocFiles.length === 0}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {isUploadingDocs ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang tải giấy tờ...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Tải {selectedDocFiles.length} giấy tờ
+                      </>
+                    )}
+                  </Button>
+                  {selectedDocFiles.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        docPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+                        setSelectedDocFiles([]);
+                        setDocPreviewUrls([]);
+                      }}
+                      disabled={isUploadingDocs}
+                    >
+                      Xóa lựa chọn
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {documents && documents.length > 0
+                ? 'Bạn có thể cập nhật giấy tờ bất cứ lúc nào trong trang quản lý tin đăng.'
+                : 'Bạn cần tải ít nhất 1 giấy tờ xe để bài đăng được duyệt.'}
+            </p>
+            <Button
+              onClick={() => router.push('/my-posts')}
+              disabled={!documents || documents.length === 0}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Hoàn tất
+            </Button>
+          </div>
         </div>
       </div>
     </div>

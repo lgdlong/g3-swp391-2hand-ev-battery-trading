@@ -7,4 +7,3 @@ export { default as RejectReasonDialog } from './reject-reason-dialog';
 export { default as EmptyState } from './empty-state';
 export { default as PostListSkeleton } from './post-list-skeleton';
 export { default as Pagination } from './pagination';
-export { PaymentDialog } from './payment-dialog';

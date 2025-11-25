@@ -44,9 +44,6 @@ export class AdminStatisticsService {
     const walletTopupService = await this.serviceTypeRepo.findOne({
       where: { code: 'WALLET_TOPUP' },
     });
-    const postVerificationService = await this.serviceTypeRepo.findOne({
-      where: { code: 'POST_VERIFICATION' },
-    });
 
     // Get total topup amount
     const topupResult = await this.walletTransactionRepo
@@ -74,22 +71,8 @@ export class AdminStatisticsService {
 
     const totalDepositCollected = depositResult?.total || '0';
 
-    // Get total verification fees
-    const verificationResult = await this.walletTransactionRepo
-      .createQueryBuilder('wt')
-      .select('SUM(ABS(CAST(wt.amount AS DECIMAL)))', 'total')
-      .where('wt.service_type_id = :serviceTypeId', {
-        serviceTypeId: postVerificationService?.id,
-      })
-      .andWhere('CAST(wt.amount AS DECIMAL) < 0')
-      .getRawOne();
-
-    const totalVerificationFees = verificationResult?.total || '0';
-
     // Calculate total fees collected
-    const totalFeesCollected = (
-      Number.parseFloat(totalDepositCollected) + Number.parseFloat(totalVerificationFees)
-    ).toString();
+    const totalFeesCollected = Number.parseFloat(totalDepositCollected).toString();
 
     // Get total refund amount (from wallet transactions with positive amounts after post creation)
     // This would need to track refund transactions specifically
@@ -108,7 +91,6 @@ export class AdminStatisticsService {
       totalTransactions,
       totalFeesCollected,
       totalDepositCollected,
-      totalVerificationFees,
       totalRefundAmount,
       netRevenue,
     };
@@ -176,18 +158,10 @@ export class AdminStatisticsService {
     const walletTopupService = await this.serviceTypeRepo.findOne({
       where: { code: 'WALLET_TOPUP' },
     });
-    const postVerificationService = await this.serviceTypeRepo.findOne({
-      where: { code: 'POST_VERIFICATION' },
-    });
 
     // Total topup transactions
     const totalTopups = await this.walletTransactionRepo.count({
       where: { serviceTypeId: walletTopupService?.id },
-    });
-
-    // Total verification transactions
-    const totalVerifications = await this.walletTransactionRepo.count({
-      where: { serviceTypeId: postVerificationService?.id },
     });
 
     return {
@@ -195,7 +169,6 @@ export class AdminStatisticsService {
       transactionsToday,
       totalPostPayments,
       totalTopups,
-      totalVerifications,
     };
   }
 

@@ -10,6 +10,8 @@ interface PostDetailActionsProps {
   onClose: () => void;
   isApproving?: boolean;
   isRejecting?: boolean;
+  canApprove?: boolean;
+  approveDisabledReason?: string;
 }
 
 export function PostDetailActions({
@@ -20,6 +22,8 @@ export function PostDetailActions({
   onClose,
   isApproving = false,
   isRejecting = false,
+  canApprove = true,
+  approveDisabledReason,
 }: PostDetailActionsProps) {
   return (
     <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 -mx-6 mt-8">
@@ -32,15 +36,22 @@ export function PostDetailActions({
                   onApprove(postId);
                   onClose();
                 }}
-                disabled={isApproving}
+                disabled={isApproving || !canApprove}
                 size="lg"
                 className="bg-green-50 hover:bg-green-100 text-green-700 hover:text-green-800 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3 px-8"
               >
                 <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
                   <Check className="w-3 h-3 text-green-600" />
                 </div>
-                {isApproving ? 'Đang duyệt...' : 'Duyệt bài đăng'}
+                {isApproving
+                  ? 'Đang duyệt...'
+                  : canApprove
+                    ? 'Duyệt bài đăng'
+                    : 'Thiếu giấy tờ'}
               </Button>
+              {!canApprove && approveDisabledReason && (
+                <p className="text-xs text-red-500">{approveDisabledReason}</p>
+              )}
               <RejectDialog
                 onReject={async (reason: string) => {
                   await onReject(postId, reason);

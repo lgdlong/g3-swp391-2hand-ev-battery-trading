@@ -14,6 +14,7 @@ import type {
   DeletePostResponse,
   ArchivePostResponse,
 } from '@/types/api/post';
+import type { PostDocument, PostDocumentType } from '@/types/post';
 
 // Re-export types for backward compatibility
 export type {
@@ -440,6 +441,54 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
       }
     }
   }
+}
+
+/**
+ * Upload confidential vehicle documents for a post
+ * These images are only visible to admins and the post owner
+ */
+export async function uploadPostDocuments(
+  postId: string,
+  files: File[],
+  documentType: PostDocumentType,
+): Promise<PostDocument[]> {
+  if (!files || files.length === 0) {
+    throw new Error('No files provided for upload');
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic'];
+  const maxSize = 4 * 1024 * 1024; // 4MB per file
+
+  files.forEach((file, index) => {
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`File ${index + 1} (${file.name}) is not a supported image type`);
+    }
+    if (file.size > maxSize) {
+      throw new Error(`File ${index + 1} (${file.name}) is too large (max 4MB)`);
+    }
+  });
+
+  const formData = new FormData();
+  formData.append('documentType', documentType);
+  files.forEach((file) => formData.append('files', file, file.name));
+
+  const { data } = await api.post<{ documents: PostDocument[] }>(
+    `/posts/${postId}/documents`,
+    formData,
+    { headers: getAuthHeaders() },
+  );
+
+  return data?.documents ?? [];
+}
+
+/**
+ * Fetch confidential vehicle documents for a post (owner or admin only)
+ */
+export async function getPostDocuments(postId: string): Promise<PostDocument[]> {
+  const { data } = await api.get<{ documents: PostDocument[] }>(`/posts/${postId}/documents`, {
+    headers: getAuthHeaders(),
+  });
+  return data?.documents ?? [];
 }
 
 // ==================== BIKE SPECIFIC API FUNCTIONS ====================

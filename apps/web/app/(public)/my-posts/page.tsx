@@ -17,7 +17,6 @@ import PostDetailDialog from './_components/post-detail-dialog';
 import DeleteConfirmDialog from './_components/delete-confirm-dialog';
 import ArchiveConfirmDialog from './_components/archive-confirm-dialog';
 import RejectReasonDialog from './_components/reject-reason-dialog';
-import VerificationRejectReasonDialog from './_components/verification-reject-reason-dialog';
 import EmptyState from './_components/empty-state';
 import PostListSkeleton from './_components/post-list-skeleton';
 
@@ -48,12 +47,6 @@ export default function MyPostsPage() {
   const [postToView, setPostToView] = useState<Post | null>(null);
   const [rejectReasonDialogOpen, setRejectReasonDialogOpen] = useState(false);
   const [postForRejectReason, setPostForRejectReason] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
-  const [verificationRejectReasonDialogOpen, setVerificationRejectReasonDialogOpen] =
-    useState(false);
-  const [postForVerificationRejectReason, setPostForVerificationRejectReason] = useState<{
     id: string;
     title: string;
   } | null>(null);
@@ -267,14 +260,12 @@ export default function MyPostsPage() {
     setRejectReasonDialogOpen(true);
   };
 
-  const handleViewVerificationRejectReason = (postId: string, postTitle: string) => {
-    setPostForVerificationRejectReason({ id: postId, title: postTitle });
-    setVerificationRejectReasonDialogOpen(true);
-  };
-
   const handleArchive = (postId: string, postTitle: string) => {
     setPostToArchive({ id: postId, title: postTitle });
     setArchiveDialogOpen(true);
+  };
+  const handleUploadDocuments = (postId: string) => {
+    router.push(`/posts/create/upload-images/${postId}`);
   };
 
   const confirmArchive = () => {
@@ -406,7 +397,7 @@ export default function MyPostsPage() {
                           onPayment={handlePayment}
                           onArchive={handleArchive}
                           onViewRejectReason={handleViewRejectReason}
-                          onViewVerificationRejectReason={handleViewVerificationRejectReason}
+                          onUploadDocuments={handleUploadDocuments}
                         />
                       </div>
                     ))}
@@ -438,12 +429,6 @@ export default function MyPostsPage() {
           onOpenChange={setRejectReasonDialogOpen}
           postId={postForRejectReason?.id || ''}
           postTitle={postForRejectReason?.title || ''}
-        />
-        <VerificationRejectReasonDialog
-          open={verificationRejectReasonDialogOpen}
-          onOpenChange={setVerificationRejectReasonDialogOpen}
-          postId={postForVerificationRejectReason?.id || ''}
-          postTitle={postForVerificationRejectReason?.title || ''}
         />
       </div>
     </TooltipProvider>

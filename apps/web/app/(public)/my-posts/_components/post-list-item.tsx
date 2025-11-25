@@ -1,10 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Edit, Trash2, Eye, Package, AlertCircle, Coins, Archive } from 'lucide-react';
+import { Edit, Trash2, Eye, Package, Coins, Archive, Shield } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
-import { VerificationBadge } from '@/components/VerificationBadge';
-import { RequestVerificationButton } from './RequestVerificationButton';
 
 interface PostListItemProps {
   post: Post;
@@ -15,7 +13,7 @@ interface PostListItemProps {
   onPayment?: (postId: string) => void;
   onArchive?: (postId: string, postTitle: string) => void;
   onViewRejectReason?: (postId: string, postTitle: string) => void;
-  onViewVerificationRejectReason?: (postId: string, postTitle: string) => void;
+  onUploadDocuments?: (postId: string) => void;
 }
 
 const formatPrice = (priceVnd: string): string => {
@@ -98,7 +96,7 @@ export default function PostListItem({
   onPayment,
   onArchive,
   onViewRejectReason,
-  onViewVerificationRejectReason,
+  onUploadDocuments,
 }: PostListItemProps) {
   // Get the first image URL
   const firstImageUrl =
@@ -119,9 +117,10 @@ export default function PostListItem({
       ? (post.districtNameCached as { value?: string })?.value
       : (post.districtNameCached as string);
 
-  // Check if verification was rejected
-  const isVerificationRejected =
-    post.status === 'PUBLISHED' && post.verificationRequest?.status === 'REJECTED';
+  const documentsCount = typeof post.documentsCount === 'number' ? post.documentsCount : 0;
+  const needsDocuments = documentsCount === 0;
+  const canUploadDocuments =
+    post.status === 'DRAFT' || post.status === 'PENDING_REVIEW' || post.status === 'REJECTED';
 
   return (
     <div className="transition-colors hover:bg-muted/50">
@@ -131,40 +130,28 @@ export default function PostListItem({
         </div>
 
         <div className="flex flex-1 flex-col justify-between gap-2 min-w-0">
-          {/* Verification Rejection Alert - inside the post box */}
-          {isVerificationRejected && (
-            <div className="mb-2 p-3 border border-orange-200 bg-orange-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-orange-600" />
-                <span className="font-medium text-orange-800 text-sm">
-                  Yêu cầu kiểm định đã bị từ chối
-                </span>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-orange-600 hover:text-orange-800 ml-2 text-xs"
-                  onClick={() => onViewVerificationRejectReason?.(post.id, post.title)}
-                >
-                  Xem lý do
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Title and Status Badge */}
           <div className="flex items-start justify-between gap-3">
             <h3 className="font-medium text-base line-clamp-2 flex-1">{post.title}</h3>
-            {post.verificationRequest?.status === 'APPROVED' && <VerificationBadge />}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant={getStatusBadgeVariant(post.status)} className="shrink-0">
-                  {getStatusLabel(post.status)}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{getStatusTooltip(post.status)}</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="flex flex-col items-end gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant={getStatusBadgeVariant(post.status)} className="shrink-0">
+                    {getStatusLabel(post.status)}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getStatusTooltip(post.status)}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Badge
+                variant={needsDocuments ? 'destructive' : 'secondary'}
+                className="flex items-center gap-1 text-xs"
+              >
+                <Shield className="h-3 w-3" />
+                {needsDocuments ? 'Thiếu giấy tờ' : `Giấy tờ: ${documentsCount}`}
+              </Badge>
+            </div>
           </div>
 
           {/* Price, Location, Date */}
@@ -205,6 +192,25 @@ export default function PostListItem({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Thanh toán để đăng bài</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {canUploadDocuments && onUploadDocuments && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                    onClick={() => onUploadDocuments(post.id)}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Giấy tờ
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Bổ sung giấy tờ xe để duyệt nhanh hơn</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -290,9 +296,6 @@ export default function PostListItem({
                 </TooltipContent>
               </Tooltip>
             )}
-
-            {/* Verification Button - visible for PUBLISHED posts */}
-            {post.status === 'PUBLISHED' && <RequestVerificationButton post={post as any} />}
 
             {/* View reject reason */}
             {post.status === 'REJECTED' && (

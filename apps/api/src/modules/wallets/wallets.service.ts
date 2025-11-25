@@ -292,7 +292,6 @@ export class WalletsService {
   private getServiceTypeName(code: string): string {
     const names: Record<string, string> = {
       WALLET_TOPUP: 'Nạp tiền vào ví',
-      POST_VERIFICATION: 'Phí kiểm định bài đăng',
       POST_PAYMENT: 'Thanh toán đăng bài',
       ADJUSTMENT: 'Điều chỉnh số dư',
     };
@@ -305,7 +304,6 @@ export class WalletsService {
   private getServiceTypeDescription(code: string): string {
     const descriptions: Record<string, string> = {
       WALLET_TOPUP: 'Nạp tiền vào ví qua PayOS',
-      POST_VERIFICATION: 'Thanh toán phí để yêu cầu kiểm định bài đăng',
       POST_PAYMENT: 'Thanh toán phí để đăng bài tin',
       ADJUSTMENT: 'Admin điều chỉnh số dư ví của user',
     };

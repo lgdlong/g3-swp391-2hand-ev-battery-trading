@@ -20,6 +20,24 @@ export type PostStatus =
 /** Origin type for vehicles */
 export type PostOrigin = 'NOI_DIA' | 'NHAP_KHAU';
 
+/** Post document type enum matching backend */
+export type PostDocumentType =
+  | 'REGISTRATION'
+  | 'VEHICLE_PAPER'
+  | 'OWNERSHIP'
+  | 'INSURANCE'
+  | 'OTHER';
+
+export interface PostDocument {
+  id: string;
+  documentType: PostDocumentType;
+  url: string;
+  publicId: string;
+  width: number;
+  height: number;
+  uploadedAt: string;
+}
+
 // ===== Vehicle Detail Enums =====
 
 /** Car body style types */
@@ -207,13 +225,7 @@ export interface PostUI {
   updatedAt: string;
   submittedAt?: string;
   reviewedAt?: string;
-  // Verification data from relation
-  verificationRequest?: {
-    status: 'PENDING' | 'APPROVED' | 'REJECTED';
-    requestedAt: string;
-    reviewedAt?: string;
-    rejectReason?: string;
-  };
+  documentsCount?: number;
 }
 
 // ===== Main Post Interface =====
@@ -246,13 +258,7 @@ export interface Post {
   updatedAt: string;
   submittedAt: FlexibleField;
   reviewedAt: FlexibleField;
-  // Verification data from relation
-  verificationRequest?: {
-    status: 'PENDING' | 'APPROVED' | 'REJECTED';
-    requestedAt: string;
-    reviewedAt?: string;
-    rejectReason?: string;
-  };
+  documentsCount?: number;
 }
 
 // ===== Legacy/Alternative Interfaces =====

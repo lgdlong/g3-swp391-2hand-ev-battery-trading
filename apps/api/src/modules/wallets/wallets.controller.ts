@@ -110,7 +110,7 @@ export class WalletsController {
     summary: 'Deduct money from current user wallet',
     description:
       'Deduct funds from the authenticated user wallet with detailed transaction tracking. ' +
-      'Supports various service types (POST_PAYMENT, POST_VERIFICATION, etc.) and entity references. ' +
+      'Supports various service types (POST_PAYMENT, WALLET_TOPUP, etc.) and entity references. ' +
       'The serviceTypeCode parameter is optional - if not provided, defaults to generic deduction.',
   })
   @ApiResponse({

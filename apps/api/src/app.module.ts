@@ -13,7 +13,6 @@ import { PostsModule } from './modules/posts/posts.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { PostBookmarksModule } from './modules/post-bookmarks/post-bookmarks.module';
 import { AddressModule } from './modules/address/address.module';
-import { VerifyPostModule } from './modules/verifyPost/verify-post.module';
 import { PostReviewModule } from './modules/post-review/post-review.module';
 import { PayosModule } from './modules/payos/payos.module';
 import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
@@ -73,7 +72,6 @@ import { AdminStatisticsModule } from './modules/admin-statistics/admin-statisti
     UploadModule,
     PostBookmarksModule,
     AddressModule,
-    VerifyPostModule,
     PostReviewModule,
     PayosModule,
     PostRatingModule,

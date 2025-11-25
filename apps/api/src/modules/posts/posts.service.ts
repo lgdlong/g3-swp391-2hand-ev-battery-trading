@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository, DataSource } from 'typeorm';
 import { Post } from './entities/post.entity';
@@ -14,6 +14,7 @@ import { PostsQueryDto } from './dto/posts-query.dto';
 import { PostMapper } from './mappers/post.mapper';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PostImage } from './entities/post-image.entity';
+import { PostDocument } from './entities/post-document.entity';
 import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { PostImageResponseDto } from './dto/post-image-response.dto';
@@ -30,9 +31,23 @@ import { WalletsService } from '../wallets/wallets.service';
 import { FeeTierService } from '../settings/service/fee-tier.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
+import { PostDocumentResponseDto } from './dto/post-document-response.dto';
+import { PostDocumentType } from '../../shared/enums/post-document-type.enum';
+import type { AuthUser } from '../../core/guards/roles.guard';
+import { AccountRole } from '../../shared/enums/account-role.enum';
 
 // Union type for all post creation DTOs
 type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
+
+interface CreateDocumentUploadDto {
+  public_id: string;
+  url: string;
+  width: number;
+  height: number;
+  bytes: number;
+  format: string | null;
+  documentType: PostDocumentType;
+}
 
 @Injectable()
 export class PostsService {
@@ -42,14 +57,12 @@ export class PostsService {
   private readonly BATTERY_DETAILS = 'batteryDetails';
   private readonly SELLER = 'seller';
   private readonly IMAGES = 'images';
-  private readonly VERIFICATION_REQUEST = 'verificationRequest';
   private readonly POST_FULL_RELATIONS = [
     this.CAR_DETAILS,
     this.BIKE_DETAILS,
     this.BATTERY_DETAILS,
     this.SELLER,
     this.IMAGES,
-    this.VERIFICATION_REQUEST,
   ];
 
   constructor(
@@ -57,6 +70,8 @@ export class PostsService {
     private readonly postsRepo: Repository<Post>,
     @InjectRepository(PostImage)
     private readonly imagesRepo: Repository<PostImage>,
+    @InjectRepository(PostDocument)
+    private readonly documentsRepo: Repository<PostDocument>,
     private readonly bikeDetailsService: BikeDetailsService,
     private readonly carDetailsService: CarDetailsService,
     private readonly batteryDetailsService: BatteryDetailsService,
@@ -170,7 +185,9 @@ export class PostsService {
       throw new NotFoundException('Không tìm thấy bài đăng sau khi cập nhật');
     }
 
-    return PostMapper.toBasePostResponseDto(updatedPost);
+    const dto = PostMapper.toBasePostResponseDto(updatedPost);
+    await this.hydrateDocumentCounts([dto]);
+    return dto;
   }
 
   /**
@@ -287,7 +304,7 @@ export class PostsService {
         postType: PostType.EV_CAR,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
+      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -308,7 +325,7 @@ export class PostsService {
         postType: PostType.EV_BIKE,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
+      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -368,7 +385,7 @@ export class PostsService {
         postType: PostType.BATTERY,
         status: DISPLAYABLE_POST_STATUS,
       },
-      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
+      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -422,12 +439,79 @@ export class PostsService {
     }
   }
 
+  async addDocuments(
+    postId: string,
+    userId: number,
+    documents: CreateDocumentUploadDto[],
+  ): Promise<PostDocumentResponseDto[]> {
+    if (!documents?.length) {
+      return [];
+    }
+
+    const post = await this.postsRepo.findOne({
+      where: { id: postId },
+      relations: [this.SELLER],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    if (post.seller.id !== userId) {
+      throw new BadRequestException('Bạn không có quyền tải giấy tờ cho bài đăng này');
+    }
+
+    const entities = documents.map((doc) =>
+      this.documentsRepo.create({
+        post_id: postId,
+        documentType: doc.documentType ?? PostDocumentType.VEHICLE_PAPER,
+        public_id: doc.public_id,
+        url: doc.url,
+        width: doc.width,
+        height: doc.height,
+        bytes: doc.bytes,
+        format: doc.format ?? null,
+      }),
+    );
+
+    const saved = await this.documentsRepo.save(entities);
+    return saved.map((document) => this.toDocumentResponse(document));
+  }
+
   async listImages(postId: string): Promise<PostImageResponseDto[]> {
     const images = await this.imagesRepo.find({
       where: { post_id: postId },
       order: { position: 'ASC', id: 'ASC' },
     });
     return PostImageMapper.toResponseDtoArray(images);
+  }
+
+  async listDocumentsForRequester(
+    postId: string,
+    requester: AuthUser,
+  ): Promise<PostDocumentResponseDto[]> {
+    const post = await this.postsRepo.findOne({
+      where: { id: postId },
+      relations: [this.SELLER],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    const isOwner = post.seller.id === requester.sub;
+    const isAdmin = requester.role === AccountRole.ADMIN;
+
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('Bạn không có quyền xem giấy tờ của bài đăng này');
+    }
+
+    const documents = await this.documentsRepo.find({
+      where: { post_id: postId },
+      order: { created_at: 'ASC', id: 'ASC' },
+    });
+
+    return documents.map((document) => this.toDocumentResponse(document));
   }
 
   async getPostsByUserId(userId: number, query: PostsQueryDto): Promise<BasePostResponseDto[]> {
@@ -465,7 +549,9 @@ export class PostsService {
       skip: offset,
     });
 
-    return PostMapper.toBasePostResponseDtoArray(rows);
+    const dtos = PostMapper.toBasePostResponseDtoArray(rows);
+    await this.hydrateDocumentCounts(dtos);
+    return dtos;
   }
 
   async getPostById(id: string): Promise<BasePostResponseDto> {
@@ -478,7 +564,9 @@ export class PostsService {
       throw new NotFoundException('Post not found');
     }
 
-    return PostMapper.toBasePostResponseDto(post);
+    const dto = PostMapper.toBasePostResponseDto(post);
+    await this.hydrateDocumentCounts([dto]);
+    return dto;
   }
 
   async getAllPostsForAdmin(query: AdminListPostsQueryDto): Promise<{
@@ -527,8 +615,11 @@ export class PostsService {
     const limit = query.limit || 20;
     const totalPages = Math.ceil(total / limit);
 
+    const data = PostMapper.toBasePostResponseDtoArray(rows);
+    await this.hydrateDocumentCounts(data);
+
     return {
-      data: PostMapper.toBasePostResponseDtoArray(rows),
+      data,
       total,
       page,
       limit,
@@ -549,11 +640,24 @@ export class PostsService {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
+    if (post.status !== PostStatus.PENDING_REVIEW) {
+      throw new BadRequestException('Chỉ có thể duyệt bài đăng ở trạng thái PENDING_REVIEW');
+    }
+
+    const documentCount = await this.documentsRepo.count({ where: { post_id: id } });
+    if (documentCount === 0) {
+      throw new BadRequestException(
+        'Bài đăng chưa có giấy tờ xe phục vụ kiểm duyệt. Vui lòng yêu cầu người bán bổ sung cà vẹt/giấy tờ xe.',
+      );
+    }
+
     post.status = DISPLAYABLE_POST_STATUS;
     post.reviewedAt = new Date();
     await this.postsRepo.save(post);
 
-    return PostMapper.toBasePostResponseDto(post);
+    const dto = PostMapper.toBasePostResponseDto(post);
+    dto.documentsCount = documentCount;
+    return dto;
   }
 
   /**
@@ -589,7 +693,9 @@ export class PostsService {
       action: ReviewActionEnum.REJECTED,
     });
 
-    return PostMapper.toBasePostResponseDto(post);
+    const dto = PostMapper.toBasePostResponseDto(post);
+    await this.hydrateDocumentCounts([dto]);
+    return dto;
   }
 
   async deletePostById(id: string, userId: number): Promise<Date> {
@@ -772,6 +878,38 @@ export class PostsService {
         message:
           'Bài viết đã được thu hồi. Yêu cầu hoàn phí (nếu đủ điều kiện) sẽ được xử lý tự động.',
       };
+    });
+  }
+
+  private toDocumentResponse(document: PostDocument): PostDocumentResponseDto {
+    const dto = new PostDocumentResponseDto();
+    dto.id = document.id;
+    dto.documentType = document.documentType;
+    dto.url = document.url;
+    dto.publicId = document.public_id;
+    dto.width = document.width;
+    dto.height = document.height;
+    dto.uploadedAt = document.created_at;
+    return dto;
+  }
+
+  private async hydrateDocumentCounts(dtos: BasePostResponseDto[]): Promise<void> {
+    if (!dtos.length) {
+      return;
+    }
+
+    const ids = dtos.map((dto) => String(dto.id));
+    const rows = await this.documentsRepo
+      .createQueryBuilder('doc')
+      .select('doc.post_id', 'postId')
+      .addSelect('COUNT(doc.id)', 'count')
+      .where('doc.post_id IN (:...ids)', { ids })
+      .groupBy('doc.post_id')
+      .getRawMany<{ postId: string; count: string }>();
+
+    const map = new Map(rows.map((row) => [String(row.postId), Number(row.count)]));
+    dtos.forEach((dto) => {
+      dto.documentsCount = map.get(String(dto.id)) ?? 0;
     });
   }
 }

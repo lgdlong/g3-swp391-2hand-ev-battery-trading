@@ -55,6 +55,8 @@ import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 import { DeletePostResponseDto } from './dto/delete-post-response.dto';
 import { DeductPostFeeDto } from './dto/deduct-post-fee.dto';
 import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
+import { PostDocumentType } from '../../shared/enums/post-document-type.enum';
+import { PostDocumentResponseDto } from './dto/post-document-response.dto';
 
 @ApiTags('posts')
 @ApiExtraModels(
@@ -62,6 +64,7 @@ import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
   CarDetailsResponseDto,
   BikeDetailsResponseDto,
   BatteryDetailResponseDto,
+  PostDocumentResponseDto,
 )
 @Controller('posts')
 export class PostsController {
@@ -466,6 +469,109 @@ export class PostsController {
     await this.postsService.addImages(postId, uploaded);
 
     return { images: uploaded };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @Post(':postId/documents')
+  @ApiOperation({ summary: 'Upload giấy tờ xe phục vụ kiểm duyệt (người bán)' })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'postId', type: String, example: '123' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Tải tối đa 5 giấy tờ, field name: files; chọn documentType nếu cần',
+    schema: {
+      type: 'object',
+      properties: {
+        documentType: {
+          type: 'string',
+          enum: Object.values(PostDocumentType),
+          example: PostDocumentType.VEHICLE_PAPER,
+        },
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+      required: ['files'],
+    },
+  })
+  @ApiOkResponse({
+    description: 'Danh sách giấy tờ đã upload',
+    schema: {
+      type: 'object',
+      properties: {
+        documents: {
+          type: 'array',
+          items: { $ref: getSchemaPath(PostDocumentResponseDto) },
+        },
+      },
+    },
+  })
+  @UseInterceptors(MultipleImageUploadInterceptor(5))
+  async uploadPostDocuments(
+    @Param('postId') postId: string,
+    @User() user: AuthUser,
+    @UploadedFiles() files?: Express.Multer.File[],
+    @Body('documentType') documentType?: string,
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No files provided');
+    }
+
+    if (!postId || isNaN(+postId)) {
+      throw new BadRequestException('Invalid postId');
+    }
+
+    const normalizedTypeInput = typeof documentType === 'string' ? documentType.toUpperCase() : undefined;
+    const allowedTypes = Object.values(PostDocumentType) as string[];
+    const normalizedType = allowedTypes.includes(normalizedTypeInput ?? '')
+      ? (normalizedTypeInput as PostDocumentType)
+      : PostDocumentType.VEHICLE_PAPER;
+
+    const uploaded = await Promise.all(
+      files.map(async (file) => {
+        const res = await this.uploadService.uploadImage(file, {
+          folder: `posts/${postId}/documents`,
+        });
+        return {
+          public_id: res.public_id,
+          url: res.secure_url,
+          width: res.width,
+          height: res.height,
+          bytes: res.bytes,
+          format: res.format ?? null,
+          documentType: normalizedType,
+        };
+      }),
+    );
+
+    const documents = await this.postsService.addDocuments(postId, user.sub, uploaded);
+
+    return { documents };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN, AccountRole.USER)
+  @Get(':postId/documents')
+  @ApiOperation({ summary: 'Xem giấy tờ xe (admin hoặc chủ bài đăng)' })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'postId', type: String, example: '123' })
+  @ApiOkResponse({
+    description: 'Danh sách giấy tờ',
+    schema: {
+      type: 'object',
+      properties: {
+        documents: {
+          type: 'array',
+          items: { $ref: getSchemaPath(PostDocumentResponseDto) },
+        },
+      },
+    },
+  })
+  async getPostDocuments(@Param('postId') postId: string, @User() user: AuthUser) {
+    const documents = await this.postsService.listDocumentsForRequester(postId, user);
+    return { documents };
   }
 
   //-----------------------------------------
