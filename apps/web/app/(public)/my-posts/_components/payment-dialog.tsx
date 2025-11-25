@@ -218,64 +218,6 @@ export function PaymentDialog({
                   </Button>
                 )}
               </button>
-
-              {/* {selectedMethod === 'coin' && !hasEnoughCoins && !isLoadingWallet && (
-                <div className="px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                  <p className="font-medium">Số dư không đủ!</p>
-                  <p className="text-xs mt-1">
-                    Bạn cần nạp thêm {formatCurrency(totalAmount - currentCoins)} ₫ để thanh toán.
-                  </p>
-                </div>
-              )} */}
-
-              {/* Chuyển khoản ngân hàng */}
-              {/* <button
-                onClick={() => setSelectedMethod('bank')}
-                className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
-                  selectedMethod === 'bank'
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold">Chuyển khoản ngân hàng</p>
-                  </div>
-                </div>
-                {selectedMethod === 'bank' && (
-                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-white" />
-                  </div>
-                )}
-              </button> */}
-
-              {/* Ví MoMo */}
-              {/* <button
-                onClick={() => setSelectedMethod('momo')}
-                className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition-all ${
-                  selectedMethod === 'momo'
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center">
-                    <Wallet className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold">Ví MoMo</p>
-                    <p className="text-sm text-gray-600">Hướng dẫn tải và thanh toán</p>
-                  </div>
-                </div>
-                {selectedMethod === 'momo' && (
-                  <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                    <CheckCircle className="h-4 w-4 text-white" />
-                  </div>
-                )}
-              </button> */}
             </div>
           </div>
 
