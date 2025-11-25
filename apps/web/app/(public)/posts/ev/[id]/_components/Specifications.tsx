@@ -92,15 +92,13 @@ export function Specifications({ post }: SpecificationsProps) {
         </div>
 
         {/* Bundled Battery Section */}
-        {isCarPost && post.carDetails?.has_bundled_battery && (
+        {isCarPost && post.carDetails && post.carDetails.has_bundled_battery === true && (
           <div className="mt-8 pt-6 border-t">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
               <Battery className="h-5 w-5 text-blue-600" />
-              Thông tin pin kèm theo
+              Bao gồm pin điện
             </h3>
-            <p className="text-sm text-gray-600">
-              Xe này được bán kèm pin điện. Vui lòng liên hệ người bán để biết thêm chi tiết về pin.
-            </p>
+            <p className="text-sm text-gray-600">Xe này được bán kèm pin điện</p>
           </div>
         )}
       </CardContent>
