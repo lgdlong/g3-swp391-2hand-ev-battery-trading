@@ -46,13 +46,34 @@ export async function getMyWallet(): Promise<Wallet> {
   return data;
 }
 
+export interface PayosPaymentLinkResponse {
+  bin: string;
+  accountNumber: string;
+  accountName: string;
+  amount: number;
+  description: string;
+  orderCode: number;
+  currency: string;
+  paymentLinkId: string;
+  status: 'PENDING' | 'PROCESSING' | 'PAID' | 'CANCELLED';
+  checkoutUrl: string;
+  qrCode: string;
+}
+
+export interface PayosCreatePaymentResponse {
+  code: string;
+  desc: string;
+  data: PayosPaymentLinkResponse;
+  signature: string;
+}
+
 /**
  * Create topup payment link via PayOS
  */
 export async function createTopupPayment(
   payload: CreateTopupDto,
-): Promise<{ data?: { checkoutUrl?: string } }> {
-  const { data } = await api.post('/wallets/topup/payment', payload, {
+): Promise<PayosCreatePaymentResponse> {
+  const { data } = await api.post<PayosCreatePaymentResponse>('/wallets/topup/payment', payload, {
     headers: getAuthHeaders(),
   });
   return data;
@@ -101,6 +122,21 @@ export async function getTransactionById(id: number): Promise<WalletTransaction>
 export async function getTransactionByOrderCode(orderCode: string): Promise<WalletTransaction> {
   const { data } = await api.get<WalletTransaction>(
     `/wallets/transactions/orderCode/${orderCode}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * Verify and process topup payment
+ * Call this when returning from PayOS checkout to ensure payment is processed
+ */
+export async function verifyAndProcessTopup(orderCode: string): Promise<WalletTransaction> {
+  const { data } = await api.post<WalletTransaction>(
+    `/wallets/topup/verify/${orderCode}`,
+    {},
     {
       headers: getAuthHeaders(),
     },

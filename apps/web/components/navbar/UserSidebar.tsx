@@ -120,7 +120,7 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
                     <Wallet className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <p className="text-xs text-[#048C73] font-medium">Số dư coin</p>
+                    <p className="text-xs text-[#048C73] font-medium">Số dư ví</p>
                     <p className="text-sm font-bold text-[#048C73]">
                       {isLoadingWallet
                         ? 'Đang tải...'
@@ -136,7 +136,7 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
                 className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#048C73]/15 transition-colors w-full"
               >
                 <Plus className="h-4 w-4 text-gray-500" />
-                <span>Nạp coin</span>
+                <span>Nạp tiền</span>
               </button>
             </div>
 

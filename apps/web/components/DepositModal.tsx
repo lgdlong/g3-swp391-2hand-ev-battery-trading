@@ -88,16 +88,16 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
     return new Intl.NumberFormat('vi-VN').format(value);
   };
 
-  // Calculate deposit coin based on fee tier
-  const calculateDepositCoin = (): number => {
+  // Calculate deposit amount based on fee tier
+  const calculateDepositAmount = (): number => {
     if (!feeTier) return 0;
     const depositRate = parseFloat(feeTier.depositRate);
     return Math.round(priceVnd * depositRate);
   };
 
-  const depositCoin = calculateDepositCoin();
+  const depositAmount = calculateDepositAmount();
   const currentBalance = wallet ? parseFloat(wallet.balance) : 0;
-  const remainingBalance = currentBalance - depositCoin;
+  const remainingBalance = currentBalance - depositAmount;
 
   const handleDeposit = async () => {
     if (!user?.id) {
@@ -117,7 +117,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
 
       // Deduct wallet
       await deductWallet(user.id, {
-        amount: depositCoin,
+        amount: depositAmount,
         description: 'Trừ tiền phí đặt cọc đăng bài',
         paymentOrderId,
       });
@@ -182,7 +182,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
                   <div>
                     <p className="text-xs text-gray-600">Số dư hiện tại</p>
                     <p className="text-lg font-bold text-[#048C73]">
-                      {formatVND(currentBalance)} Coin
+                      {formatVND(currentBalance)} ₫
                     </p>
                   </div>
                 </div>
@@ -206,9 +206,9 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
                 )}
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between">
-                    <span className="text-sm font-medium text-gray-700">Số coin đặt cọc</span>
+                    <span className="text-sm font-medium text-gray-700">Số tiền đặt cọc</span>
                     <span className="text-lg font-bold text-amber-600">
-                      {formatVND(depositCoin)} Coin
+                      {formatVND(depositAmount)} ₫
                     </span>
                   </div>
                 </div>
@@ -222,7 +222,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
                   <div>
                     <p className="text-xs text-gray-600 mb-1">Số dư cần phải nạp</p>
                     <p className="text-xl font-bold text-red-600">
-                      {formatVND(Math.abs(remainingBalance))} Coin
+                      {formatVND(Math.abs(remainingBalance))} ₫
                     </p>
                   </div>
                 </div>
@@ -236,7 +236,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
                   <div>
                     <p className="text-xs text-gray-600 mb-1">Số dư còn lại sau khi trừ</p>
                     <p className="text-xl font-bold text-green-600">
-                      {formatVND(remainingBalance)} Coin
+                      {formatVND(remainingBalance)} ₫
                     </p>
                   </div>
                 </div>
@@ -247,7 +247,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
             {remainingBalance < 0 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center justify-between gap-3">
                 <p className="text-sm text-red-600 flex-1">
-                  ⚠️ Số dư ví không đủ để đặt cọc. Vui lòng nạp thêm coin.
+                  ⚠️ Số dư ví không đủ để đặt cọc. Vui lòng nạp thêm tiền.
                 </p>
                 <Button
                   onClick={() => setIsTopupModalOpen(true)}
@@ -255,7 +255,7 @@ export function DepositModal({ isOpen, onClose, priceVnd, onSuccess }: DepositMo
                   className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 text-sm font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   <Plus className="h-4 w-4 mr-1.5" />
-                  Nạp coin
+                  Nạp tiền
                 </Button>
               </div>
             )}

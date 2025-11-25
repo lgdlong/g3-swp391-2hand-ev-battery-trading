@@ -99,16 +99,16 @@ export default function PostPaymentPage() {
     return Math.round(postPrice * depositRate);
   })();
 
-  const currentCoins = wallet ? Number.parseFloat(wallet.balance) : 0;
-  const hasEnoughCoins = currentCoins >= depositFee;
+  const currentBalance = wallet ? Number.parseFloat(wallet.balance) : 0;
+  const hasEnoughBalance = currentBalance >= depositFee;
 
   // Check if post has already been paid - if status is PENDING_REVIEW, user should go to upload images
   const isPendingReview = post?.status === 'PENDING_REVIEW';
 
   const handlePayment = async () => {
-    if (!hasEnoughCoins) {
-      toast.error('Không đủ coin', {
-        description: `Bạn cần ${formatCurrency(depositFee)} ₫ để đăng bài. Hiện tại bạn có ${formatCurrency(currentCoins)} ₫.`,
+    if (!hasEnoughBalance) {
+      toast.error('Không đủ tiền', {
+        description: `Bạn cần ${formatCurrency(depositFee)} ₫ để đăng bài. Hiện tại bạn có ${formatCurrency(currentBalance)} ₫.`,
         duration: 5000,
       });
       return;
@@ -270,18 +270,18 @@ export default function PostPaymentPage() {
               <div className="p-4 border-2 border-green-500 bg-green-50 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
                       <Coins className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold">Coin</p>
+                      <p className="font-semibold">Ví</p>
                       <div className="flex items-center gap-2">
                         <p className="text-sm text-zinc-600">
                           Số dư:{' '}
                           <strong
-                            className={`font-bold ${hasEnoughCoins ? 'text-green-600' : 'text-red-600'}`}
+                            className={`font-bold ${hasEnoughBalance ? 'text-green-600' : 'text-red-600'}`}
                           >
-                            {isLoadingWallet ? '...' : formatCurrency(currentCoins)} ₫
+                            {isLoadingWallet ? '...' : formatCurrency(currentBalance)} ₫
                           </strong>
                         </p>
                         <button
@@ -294,7 +294,7 @@ export default function PostPaymentPage() {
                       </div>
                     </div>
                   </div>
-                  {hasEnoughCoins && (
+                  {hasEnoughBalance && (
                     <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                       <CheckCircle className="h-4 w-4 text-white" />
                     </div>
@@ -302,14 +302,14 @@ export default function PostPaymentPage() {
                 </div>
               </div>
 
-              {!hasEnoughCoins && (
+              {!hasEnoughBalance && (
                 <div className="mt-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
                   <div className="flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-orange-900">Không đủ coin</p>
+                      <p className="text-sm font-medium text-orange-900">Không đủ tiền</p>
                       <p className="text-sm text-orange-700 mt-1">
-                        Bạn cần nạp thêm {formatCurrency(depositFee - currentCoins)} ₫ để thanh
+                        Bạn cần nạp thêm {formatCurrency(depositFee - currentBalance)} ₫ để thanh
                         toán.
                       </p>
                       <Button
@@ -318,7 +318,7 @@ export default function PostPaymentPage() {
                         onClick={() => router.push('/wallet')}
                         className="mt-2 border-orange-500 text-orange-700 hover:bg-orange-100"
                       >
-                        Nạp coin ngay
+                        Nạp tiền ngay
                       </Button>
                     </div>
                   </div>
@@ -348,11 +348,11 @@ export default function PostPaymentPage() {
             <Button
               onClick={handlePayment}
               className={`w-full h-14 text-lg font-semibold ${
-                hasEnoughCoins && !isPendingReview
+                hasEnoughBalance && !isPendingReview
                   ? 'bg-green-600 hover:bg-green-700'
                   : 'bg-gray-400 cursor-not-allowed'
               }`}
-              disabled={isProcessing || !hasEnoughCoins || isLoadingWallet || isPendingReview}
+              disabled={isProcessing || !hasEnoughBalance || isLoadingWallet || isPendingReview}
             >
               {isProcessing ? (
                 <>

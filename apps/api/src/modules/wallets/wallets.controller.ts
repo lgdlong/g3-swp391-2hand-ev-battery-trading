@@ -75,20 +75,6 @@ export class WalletsController {
     return wallet;
   }
 
-  // @Post('update-balance/:userId')
-  // @UseGuards(RolesGuard)
-  // @Roles(AccountRole.ADMIN)
-  // async updateBalance(
-  //   @Param('userId', new ParseIntPipe({ errorHttpStatusCode: 400 })) userId: number,
-  //   @Body() dto: TopUpWalletDto,
-  // ): Promise<TopUpResponseDto> {
-  //   const result = await this.walletsService.updateWalletBalance(
-  //     userId,
-  //     dto.amount.toString(),
-  //   );
-  //   return result;
-  // }
-
   @Post('deduct/:userId')
   @UseGuards(RolesGuard)
   @ApiOperation({
@@ -162,36 +148,6 @@ export class WalletsController {
     return result;
   }
 
-  // Purpose: Direct wallet topup (manual/internal)
-  // Input: TopUpWalletDto with amount, description, paymentOrderId
-  // Action: Directly adds funds to wallet balance
-  // Use Case: Internal system topup or admin manual topup
-  // Returns: TopUpResponseDto with wallet and transaction info
-  // ==========================================================================================
-  // @Post('top-up')
-  // @ApiOperation({
-  //   summary: 'Top up wallet',
-  //   description: 'Add funds to wallet. Automatically initializes wallet if not exists.',
-  // })
-  // @ApiResponse({
-  //   status: HttpStatus.CREATED,
-  //   description: 'Wallet topped up successfully',
-  //   type: TopUpResponseDto,
-  // })
-  // @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
-  // async topUp(
-  //   @CurrentUser() user: ReqUser,
-  //   @Body() dto: TopUpWalletDto,
-  // ): Promise<TopUpResponseDto> {
-  //   const result = await this.walletsService.topUp(
-  //     user.sub,
-  //     dto.amount.toString(),
-  //     dto.description,
-  //     dto.paymentOrderId,
-  //   );
-  //   return result;
-  // }
-
   @Post('topup/payment')
   @ApiOperation({
     summary: 'Create topup payment link',
@@ -225,6 +181,34 @@ export class WalletsController {
     }
 
     return payosResponse;
+  }
+
+  @Post('topup/verify/:orderCode')
+  @ApiOperation({
+    summary: 'Verify and process topup payment',
+    description:
+      'Verify payment status with PayOS and process wallet topup if payment is successful. ' +
+      'This is used when returning from PayOS checkout to ensure the payment is processed.',
+  })
+  @ApiParam({ name: 'orderCode', description: 'Payment order code', type: String })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Payment verified and processed successfully',
+    type: WalletTransactionResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Payment order not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Payment not completed or already processed',
+  })
+  async verifyAndProcessTopup(
+    @CurrentUser() user: ReqUser,
+    @Param('orderCode') orderCode: string,
+  ): Promise<WalletTransactionResponseDto> {
+    return this.walletsService.verifyAndProcessTopup(orderCode, user.sub);
   }
 
   @Get('transactions/me')

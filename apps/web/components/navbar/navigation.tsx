@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { CompareButton } from './CompareButton';
 
 interface NavigationProps {
   className?: string;
@@ -15,7 +16,7 @@ const navigationItems = [
   { label: 'Pin', href: '/posts/batteries' },
 ];
 
-export function Navigation({ className }: NavigationProps) {
+function NavigationContent({ className }: NavigationProps) {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -51,6 +52,19 @@ export function Navigation({ className }: NavigationProps) {
           />
         </Link>
       ))}
+      
+      {/* Compare Button */}
+      <Suspense fallback={<div className="w-20" />}>
+        <CompareButton />
+      </Suspense>
     </nav>
+  );
+}
+
+export function Navigation({ className }: NavigationProps) {
+  return (
+    <Suspense fallback={<nav className={cn('flex items-center space-x-10', className)} />}>
+      <NavigationContent className={className} />
+    </Suspense>
   );
 }

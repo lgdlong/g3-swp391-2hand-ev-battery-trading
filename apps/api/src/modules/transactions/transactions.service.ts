@@ -645,7 +645,7 @@ export class TransactionsService {
   }
 
   /**
-   * Record post deposit payment when user pays coin to create post
+   * Record post deposit payment when user pays VND to create post
    * @param postId - Post ID
    * @param accountId - User account ID who paid deposit
    * @param amountPaid - Deposit amount paid

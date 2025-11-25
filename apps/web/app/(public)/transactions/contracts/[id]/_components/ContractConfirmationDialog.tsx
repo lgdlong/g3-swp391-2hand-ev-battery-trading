@@ -121,7 +121,7 @@ export function ContractConfirmationDialog({
               Bạn có chắc chắn muốn báo đã bán sản phẩm ngoài hệ thống không?
               <br />
               <span className="font-semibold text-orange-600 mt-2 block">
-                Hành động này không thể hoàn tác. Coin đặt cọc sẽ bị giữ lại.
+                Hành động này không thể hoàn tác. Tiền đặt cọc sẽ bị giữ lại.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
