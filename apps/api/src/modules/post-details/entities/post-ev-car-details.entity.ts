@@ -64,4 +64,7 @@ export class PostEvCarDetails {
 
   @Column({ type: 'boolean', default: false })
   has_bundled_battery: boolean = false;
+
+  @Column({ type: 'boolean', default: false })
+  is_original_battery: boolean = false;
 }

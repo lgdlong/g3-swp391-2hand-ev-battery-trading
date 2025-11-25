@@ -164,4 +164,13 @@ export class CreateCarDetailsDto {
   })
   @IsOptional()
   has_bundled_battery?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Pin là pin gốc hãng không',
+    type: Boolean,
+    default: false,
+    example: true,
+  })
+  @IsOptional()
+  is_original_battery?: boolean;
 }

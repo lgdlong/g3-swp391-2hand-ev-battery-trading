@@ -96,6 +96,7 @@ export class PostMapper {
     dto.charge_dc_kw = carDetails.charge_dc_kw;
     dto.battery_health_pct = carDetails.battery_health_pct;
     dto.has_bundled_battery = carDetails.has_bundled_battery;
+    dto.is_original_battery = carDetails.is_original_battery;
     return dto;
   }
 

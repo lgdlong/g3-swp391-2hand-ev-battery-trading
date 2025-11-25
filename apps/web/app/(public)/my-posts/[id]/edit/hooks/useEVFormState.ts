@@ -55,6 +55,8 @@ export function useEVFormState(post: Post) {
         batteryHealthPct: getFlexibleFieldValue(detail?.battery_health_pct) || '',
         hasBundledBattery:
           post.postType === 'EV_CAR' ? ((detail as CarDetail)?.has_bundled_battery ?? false) : false,
+        isOriginalBattery:
+          post.postType === 'EV_CAR' ? ((detail as CarDetail)?.is_original_battery ?? false) : false,
       };
     }
     return {
@@ -78,6 +80,7 @@ export function useEVFormState(post: Post) {
       motorPowerKw: '',
       batteryHealthPct: '',
       hasBundledBattery: false,
+      isOriginalBattery: false,
     };
   });
 

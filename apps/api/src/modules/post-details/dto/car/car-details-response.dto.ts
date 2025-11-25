@@ -49,4 +49,7 @@ export class CarDetailsResponseDto {
 
   @ApiProperty({ default: false })
   has_bundled_battery!: boolean;
+
+  @ApiProperty({ default: false })
+  is_original_battery!: boolean;
 }

@@ -149,6 +149,7 @@ export function useCreatePost() {
               battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
               // Bundled battery flag only
               has_bundled_battery: formData.hasBundledBattery,
+              is_original_battery: formData.isOriginalBattery,
             },
           };
 

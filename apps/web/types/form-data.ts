@@ -59,6 +59,7 @@ export interface EvFormData {
   motorPowerKw: string;
   batteryHealthPct: string;
   hasBundledBattery: boolean;
+  isOriginalBattery: boolean;
 }
 
 // ============================================================================
@@ -145,6 +146,7 @@ export const initialFormData: FormData = {
   motorPowerKw: '',
   batteryHealthPct: '',
   hasBundledBattery: false,
+  isOriginalBattery: false,
 
   // Battery specific fields (from BatteryFormData)
   brand_id: '',

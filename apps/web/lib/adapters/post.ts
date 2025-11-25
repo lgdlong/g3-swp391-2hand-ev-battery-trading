@@ -58,6 +58,7 @@ function adaptCarDetails(dto: PostDtoRaw['carDetails']): CarDetailUI | undefined
     license_plate: dto.license_plate ? toString(dto.license_plate) : undefined,
     origin: dto.origin as Origin | undefined,
     has_bundled_battery: dto.has_bundled_battery ?? false,
+    is_original_battery: dto.is_original_battery ?? false,
   };
 }
 
