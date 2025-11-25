@@ -50,7 +50,8 @@ export function ComparePageClient() {
           const post = result.value;
           return {
             ...post,
-            type: post.postType === 'EV_CAR' ? 'CAR' : post.postType === 'EV_BIKE' ? 'BIKE' : 'BATTERY',
+            type:
+              post.postType === 'EV_CAR' ? 'CAR' : post.postType === 'EV_BIKE' ? 'BIKE' : 'BATTERY',
           };
         });
     },
@@ -71,7 +72,7 @@ export function ComparePageClient() {
 
   const getProductTypeLabel = (): string => {
     if (posts.length === 0) return '';
-    const types = new Set(posts.map(p => p.type));
+    const types = new Set(posts.map((p) => p.type));
     if (types.size === 1) {
       const type = Array.from(types)[0];
       if (type === 'CAR') return 'Xe điện';
@@ -85,12 +86,12 @@ export function ComparePageClient() {
     const items: BreadcrumbItem[] = [
       { label: 'So sánh sản phẩm', onClick: () => router.push('/compare') },
     ];
-    
+
     const productTypeLabel = getProductTypeLabel();
     if (productTypeLabel) {
       items.push({ label: productTypeLabel });
     }
-    
+
     return items;
   };
 
@@ -99,7 +100,9 @@ export function ComparePageClient() {
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Breadcrumb */}
-          <Breadcrumb items={[{ label: 'So sánh sản phẩm', onClick: () => router.push('/compare') }]} />
+          <Breadcrumb
+            items={[{ label: 'So sánh sản phẩm', onClick: () => router.push('/compare') }]}
+          />
 
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <div className="mb-6">
@@ -117,9 +120,7 @@ export function ComparePageClient() {
                 />
               </svg>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Chưa có sản phẩm để so sánh</h2>
-              <p className="text-gray-600 mb-8">
-                Chọn sản phẩm từ danh sách để bắt đầu so sánh
-              </p>
+              <p className="text-gray-600 mb-8">Chọn sản phẩm từ danh sách để bắt đầu so sánh</p>
               <div className="flex gap-3 justify-center flex-wrap">
                 <Button
                   onClick={() => {
@@ -128,7 +129,7 @@ export function ComparePageClient() {
                   }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6 py-2 font-semibold"
                 >
-                  Thêm xe
+                  Xe hơi điện
                 </Button>
                 <Button
                   onClick={() => {
@@ -137,7 +138,7 @@ export function ComparePageClient() {
                   }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6 py-2 font-semibold"
                 >
-                  Xe máy
+                  Xe máy điện
                 </Button>
                 <Button
                   onClick={() => {
@@ -216,7 +217,11 @@ export function ComparePageClient() {
                         }}
                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-full py-2 text-sm font-bold"
                       >
-                        {lastProductType === 'CAR' ? 'Thêm xe' : lastProductType === 'BIKE' ? 'Thêm xe máy' : 'Thêm pin'}
+                        {lastProductType === 'CAR'
+                          ? 'Thêm xe'
+                          : lastProductType === 'BIKE'
+                            ? 'Thêm xe máy'
+                            : 'Thêm pin'}
                       </Button>
                     </div>
                   </td>
@@ -298,7 +303,10 @@ export function ComparePageClient() {
                           </div>
 
                           {/* Product Title Below Image */}
-                          <div className="w-full bg-white text-center border-t p-3 flex-shrink-0" style={{ height: '110px' }}>
+                          <div
+                            className="w-full bg-white text-center border-t p-3 flex-shrink-0"
+                            style={{ height: '110px' }}
+                          >
                             <h3 className="font-bold text-gray-900 text-sm line-clamp-2">
                               {post.title}
                             </h3>
@@ -316,13 +324,20 @@ export function ComparePageClient() {
                   getValue={(post) => `${Number(post.priceVnd).toLocaleString('vi-VN')} đ`}
                 />
 
-                {posts.some((p) => p.carDetails?.manufacture_year || p.bikeDetails?.manufacture_year) && (
+                {posts.some(
+                  (p) => p.carDetails?.manufacture_year || p.bikeDetails?.manufacture_year,
+                ) && (
                   <ComparisonRow
                     label="Đời xe"
                     posts={posts}
                     getValue={(post) => {
-                      const year = post.carDetails?.manufacture_year || post.bikeDetails?.manufacture_year;
-                      return year ? (typeof year === 'object' ? year.value?.toString() || 'N/A' : year.toString()) : 'N/A';
+                      const year =
+                        post.carDetails?.manufacture_year || post.bikeDetails?.manufacture_year;
+                      return year
+                        ? typeof year === 'object'
+                          ? year.value?.toString() || 'N/A'
+                          : year.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -331,7 +346,9 @@ export function ComparePageClient() {
                   <ComparisonRow
                     label="Dạng xe"
                     posts={posts}
-                    getValue={(post) => post.carDetails?.body_style || post.bikeDetails?.bike_style || 'N/A'}
+                    getValue={(post) =>
+                      post.carDetails?.body_style || post.bikeDetails?.bike_style || 'N/A'
+                    }
                   />
                 )}
 
@@ -349,7 +366,11 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const origin = post.carDetails?.origin || post.bikeDetails?.origin;
-                      return origin === 'NOI_DIA' ? 'Nội địa' : origin === 'NHAP_KHAU' ? 'Nhập khẩu' : origin || 'N/A';
+                      return origin === 'NOI_DIA'
+                        ? 'Nội địa'
+                        : origin === 'NHAP_KHAU'
+                          ? 'Nhập khẩu'
+                          : origin || 'N/A';
                     }}
                   />
                 )}
@@ -360,18 +381,30 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const seats = post.carDetails?.seats;
-                      return seats ? (typeof seats === 'object' ? seats.value?.toString() || 'N/A' : seats.toString()) : 'N/A';
+                      return seats
+                        ? typeof seats === 'object'
+                          ? seats.value?.toString() || 'N/A'
+                          : seats.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
 
-                {posts.some((p) => p.carDetails?.battery_capacity_kwh || p.bikeDetails?.battery_capacity_kwh) && (
+                {posts.some(
+                  (p) => p.carDetails?.battery_capacity_kwh || p.bikeDetails?.battery_capacity_kwh,
+                ) && (
                   <ComparisonRow
                     label="Dung lượng pin"
                     posts={posts}
                     getValue={(post) => {
-                      const cap = post.carDetails?.battery_capacity_kwh || post.bikeDetails?.battery_capacity_kwh;
-                      return cap ? (typeof cap === 'object' ? cap.value?.toString() || 'N/A' : cap.toString()) : 'N/A';
+                      const cap =
+                        post.carDetails?.battery_capacity_kwh ||
+                        post.bikeDetails?.battery_capacity_kwh;
+                      return cap
+                        ? typeof cap === 'object'
+                          ? cap.value?.toString() || 'N/A'
+                          : cap.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -382,7 +415,11 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const range = post.carDetails?.range_km || post.bikeDetails?.range_km;
-                      return range ? (typeof range === 'object' ? range.value?.toString() || 'N/A' : range.toString()) : 'N/A';
+                      return range
+                        ? typeof range === 'object'
+                          ? range.value?.toString() || 'N/A'
+                          : range.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -405,7 +442,11 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const health = post.carDetails?.battery_health_pct;
-                      return health ? (typeof health === 'object' ? `${health.value || 'N/A'}%` : `${health}%`) : 'N/A';
+                      return health
+                        ? typeof health === 'object'
+                          ? `${health.value || 'N/A'}%`
+                          : `${health}%`
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -416,7 +457,11 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const count = post.carDetails?.owners_count || post.bikeDetails?.owners_count;
-                      return count ? (typeof count === 'object' ? count.value?.toString() || 'N/A' : count.toString()) : 'N/A';
+                      return count
+                        ? typeof count === 'object'
+                          ? count.value?.toString() || 'N/A'
+                          : count.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -427,7 +472,11 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const power = post.carDetails?.charge_ac_kw;
-                      return power ? (typeof power === 'object' ? power.value?.toString() || 'N/A' : power.toString()) : 'N/A';
+                      return power
+                        ? typeof power === 'object'
+                          ? power.value?.toString() || 'N/A'
+                          : power.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -438,7 +487,11 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const power = post.carDetails?.charge_dc_kw;
-                      return power ? (typeof power === 'object' ? power.value?.toString() || 'N/A' : power.toString()) : 'N/A';
+                      return power
+                        ? typeof power === 'object'
+                          ? power.value?.toString() || 'N/A'
+                          : power.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -449,7 +502,11 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const power = post.bikeDetails?.motor_power_kw;
-                      return power ? (typeof power === 'object' ? power.value?.toString() || 'N/A' : power.toString()) : 'N/A';
+                      return power
+                        ? typeof power === 'object'
+                          ? power.value?.toString() || 'N/A'
+                          : power.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -460,7 +517,11 @@ export function ComparePageClient() {
                     posts={posts}
                     getValue={(post) => {
                       const power = post.bikeDetails?.charge_ac_kw;
-                      return power ? (typeof power === 'object' ? power.value?.toString() || 'N/A' : power.toString()) : 'N/A';
+                      return power
+                        ? typeof power === 'object'
+                          ? power.value?.toString() || 'N/A'
+                          : power.toString()
+                        : 'N/A';
                     }}
                   />
                 )}
@@ -527,9 +588,7 @@ interface ComparisonRowProps {
 function ComparisonRow({ label, posts, getValue }: ComparisonRowProps) {
   return (
     <tr className="border-t">
-      <td className="px-6 py-4 font-semibold text-gray-900 bg-gray-50 w-1/4 min-w-40">
-        {label}
-      </td>
+      <td className="px-6 py-4 font-semibold text-gray-900 bg-gray-50 w-1/4 min-w-40">{label}</td>
       {posts.map((post) => (
         <td key={post.id} className="px-6 py-4 text-gray-600">
           {getValue(post)}

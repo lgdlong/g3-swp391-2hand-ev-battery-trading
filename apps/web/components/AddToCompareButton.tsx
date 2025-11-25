@@ -16,9 +16,12 @@ export function AddToCompareButton({ post, className }: AddToCompareButtonProps)
   const selected = isSelected(post.id);
 
   const handleClick = () => {
-    const type = post.postType === 'EV_CAR' || post.postType === 'EV_BIKE' 
-      ? (post.postType === 'EV_CAR' ? 'CAR' : 'BIKE')
-      : 'BATTERY';
+    const type =
+      post.postType === 'EV_CAR' || post.postType === 'EV_BIKE'
+        ? post.postType === 'EV_CAR'
+          ? 'CAR'
+          : 'BIKE'
+        : 'BATTERY';
     addItem(post, type);
     if (!selected) {
       toast.success('Đã thêm vào so sánh', {
@@ -31,7 +34,10 @@ export function AddToCompareButton({ post, className }: AddToCompareButtonProps)
     <div className="space-y-3">
       <Button
         onClick={handleClick}
-        className={className || 'w-full bg-emerald-600 hover:bg-emerald-700 text-white border-0 py-3 text-base font-normal'}
+        className={
+          className ||
+          'w-full bg-emerald-600 hover:bg-emerald-700 text-white border-0 py-3 text-base font-normal'
+        }
       >
         {selected ? 'Đã thêm so sánh' : 'Thêm so sánh'}
       </Button>

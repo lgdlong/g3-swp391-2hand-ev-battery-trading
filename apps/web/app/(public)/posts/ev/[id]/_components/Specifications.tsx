@@ -1,7 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, Car, Battery, Gauge, Hash } from 'lucide-react';
 import { SpecItem } from './SpecItem';
-import { AddToCompareButton } from '@/components/AddToCompareButton';
 import type { PostUI } from '@/types/post';
 
 interface SpecificationsProps {
@@ -90,11 +89,6 @@ export function Specifications({ post }: SpecificationsProps) {
             label="Biển số"
             value={details.license_plate || 'N/A'}
           />
-        </div>
-
-        {/* Compare Button */}
-        <div className="mt-6 pt-6 border-t">
-          <AddToCompareButton post={post as any} />
         </div>
       </CardContent>
     </Card>
