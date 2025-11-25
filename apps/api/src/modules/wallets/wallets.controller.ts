@@ -183,6 +183,34 @@ export class WalletsController {
     return payosResponse;
   }
 
+  @Post('topup/verify/:orderCode')
+  @ApiOperation({
+    summary: 'Verify and process topup payment',
+    description:
+      'Verify payment status with PayOS and process wallet topup if payment is successful. ' +
+      'This is used when returning from PayOS checkout to ensure the payment is processed.',
+  })
+  @ApiParam({ name: 'orderCode', description: 'Payment order code', type: String })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Payment verified and processed successfully',
+    type: WalletTransactionResponseDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Payment order not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Payment not completed or already processed',
+  })
+  async verifyAndProcessTopup(
+    @CurrentUser() user: ReqUser,
+    @Param('orderCode') orderCode: string,
+  ): Promise<WalletTransactionResponseDto> {
+    return this.walletsService.verifyAndProcessTopup(orderCode, user.sub);
+  }
+
   @Get('transactions/me')
   @ApiOperation({ summary: 'Get current user wallet transactions' })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })

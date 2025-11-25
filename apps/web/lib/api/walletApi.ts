@@ -128,3 +128,18 @@ export async function getTransactionByOrderCode(orderCode: string): Promise<Wall
   );
   return data;
 }
+
+/**
+ * Verify and process topup payment
+ * Call this when returning from PayOS checkout to ensure payment is processed
+ */
+export async function verifyAndProcessTopup(orderCode: string): Promise<WalletTransaction> {
+  const { data } = await api.post<WalletTransaction>(
+    `/wallets/topup/verify/${orderCode}`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
