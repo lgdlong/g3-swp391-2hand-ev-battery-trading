@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpStatus,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,8 +18,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderResponseDto, OrderWithRelationsDto } from './dto/order-response.dto';
+import { BuyNowDto, SellerConfirmDto, OrderResponseDto, OrderWithRelationsDto } from './dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
 import { Roles } from '../../core/decorators/roles.decorator';
@@ -26,61 +35,57 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   /**
-   * Tạo đơn hàng mới (Buyer mua hàng)
+   * API 1: Mua ngay - Buyer đặt mua + trừ tiền + lock post
    */
-  @Post()
-  @ApiOperation({ summary: 'Tạo đơn hàng mới', description: 'Buyer tạo đơn mua hàng' })
+  @Post('buy-now')
+  @ApiOperation({
+    summary: 'Mua ngay',
+    description: 'Buyer đặt mua, trừ tiền ví (BUY_HOLD), lock bài đăng',
+  })
   @ApiResponse({ status: HttpStatus.CREATED, type: OrderResponseDto })
-  async create(@CurrentUser() user: ReqUser, @Body() dto: CreateOrderDto) {
-    return this.ordersService.create(user.sub, dto);
+  async buyNow(@CurrentUser() user: ReqUser, @Body() dto: BuyNowDto) {
+    return this.ordersService.buyNow(user.sub, dto);
   }
 
   /**
-   * Buyer thanh toán đơn hàng
+   * API 2: Seller xác nhận (ACCEPT/REJECT)
    */
-  @Post(':id/pay')
-  @ApiOperation({ summary: 'Thanh toán đơn hàng', description: 'Buyer thanh toán từ ví' })
-  @ApiParam({ name: 'id', description: 'Order ID' })
-  @ApiResponse({ status: HttpStatus.OK, type: OrderResponseDto })
-  async payOrder(@CurrentUser() user: ReqUser, @Param('id') orderId: string) {
-    return this.ordersService.payOrder(orderId, user.sub);
-  }
-
-  /**
-   * Seller xác nhận đơn hàng
-   */
-  @Post(':id/confirm')
+  @Put(':id/confirm')
   @ApiOperation({
     summary: 'Seller xác nhận đơn',
-    description: 'Seller xác nhận đã nhận được đơn, bắt đầu giao hàng',
+    description: 'ACCEPT: chuyển sang giao hàng | REJECT: hoàn tiền buyer, mở lại post',
   })
   @ApiParam({ name: 'id', description: 'Order ID' })
   @ApiResponse({ status: HttpStatus.OK, type: OrderResponseDto })
-  async sellerConfirm(@CurrentUser() user: ReqUser, @Param('id') orderId: string) {
-    return this.ordersService.sellerConfirm(orderId, user.sub);
+  async sellerConfirm(
+    @CurrentUser() user: ReqUser,
+    @Param('id') orderId: string,
+    @Body() dto: SellerConfirmDto,
+  ) {
+    return this.ordersService.sellerConfirm(orderId, user.sub, dto);
   }
 
   /**
-   * Buyer xác nhận đã nhận hàng
+   * API 3: Hoàn tất đơn hàng - Buyer xác nhận đã nhận hàng
    */
-  @Post(':id/received')
+  @Put(':id/complete')
   @ApiOperation({
-    summary: 'Xác nhận đã nhận hàng',
-    description: 'Buyer xác nhận đã nhận hàng, tiền chuyển cho seller',
+    summary: 'Hoàn tất đơn hàng',
+    description: 'Buyer xác nhận nhận hàng, chuyển tiền cho seller (trừ 2% commission)',
   })
   @ApiParam({ name: 'id', description: 'Order ID' })
   @ApiResponse({ status: HttpStatus.OK, type: OrderResponseDto })
-  async buyerConfirmReceived(@CurrentUser() user: ReqUser, @Param('id') orderId: string) {
-    return this.ordersService.buyerConfirmReceived(orderId, user.sub);
+  async completeOrder(@CurrentUser() user: ReqUser, @Param('id') orderId: string) {
+    return this.ordersService.completeOrder(orderId, user.sub);
   }
 
   /**
    * Hủy đơn hàng
    */
-  @Post(':id/cancel')
+  @Put(':id/cancel')
   @ApiOperation({
     summary: 'Hủy đơn hàng',
-    description: 'Hủy đơn (chỉ khi PENDING hoặc WAITING_SELLER_CONFIRM)',
+    description: 'Buyer hủy đơn (chỉ khi WAITING_SELLER_CONFIRM), hoàn tiền',
   })
   @ApiParam({ name: 'id', description: 'Order ID' })
   @ApiResponse({ status: HttpStatus.OK, type: OrderResponseDto })
@@ -95,7 +100,7 @@ export class OrdersController {
   /**
    * Tạo tranh chấp
    */
-  @Post(':id/dispute')
+  @Put(':id/dispute')
   @ApiOperation({
     summary: 'Tạo tranh chấp',
     description: 'Báo cáo tranh chấp khi đơn hàng đang giao',
@@ -108,6 +113,22 @@ export class OrdersController {
     @Body('note') note: string,
   ) {
     return this.ordersService.createDispute(orderId, user.sub, note);
+  }
+
+  /**
+   * Lấy đơn hàng của tôi
+   */
+  @Get('my')
+  @ApiOperation({ summary: 'Lấy đơn hàng của tôi' })
+  @ApiQuery({ name: 'role', enum: ['buyer', 'seller', 'all'], required: false })
+  @ApiQuery({ name: 'status', enum: OrderStatus, required: false })
+  @ApiResponse({ status: HttpStatus.OK, type: [OrderWithRelationsDto] })
+  async findMyOrders(
+    @CurrentUser() user: ReqUser,
+    @Query('role') role: 'buyer' | 'seller' | 'all' = 'all',
+    @Query('status') status?: OrderStatus,
+  ) {
+    return this.ordersService.findByUser(user.sub, role, status);
   }
 
   /**
@@ -130,22 +151,6 @@ export class OrdersController {
   @ApiResponse({ status: HttpStatus.OK, type: OrderWithRelationsDto })
   async findByCode(@Param('code') code: string) {
     return this.ordersService.findByCode(code);
-  }
-
-  /**
-   * Lấy đơn hàng của tôi
-   */
-  @Get('my/orders')
-  @ApiOperation({ summary: 'Lấy đơn hàng của tôi' })
-  @ApiQuery({ name: 'role', enum: ['buyer', 'seller', 'all'], required: false })
-  @ApiQuery({ name: 'status', enum: OrderStatus, required: false })
-  @ApiResponse({ status: HttpStatus.OK, type: [OrderWithRelationsDto] })
-  async findMyOrders(
-    @CurrentUser() user: ReqUser,
-    @Query('role') role: 'buyer' | 'seller' | 'all' = 'all',
-    @Query('status') status?: OrderStatus,
-  ) {
-    return this.ordersService.findByUser(user.sub, role, status);
   }
 
   /**

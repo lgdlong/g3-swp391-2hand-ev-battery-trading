@@ -5,13 +5,16 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { Post } from '../posts/entities/post.entity';
-import { CreateOrderDto } from './dto/create-order.dto';
+import { BuyNowDto, SellerConfirmDto, SellerAction } from './dto';
 import { OrderStatus } from '../../shared/enums/order-status.enum';
 import { PostStatus } from '../../shared/enums/post.enum';
 import { WalletsService } from '../wallets/wallets.service';
+
+// Admin ID nhận hoa hồng
+const ADMIN_COMMISSION_ACCOUNT_ID = 1;
 
 @Injectable()
 export class OrdersService {
@@ -34,61 +37,92 @@ export class OrdersService {
   }
 
   /**
-   * Create new order (Buyer mua hàng)
+   * API 1: Mua ngay (Buy Now) - Escrow Flow
+   * 1. Check post status = PUBLISHED
+   * 2. Check buyer balance
+   * 3. Deduct with BUY_HOLD
+   * 4. Create order with WAITING_SELLER_CONFIRM
+   * 5. Lock post to LOCKED
    */
-  async create(buyerId: number, dto: CreateOrderDto): Promise<Order> {
-    // 1. Tìm bài đăng
-    const post = await this.postRepo.findOne({
-      where: { id: dto.postId },
-      relations: ['seller'],
-    });
+  async buyNow(buyerId: number, dto: BuyNowDto): Promise<Order> {
+    return this.dataSource.transaction(async (manager) => {
+      const orderRepo = manager.getRepository(Order);
+      const postRepo = manager.getRepository(Post);
 
-    if (!post) {
-      throw new NotFoundException('Bài đăng không tồn tại');
-    }
+      // 1. Tìm bài đăng
+      const post = await postRepo.findOne({
+        where: { id: dto.postId },
+        relations: ['seller'],
+      });
 
-    // 2. Kiểm tra trạng thái bài đăng
-    if (post.status !== PostStatus.PUBLISHED) {
-      throw new BadRequestException('Bài đăng không còn khả dụng');
-    }
+      if (!post) {
+        throw new NotFoundException('Bài đăng không tồn tại');
+      }
 
-    // 3. Không thể tự mua bài của mình
-    if (post.seller.id === buyerId) {
-      throw new BadRequestException('Không thể mua bài đăng của chính mình');
-    }
+      // 2. Kiểm tra trạng thái bài đăng - chỉ cho phép PUBLISHED
+      if (post.status !== PostStatus.PUBLISHED) {
+        throw new BadRequestException('Xe đang giao dịch hoặc không còn khả dụng');
+      }
 
-    // 4. Kiểm tra đã có order pending chưa
-    const existingOrder = await this.orderRepo.findOne({
-      where: {
+      // 3. Không thể tự mua bài của mình
+      if (post.seller.id === buyerId) {
+        throw new BadRequestException('Không thể mua bài đăng của chính mình');
+      }
+
+      // 4. Kiểm tra đã có order đang xử lý chưa
+      const existingOrder = await orderRepo.findOne({
+        where: {
+          postId: dto.postId,
+          status: In([OrderStatus.WAITING_SELLER_CONFIRM, OrderStatus.PROCESSING]),
+        },
+      });
+
+      if (existingOrder) {
+        throw new BadRequestException('Đã có đơn hàng đang xử lý cho bài đăng này');
+      }
+
+      // 5. Lấy giá từ bài đăng
+      const amount = post.priceVnd;
+
+      // 6. Trừ tiền từ ví buyer (tiền treo - BUY_HOLD)
+      await this.walletsService.deduct(
+        buyerId,
+        amount,
+        'BUY_HOLD',
+        `Giữ tiền mua hàng - Bài đăng ${post.id}`,
+        'orders',
+        dto.postId,
+      );
+
+      // 7. Tạo order với trạng thái WAITING_SELLER_CONFIRM
+      const order = orderRepo.create({
+        code: this.generateOrderCode(),
+        buyerId,
+        sellerId: post.seller.id,
         postId: dto.postId,
-        status: OrderStatus.PENDING,
-      },
+        amount,
+        status: OrderStatus.WAITING_SELLER_CONFIRM,
+        note: dto.note,
+      });
+
+      const savedOrder = await orderRepo.save(order);
+
+      // 8. Khóa bài đăng (LOCKED)
+      await postRepo.update(dto.postId, { status: PostStatus.LOCKED });
+
+      return savedOrder;
     });
-
-    if (existingOrder) {
-      throw new BadRequestException('Đã có đơn hàng đang chờ xử lý cho bài đăng này');
-    }
-
-    // 5. Tạo order
-    const order = this.orderRepo.create({
-      code: this.generateOrderCode(),
-      buyerId,
-      sellerId: post.seller.id,
-      postId: dto.postId,
-      amount: post.priceVnd,
-      status: OrderStatus.PENDING,
-      note: dto.note,
-    });
-
-    return this.orderRepo.save(order);
   }
 
   /**
-   * Buyer thanh toán đơn hàng
+   * API 2: Seller xác nhận đơn hàng (ACCEPT / REJECT)
+   * ACCEPT: status -> PROCESSING
+   * REJECT: Hoàn tiền buyer, status -> CANCELLED, unlock post -> PUBLISHED
    */
-  async payOrder(orderId: string, buyerId: number): Promise<Order> {
+  async sellerConfirm(orderId: string, sellerId: number, dto: SellerConfirmDto): Promise<Order> {
     return this.dataSource.transaction(async (manager) => {
       const orderRepo = manager.getRepository(Order);
+      const postRepo = manager.getRepository(Post);
 
       const order = await orderRepo.findOne({
         where: { id: orderId },
@@ -98,63 +132,56 @@ export class OrdersService {
         throw new NotFoundException('Đơn hàng không tồn tại');
       }
 
-      if (order.buyerId !== buyerId) {
-        throw new ForbiddenException('Bạn không có quyền thanh toán đơn hàng này');
+      if (order.sellerId !== sellerId) {
+        throw new ForbiddenException('Bạn không có quyền xác nhận đơn hàng này');
       }
 
-      if (order.status !== OrderStatus.PENDING) {
-        throw new BadRequestException('Đơn hàng không ở trạng thái chờ thanh toán');
+      if (order.status !== OrderStatus.WAITING_SELLER_CONFIRM) {
+        throw new BadRequestException('Đơn hàng không ở trạng thái chờ xác nhận');
       }
 
-      // Trừ tiền từ ví buyer (tiền treo)
-      await this.walletsService.deduct(
-        buyerId,
-        order.amount,
-        'ORDER_PAYMENT',
-        `Thanh toán đơn hàng ${order.code}`,
-        'orders',
-        order.id,
-      );
+      if (dto.action === SellerAction.ACCEPT) {
+        // ACCEPT: Chuyển sang PROCESSING
+        order.status = OrderStatus.PROCESSING;
+        order.confirmedAt = new Date();
+        if (dto.note) {
+          order.note = order.note ? `${order.note} | Seller: ${dto.note}` : `Seller: ${dto.note}`;
+        }
+      } else {
+        // REJECT: Hoàn tiền buyer, hủy đơn, mở lại bài đăng
+        await this.walletsService.topUp(
+          order.buyerId,
+          order.amount,
+          `Hoàn tiền - Seller từ chối đơn ${order.code}`,
+          order.id,
+        );
 
-      // Cập nhật trạng thái
-      order.status = OrderStatus.WAITING_SELLER_CONFIRM;
+        order.status = OrderStatus.CANCELLED;
+        order.cancelledAt = new Date();
+        order.note = order.note
+          ? `${order.note} | Seller từ chối: ${dto.note || 'Không có lý do'}`
+          : `Seller từ chối: ${dto.note || 'Không có lý do'}`;
+
+        // Mở lại bài đăng
+        await postRepo.update(order.postId, { status: PostStatus.PUBLISHED });
+      }
 
       return orderRepo.save(order);
     });
   }
 
   /**
-   * Seller xác nhận đơn hàng
+   * API 3: Hoàn tất đơn hàng (Buyer xác nhận nhận hàng)
+   * - Tính commission 2%
+   * - Chuyển tiền cho seller (amount - commission)
+   * - Chuyển commission cho Admin
+   * - Status -> COMPLETED
+   * - Post -> SOLD
    */
-  async sellerConfirm(orderId: string, sellerId: number): Promise<Order> {
-    const order = await this.orderRepo.findOne({
-      where: { id: orderId },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Đơn hàng không tồn tại');
-    }
-
-    if (order.sellerId !== sellerId) {
-      throw new ForbiddenException('Bạn không có quyền xác nhận đơn hàng này');
-    }
-
-    if (order.status !== OrderStatus.WAITING_SELLER_CONFIRM) {
-      throw new BadRequestException('Đơn hàng không ở trạng thái chờ xác nhận');
-    }
-
-    order.status = OrderStatus.PROCESSING;
-    order.confirmedAt = new Date();
-
-    return this.orderRepo.save(order);
-  }
-
-  /**
-   * Buyer xác nhận đã nhận hàng - Hoàn tất giao dịch
-   */
-  async buyerConfirmReceived(orderId: string, buyerId: number): Promise<Order> {
+  async completeOrder(orderId: string, buyerId: number): Promise<Order> {
     return this.dataSource.transaction(async (manager) => {
       const orderRepo = manager.getRepository(Order);
+      const postRepo = manager.getRepository(Post);
 
       const order = await orderRepo.findOne({
         where: { id: orderId },
@@ -172,8 +199,8 @@ export class OrdersService {
         throw new BadRequestException('Đơn hàng không ở trạng thái đang giao');
       }
 
-      // Tính phí hoa hồng (VD: 5%)
-      const commissionRate = 0.05;
+      // Tính phí hoa hồng 2%
+      const commissionRate = 0.02;
       const amount = Number.parseFloat(order.amount);
       const commissionFee = Math.round(amount * commissionRate);
       const sellerReceiveAmount = amount - commissionFee;
@@ -186,6 +213,16 @@ export class OrdersService {
         order.id,
       );
 
+      // Chuyển hoa hồng cho Admin
+      if (commissionFee > 0) {
+        await this.walletsService.topUp(
+          ADMIN_COMMISSION_ACCOUNT_ID,
+          commissionFee.toString(),
+          `Hoa hồng đơn hàng ${order.code}`,
+          order.id,
+        );
+      }
+
       // Cập nhật order
       order.status = OrderStatus.COMPLETED;
       order.completedAt = new Date();
@@ -193,18 +230,19 @@ export class OrdersService {
       order.sellerReceiveAmount = sellerReceiveAmount.toString();
 
       // Cập nhật post thành SOLD
-      await manager.getRepository(Post).update(order.postId, { status: PostStatus.SOLD });
+      await postRepo.update(order.postId, { status: PostStatus.SOLD });
 
       return orderRepo.save(order);
     });
   }
 
   /**
-   * Hủy đơn hàng
+   * Hủy đơn hàng (Buyer hủy)
    */
   async cancelOrder(orderId: string, userId: number, note?: string): Promise<Order> {
     return this.dataSource.transaction(async (manager) => {
       const orderRepo = manager.getRepository(Order);
+      const postRepo = manager.getRepository(Post);
 
       const order = await orderRepo.findOne({
         where: { id: orderId },
@@ -214,31 +252,32 @@ export class OrdersService {
         throw new NotFoundException('Đơn hàng không tồn tại');
       }
 
-      // Chỉ buyer hoặc seller mới có quyền hủy
-      if (order.buyerId !== userId && order.sellerId !== userId) {
+      // Chỉ buyer mới có quyền hủy
+      if (order.buyerId !== userId) {
         throw new ForbiddenException('Bạn không có quyền hủy đơn hàng này');
       }
 
-      // Chỉ hủy được khi PENDING hoặc WAITING_SELLER_CONFIRM
-      if (![OrderStatus.PENDING, OrderStatus.WAITING_SELLER_CONFIRM].includes(order.status)) {
+      // Chỉ hủy được khi WAITING_SELLER_CONFIRM
+      if (order.status !== OrderStatus.WAITING_SELLER_CONFIRM) {
         throw new BadRequestException('Không thể hủy đơn hàng ở trạng thái này');
       }
 
-      // Hoàn tiền nếu đã thanh toán
-      if (order.status === OrderStatus.WAITING_SELLER_CONFIRM) {
-        await this.walletsService.topUp(
-          order.buyerId,
-          order.amount,
-          `Hoàn tiền đơn hàng ${order.code} bị hủy`,
-          order.id,
-        );
-      }
+      // Hoàn tiền cho buyer
+      await this.walletsService.topUp(
+        order.buyerId,
+        order.amount,
+        `Hoàn tiền - Buyer hủy đơn ${order.code}`,
+        order.id,
+      );
 
       order.status = OrderStatus.CANCELLED;
       order.cancelledAt = new Date();
       if (note) {
-        order.note = order.note ? `${order.note} | Hủy: ${note}` : `Hủy: ${note}`;
+        order.note = order.note ? `${order.note} | Buyer hủy: ${note}` : `Buyer hủy: ${note}`;
       }
+
+      // Mở lại bài đăng
+      await postRepo.update(order.postId, { status: PostStatus.PUBLISHED });
 
       return orderRepo.save(order);
     });
