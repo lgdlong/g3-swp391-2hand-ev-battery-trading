@@ -1,12 +1,20 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { Suspense, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getTransactionByOrderCode, type WalletTransaction } from '@/lib/api/walletApi';
+import {
+  verifyAndProcessTopup,
+  getTransactionByOrderCode,
+  type WalletTransaction,
+  getMyWallet,
+} from '@/lib/api/walletApi';
+import { createContract } from '@/lib/api/transactionApi';
+import { toast } from 'sonner';
 
 function CheckoutResultContent() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const orderCode = searchParams.get('orderCode');
   const paymentStatus = searchParams.get('status');
@@ -20,18 +28,98 @@ function CheckoutResultContent() {
   const isPaymentSuccessful =
     paymentStatus === 'PAID' && paymentCode === '00' && cancelFlag === 'false';
 
-  // Fetch transaction details by orderCode
+  // Verify and fetch transaction details
+  // If payment is successful, call verify first to ensure transaction is created
   const {
     data: transaction,
     isLoading,
     error,
   } = useQuery<WalletTransaction>({
-    queryKey: ['transaction', 'orderCode', orderCode],
-    queryFn: () => getTransactionByOrderCode(orderCode!),
+    queryKey: ['transaction', 'orderCode', orderCode, isPaymentSuccessful],
+    queryFn: async () => {
+      // If payment was successful, verify and process first
+      if (isPaymentSuccessful) {
+        try {
+          return await verifyAndProcessTopup(orderCode!);
+        } catch {
+          // If verify fails, try to get existing transaction
+          return await getTransactionByOrderCode(orderCode!);
+        }
+      }
+      // Otherwise just fetch the transaction
+      return await getTransactionByOrderCode(orderCode!);
+    },
     enabled: isValidOrderCode,
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Create contract mutation for completing purchase after topup
+  const createContractMutation = useMutation({
+    mutationFn: (listingId: string) => createContract(listingId),
+    onSuccess: () => {
+      toast.success('Mua xe thành công!');
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      // Clear localStorage
+      localStorage.removeItem('pendingBuyPostId');
+      localStorage.removeItem('pendingBuyPrice');
+      // Redirect to my-orders
+      router.push('/my-orders');
+    },
+    onError: (error: unknown) => {
+      console.error('Error creating contract:', error);
+      const errorMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(errorMessage || 'Có lỗi xảy ra khi mua xe');
+      // Clear localStorage on error
+      localStorage.removeItem('pendingBuyPostId');
+      localStorage.removeItem('pendingBuyPrice');
+    },
+  });
+
+  // Handle completing purchase after successful payment
+  useEffect(() => {
+    // Only process if payment is successful, transaction is loaded, and not already processing
+    if (isPaymentSuccessful && !isLoading && transaction && !createContractMutation.isPending) {
+      const pendingPostId = localStorage.getItem('pendingBuyPostId');
+
+      if (pendingPostId) {
+        // Wait a bit for wallet to be updated, then create contract
+        const checkAndComplete = async () => {
+          try {
+            // Wait 2 seconds for wallet update to be processed
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            // Check wallet balance
+            const wallet = await getMyWallet();
+            const walletBalance = parseFloat(wallet.balance);
+            const pendingPrice = localStorage.getItem('pendingBuyPrice');
+            const carPrice = pendingPrice ? parseFloat(pendingPrice) : 0;
+
+            if (walletBalance >= carPrice) {
+              // Create contract automatically after successful payment
+              await createContractMutation.mutateAsync(pendingPostId);
+            } else {
+              toast.error('Số dư ví vẫn chưa đủ. Vui lòng thử lại sau.');
+              // Clear localStorage on error
+              localStorage.removeItem('pendingBuyPostId');
+              localStorage.removeItem('pendingBuyPrice');
+            }
+          } catch (error) {
+            console.error('Error completing purchase:', error);
+            toast.error('Có lỗi xảy ra khi hoàn tất mua xe');
+            // Clear localStorage on error
+            localStorage.removeItem('pendingBuyPostId');
+            localStorage.removeItem('pendingBuyPrice');
+          }
+        };
+
+        checkAndComplete();
+      }
+    }
+  }, [isPaymentSuccessful, isLoading, transaction, createContractMutation]);
 
   // Show loading state
   if (isLoading) {
@@ -64,8 +152,8 @@ function CheckoutResultContent() {
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <p className="text-gray-600">
               {!isValidOrderCode
-                ? `Mã đơn hàng &quot;${orderCode || 'không có'}&quot; không hợp lệ.`
-                : `Giao dịch với mã đơn hàng &quot;${orderCode}&quot; không tồn tại hoặc bạn không có quyền truy cập.`}
+                ? `Mã đơn hàng ${orderCode || 'không có'} không hợp lệ.`
+                : `Giao dịch với mã đơn hàng ${orderCode} không tồn tại hoặc bạn không có quyền truy cập.`}
             </p>
             <button
               onClick={() => router.back()}

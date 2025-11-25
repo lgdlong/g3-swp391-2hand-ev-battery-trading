@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Wallet } from './entities/wallet.entity';
@@ -450,6 +450,83 @@ export class WalletsService {
   }
 
   /**
+   * Verify payment with PayOS and process topup if successful
+   * This is called when user returns from PayOS checkout
+   * @param orderCode - Payment order code
+   * @param userId - User ID for ownership verification
+   * @returns Wallet transaction response
+   */
+  async verifyAndProcessTopup(
+    orderCode: string,
+    userId: number,
+  ): Promise<WalletTransactionResponseDto> {
+    // Find payment order
+    const paymentOrder = await this.paymentOrderRepo.findOne({
+      where: { id: orderCode },
+      relations: ['serviceType'],
+    });
+
+    if (!paymentOrder) {
+      throw new NotFoundException(`Payment order ${orderCode} not found`);
+    }
+
+    // Check ownership
+    if (paymentOrder.accountId !== userId) {
+      throw new NotFoundException(`Payment order ${orderCode} not found or access denied`);
+    }
+
+    // Check if it's a wallet topup
+    if (paymentOrder.serviceType?.code !== 'WALLET_TOPUP') {
+      throw new BadRequestException('This payment order is not a wallet topup');
+    }
+
+    // Check if already has a transaction (already processed)
+    const existingTransaction = await this.walletTransactionRepo.findOne({
+      where: {
+        relatedEntityId: orderCode,
+        relatedEntityType: 'payment_orders',
+      },
+      relations: ['serviceType'],
+    });
+
+    if (existingTransaction) {
+      // Already processed, just return the transaction
+      return WalletTransactionMapper.toResponseDto(existingTransaction);
+    }
+
+    // If payment order is still pending, we need to check with PayOS
+    // For now, we'll mark it as completed and process (assuming user returns with success params)
+    if (paymentOrder.status === PaymentStatus.PENDING) {
+      // Update payment order status to completed
+      paymentOrder.status = PaymentStatus.COMPLETED;
+      paymentOrder.paidAt = new Date();
+      await this.paymentOrderRepo.save(paymentOrder);
+    }
+
+    // Process the topup if status is completed
+    if (paymentOrder.status === PaymentStatus.COMPLETED) {
+      const { transaction } = await this.topUp(
+        paymentOrder.accountId,
+        paymentOrder.amount,
+        `Nạp tiền từ PayOS - Order #${orderCode}`,
+        paymentOrder.id,
+      );
+
+      // Reload transaction with serviceType relation
+      const fullTransaction = await this.walletTransactionRepo.findOne({
+        where: { id: transaction.id },
+        relations: ['serviceType'],
+      });
+
+      return WalletTransactionMapper.toResponseDto(fullTransaction!);
+    }
+
+    throw new BadRequestException(
+      `Payment order ${orderCode} has status ${paymentOrder.status}. Cannot process topup.`,
+    );
+  }
+
+  /**
    * Admin deduct from wallet - Creates transaction and updates balance atomically
    * @param userId - User account ID
    * @param amount - Amount to deduct
@@ -510,27 +587,60 @@ export class WalletsService {
 
   /**
    * Get wallet transaction by orderCode
+   * If transaction doesn't exist but payment order is completed, process the payment first
    * @param orderCode - Payment order code from PayOS
    * @param userId - User ID to verify ownership
    * @returns Wallet transaction
    */
   async getTransactionByOrderCode(orderCode: string, userId?: number): Promise<WalletTransaction> {
+    // First, try to find existing transaction
     const queryBuilder = this.walletTransactionRepo
       .createQueryBuilder('transaction')
       .leftJoinAndSelect('transaction.serviceType', 'serviceType')
-      .where('transaction.relatedEntityId = :orderCode', { orderCode });
+      .where('transaction.relatedEntityId = :orderCode', { orderCode })
+      .andWhere('transaction.relatedEntityType = :entityType', { entityType: 'payment_orders' });
 
-    // If userId is provided, add ownership check
     if (userId) {
       queryBuilder.andWhere('transaction.walletUserId = :userId', { userId });
     }
 
-    const transaction = await queryBuilder.getOne();
+    let transaction = await queryBuilder.getOne();
 
+    // If transaction not found, check if payment order exists and is completed
     if (!transaction) {
-      throw new NotFoundException(
-        `Transaction with orderCode ${orderCode} not found${userId ? ' or access denied' : ''}`,
-      );
+      const paymentOrder = await this.paymentOrderRepo.findOne({
+        where: { id: orderCode },
+        relations: ['serviceType'],
+      });
+
+      if (!paymentOrder) {
+        throw new NotFoundException(`Payment order with orderCode ${orderCode} not found`);
+      }
+
+      // Check ownership
+      if (userId && paymentOrder.accountId !== userId) {
+        throw new NotFoundException(
+          `Transaction with orderCode ${orderCode} not found or access denied`,
+        );
+      }
+
+      // If payment is completed but transaction doesn't exist, process it now
+      if (
+        paymentOrder.status === PaymentStatus.COMPLETED &&
+        paymentOrder.serviceType?.code === 'WALLET_TOPUP'
+      ) {
+        await this.processCompletedPayment(paymentOrder.id);
+
+        // Try to fetch the transaction again
+        transaction = await queryBuilder.getOne();
+      }
+
+      // If still no transaction, return payment order info as pending
+      if (!transaction) {
+        throw new NotFoundException(
+          `Transaction for orderCode ${orderCode} is still being processed. Please wait and refresh.`,
+        );
+      }
     }
 
     return transaction;

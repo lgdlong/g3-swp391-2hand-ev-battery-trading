@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Calendar, MapPin, User, Phone } from 'lucide-react';
+import { Calendar, MapPin, User, Phone, ShoppingCart } from 'lucide-react';
 import { relativeTime } from '@/lib/utils/format';
 import type { PostUI } from '@/types/post';
 import type { AccountUI } from '@/types/account';
@@ -8,12 +8,24 @@ import { useAuth } from '@/lib/auth-context';
 import { useCreateConversation } from '@/hooks/useChat';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
-import { getContractByBuyerAndListing } from '@/lib/api/transactionApi';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createContract } from '@/lib/api/transactionApi';
 import { BuyerContractInfo } from './BuyerContractInfo';
 import { SellerRatingDisplay } from '@/components/SellerRatingDisplay';
 import { useSellerRating } from '@/hooks/useSellerRating';
-
+import { getMyWallet } from '@/lib/api/walletApi';
+import { TopupModal } from '@/components/TopupModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useState } from 'react';
 
 interface SellerInfoProps {
   account: AccountUI | undefined;
@@ -27,12 +39,45 @@ interface SellerInfoProps {
 export function SellerInfo({ account, post }: SellerInfoProps) {
   const { user, isLoggedIn } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const createConversationMutation = useCreateConversation();
-  
+
+  // State for buy now flow
+  const [showBuyConfirm, setShowBuyConfirm] = useState(false);
+  const [showTopupModal, setShowTopupModal] = useState(false);
+  const [topupAmount, setTopupAmount] = useState<number | undefined>(undefined);
+
   // Lấy rating của seller
-  const { averageRating, totalReviews, isLoading: ratingLoading } = useSellerRating(
-    account?.id?.toString()
-  );
+  const {
+    averageRating,
+    totalReviews,
+    isLoading: ratingLoading,
+  } = useSellerRating(account?.id?.toString());
+
+  // Fetch wallet balance
+  const { refetch: refetchWallet } = useQuery({
+    queryKey: ['wallet', 'me'],
+    queryFn: getMyWallet,
+    enabled: isLoggedIn && showBuyConfirm,
+  });
+
+  // Create contract mutation
+  const createContractMutation = useMutation({
+    mutationFn: (listingId: string) => createContract(listingId),
+    onSuccess: () => {
+      toast.success('Mua xe thành công!');
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      router.push('/my-orders');
+    },
+    onError: (error: unknown) => {
+      console.error('Error creating contract:', error);
+      const errorMessage =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(errorMessage || 'Có lỗi xảy ra khi mua xe');
+    },
+  });
 
   const handleContactSeller = async () => {
     // Check if user is logged in
@@ -63,6 +108,52 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
     }
   };
 
+  const handleBuyNow = () => {
+    if (!isLoggedIn) {
+      toast.error('Vui lòng đăng nhập để mua xe');
+      router.push('/login');
+      return;
+    }
+
+    if (user?.id === account?.id) {
+      toast.error('Bạn không thể mua chính bài đăng của mình');
+      return;
+    }
+
+    setShowBuyConfirm(true);
+  };
+
+  const handleConfirmBuy = async () => {
+    setShowBuyConfirm(false);
+
+    try {
+      // Refetch wallet to get latest balance
+      const walletData = await refetchWallet();
+      const currentBalance = walletData.data ? parseFloat(walletData.data.balance) : 0;
+      const carPrice = parseFloat(post.priceVnd);
+
+      if (currentBalance >= carPrice) {
+        // Enough balance, create contract directly
+        await createContractMutation.mutateAsync(post.id);
+      } else {
+        // Insufficient balance, calculate missing amount and open topup modal
+        const missingAmount = Math.ceil(carPrice - currentBalance);
+        setTopupAmount(missingAmount);
+        // Store post ID in localStorage to complete purchase after topup
+        localStorage.setItem('pendingBuyPostId', post.id);
+        localStorage.setItem('pendingBuyPrice', post.priceVnd);
+        // Use custom return URL that will complete the purchase
+        setShowTopupModal(true);
+      }
+    } catch (error) {
+      console.error('Error in buy flow:', error);
+      toast.error('Có lỗi xảy ra khi xử lý mua xe');
+    }
+  };
+
+  const handleTopupClose = () => {
+    setShowTopupModal(false);
+  };
 
   if (!account) {
     return (
@@ -97,10 +188,7 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
             </div>
             {/* ⭐ Rating Display */}
             {!ratingLoading && (
-              <SellerRatingDisplay
-                averageRating={averageRating}
-                totalReviews={totalReviews}
-              />
+              <SellerRatingDisplay averageRating={averageRating} totalReviews={totalReviews} />
             )}
           </div>
         </div>
@@ -148,11 +236,7 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
         <div className="space-y-2">
           {/* Show buyer's contract if exists */}
           {isLoggedIn && user?.id && (
-            <BuyerContractInfo
-              listingId={post.id}
-              buyerId={user.id}
-              enabled={true}
-            />
+            <BuyerContractInfo listingId={post.id} buyerId={user.id} enabled={true} />
           )}
 
           <button
@@ -176,8 +260,43 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
               Không có số điện thoại
             </button>
           )}
+
+          {/* Buy Now Button */}
+          <button
+            onClick={handleBuyNow}
+            disabled={createContractMutation.isPending}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            {createContractMutation.isPending ? 'Đang xử lý...' : 'Mua ngay'}
+          </button>
         </div>
       )}
+
+      {/* Buy Confirmation Dialog */}
+      <AlertDialog open={showBuyConfirm} onOpenChange={setShowBuyConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận mua xe</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn mua xe này với giá{' '}
+              {new Intl.NumberFormat('vi-VN').format(parseFloat(post.priceVnd))} ₫ không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBuy}>Xác nhận</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Topup Modal */}
+      <TopupModal
+        isOpen={showTopupModal}
+        onClose={handleTopupClose}
+        initialAmount={topupAmount}
+        returnUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/checkout/result?completeBuy=true`}
+      />
     </div>
   );
 }

@@ -46,7 +46,7 @@ export default function TransactionDetailPage() {
   });
 
   const formatAmount = (amount: string) => {
-    return new Intl.NumberFormat('vi-VN').format(Math.abs(parseFloat(amount))) + ' Coin';
+    return new Intl.NumberFormat('vi-VN').format(Math.abs(parseFloat(amount))) + ' ₫';
   };
 
   const getTransactionType = () => {
@@ -311,7 +311,7 @@ export default function TransactionDetailPage() {
             className="flex-1 bg-[#048C73] hover:bg-[#037060] text-white shadow-lg"
             size="lg"
           >
-            Nạp thêm coin
+            Nạp thêm tiền
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
