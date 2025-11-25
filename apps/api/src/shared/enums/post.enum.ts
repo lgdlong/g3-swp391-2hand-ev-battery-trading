@@ -6,6 +6,7 @@ export enum PostStatus {
   PAUSED = 'PAUSED',
   SOLD = 'SOLD',
   ARCHIVED = 'ARCHIVED',
+  LOCKED = 'LOCKED',
 }
 
 export enum PostType {

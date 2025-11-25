@@ -23,6 +23,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { AdminStatisticsModule } from './modules/admin-statistics/admin-statistics.module';
+import { OrdersModule } from './modules/orders/orders.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -81,6 +82,7 @@ import { AdminStatisticsModule } from './modules/admin-statistics/admin-statisti
     TransactionsModule,
     ChatModule,
     AdminStatisticsModule,
+    OrdersModule,
   ],
   controllers: [],
   providers: [],

@@ -14,12 +14,16 @@ import { ContractStatus } from '../../../shared/enums/contract-status.enum';
 @Entity({ name: 'contracts' })
 @Index(['listingId'])
 @Index(['status'])
+@Index(['orderId'])
 export class Contract {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string;
 
   @Column({ name: 'listing_id', type: 'bigint', nullable: false })
   listingId!: string;
+
+  @Column({ name: 'order_id', type: 'bigint', nullable: true })
+  orderId: string | null = null;
 
   @Column({ name: 'buyer_id', type: 'int', nullable: false })
   buyerId!: number;
@@ -75,4 +79,8 @@ export class Contract {
   @ManyToOne(() => require('../../accounts/entities/account.entity').Account)
   @JoinColumn({ name: 'seller_id' })
   seller!: Account;
+
+  @ManyToOne(() => require('../../orders/entities/order.entity').Order, { nullable: true })
+  @JoinColumn({ name: 'order_id' })
+  order?: Account | null;
 }
