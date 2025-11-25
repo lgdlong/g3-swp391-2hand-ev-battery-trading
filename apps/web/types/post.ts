@@ -104,6 +104,7 @@ export interface CarDetail {
   charge_ac_kw: FlexibleField;
   charge_dc_kw: FlexibleField;
   battery_health_pct: FlexibleField;
+  has_bundled_battery?: boolean;
 }
 
 // ===== BikeDetail =====
@@ -159,6 +160,11 @@ export interface CarDetailUI {
   range_km?: number;
   license_plate?: string;
   origin?: Origin;
+  // Bundled battery info
+  has_bundled_battery?: boolean;
+  battery_brand?: string;
+  battery_manufacture_year?: number;
+  battery_charge_count?: number;
 }
 
 /** Bike detail specifications for UI */

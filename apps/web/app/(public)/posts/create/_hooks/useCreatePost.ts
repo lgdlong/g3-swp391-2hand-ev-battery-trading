@@ -37,7 +37,7 @@ export function useCreatePost() {
   const [provinceCode, setProvinceCode] = useState<string>('');
   const [districtCode, setDistrictCode] = useState<string>('');
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => {
       const newData = {
         ...prev,
@@ -147,6 +147,8 @@ export function useCreatePost() {
               charge_ac_kw: parseFloat(formData.chargeAcKw) || 0,
               charge_dc_kw: parseFloat(formData.chargeDcKw) || 0,
               battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
+              // Bundled battery flag only
+              has_bundled_battery: formData.hasBundledBattery,
             },
           };
 

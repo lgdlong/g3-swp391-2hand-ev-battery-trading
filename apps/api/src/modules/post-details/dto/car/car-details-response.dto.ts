@@ -46,4 +46,7 @@ export class CarDetailsResponseDto {
 
   @ApiProperty({ nullable: true })
   battery_health_pct!: number | null;
+
+  @ApiProperty({ default: false })
+  has_bundled_battery!: boolean;
 }

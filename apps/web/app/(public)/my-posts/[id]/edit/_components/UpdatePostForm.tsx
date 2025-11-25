@@ -52,7 +52,7 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
     }));
   };
 
-  const handleEvInputChange = (field: string, value: string) => {
+  const handleEvInputChange = (field: string, value: string | boolean) => {
     setEvFormData((prev) => ({
       ...prev,
       [field]: value,

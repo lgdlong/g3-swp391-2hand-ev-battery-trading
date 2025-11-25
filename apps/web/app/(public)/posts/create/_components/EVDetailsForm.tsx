@@ -28,12 +28,13 @@ interface EVDetailsFormProps {
     chargeDcKw: string;
     motorPowerKw: string;
     batteryHealthPct: string;
+    hasBundledBattery: boolean;
   };
   brands: Brand[];
   models: Model[];
   loadingBrands: boolean;
   loadingModels: boolean;
-  onInputChange: (field: string, value: string) => void;
+  onInputChange: (field: string, value: string | boolean) => void;
 }
 
 export default function EVDetailsForm({
@@ -358,6 +359,22 @@ export default function EVDetailsForm({
               <option value="NOI_DIA">Nội địa</option>
               <option value="NHAP_KHAU">Nhập khẩu</option>
             </select>
+          </div>
+        </div>
+
+        {/* Bundled Battery Section */}
+        <div className="mt-8 pt-6 border-t">
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              id="hasBundledBattery"
+              checked={formData.hasBundledBattery}
+              onChange={(e) => onInputChange('hasBundledBattery', e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="hasBundledBattery" className="font-semibold mb-0 cursor-pointer">
+              Xe có kèm pin
+            </Label>
           </div>
         </div>
       </CardContent>
