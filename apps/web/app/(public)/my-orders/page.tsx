@@ -131,7 +131,10 @@ export default function MyOrdersPage() {
           </p>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-foreground">Lọc theo:</span>
-            <Select value={orderTypeFilter} onValueChange={(v) => setOrderTypeFilter(v as typeof orderTypeFilter)}>
+            <Select
+              value={orderTypeFilter}
+              onValueChange={(v) => setOrderTypeFilter(v as typeof orderTypeFilter)}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Chọn loại đơn hàng" />
               </SelectTrigger>
@@ -151,32 +154,56 @@ export default function MyOrdersPage() {
           <TabsList className="grid w-full grid-cols-4">
             {orderTypeFilter === 'buy' && (
               <>
-                <TabsTrigger value="buy-awaiting">
+                <TabsTrigger
+                  value="buy-awaiting"
+                  className="gap-2 font-semibold h-full data-[state=active]:bg-white"
+                >
                   Đang chờ xác nhận ({buyAwaitingContracts.length})
                 </TabsTrigger>
-                <TabsTrigger value="buy-success">
+                <TabsTrigger
+                  value="buy-success"
+                  className="gap-2 font-semibold h-full data-[state=active]:bg-white"
+                >
                   Thành công ({buySuccessContracts.length})
                 </TabsTrigger>
-                <TabsTrigger value="buy-forfeited">
+                <TabsTrigger
+                  value="buy-forfeited"
+                  className="gap-2 font-semibold h-full data-[state=active]:bg-white"
+                >
                   Đã hủy ({buyForfeitedContracts.length})
                 </TabsTrigger>
-                <TabsTrigger value="buy-pending-refund">
+                <TabsTrigger
+                  value="buy-pending-refund"
+                  className="gap-2 font-semibold h-full data-[state=active]:bg-white"
+                >
                   Chờ hoàn tiền ({buyPendingRefundContracts.length})
                 </TabsTrigger>
               </>
             )}
             {orderTypeFilter === 'sell' && (
               <>
-                <TabsTrigger value="sell-awaiting">
+                <TabsTrigger
+                  value="sell-awaiting"
+                  className="gap-2 font-semibold h-full data-[state=active]:bg-white"
+                >
                   Đang chờ xác nhận ({sellAwaitingContracts.length})
                 </TabsTrigger>
-                <TabsTrigger value="sell-success">
+                <TabsTrigger
+                  value="sell-success"
+                  className="gap-2 font-semibold h-full data-[state=active]:bg-white"
+                >
                   Thành công ({sellSuccessContracts.length})
                 </TabsTrigger>
-                <TabsTrigger value="sell-forfeited">
+                <TabsTrigger
+                  value="sell-forfeited"
+                  className="gap-2 font-semibold h-full data-[state=active]:bg-white"
+                >
                   Đã hủy ({sellForfeitedContracts.length})
                 </TabsTrigger>
-                <TabsTrigger value="sell-pending-refund">
+                <TabsTrigger
+                  value="sell-pending-refund"
+                  className="gap-2 font-semibold h-full data-[state=active]:bg-white"
+                >
                   Chờ hoàn tiền ({sellPendingRefundContracts.length})
                 </TabsTrigger>
               </>
