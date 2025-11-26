@@ -14,6 +14,7 @@ export type PostStatus =
   | 'REJECTED'
   | 'PUBLISHED'
   | 'PAUSED'
+  | 'LOCKED'
   | 'SOLD'
   | 'ARCHIVED';
 
