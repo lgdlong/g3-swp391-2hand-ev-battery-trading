@@ -52,6 +52,7 @@ export class OrderWithRelationsDto extends OrderResponseDto {
     fullName: string;
     email: string | null;
     phone: string | null;
+    avatarUrl: string | null;
   };
 
   @ApiPropertyOptional({ description: 'Thông tin seller' })
@@ -60,6 +61,7 @@ export class OrderWithRelationsDto extends OrderResponseDto {
     fullName: string;
     email: string | null;
     phone: string | null;
+    avatarUrl: string | null;
   };
 
   @ApiPropertyOptional({ description: 'Thông tin bài đăng' })
@@ -67,5 +69,11 @@ export class OrderWithRelationsDto extends OrderResponseDto {
     id: string;
     title: string;
     priceVnd: string;
+    postType: string;
+    images: Array<{
+      id: string;
+      url: string;
+      position: number;
+    }>;
   };
 }
