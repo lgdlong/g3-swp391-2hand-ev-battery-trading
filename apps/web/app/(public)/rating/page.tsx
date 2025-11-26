@@ -28,8 +28,8 @@ function RatingStars({ rating }: { rating: number }) {
   );
 }
 
-function RatingCard({ rating, type }: { rating: RatingResponse; type: 'given' | 'received' }) {
-  const displayUser = type === 'given' ? rating.seller : rating.customer;
+function RatingCard({ rating }: { rating: RatingResponse }) {
+  const displayUser = rating.customer;
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('vi-VN', {
       day: '2-digit',
@@ -87,12 +87,10 @@ function RatingCard({ rating, type }: { rating: RatingResponse; type: 'given' | 
 function RatingsList({
   ratings,
   isLoading,
-  type,
   emptyMessage,
 }: {
   ratings: RatingResponse[];
   isLoading: boolean;
-  type: 'given' | 'received';
   emptyMessage: string;
 }) {
   if (isLoading) {
@@ -115,7 +113,7 @@ function RatingsList({
   return (
     <div className="space-y-4">
       {ratings.map((rating) => (
-        <RatingCard key={rating.id} rating={rating} type={type} />
+        <RatingCard key={rating.id} rating={rating} />
       ))}
     </div>
   );
@@ -232,7 +230,6 @@ export default function RatingPage() {
                 <RatingsList
                   ratings={givenRatings?.data || []}
                   isLoading={isLoadingGiven}
-                  type="given"
                   emptyMessage="Bạn chưa đánh giá sản phẩm nào"
                 />
               </CardContent>
@@ -248,7 +245,6 @@ export default function RatingPage() {
                 <RatingsList
                   ratings={receivedRatings?.data || []}
                   isLoading={isLoadingReceived}
-                  type="received"
                   emptyMessage="Bạn chưa nhận được đánh giá nào"
                 />
               </CardContent>
