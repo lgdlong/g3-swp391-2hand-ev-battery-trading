@@ -99,12 +99,16 @@ export function PostCard({ post, onViewDetails }: PostCardProps) {
               <div className="flex flex-col items-end gap-2">
                 {getStatusBadge(post.status)}
                 <Badge
-                  variant={post.documentsCount && post.documentsCount > 0 ? 'outline' : 'destructive'}
-                  className="flex items-center gap-1 text-xs"
+                  variant={post.documentsCount && post.documentsCount > 0 ? 'secondary' : 'destructive'}
+                  className={
+                    post.documentsCount && post.documentsCount > 0
+                      ? 'flex items-center gap-1 text-xs bg-green-100 text-green-800 border-green-200'
+                      : 'flex items-center gap-1 text-xs'
+                  }
                 >
                   <Shield className="w-3 h-3" />
                   {post.documentsCount && post.documentsCount > 0
-                    ? `${post.documentsCount} giấy tờ`
+                    ? `Đã tải ${post.documentsCount} giấy tờ`
                     : 'Thiếu giấy tờ'}
                 </Badge>
               </div>

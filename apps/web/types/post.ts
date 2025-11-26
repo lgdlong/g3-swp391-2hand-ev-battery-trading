@@ -20,22 +20,20 @@ export type PostStatus =
 /** Origin type for vehicles */
 export type PostOrigin = 'NOI_DIA' | 'NHAP_KHAU';
 
-/** Post document type enum matching backend */
-export type PostDocumentType =
-  | 'REGISTRATION'
-  | 'VEHICLE_PAPER'
-  | 'OWNERSHIP'
+/** Post verification document type enum matching backend */
+export type PostVerificationDocumentType =
+  | 'REGISTRATION_CERTIFICATE'
   | 'INSURANCE'
   | 'OTHER';
 
-export interface PostDocument {
+export interface PostVerificationDocument {
   id: string;
-  documentType: PostDocumentType;
+  postId: string;
+  type: PostVerificationDocumentType;
   url: string;
-  publicId: string;
-  width: number;
-  height: number;
   uploadedAt: string;
+  uploadedBy: number;
+  createdAt: string;
 }
 
 // ===== Vehicle Detail Enums =====

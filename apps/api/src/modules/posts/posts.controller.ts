@@ -55,8 +55,9 @@ import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 import { DeletePostResponseDto } from './dto/delete-post-response.dto';
 import { DeductPostFeeDto } from './dto/deduct-post-fee.dto';
 import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
-import { PostDocumentType } from '../../shared/enums/post-document-type.enum';
-import { PostDocumentResponseDto } from './dto/post-document-response.dto';
+import { PostVerificationDocumentType } from '../../shared/enums/post-verification-document-type.enum';
+import { CreateVerificationDocumentDto } from './dto/create-verification-document.dto';
+import { VerificationDocumentResponseDto } from './dto/verification-document-response.dto';
 
 @ApiTags('posts')
 @ApiExtraModels(
@@ -64,7 +65,7 @@ import { PostDocumentResponseDto } from './dto/post-document-response.dto';
   CarDetailsResponseDto,
   BikeDetailsResponseDto,
   BatteryDetailResponseDto,
-  PostDocumentResponseDto,
+  VerificationDocumentResponseDto,
 )
 @Controller('posts')
 export class PostsController {
@@ -471,107 +472,99 @@ export class PostsController {
     return { images: uploaded };
   }
 
+  //-----------------------------------------
+  //--- VERIFICATION DOCUMENTS ENDPOINTS ---
+  //-----------------------------------------
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.USER)
-  @Post(':postId/documents')
-  @ApiOperation({ summary: 'Upload giấy tờ xe phục vụ kiểm duyệt (người bán)' })
+  @Post(':postId/verification-documents')
+  @ApiOperation({
+    summary: 'Upload giấy tờ xe để kiểm duyệt (cà vẹt, đăng ký, bảo hiểm...)',
+    description:
+      'Upload giấy tờ xe để admin kiểm duyệt. Giấy tờ này CHỈ admin và chủ bài đăng xem được, không hiển thị công khai.',
+  })
   @ApiBearerAuth()
   @ApiParam({ name: 'postId', type: String, example: '123' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: 'Tải tối đa 5 giấy tờ, field name: files; chọn documentType nếu cần',
-    schema: {
-      type: 'object',
-      properties: {
-        documentType: {
-          type: 'string',
-          enum: Object.values(PostDocumentType),
-          example: PostDocumentType.VEHICLE_PAPER,
-        },
-        files: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
-        },
-      },
-      required: ['files'],
-    },
-  })
-  @ApiOkResponse({
+  @ApiBody({ type: [CreateVerificationDocumentDto] })
+  @ApiCreatedResponse({
     description: 'Danh sách giấy tờ đã upload',
     schema: {
       type: 'object',
       properties: {
-        documents: {
+        verificationDocuments: {
           type: 'array',
-          items: { $ref: getSchemaPath(PostDocumentResponseDto) },
+          items: { $ref: getSchemaPath(VerificationDocumentResponseDto) },
         },
       },
     },
   })
-  @UseInterceptors(MultipleImageUploadInterceptor(5))
-  async uploadPostDocuments(
+  @ApiBadRequestResponse({ description: 'Không có file hoặc postId không hợp lệ' })
+  @ApiUnauthorizedResponse({ description: 'Chưa đăng nhập' })
+  @ApiForbiddenResponse({ description: 'Không có quyền' })
+  async uploadVerificationDocuments(
     @Param('postId') postId: string,
     @User() user: AuthUser,
-    @UploadedFiles() files?: Express.Multer.File[],
-    @Body('documentType') documentType?: string,
+    @Body() body: CreateVerificationDocumentDto[],
   ) {
-    if (!files || files.length === 0) {
-      throw new BadRequestException('No files provided');
+    if (!body || body.length === 0) {
+      throw new BadRequestException('Không có giấy tờ nào được cung cấp');
     }
 
     if (!postId || isNaN(+postId)) {
-      throw new BadRequestException('Invalid postId');
+      throw new BadRequestException('postId không hợp lệ');
     }
 
-    const normalizedTypeInput = typeof documentType === 'string' ? documentType.toUpperCase() : undefined;
-    const allowedTypes = Object.values(PostDocumentType) as string[];
-    const normalizedType = allowedTypes.includes(normalizedTypeInput ?? '')
-      ? (normalizedTypeInput as PostDocumentType)
-      : PostDocumentType.VEHICLE_PAPER;
+    const verificationDocuments = await this.postsService.addVerificationDocuments(postId, user.sub, body);
 
-    const uploaded = await Promise.all(
-      files.map(async (file) => {
-        const res = await this.uploadService.uploadImage(file, {
-          folder: `posts/${postId}/documents`,
-        });
-        return {
-          public_id: res.public_id,
-          url: res.secure_url,
-          width: res.width,
-          height: res.height,
-          bytes: res.bytes,
-          format: res.format ?? null,
-          documentType: normalizedType,
-        };
-      }),
-    );
-
-    const documents = await this.postsService.addDocuments(postId, user.sub, uploaded);
-
-    return { documents };
+    return { verificationDocuments };
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountRole.ADMIN, AccountRole.USER)
-  @Get(':postId/documents')
-  @ApiOperation({ summary: 'Xem giấy tờ xe (admin hoặc chủ bài đăng)' })
+  @Get(':postId/verification-documents')
+  @ApiOperation({
+    summary: 'Xem giấy tờ xe để kiểm duyệt (CHỈ admin hoặc chủ bài đăng)',
+    description: 'Lấy danh sách giấy tờ xe đã upload. CHỈ admin hoặc chủ bài đăng mới xem được.',
+  })
   @ApiBearerAuth()
   @ApiParam({ name: 'postId', type: String, example: '123' })
   @ApiOkResponse({
-    description: 'Danh sách giấy tờ',
+    description: 'Danh sách giấy tờ xe',
     schema: {
       type: 'object',
       properties: {
-        documents: {
+        verificationDocuments: {
           type: 'array',
-          items: { $ref: getSchemaPath(PostDocumentResponseDto) },
+          items: { $ref: getSchemaPath(VerificationDocumentResponseDto) },
         },
       },
     },
   })
-  async getPostDocuments(@Param('postId') postId: string, @User() user: AuthUser) {
-    const documents = await this.postsService.listDocumentsForRequester(postId, user);
-    return { documents };
+  @ApiForbiddenResponse({ description: 'Không có quyền xem giấy tờ này' })
+  async getVerificationDocuments(@Param('postId') postId: string, @User() user: AuthUser) {
+    const verificationDocuments = await this.postsService.listVerificationDocuments(
+      postId,
+      user.sub,
+      user.role,
+    );
+    return { verificationDocuments };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN, AccountRole.USER)
+  @Delete('verification-documents/:docId')
+  @ApiOperation({
+    summary: 'Xóa giấy tờ xe (soft delete)',
+    description: 'Xóa một giấy tờ xe đã upload. CHỈ admin hoặc chủ bài đăng mới xóa được.',
+  })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'docId', type: String, example: '123' })
+  @ApiOkResponse({ description: 'Xóa thành công' })
+  @ApiForbiddenResponse({ description: 'Không có quyền xóa giấy tờ này' })
+  async deleteVerificationDocument(@Param('docId') docId: string, @User() user: AuthUser) {
+    await this.postsService.deleteVerificationDocument(docId, user.sub, user.role);
+    return { message: 'Xóa giấy tờ thành công' };
   }
 
   //-----------------------------------------

@@ -1,11 +1,10 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Clock, CheckCircle, XCircle } from 'lucide-react';
 
 interface StatusSummaryCardsProps {
   counts: {
-    draftCount: number;
     pendingReviewCount: number;
     publishedCount: number;
     rejectedCount: number;
@@ -13,7 +12,7 @@ interface StatusSummaryCardsProps {
 }
 
 export function StatusSummaryCards({ counts }: StatusSummaryCardsProps) {
-  const { draftCount, pendingReviewCount, publishedCount, rejectedCount } = counts;
+  const { pendingReviewCount, publishedCount, rejectedCount } = counts;
 
   return (
     <>
@@ -21,7 +20,7 @@ export function StatusSummaryCards({ counts }: StatusSummaryCardsProps) {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Thống kê bài đăng</h2>
         <p className="text-gray-600">Tổng quan về trạng thái các bài đăng</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-gradient-to-br from-yellow-50 to-amber-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -32,21 +31,6 @@ export function StatusSummaryCards({ counts }: StatusSummaryCardsProps) {
               </div>
               <div className="w-12 h-12 bg-yellow-200 rounded-xl flex items-center justify-center group-hover:bg-yellow-300 transition-colors">
                 <Clock className="w-6 h-6 text-yellow-700" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 group">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-green-700 mb-1">Bản nháp</h3>
-                <div className="text-3xl font-bold text-green-800">{draftCount}</div>
-                <p className="text-xs text-green-600 mt-1">Chưa thanh toán</p>
-              </div>
-              <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center group-hover:bg-green-300 transition-colors">
-                <FileText className="w-6 h-6 text-green-700" />
               </div>
             </div>
           </CardContent>

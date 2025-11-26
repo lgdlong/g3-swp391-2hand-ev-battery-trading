@@ -17,7 +17,7 @@ import type { PostEvCarDetails } from '../../post-details/entities/post-ev-car-d
 import type { PostEvBikeDetails } from '../../post-details/entities/post-ev-bike-details.entity';
 import type { PostBatteryDetails } from '../../post-details/entities/post-battery-details.entity';
 import { PostImage } from './post-image.entity';
-import type { PostDocument } from './post-document.entity';
+import type { PostVerificationDocument } from './post-verification-document.entity';
 
 @Entity({ name: 'posts' })
 @Index(['wardCode'])
@@ -128,6 +128,9 @@ export class Post {
   @OneToMany(() => require('./post-image.entity').PostImage, (image: PostImage) => image.post)
   images!: PostImage[];
 
-  @OneToMany(() => require('./post-document.entity').PostDocument, (document: PostDocument) => document.post)
-  documents!: PostDocument[];
+  @OneToMany(
+    () => require('./post-verification-document.entity').PostVerificationDocument,
+    (doc: PostVerificationDocument) => doc.post,
+  )
+  verificationDocuments!: PostVerificationDocument[];
 }

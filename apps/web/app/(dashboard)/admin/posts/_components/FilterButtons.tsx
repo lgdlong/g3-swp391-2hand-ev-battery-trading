@@ -9,7 +9,6 @@ interface FilterButtonsProps {
   currentFilter: AdminPostFilter;
   onFilterChange: (filter: AdminPostFilter) => void;
   counts: {
-    draftCount: number;
     pendingReviewCount: number;
     publishedCount: number;
     rejectedCount: number;
@@ -19,7 +18,6 @@ interface FilterButtonsProps {
 export function FilterButtons({ currentFilter, onFilterChange, counts }: FilterButtonsProps) {
   const filters: { key: AdminPostFilter; label: string; badge: number }[] = [
     { key: 'PENDING_REVIEW', label: 'Chờ duyệt', badge: counts.pendingReviewCount },
-    { key: 'DRAFT', label: 'Bản nháp', badge: counts.draftCount },
     { key: 'PUBLISHED', label: 'Đã đăng', badge: counts.publishedCount },
     { key: 'REJECTED', label: 'Từ chối', badge: counts.rejectedCount },
   ];

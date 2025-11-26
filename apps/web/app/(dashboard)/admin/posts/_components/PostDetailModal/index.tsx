@@ -10,11 +10,17 @@ import { PostVehicleDetails } from './PostVehicleDetails';
 import { PostDetailActions } from './PostDetailActions';
 import { Post } from '@/types/post';
 import { useQuery } from '@tanstack/react-query';
-import { getPostDocuments } from '@/lib/api/postApi';
-import type { PostDocument } from '@/types/post';
+import { getVerificationDocuments } from '@/lib/api/postApi';
+import type { PostVerificationDocument } from '@/types/post';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Shield } from 'lucide-react';
+
+const DOCUMENT_LABELS: Record<string, string> = {
+  REGISTRATION_CERTIFICATE: 'Cà vẹt / Giấy đăng ký xe',
+  INSURANCE: 'Bảo hiểm xe',
+  OTHER: 'Giấy tờ khác',
+};
 
 export interface PostDetailModalProps {
   isOpen: boolean;
@@ -41,8 +47,8 @@ export function PostDetailModal({
     data: documents,
     isLoading: isLoadingDocuments,
   } = useQuery({
-    queryKey: ['admin-post-documents', post.id],
-    queryFn: () => getPostDocuments(String(post.id)),
+    queryKey: ['admin-post-verification-documents', post.id],
+    queryFn: () => getVerificationDocuments(String(post.id)),
     enabled: isOpen,
   });
 
@@ -99,7 +105,7 @@ export function PostDetailModal({
                   <p className="text-sm text-muted-foreground">Đang tải giấy tờ...</p>
                 ) : documents && documents.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {documents.map((doc: PostDocument) => (
+                    {documents.map((doc: PostVerificationDocument) => (
                       <div
                         key={doc.id}
                         className="border rounded-lg p-3 bg-gray-50 hover:bg-white transition-colors"
@@ -107,13 +113,13 @@ export function PostDetailModal({
                         <div className="relative aspect-[4/3] rounded-md overflow-hidden mb-3">
                           <Image
                             src={doc.url}
-                            alt={doc.documentType}
+                            alt={DOCUMENT_LABELS[doc.type] || doc.type}
                             fill
                             className="object-cover"
                           />
                         </div>
                         <Badge variant="outline" className="text-xs mb-1">
-                          {doc.documentType}
+                          {DOCUMENT_LABELS[doc.type] || doc.type}
                         </Badge>
                         <p className="text-[11px] text-muted-foreground">
                           Tải lúc {new Date(doc.uploadedAt).toLocaleString('vi-VN')}

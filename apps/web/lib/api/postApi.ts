@@ -14,7 +14,7 @@ import type {
   DeletePostResponse,
   ArchivePostResponse,
 } from '@/types/api/post';
-import type { PostDocument, PostDocumentType } from '@/types/post';
+import type { PostVerificationDocument, PostVerificationDocumentType } from '@/types/post';
 
 // Re-export types for backward compatibility
 export type {
@@ -444,14 +444,14 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
 }
 
 /**
- * Upload confidential vehicle documents for a post
- * These images are only visible to admins and the post owner
+ * Upload files to Cloudinary and then create verification documents
+ * These documents are only visible to admins and the post owner
  */
-export async function uploadPostDocuments(
+export async function uploadVerificationDocuments(
   postId: string,
   files: File[],
-  documentType: PostDocumentType,
-): Promise<PostDocument[]> {
+  documentType: PostVerificationDocumentType,
+): Promise<PostVerificationDocument[]> {
   if (!files || files.length === 0) {
     throw new Error('No files provided for upload');
   }
@@ -468,27 +468,57 @@ export async function uploadPostDocuments(
     }
   });
 
+  // Step 1: Upload files to Cloudinary
   const formData = new FormData();
-  formData.append('documentType', documentType);
   files.forEach((file) => formData.append('files', file, file.name));
 
-  const { data } = await api.post<{ documents: PostDocument[] }>(
-    `/posts/${postId}/documents`,
+  const uploadResponse = await api.post<{ images: Array<{ url: string }> }>(
+    '/upload/multiple',
     formData,
     { headers: getAuthHeaders() },
   );
 
-  return data?.documents ?? [];
+  const uploadedUrls = uploadResponse.data?.images?.map((img) => img.url) ?? [];
+
+  if (uploadedUrls.length === 0) {
+    throw new Error('Failed to upload images to Cloudinary');
+  }
+
+  // Step 2: Create verification documents with uploaded URLs
+  const verificationDocs = uploadedUrls.map((url) => ({
+    type: documentType,
+    url: url,
+  }));
+
+  const { data } = await api.post<{ verificationDocuments: PostVerificationDocument[] }>(
+    `/posts/${postId}/verification-documents`,
+    verificationDocs,
+    { headers: getAuthHeaders() },
+  );
+
+  return data?.verificationDocuments ?? [];
 }
 
 /**
- * Fetch confidential vehicle documents for a post (owner or admin only)
+ * Fetch verification documents for a post (owner or admin only)
  */
-export async function getPostDocuments(postId: string): Promise<PostDocument[]> {
-  const { data } = await api.get<{ documents: PostDocument[] }>(`/posts/${postId}/documents`, {
+export async function getVerificationDocuments(postId: string): Promise<PostVerificationDocument[]> {
+  const { data } = await api.get<{ verificationDocuments: PostVerificationDocument[] }>(
+    `/posts/${postId}/verification-documents`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data?.verificationDocuments ?? [];
+}
+
+/**
+ * Delete a verification document (soft delete)
+ */
+export async function deleteVerificationDocument(docId: string): Promise<void> {
+  await api.delete(`/verification-documents/${docId}`, {
     headers: getAuthHeaders(),
   });
-  return data?.documents ?? [];
 }
 
 // ==================== BIKE SPECIFIC API FUNCTIONS ====================

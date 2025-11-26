@@ -146,10 +146,14 @@ export default function PostListItem({
               </Tooltip>
               <Badge
                 variant={needsDocuments ? 'destructive' : 'secondary'}
-                className="flex items-center gap-1 text-xs"
+                className={
+                  needsDocuments
+                    ? 'flex items-center gap-1 text-xs'
+                    : 'flex items-center gap-1 text-xs bg-green-100 text-green-800 border-green-200'
+                }
               >
                 <Shield className="h-3 w-3" />
-                {needsDocuments ? 'Thiếu giấy tờ' : `Giấy tờ: ${documentsCount}`}
+                {needsDocuments ? 'Thiếu giấy tờ' : `Đã tải ${documentsCount} giấy tờ`}
               </Badge>
             </div>
           </div>

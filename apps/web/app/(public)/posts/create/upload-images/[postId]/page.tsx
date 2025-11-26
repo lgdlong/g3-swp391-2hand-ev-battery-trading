@@ -3,22 +3,25 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { getPostById, uploadPostImages, uploadPostDocuments, getPostDocuments } from '@/lib/api/postApi';
+import {
+  getPostById,
+  uploadPostImages,
+  uploadVerificationDocuments,
+  getVerificationDocuments,
+} from '@/lib/api/postApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { PostDocumentType } from '@/types/post';
+import type { PostVerificationDocumentType } from '@/types/post';
 import { Badge } from '@/components/ui/badge';
 
-const DOCUMENT_LABELS: Record<PostDocumentType, string> = {
-  REGISTRATION: 'Cà vẹt / Đăng ký',
-  VEHICLE_PAPER: 'Giấy tờ xe',
-  OWNERSHIP: 'Giấy chứng nhận sở hữu',
-  INSURANCE: 'Bảo hiểm',
-  OTHER: 'Khác',
+const DOCUMENT_LABELS: Record<PostVerificationDocumentType, string> = {
+  REGISTRATION_CERTIFICATE: 'Cà vẹt / Giấy đăng ký xe',
+  INSURANCE: 'Bảo hiểm xe',
+  OTHER: 'Giấy tờ khác',
 };
 
 export default function UploadImagesPage() {
@@ -29,7 +32,7 @@ export default function UploadImagesPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [documentType, setDocumentType] = useState<PostDocumentType>('REGISTRATION');
+  const [documentType, setDocumentType] = useState<PostVerificationDocumentType>('REGISTRATION_CERTIFICATE');
   const [selectedDocFiles, setSelectedDocFiles] = useState<File[]>([]);
   const [docPreviewUrls, setDocPreviewUrls] = useState<string[]>([]);
   const [isUploadingDocs, setIsUploadingDocs] = useState(false);
@@ -51,8 +54,8 @@ export default function UploadImagesPage() {
     isLoading: isLoadingDocuments,
     refetch: refetchDocuments,
   } = useQuery({
-    queryKey: ['post-documents', postId],
-    queryFn: () => getPostDocuments(postId),
+    queryKey: ['post-verification-documents', postId],
+    queryFn: () => getVerificationDocuments(postId),
     enabled: !!postId,
   });
 
@@ -153,7 +156,7 @@ export default function UploadImagesPage() {
 
     setIsUploadingDocs(true);
     try {
-      await uploadPostDocuments(postId, selectedDocFiles, documentType);
+      await uploadVerificationDocuments(postId, selectedDocFiles, documentType);
       toast.success('Tải giấy tờ thành công!');
       docPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
       setSelectedDocFiles([]);
@@ -445,22 +448,40 @@ export default function UploadImagesPage() {
                 </div>
               ) : documents && documents.length > 0 ? (
                 <div>
-                  <h4 className="text-sm font-medium mb-3">
-                    Giấy tờ đã tải ({documents.length})
-                  </h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium">Giấy tờ đã tải ({documents.length})</h4>
+                    {post?.status === 'PENDING_REVIEW' && (
+                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                        <Loader2 className="h-3 w-3 mr-1" />
+                        Chờ kiểm duyệt
+                      </Badge>
+                    )}
+                    {post?.status === 'PUBLISHED' && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Đã duyệt
+                      </Badge>
+                    )}
+                    {post?.status === 'REJECTED' && (
+                      <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+                        <X className="h-3 w-3 mr-1" />
+                        Bị từ chối
+                      </Badge>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {documents.map((doc) => (
                       <div key={doc.id} className="space-y-2">
                         <div className="relative aspect-[4/3] rounded-lg overflow-hidden border">
                           <Image
                             src={doc.url}
-                            alt={DOCUMENT_LABELS[doc.documentType] || doc.documentType}
+                            alt={DOCUMENT_LABELS[doc.type] || doc.type}
                             fill
                             className="object-cover"
                           />
                         </div>
                         <Badge variant="outline" className="text-xs w-fit">
-                          {DOCUMENT_LABELS[doc.documentType] || doc.documentType}
+                          {DOCUMENT_LABELS[doc.type] || doc.type}
                         </Badge>
                         <p className="text-[11px] text-muted-foreground">
                           {new Date(doc.uploadedAt).toLocaleString('vi-VN')}
@@ -480,7 +501,7 @@ export default function UploadImagesPage() {
                   <p className="text-sm font-medium mb-2">Loại giấy tờ</p>
                   <Select
                     value={documentType}
-                    onValueChange={(value) => setDocumentType(value as PostDocumentType)}
+                    onValueChange={(value) => setDocumentType(value as PostVerificationDocumentType)}
                   >
                     <SelectTrigger className="w-full sm:w-72">
                       <SelectValue placeholder="Chọn loại giấy tờ" />
