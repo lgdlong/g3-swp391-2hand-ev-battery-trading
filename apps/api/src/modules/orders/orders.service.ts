@@ -8,10 +8,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { Post } from '../posts/entities/post.entity';
-import { BuyNowDto, SellerConfirmDto, SellerAction } from './dto';
+import {
+  BuyNowDto,
+  SellerConfirmDto,
+  SellerAction,
+  OrderResponseDto,
+  OrderWithRelationsDto,
+} from './dto';
 import { OrderStatus } from '../../shared/enums/order-status.enum';
 import { PostStatus } from '../../shared/enums/post.enum';
 import { WalletsService } from '../wallets/wallets.service';
+import { OrderMapper } from './mappers';
 
 // Admin ID nhận hoa hồng
 const ADMIN_COMMISSION_ACCOUNT_ID = 1;
@@ -44,7 +51,7 @@ export class OrdersService {
    * 4. Create order with WAITING_SELLER_CONFIRM
    * 5. Lock post to LOCKED
    */
-  async buyNow(buyerId: number, dto: BuyNowDto): Promise<Order> {
+  async buyNow(buyerId: number, dto: BuyNowDto): Promise<OrderResponseDto> {
     return this.dataSource.transaction(async (manager) => {
       const orderRepo = manager.getRepository(Order);
       const postRepo = manager.getRepository(Post);
@@ -110,7 +117,7 @@ export class OrdersService {
       // 8. Khóa bài đăng (LOCKED)
       await postRepo.update(dto.postId, { status: PostStatus.LOCKED });
 
-      return savedOrder;
+      return OrderMapper.toResponseDto(savedOrder);
     });
   }
 
@@ -119,7 +126,11 @@ export class OrdersService {
    * ACCEPT: status -> PROCESSING
    * REJECT: Hoàn tiền buyer, status -> CANCELLED, unlock post -> PUBLISHED
    */
-  async sellerConfirm(orderId: string, sellerId: number, dto: SellerConfirmDto): Promise<Order> {
+  async sellerConfirm(
+    orderId: string,
+    sellerId: number,
+    dto: SellerConfirmDto,
+  ): Promise<OrderResponseDto> {
     return this.dataSource.transaction(async (manager) => {
       const orderRepo = manager.getRepository(Order);
       const postRepo = manager.getRepository(Post);
@@ -144,8 +155,10 @@ export class OrdersService {
         // ACCEPT: Chuyển sang PROCESSING
         order.status = OrderStatus.PROCESSING;
         order.confirmedAt = new Date();
-        if (dto.note) {
-          order.note = order.note ? `${order.note} | Seller: ${dto.note}` : `Seller: ${dto.note}`;
+        if (dto.reason) {
+          order.note = order.note
+            ? `${order.note} | Seller: ${dto.reason}`
+            : `Seller: ${dto.reason}`;
         }
       } else {
         // REJECT: Hoàn tiền buyer, hủy đơn, mở lại bài đăng
@@ -159,14 +172,15 @@ export class OrdersService {
         order.status = OrderStatus.CANCELLED;
         order.cancelledAt = new Date();
         order.note = order.note
-          ? `${order.note} | Seller từ chối: ${dto.note || 'Không có lý do'}`
-          : `Seller từ chối: ${dto.note || 'Không có lý do'}`;
+          ? `${order.note} | Seller từ chối: ${dto.reason || 'Không có lý do'}`
+          : `Seller từ chối: ${dto.reason || 'Không có lý do'}`;
 
         // Mở lại bài đăng
         await postRepo.update(order.postId, { status: PostStatus.PUBLISHED });
       }
 
-      return orderRepo.save(order);
+      const savedOrder = await orderRepo.save(order);
+      return OrderMapper.toResponseDto(savedOrder);
     });
   }
 
@@ -178,7 +192,7 @@ export class OrdersService {
    * - Status -> COMPLETED
    * - Post -> SOLD
    */
-  async completeOrder(orderId: string, buyerId: number): Promise<Order> {
+  async completeOrder(orderId: string, buyerId: number): Promise<OrderResponseDto> {
     return this.dataSource.transaction(async (manager) => {
       const orderRepo = manager.getRepository(Order);
       const postRepo = manager.getRepository(Post);
@@ -232,14 +246,15 @@ export class OrdersService {
       // Cập nhật post thành SOLD
       await postRepo.update(order.postId, { status: PostStatus.SOLD });
 
-      return orderRepo.save(order);
+      const savedOrder = await orderRepo.save(order);
+      return OrderMapper.toResponseDto(savedOrder);
     });
   }
 
   /**
    * Hủy đơn hàng (Buyer hủy)
    */
-  async cancelOrder(orderId: string, userId: number, note?: string): Promise<Order> {
+  async cancelOrder(orderId: string, userId: number, note?: string): Promise<OrderResponseDto> {
     return this.dataSource.transaction(async (manager) => {
       const orderRepo = manager.getRepository(Order);
       const postRepo = manager.getRepository(Post);
@@ -279,14 +294,15 @@ export class OrdersService {
       // Mở lại bài đăng
       await postRepo.update(order.postId, { status: PostStatus.PUBLISHED });
 
-      return orderRepo.save(order);
+      const savedOrder = await orderRepo.save(order);
+      return OrderMapper.toResponseDto(savedOrder);
     });
   }
 
   /**
    * Tạo tranh chấp
    */
-  async createDispute(orderId: string, userId: number, note: string): Promise<Order> {
+  async createDispute(orderId: string, userId: number, note: string): Promise<OrderResponseDto> {
     const order = await this.orderRepo.findOne({
       where: { id: orderId },
     });
@@ -306,39 +322,40 @@ export class OrdersService {
     order.status = OrderStatus.DISPUTE;
     order.note = order.note ? `${order.note} | Tranh chấp: ${note}` : `Tranh chấp: ${note}`;
 
-    return this.orderRepo.save(order);
+    const savedOrder = await this.orderRepo.save(order);
+    return OrderMapper.toResponseDto(savedOrder);
   }
 
   /**
    * Lấy đơn hàng theo ID
    */
-  async findOne(orderId: string): Promise<Order> {
+  async findOne(orderId: string): Promise<OrderWithRelationsDto> {
     const order = await this.orderRepo.findOne({
       where: { id: orderId },
-      relations: ['buyer', 'seller', 'post'],
+      relations: ['buyer', 'seller', 'post', 'post.images'],
     });
 
     if (!order) {
       throw new NotFoundException('Đơn hàng không tồn tại');
     }
 
-    return order;
+    return OrderMapper.toWithRelationsDto(order);
   }
 
   /**
    * Lấy đơn hàng theo code
    */
-  async findByCode(code: string): Promise<Order> {
+  async findByCode(code: string): Promise<OrderWithRelationsDto> {
     const order = await this.orderRepo.findOne({
       where: { code },
-      relations: ['buyer', 'seller', 'post'],
+      relations: ['buyer', 'seller', 'post', 'post.images'],
     });
 
     if (!order) {
       throw new NotFoundException('Đơn hàng không tồn tại');
     }
 
-    return order;
+    return OrderMapper.toWithRelationsDto(order);
   }
 
   /**
@@ -348,12 +365,13 @@ export class OrdersService {
     userId: number,
     role: 'buyer' | 'seller' | 'all' = 'all',
     status?: OrderStatus,
-  ): Promise<Order[]> {
+  ): Promise<OrderWithRelationsDto[]> {
     const queryBuilder = this.orderRepo
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.buyer', 'buyer')
       .leftJoinAndSelect('order.seller', 'seller')
-      .leftJoinAndSelect('order.post', 'post');
+      .leftJoinAndSelect('order.post', 'post')
+      .leftJoinAndSelect('post.images', 'images');
 
     if (role === 'buyer') {
       queryBuilder.where('order.buyerId = :userId', { userId });
@@ -369,18 +387,20 @@ export class OrdersService {
 
     queryBuilder.orderBy('order.createdAt', 'DESC');
 
-    return queryBuilder.getMany();
+    const orders = await queryBuilder.getMany();
+    return OrderMapper.toWithRelationsDtos(orders);
   }
 
   /**
    * Lấy tất cả đơn hàng (Admin)
    */
-  async findAll(status?: OrderStatus): Promise<Order[]> {
+  async findAll(status?: OrderStatus): Promise<OrderWithRelationsDto[]> {
     const queryBuilder = this.orderRepo
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.buyer', 'buyer')
       .leftJoinAndSelect('order.seller', 'seller')
-      .leftJoinAndSelect('order.post', 'post');
+      .leftJoinAndSelect('order.post', 'post')
+      .leftJoinAndSelect('post.images', 'images');
 
     if (status) {
       queryBuilder.where('order.status = :status', { status });
@@ -388,6 +408,7 @@ export class OrdersService {
 
     queryBuilder.orderBy('order.createdAt', 'DESC');
 
-    return queryBuilder.getMany();
+    const orders = await queryBuilder.getMany();
+    return OrderMapper.toWithRelationsDtos(orders);
   }
 }
