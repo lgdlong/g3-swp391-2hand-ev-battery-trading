@@ -42,7 +42,7 @@ export class BasePostResponseDto {
   @ApiProperty()
   isNegotiable!: boolean;
 
-  @ApiProperty({ enum: PostStatus })
+  @ApiProperty({ enum: PostStatus, enumName: 'PostStatus', example: 'PUBLISHED' })
   status!: PostStatus;
 
   @ApiProperty({ nullable: true })
@@ -72,11 +72,12 @@ export class BasePostResponseDto {
   images?: PostImageResponseDto[];
 
   @ApiProperty({
+    type: Number,
     description: 'Số lượng giấy tờ xe đã được người bán tải lên để phục vụ kiểm duyệt',
     example: 2,
     required: false,
   })
-  documentsCount = 0;
+  documentsCount: number = 0;
 
   @ApiProperty()
   createdAt!: Date;

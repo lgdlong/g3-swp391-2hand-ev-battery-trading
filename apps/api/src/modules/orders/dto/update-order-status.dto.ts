@@ -5,7 +5,8 @@ import { OrderStatus } from '../../../shared/enums/order-status.enum';
 export class UpdateOrderStatusDto {
   @ApiProperty({
     enum: OrderStatus,
-    example: OrderStatus.PROCESSING,
+    enumName: 'OrderStatus',
+    example: 'PROCESSING',
     description: 'Trạng thái mới của đơn hàng',
   })
   @IsEnum(OrderStatus)

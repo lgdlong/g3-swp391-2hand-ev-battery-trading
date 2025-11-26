@@ -17,13 +17,13 @@ export class PostReviewLogResponseDto {
   @ApiProperty({ example: '123' })
   postId!: string;
 
-  @ApiProperty({ enum: ReviewActionEnum, example: ReviewActionEnum.REJECTED })
+  @ApiProperty({ enum: ReviewActionEnum, enumName: 'ReviewActionEnum', example: 'REJECTED' })
   action!: ReviewActionEnum;
 
-  @ApiPropertyOptional({ enum: PostStatus, example: PostStatus.PENDING_REVIEW })
+  @ApiPropertyOptional({ enum: PostStatus, enumName: 'PostStatus', example: 'PENDING_REVIEW' })
   oldStatus?: PostStatus | null;
 
-  @ApiPropertyOptional({ enum: PostStatus, example: PostStatus.PUBLISHED })
+  @ApiPropertyOptional({ enum: PostStatus, enumName: 'PostStatus', example: 'PUBLISHED' })
   newStatus?: PostStatus | null;
 
   @ApiPropertyOptional({ example: 'Post contains inappropriate content' })

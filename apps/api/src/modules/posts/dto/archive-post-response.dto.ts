@@ -8,7 +8,7 @@ export class ArchivePostResponseDto {
   @ApiProperty({ example: '123' })
   postId!: string;
 
-  @ApiProperty({ enum: PostStatus, example: PostStatus.ARCHIVED })
+  @ApiProperty({ enum: PostStatus, enumName: 'PostStatus', example: 'ARCHIVED' })
   newStatus!: PostStatus;
 
   @ApiProperty({

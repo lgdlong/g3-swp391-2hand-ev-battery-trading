@@ -14,17 +14,21 @@ export class CreateReviewLogDto {
   @IsString()
   actorId?: string;
 
-  @ApiPropertyOptional({ enum: PostStatus, description: 'Trạng thái cũ' })
+  @ApiPropertyOptional({ enum: PostStatus, enumName: 'PostStatus', description: 'Trạng thái cũ' })
   @IsEnum(PostStatus)
   @IsOptional()
   oldStatus?: PostStatus;
 
-  @ApiPropertyOptional({ enum: PostStatus, description: 'Trạng thái mới' })
+  @ApiPropertyOptional({ enum: PostStatus, enumName: 'PostStatus', description: 'Trạng thái mới' })
   @IsEnum(PostStatus)
   @IsOptional()
   newStatus?: PostStatus;
 
-  @ApiProperty({ enum: ReviewActionEnum, description: 'Hành động review' })
+  @ApiProperty({
+    enum: ReviewActionEnum,
+    enumName: 'ReviewActionEnum',
+    description: 'Hành động review',
+  })
   @IsEnum(ReviewActionEnum)
   action!: ReviewActionEnum;
 
