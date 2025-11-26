@@ -24,7 +24,7 @@ import { ACCESS_TOKEN_KEY } from '@/config/constants';
 import { handleApiError } from '@/lib/handle-api-error';
 import { FormRootError } from '@/components/FormRootError';
 import { useState } from 'react';
-import { Eye, EyeOff, Battery, Car, Zap } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { AccountRole } from '@/types/enums/account-enum';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
@@ -55,9 +55,7 @@ export default function LoginPage() {
       // lưu access_token vào localStorage
       if (data.accessToken) {
         localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
-        console.log('[DEBUG] Token:', data.accessToken);
       }
-      console.log('[DEBUG] Login successful:', data.account);
 
       // Update auth context
       login(data.accessToken, data.account);
@@ -95,30 +93,14 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col gap-8">
-          {/* Logo and Branding */}
-          <div className="text-center space-y-4">
-            <div className="flex justify-center items-center gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 bg-[#048C73] rounded-xl flex items-center justify-center">
-                  <Battery className="h-6 w-6 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#048C73] rounded-full flex items-center justify-center">
-                  <Car className="h-3 w-3 text-white" />
-                </div>
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">EV Trading</h1>
-              <p className="text-gray-600 text-sm">Second-hand EV Battery Trading Platform</p>
-            </div>
-          </div>
-
           {/* Login Card */}
           <Card className="bg-white border border-gray-200 shadow-lg">
             <CardHeader className="text-center pb-4">
-              <CardTitle className="text-2xl font-semibold text-gray-900">Welcome back</CardTitle>
+              <CardTitle className="text-2xl font-semibold text-gray-900">
+                Chào mừng trở lại
+              </CardTitle>
               <CardDescription className="text-gray-600">
-                Sign in to your account to continue
+                Đăng nhập vào tài khoản của bạn để tiếp tục
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -130,10 +112,10 @@ export default function LoginPage() {
                     name="identifier"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email or Phone</FormLabel>
+                        <FormLabel>Email hoặc Số điện thoại</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter your email or phone number"
+                            placeholder="Nhập email hoặc số điện thoại"
                             type="text"
                             autoComplete="username"
                             disabled={loginMutation.isPending}
@@ -153,19 +135,19 @@ export default function LoginPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center">
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel>Mật khẩu</FormLabel>
                           <Link
                             href="/forgot-password"
                             className="ml-auto inline-block text-sm text-[#048C73] hover:text-[#037A66] underline-offset-4 hover:underline"
                           >
-                            Forgot your password?
+                            Quên mật khẩu?
                           </Link>
                         </div>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showPassword ? 'text' : 'password'}
-                              placeholder="Enter your password"
+                              placeholder="Nhập mật khẩu"
                               autoComplete="current-password"
                               className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 transition-all duration-200 pr-10"
                               disabled={loginMutation.isPending}
@@ -205,13 +187,10 @@ export default function LoginPage() {
                       {loginMutation.isPending ? (
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Signing in...
+                          Đang đăng nhập...
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-4 w-4" />
-                          Login
-                        </div>
+                        <div className="flex items-center gap-2">Đăng nhập</div>
                       )}
                     </Button>
 
@@ -220,7 +199,7 @@ export default function LoginPage() {
                         <span className="w-full border-t border-gray-300" />
                       </div>
                       <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                        <span className="bg-white px-2 text-gray-500">Hoặc tiếp tục với</span>
                       </div>
                     </div>
 
@@ -249,19 +228,19 @@ export default function LoginPage() {
                           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                         />
                       </svg>
-                      Continue with Google
+                      Đăng nhập với Google
                     </Button>
                   </div>
 
                   {/* Footer */}
                   <div className="text-center text-sm space-y-2">
                     <p className="text-gray-600">
-                      Don&apos;t have an account?{' '}
+                      Chưa có tài khoản?{' '}
                       <Link
                         href="/sign-up"
                         className="text-[#048C73] hover:text-[#037A66] font-medium underline-offset-4 hover:underline"
                       >
-                        Create account
+                        Tạo tài khoản
                       </Link>
                     </p>
                   </div>
@@ -269,27 +248,6 @@ export default function LoginPage() {
               </Form>
             </CardContent>
           </Card>
-
-          {/* Footer */}
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-              <Link href="/about" className="hover:text-gray-700 transition-colors">
-                About
-              </Link>
-              <Link href="/privacy" className="hover:text-gray-700 transition-colors">
-                Privacy
-              </Link>
-              <Link href="/terms" className="hover:text-gray-700 transition-colors">
-                Terms
-              </Link>
-              <Link href="/support" className="hover:text-gray-700 transition-colors">
-                Support
-              </Link>
-            </div>
-            <p className="text-xs text-gray-400">
-              © 2024 EV Trading Platform. All rights reserved.
-            </p>
-          </div>
         </div>
       </div>
     </div>

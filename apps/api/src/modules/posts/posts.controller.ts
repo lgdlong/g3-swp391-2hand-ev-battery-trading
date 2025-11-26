@@ -53,6 +53,10 @@ import {
 } from '@nestjs/swagger';
 import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 import { DeletePostResponseDto } from './dto/delete-post-response.dto';
+import { DeductPostFeeDto } from './dto/deduct-post-fee.dto';
+import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
+import { CreateVerificationDocumentDto } from './dto/create-verification-document.dto';
+import { VerificationDocumentResponseDto } from './dto/verification-document-response.dto';
 
 @ApiTags('posts')
 @ApiExtraModels(
@@ -60,6 +64,7 @@ import { DeletePostResponseDto } from './dto/delete-post-response.dto';
   CarDetailsResponseDto,
   BikeDetailsResponseDto,
   BatteryDetailResponseDto,
+  VerificationDocumentResponseDto,
 )
 @Controller('posts')
 export class PostsController {
@@ -256,6 +261,31 @@ export class PostsController {
   //------------ POST ENDPOINTS -------------
   //-----------------------------------------
 
+  @Post('deduct-fee')
+  @ApiOperation({ summary: 'Trừ phí đăng bài từ ví người dùng' })
+  @ApiBearerAuth()
+  @ApiCreatedResponse({
+    description: 'Trừ tiền thành công',
+    schema: {
+      type: 'object',
+      properties: {
+        wallet: { type: 'object' },
+        transaction: { type: 'object' },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Không đủ tiền trong ví hoặc không tìm thấy bậc phí' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiBody({ type: DeductPostFeeDto })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  async deductPostFee(
+    @Body() body: DeductPostFeeDto,
+    @User() user: AuthUser,
+  ): Promise<{ wallet: any; transaction: any }> {
+    return this.postsService.deductPostCreationFee(user.sub, body.priceVnd, body.postId);
+  }
+
   @Post('car')
   @ApiOperation({ summary: 'Tạo bài đăng ô tô điện' })
   @ApiBearerAuth() // khớp với .addBearerAuth trong main.ts
@@ -320,6 +350,44 @@ export class PostsController {
     dto.postType = PostType.BATTERY;
     const sellerId = user.sub;
     return this.postsService.createBatteryPost(dto, sellerId);
+  }
+
+  @Post('draft')
+  @ApiOperation({ summary: 'Tạo bài đăng nháp (DRAFT) - hỗ trợ tất cả loại xe/pin' })
+  @ApiBearerAuth()
+  @ApiCreatedResponse({
+    description: 'Tạo bài đăng nháp thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiBadRequestResponse({ description: 'Body không hợp lệ' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không đủ quyền' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  async createDraftPost(
+    @Body() dto: CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto,
+    @User() user: AuthUser,
+  ): Promise<BasePostResponseDto | null> {
+    const sellerId = user.sub;
+    return this.postsService.createDraftPost(dto, sellerId);
+  }
+
+  @Patch(':id/publish')
+  @ApiOperation({ summary: 'Publish bài đăng từ DRAFT sang PENDING_REVIEW sau thanh toán' })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', type: String, example: '123' })
+  @ApiOkResponse({
+    description: 'Publish bài đăng thành công',
+    schema: { $ref: getSchemaPath(BasePostResponseDto) },
+  })
+  @ApiNotFoundResponse({ description: 'Không tìm thấy bài đăng' })
+  @ApiBadRequestResponse({ description: 'Chỉ có thể publish bài đăng DRAFT' })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không có quyền publish bài đăng này' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  async publishPost(@Param('id') id: string, @User() user: AuthUser): Promise<BasePostResponseDto> {
+    return this.postsService.updatePostStatusToPublish(id, user.sub);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -404,6 +472,105 @@ export class PostsController {
   }
 
   //-----------------------------------------
+  //--- VERIFICATION DOCUMENTS ENDPOINTS ---
+  //-----------------------------------------
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @Post(':postId/verification-documents')
+  @ApiOperation({
+    summary: 'Upload giấy tờ xe để kiểm duyệt (cà vẹt, đăng ký, bảo hiểm...)',
+    description:
+      'Upload giấy tờ xe để admin kiểm duyệt. Giấy tờ này CHỈ admin và chủ bài đăng xem được, không hiển thị công khai.',
+  })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'postId', type: String, example: '123' })
+  @ApiBody({ type: [CreateVerificationDocumentDto] })
+  @ApiCreatedResponse({
+    description: 'Danh sách giấy tờ đã upload',
+    schema: {
+      type: 'object',
+      properties: {
+        verificationDocuments: {
+          type: 'array',
+          items: { $ref: getSchemaPath(VerificationDocumentResponseDto) },
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({ description: 'Không có file hoặc postId không hợp lệ' })
+  @ApiUnauthorizedResponse({ description: 'Chưa đăng nhập' })
+  @ApiForbiddenResponse({ description: 'Không có quyền' })
+  async uploadVerificationDocuments(
+    @Param('postId') postId: string,
+    @User() user: AuthUser,
+    @Body() body: CreateVerificationDocumentDto[],
+  ) {
+    if (!body || body.length === 0) {
+      throw new BadRequestException('Không có giấy tờ nào được cung cấp');
+    }
+
+    if (!postId || isNaN(+postId)) {
+      throw new BadRequestException('postId không hợp lệ');
+    }
+
+    const verificationDocuments = await this.postsService.addVerificationDocuments(
+      postId,
+      user.sub,
+      body,
+    );
+
+    return { verificationDocuments };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN, AccountRole.USER)
+  @Get(':postId/verification-documents')
+  @ApiOperation({
+    summary: 'Xem giấy tờ xe để kiểm duyệt (CHỈ admin hoặc chủ bài đăng)',
+    description: 'Lấy danh sách giấy tờ xe đã upload. CHỈ admin hoặc chủ bài đăng mới xem được.',
+  })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'postId', type: String, example: '123' })
+  @ApiOkResponse({
+    description: 'Danh sách giấy tờ xe',
+    schema: {
+      type: 'object',
+      properties: {
+        verificationDocuments: {
+          type: 'array',
+          items: { $ref: getSchemaPath(VerificationDocumentResponseDto) },
+        },
+      },
+    },
+  })
+  @ApiForbiddenResponse({ description: 'Không có quyền xem giấy tờ này' })
+  async getVerificationDocuments(@Param('postId') postId: string, @User() user: AuthUser) {
+    const verificationDocuments = await this.postsService.listVerificationDocuments(
+      postId,
+      user.sub,
+      user.role,
+    );
+    return { verificationDocuments };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.ADMIN, AccountRole.USER)
+  @Delete('verification-documents/:docId')
+  @ApiOperation({
+    summary: 'Xóa giấy tờ xe (soft delete)',
+    description: 'Xóa một giấy tờ xe đã upload. CHỈ admin hoặc chủ bài đăng mới xóa được.',
+  })
+  @ApiBearerAuth()
+  @ApiParam({ name: 'docId', type: String, example: '123' })
+  @ApiOkResponse({ description: 'Xóa thành công' })
+  @ApiForbiddenResponse({ description: 'Không có quyền xóa giấy tờ này' })
+  async deleteVerificationDocument(@Param('docId') docId: string, @User() user: AuthUser) {
+    await this.postsService.deleteVerificationDocument(docId, user.sub, user.role);
+    return { message: 'Xóa giấy tờ thành công' };
+  }
+
+  //-----------------------------------------
   //------------ PATCH ENDPOINTS ------------
   //-----------------------------------------
 
@@ -440,6 +607,32 @@ export class PostsController {
     @Body() updateDto: UpdatePostDto,
   ): Promise<BasePostResponseDto> {
     return this.postsService.updateMyPostById(id, user.sub, updateDto);
+  }
+
+  // api update post by id for user
+  @Patch(':id/recall')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountRole.USER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Recall (withdraw) a post and archive it (owner only)' })
+  @ApiParam({
+    name: 'id',
+    description: 'ID của bài đăng',
+    example: '1',
+  })
+  @ApiOkResponse({
+    description: 'Post recalled and archived successfully',
+    type: ArchivePostResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Cannot recall post in current state' })
+  @ApiNotFoundResponse({ description: 'Post not found or no permission' })
+  @ApiUnauthorizedResponse({ description: 'Chưa xác thực' })
+  @ApiForbiddenResponse({ description: 'Không có quyền truy cập' })
+  async recallMyPostById(
+    @Param('id') id: string,
+    @User() user: AuthUser,
+  ): Promise<ArchivePostResponseDto> {
+    return this.postsService.recallMyPostById(id, user.sub);
   }
 
   @ApiBearerAuth()

@@ -4,28 +4,29 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { BadgeCheckIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { usePost, useAccount } from '../_queries';
+import { useAuth } from '@/lib/auth-context';
 import { Specifications } from './_components';
-import { PostHeader } from '@/app/(public)/posts/_components';
-import { SellerInfo } from './_components/SellerInfo';
+import { PostHeader, SellerInfo, PostContractsList } from '@/app/(public)/posts/_components';
+import { RatingsList } from '@/components/RatingsList';
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ model?: string }>;
+  searchParams: Promise<{ title?: string }>;
 }
 
 export default function EvDetailPage({ params, searchParams }: Props) {
   const [id, setId] = useState<string>('');
-  const [model, setModel] = useState<string>('all');
+  const [title, setTitle] = useState<string>('all');
   const [mainImage, setMainImage] = useState<string>('');
+  const { user } = useAuth();
 
   useEffect(() => {
     params.then((p) => setId(p.id));
-    searchParams.then((sp) => setModel(sp.model || 'all'));
+    searchParams.then((sp) => setTitle(sp.title || 'all'));
   }, [params, searchParams]);
 
   const { data: post, isLoading: postLoading, error: postError } = usePost(id);
@@ -85,7 +86,7 @@ export default function EvDetailPage({ params, searchParams }: Props) {
       <FilterButtons
         type="ev"
         initialCategory="Xe điện"
-        initialSubcategory={model || 'all'}
+        initialSubcategory={title || 'all'}
         showFilters={false}
       />
       <div className="container mx-auto py-6">
@@ -107,15 +108,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                     >
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
-                    {post.verificationRequest?.status === 'APPROVED' && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-blue-500 text-white dark:bg-blue-600"
-                      >
-                        <BadgeCheckIcon />
-                        Đã kiểm định
-                      </Badge>
-                    )}
                   </div>
                 </div>
                 {post.images?.length > 1 && (
@@ -158,12 +150,19 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 )}
               </CardContent>
             </Card>
+
+            {/* Contracts List for Seller */}
+            {post && (
+              <PostContractsList
+                listingId={post.id}
+                sellerId={post.seller.id}
+                currentUserId={user?.id}
+              />
+            )}
           </div>
 
           <div className="lg:col-span-2 space-y-6">
             <PostHeader post={post} details={details} />
-
-            <Specifications post={post} />
 
             {post.description && (
               <Card key={`post-description-${post.id}`} className="border-none shadow-none">
@@ -175,6 +174,10 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                 </CardContent>
               </Card>
             )}
+
+            <Specifications post={post} />
+
+            <RatingsList postId={post.id} limit={10} />
           </div>
         </div>
       </div>

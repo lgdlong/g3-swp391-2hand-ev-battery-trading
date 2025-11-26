@@ -1,0 +1,250 @@
+import { api } from '@/lib/axios';
+import { getAuthHeaders } from '../auth';
+
+// Types based on backend entities
+export interface Wallet {
+  userId: number;
+  balance: string;
+  updatedAt: string;
+}
+
+export interface WalletTransaction {
+  id: number;
+  walletUserId: number;
+  amount: string;
+  serviceTypeId: number;
+  description: string | null;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+  createdAt: string;
+  serviceType?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+}
+
+export interface CreateTopupDto {
+  amount: number;
+  returnUrl?: string;
+  cancelUrl?: string;
+}
+
+export interface DeductWalletDto {
+  amount: number;
+  description: string;
+  paymentOrderId: string;
+}
+
+/**
+ * Get current user's wallet
+ */
+export async function getMyWallet(): Promise<Wallet> {
+  const { data } = await api.get<Wallet>('/wallets/me', {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+export interface PayosPaymentLinkResponse {
+  bin: string;
+  accountNumber: string;
+  accountName: string;
+  amount: number;
+  description: string;
+  orderCode: number;
+  currency: string;
+  paymentLinkId: string;
+  status: 'PENDING' | 'PROCESSING' | 'PAID' | 'CANCELLED';
+  checkoutUrl: string;
+  qrCode: string;
+}
+
+export interface PayosCreatePaymentResponse {
+  code: string;
+  desc: string;
+  data: PayosPaymentLinkResponse;
+  signature: string;
+}
+
+/**
+ * Create topup payment link via PayOS
+ */
+export async function createTopupPayment(
+  payload: CreateTopupDto,
+): Promise<PayosCreatePaymentResponse> {
+  const { data } = await api.post<PayosCreatePaymentResponse>('/wallets/topup/payment', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Deduct money from user wallet
+ * Requires admin authentication
+ * @param userId - User ID to deduct from
+ * @param payload - Deduction details (amount, description, paymentOrderId)
+ */
+export async function deductWallet(userId: number, payload: DeductWalletDto): Promise<Wallet> {
+  const { data } = await api.post<Wallet>(`/wallets/deduct/${userId}`, payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Get current user's wallet transactions
+ */
+export async function getMyTransactions(
+  limit: number = 20,
+  offset: number = 0,
+): Promise<WalletTransaction[]> {
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  params.append('offset', offset.toString());
+
+  const { data } = await api.get<WalletTransaction[]>(
+    `/wallets/transactions/me?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+export async function getTransactionById(id: number): Promise<WalletTransaction> {
+  const { data } = await api.get<WalletTransaction>(`/wallets/transactions/me/${id}`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+export async function getTransactionByOrderCode(orderCode: string): Promise<WalletTransaction> {
+  const { data } = await api.get<WalletTransaction>(
+    `/wallets/transactions/orderCode/${orderCode}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * Verify and process topup payment
+ * Call this when returning from PayOS checkout to ensure payment is processed
+ */
+export async function verifyAndProcessTopup(orderCode: string): Promise<WalletTransaction> {
+  const { data } = await api.post<WalletTransaction>(
+    `/wallets/topup/verify/${orderCode}`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * [Admin] Get wallet transactions by user ID
+ */
+export async function getUserTransactions(userId: number): Promise<WalletTransaction[]> {
+  const { data } = await api.get<WalletTransaction[]>(`/wallets/transactions/${userId}`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * [Admin] Get wallet by user ID
+ */
+export async function getUserWallet(userId: number): Promise<Wallet> {
+  const { data } = await api.get<Wallet>(`/wallets/${userId}`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * [Admin] Get all wallet transactions across the platform
+ */
+export async function getAllTransactions(
+  limit: number = 100,
+  offset: number = 0,
+): Promise<WalletTransaction[]> {
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  params.append('offset', offset.toString());
+
+  const { data } = await api.get<WalletTransaction[]>(
+    `/wallets/transactions/all?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * [Admin] Get total count of wallet transactions
+ */
+export async function getTotalTransactionsCount(): Promise<number> {
+  const { data } = await api.get<number>('/wallets/transactions/all/count', {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+// Payment Order types
+export interface PaymentOrder {
+  id: string;
+  accountId: number;
+  serviceTypeId: number;
+  orderCode: string | null;
+  amount: string;
+  status: 'PENDING' | 'PROCESSING' | 'PAID' | 'CANCELLED';
+  payableId: string | null;
+  payableType: string | null;
+  paymentRef: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  account?: {
+    id: number;
+    fullName: string;
+    email: string | null;
+  };
+  serviceType?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+}
+
+/**
+ * [Admin] Get all payment orders across the platform
+ */
+export async function getAllPaymentOrders(
+  limit: number = 100,
+  offset: number = 0,
+): Promise<PaymentOrder[]> {
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  params.append('offset', offset.toString());
+
+  const { data } = await api.get<PaymentOrder[]>(
+    `/wallets/payment-orders/all?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * [Admin] Get total count of payment orders
+ */
+export async function getTotalPaymentOrdersCount(): Promise<number> {
+  const { data } = await api.get<number>('/wallets/payment-orders/all/count', {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}

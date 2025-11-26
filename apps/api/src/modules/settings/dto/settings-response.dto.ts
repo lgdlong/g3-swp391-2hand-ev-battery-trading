@@ -20,29 +20,6 @@ export class FeeTierResponseDto {
   updatedAt!: Date;
 }
 
-export class RefundPolicyResponseDto {
-  @ApiProperty({ example: 1 })
-  id!: number;
-
-  @ApiProperty({ example: 1.0, nullable: true })
-  cancelEarlyRate!: number | null;
-
-  @ApiProperty({ example: 0.8, nullable: true })
-  expiredRate!: number | null;
-
-  @ApiProperty({ example: 0.3, nullable: true })
-  fraudSuspectedRate!: number | null;
-
-  @ApiProperty({ example: 30, nullable: true })
-  holdDays!: number | null;
-
-  @ApiProperty({ example: 7, nullable: true })
-  autoRefundAfterDays!: number | null;
-
-  @ApiProperty({ example: '2024-01-01T00:00:00Z' })
-  updatedAt!: Date;
-}
-
 export class PostLifecycleResponseDto {
   @ApiProperty({ example: 1 })
   id!: number;

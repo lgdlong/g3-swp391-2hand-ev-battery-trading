@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-sans: 'Geist', 'Montserrat', 'Roboto', sans-serif;
+  --font-sans: var(--font-roboto), 'Roboto', 'Geist', 'Montserrat', 'Roboto', sans-serif;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
@@ -150,4 +150,12 @@
 
 .animation-delay-4000 {
   animation-delay: 4s;
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }

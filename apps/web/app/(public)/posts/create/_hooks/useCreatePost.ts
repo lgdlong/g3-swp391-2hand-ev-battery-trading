@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCarBrands, getBikeBrands, getCarModels, getBikeModels } from '@/lib/api/catalogApi';
 import {
-  createCarPost,
-  createBikePost,
-  createBatteryPost,
+  createDraftCarPost,
+  createDraftBikePost,
+  createDraftBatteryPost,
   uploadPostImages,
 } from '@/lib/api/postApi';
 import { toast } from 'sonner';
@@ -37,7 +37,7 @@ export function useCreatePost() {
   const [provinceCode, setProvinceCode] = useState<string>('');
   const [districtCode, setDistrictCode] = useState<string>('');
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => {
       const newData = {
         ...prev,
@@ -66,11 +66,20 @@ export function useCreatePost() {
       return;
     }
 
-    if (postType === 'battery') {
-      // Battery post creation with real API
-      setIsSubmitting(true);
+    // Validate price
+    const priceValue = unformatNumber(formData.priceVnd);
+    if (!priceValue || parseFloat(priceValue) <= 0) {
+      toast.error('Vui lòng nhập giá bài đăng hợp lệ');
+      return;
+    }
 
-      try {
+    setIsSubmitting(true);
+
+    try {
+      let draftPost;
+
+      if (postType === 'battery') {
+        // Create draft battery post
         const batteryPostData = {
           postType: 'BATTERY' as const,
           title: formData.title,
@@ -82,17 +91,15 @@ export function useCreatePost() {
           addressTextCached: formData.addressTextCached || formData.addressText || '',
           priceVnd: unformatNumber(formData.priceVnd),
           isNegotiable: formData.isNegotiable,
+          status: 'DRAFT' as const,
           batteryDetails: {
-            // Only send brand_id if not empty string (which represents "Khác")
             ...(formData.brand_id && formData.brand_id !== ''
               ? { brand_id: parseInt(formData.brand_id) }
               : {}),
             voltageV: parseFloat(formData.voltageV) || 0,
             capacityAh: parseFloat(formData.capacityAh) || 0,
             chargeTimeHours: parseFloat(formData.chargeTimeHours) || 0,
-            // Only send chemistry if not empty string (which represents "Khác")
             ...(formData.chemistry !== '' ? { chemistry: formData.chemistry } : {}),
-            // Only send origin if not empty string (which represents "Khác")
             origin: formData.origin,
             weightKg: parseFloat(formData.weightKg) || 0,
             cycleLife: parseInt(formData.cycleLife) || 0,
@@ -101,122 +108,103 @@ export function useCreatePost() {
           },
         };
 
-        const createdPost = await createBatteryPost(batteryPostData);
-        toast.success('Tạo bài đăng pin thành công!');
-
-        // Save the created post ID for image upload step
-        setCreatedPostId(createdPost.id);
-      } catch (error: unknown) {
-        console.error('Failed to create battery post:', error);
-        type ApiError = { response?: { data?: { message?: string } }; message?: string };
-        const err = error as ApiError;
-        const errorMessage =
-          err?.response?.data?.message || err?.message || 'Tạo bài đăng pin thất bại';
-        toast.error(`Tạo bài đăng pin thất bại: ${errorMessage}`);
-      } finally {
-        setIsSubmitting(false);
-      }
-      return;
-    }
-
-    // EV post logic with real API
-    setIsSubmitting(true);
-
-    try {
-      // Step 1: Create post (car or bike)
-      let createdPost;
-
-      if (formData.vehicleType === 'xe_hoi') {
-        // Create car post
-        const carPostData = {
-          postType: 'EV_CAR' as const,
-          title: formData.title,
-          description: formData.description,
-          wardCode: formData.wardCode || '00001',
-          provinceNameCached: formData.provinceNameCached || '',
-          districtNameCached: formData.districtNameCached || '',
-          wardNameCached: formData.wardNameCached || '',
-          addressTextCached: formData.addressTextCached || formData.addressText || '',
-          priceVnd: unformatNumber(formData.priceVnd),
-          isNegotiable: false,
-          carDetails: {
-            // Only send brand_id if not "other" option
-            ...(formData.brandId !== 'other' && formData.brandId
-              ? { brand_id: parseInt(formData.brandId) }
-              : {}),
-            // Only send model_id if not "other" option
-            ...(formData.modelId !== 'other' && formData.modelId
-              ? { model_id: parseInt(formData.modelId) }
-              : {}),
-            manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
-            // Only send body_style if not "OTHER"
-            ...(formData.bodyStyle !== 'OTHER' && formData.bodyStyle
-              ? { body_style: formData.bodyStyle }
-              : {}),
-            origin: formData.origin,
-            color: formData.color,
-            seats: parseInt(formData.seats) || 5,
-            license_plate: formData.licensePlate,
-            owners_count: parseInt(formData.ownersCount) || 1,
-            odo_km: parseInt(formData.odoKm) || 0,
-            battery_capacity_kwh: parseFloat(formData.batteryCapacityKwh) || 0,
-            range_km: parseInt(formData.rangeKm) || 0,
-            charge_ac_kw: parseFloat(formData.chargeAcKw) || 0,
-            charge_dc_kw: parseFloat(formData.chargeDcKw) || 0,
-            battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
-          },
-        };
-
-        createdPost = await createCarPost(carPostData);
+        draftPost = await createDraftBatteryPost(batteryPostData);
       } else {
-        // Create bike post
-        const bikePostData = {
-          postType: 'EV_BIKE' as const,
-          title: formData.title,
-          description: formData.description,
-          wardCode: formData.wardCode || '00001',
-          provinceNameCached: formData.provinceNameCached || '',
-          districtNameCached: formData.districtNameCached || '',
-          wardNameCached: formData.wardNameCached || '',
-          addressTextCached: formData.addressTextCached || formData.addressText || '',
-          priceVnd: unformatNumber(formData.priceVnd),
-          isNegotiable: false,
-          bikeDetails: {
-            // Only send brand_id if not "other" option
-            ...(formData.brandId !== 'other' && formData.brandId
-              ? { brand_id: parseInt(formData.brandId) }
-              : {}),
-            // Only send model_id if not "other" option
-            ...(formData.modelId !== 'other' && formData.modelId
-              ? { model_id: parseInt(formData.modelId) }
-              : {}),
-            manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
-            // Only send bike_style if not "OTHER"
-            ...(formData.bikeStyle !== 'OTHER' && formData.bikeStyle
-              ? { bike_style: formData.bikeStyle }
-              : {}),
-            origin: formData.origin,
-            color: formData.color,
-            license_plate: formData.licensePlate,
-            owners_count: parseInt(formData.ownersCount) || 1,
-            odo_km: parseInt(formData.odoKm) || 0,
-            battery_capacity_kwh: parseFloat(formData.batteryCapacityKwh) || 0,
-            range_km: parseInt(formData.rangeKm) || 0,
-            motor_power_kw: parseFloat(formData.motorPowerKw) || 0,
-            charge_ac_kw: parseFloat(formData.chargeAcKw) || 0,
-            battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
-          },
-        };
+        // EV post logic (car or bike)
+        if (formData.vehicleType === 'xe_hoi') {
+          // Create draft car post
+          const carPostData = {
+            postType: 'EV_CAR' as const,
+            title: formData.title,
+            description: formData.description,
+            wardCode: formData.wardCode || '00001',
+            provinceNameCached: formData.provinceNameCached || '',
+            districtNameCached: formData.districtNameCached || '',
+            wardNameCached: formData.wardNameCached || '',
+            addressTextCached: formData.addressTextCached || formData.addressText || '',
+            priceVnd: unformatNumber(formData.priceVnd),
+            isNegotiable: false,
+            status: 'DRAFT' as const,
+            carDetails: {
+              ...(formData.brandId !== 'other' && formData.brandId
+                ? { brand_id: parseInt(formData.brandId) }
+                : {}),
+              ...(formData.modelId !== 'other' && formData.modelId
+                ? { model_id: parseInt(formData.modelId) }
+                : {}),
+              manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
+              ...(formData.bodyStyle !== 'OTHER' && formData.bodyStyle
+                ? { body_style: formData.bodyStyle }
+                : {}),
+              origin: formData.origin,
+              color: formData.color,
+              seats: parseInt(formData.seats) || 5,
+              license_plate: formData.licensePlate,
+              owners_count: parseInt(formData.ownersCount) || 1,
+              odo_km: parseInt(formData.odoKm) || 0,
+              battery_capacity_kwh: parseFloat(formData.batteryCapacityKwh) || 0,
+              range_km: parseInt(formData.rangeKm) || 0,
+              charge_ac_kw: parseFloat(formData.chargeAcKw) || 0,
+              charge_dc_kw: parseFloat(formData.chargeDcKw) || 0,
+              battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
+              // Bundled battery flag only
+              has_bundled_battery: formData.hasBundledBattery,
+              is_original_battery: formData.isOriginalBattery,
+            },
+          };
 
-        createdPost = await createBikePost(bikePostData);
+          draftPost = await createDraftCarPost(carPostData);
+        } else {
+          // Create draft bike post
+          const bikePostData = {
+            postType: 'EV_BIKE' as const,
+            title: formData.title,
+            description: formData.description,
+            wardCode: formData.wardCode || '00001',
+            provinceNameCached: formData.provinceNameCached || '',
+            districtNameCached: formData.districtNameCached || '',
+            wardNameCached: formData.wardNameCached || '',
+            addressTextCached: formData.addressTextCached || formData.addressText || '',
+            priceVnd: unformatNumber(formData.priceVnd),
+            isNegotiable: false,
+            status: 'DRAFT' as const,
+            bikeDetails: {
+              ...(formData.brandId !== 'other' && formData.brandId
+                ? { brand_id: parseInt(formData.brandId) }
+                : {}),
+              ...(formData.modelId !== 'other' && formData.modelId
+                ? { model_id: parseInt(formData.modelId) }
+                : {}),
+              manufacture_year: parseInt(formData.manufactureYear) || new Date().getFullYear(),
+              ...(formData.bikeStyle !== 'OTHER' && formData.bikeStyle
+                ? { bike_style: formData.bikeStyle }
+                : {}),
+              origin: formData.origin,
+              color: formData.color,
+              license_plate: formData.licensePlate,
+              owners_count: parseInt(formData.ownersCount) || 1,
+              odo_km: parseInt(formData.odoKm) || 0,
+              battery_capacity_kwh: parseFloat(formData.batteryCapacityKwh) || 0,
+              range_km: parseInt(formData.rangeKm) || 0,
+              motor_power_kw: parseFloat(formData.motorPowerKw) || 0,
+              charge_ac_kw: parseFloat(formData.chargeAcKw) || 0,
+              battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
+              // Bundled battery fields
+              has_bundled_battery: formData.hasBundledBattery,
+              is_original_battery: formData.isOriginalBattery,
+            },
+          };
+
+          draftPost = await createDraftBikePost(bikePostData);
+        }
       }
 
-      toast.success('Tạo bài đăng thành công!');
+      toast.success('Tạo bài đăng nháp thành công!');
 
-      // Save the created post ID for image upload step
-      setCreatedPostId(createdPost.id);
+      // Redirect to payment page
+      router.push(`/posts/create/payment/${draftPost.id}`);
     } catch (error: unknown) {
-      console.error('Failed to create post:', error);
+      console.error('Failed to create draft post:', error);
       type ApiError = { response?: { data?: { message?: string } }; message?: string };
       const err = error as ApiError;
       const errorMessage = err?.response?.data?.message || err?.message || 'Tạo bài đăng thất bại';
@@ -366,8 +354,9 @@ export function useCreatePost() {
   // Load brands when vehicle type changes
   useEffect(() => {
     if (postType === 'ev' && formData.vehicleType) {
-      // Reset brand ID when vehicle type changes
+      // Reset brand ID and models when vehicle type changes
       setFormData((prev) => ({ ...prev, brandId: '', modelId: '' }));
+      setModels([]); // Clear models immediately to prevent stale data
 
       setLoadingBrands(true);
       const loadBrands = async () => {

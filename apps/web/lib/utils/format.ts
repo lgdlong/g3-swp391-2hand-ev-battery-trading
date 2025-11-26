@@ -19,6 +19,54 @@ export function formatVnd(amount: string | number): string {
 }
 
 /**
+ * Formats number to VND currency format (alias for formatVnd)
+ * @param amount Amount in VND (number or string)
+ * @returns Formatted currency string (e.g., "150.000.000 ₫")
+ */
+export function formatCurrency(amount: number | string): string {
+  const numAmount = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(numAmount);
+}
+
+/**
+ * Formats date to Vietnamese format
+ * @param date Date string or Date object
+ * @param formatStr Format string (default: 'dd/MM/yyyy')
+ * @returns Formatted date string
+ */
+export function formatDate(date: string | Date, formatStr = 'dd/MM/yyyy'): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+
+  if (formatStr === 'dd/MM/yyyy') {
+    return `${day}/${month}/${year}`;
+  }
+
+  return `${day}/${month}/${year}`;
+}
+
+/**
+ * Formats date and time to Vietnamese format
+ * @param dateString Date string
+ * @returns Formatted datetime string (e.g., "15/11/2024 14:30")
+ */
+export function formatDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+/**
  * Formats a date string to relative time
  * @param dateString ISO date string
  * @returns Relative time string (e.g., "Hôm nay", "2 ngày trước")
@@ -56,6 +104,41 @@ export function formatDistanceToNow(date: Date): string {
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} tuần trước`;
   if (diffDays < 365) return `${Math.floor(diffDays / 30)} tháng trước`;
   return `${Math.floor(diffDays / 365)} năm trước`;
+}
+
+/**
+ * Formats message time for chat bubbles
+ * @param date Date object
+ * @returns Formatted time string (e.g., "10:30" for today, "08:59 23/4/2024" for older)
+ */
+export function formatMessageTime(date: Date): string {
+  const now = new Date();
+  const messageDate = new Date(date);
+
+  // Check if the message is from today
+  const isToday = now.toDateString() === messageDate.toDateString();
+
+  if (isToday) {
+    // Show only time for today's messages (e.g., "10:30")
+    return messageDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  } else {
+    // Show time and date for older messages (e.g., "08:59 23/4/2024")
+    const time = messageDate.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const dateStr = messageDate.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+    });
+    return `${time} ${dateStr}`;
+  }
 }
 
 /**

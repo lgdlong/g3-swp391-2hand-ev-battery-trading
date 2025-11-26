@@ -1,16 +1,10 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PostRatings } from './entities/post-ratings.entity';
 import { Account } from '../accounts/entities/account.entity';
 import { Post } from '../posts/entities/post.entity';
 import { CreatePostRatingDto } from './dto/create-post-rating.dto';
-import { UpdatePostRatingDto } from './dto/update-post-rating.dto';
 import { PostRatingMapper } from './mappers/post-rating.mapper';
 
 @Injectable()
@@ -27,16 +21,16 @@ export class PostRatingService {
   // Create a new rating
   async create(postId: string, customerId: number, dto: CreatePostRatingDto) {
     const post = await this.postsRepository.findOne({ where: { id: postId } });
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException('Không tìm thấy bài đăng');
 
     // Check if user already rated this post
     const existing = await this.postRatingsRepository.findOne({
       where: { post: { id: postId }, customer: { id: customerId } },
     });
-    if (existing) throw new BadRequestException('You have already rated this post');
+    if (existing) throw new BadRequestException('Bạn đã đánh giá bài đăng này rồi');
 
     const customer = await this.accountRepository.findOne({ where: { id: customerId } });
-    if (!customer) throw new NotFoundException('Customer not found');
+    if (!customer) throw new NotFoundException('Không tìm thấy khách hàng');
 
     // Create a new rating entity
     const rating = this.postRatingsRepository.create({
@@ -63,8 +57,8 @@ export class PostRatingService {
     const qb = this.postRatingsRepository
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.customer', 'customer')
-      .leftJoin('r.post', 'post')
-      .addSelect(['post.id'])
+      .leftJoinAndSelect('r.post', 'post')
+      .leftJoinAndSelect('post.seller', 'seller')
       .where('r.post_id = :postId', { postId });
 
     // Optional rating filter
@@ -75,10 +69,13 @@ export class PostRatingService {
     else if (sort === 'rating_asc') qb.orderBy('r.rating', 'ASC');
     else qb.orderBy('r.createdAt', 'DESC');
 
-    const [rows, total] = await qb.skip((page - 1) * limit).take(limit).getManyAndCount();
+    const [rows, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     return {
-      items: PostRatingMapper.toSafeDtoArray(rows),
+      data: PostRatingMapper.toSafeDtoArray(rows),
       total,
       page: Number(page),
       limit: Number(limit),
@@ -93,62 +90,93 @@ export class PostRatingService {
       relations: ['post', 'customer'],
       withDeleted: true,
     });
-    if (!review) throw new NotFoundException('Rating not found');
+    if (!review) throw new NotFoundException('Không tìm thấy đánh giá');
 
     // Hide deleted reviews for non-owners
     if ((review as any).deletedAt && review.customer?.id !== currentUserId)
-      throw new NotFoundException('Rating not found');
+      throw new NotFoundException('Không tìm thấy đánh giá');
 
     return PostRatingMapper.toSafeDto(review);
   }
 
-  // // Update rating content or score
-  // async update(id: string, dto: UpdatePostRatingDto, userId: number) {
-  //   const rating = await this.postRatingsRepository.findOne({
-  //     where: { id },
-  //     relations: ['customer'],
-  //   });
+  // Get seller rating statistics (average rating + total reviews)
+  async getSellerRatingStats(sellerId: number) {
+    if (!sellerId || sellerId <= 0) {
+      throw new BadRequestException('ID người bán không hợp lệ');
+    }
 
-  //   if (!rating) throw new NotFoundException('Rating not found');
-  //   if (rating.customer.id !== userId)
-  //     throw new ForbiddenException('You cannot edit others’ rating');
+    const stats = await this.postRatingsRepository
+      .createQueryBuilder('pr')
+      .select('COALESCE(AVG(pr.rating), 0)', 'averageRating')
+      .addSelect('COUNT(pr.id)', 'totalReviews')
+      .innerJoin('pr.post', 'p')
+      .where('p.seller.id = :sellerId', { sellerId })
+      .andWhere('pr.deletedAt IS NULL')
+      .getRawOne();
 
-  //   if (dto.rating !== undefined) rating.rating = dto.rating;
-  //   if (dto.content !== undefined) rating.content = dto.content;
-
-  //   const saved = await this.postRatingsRepository.save(rating);
-  //   return PostRatingMapper.toSafeDto(saved);
-  // }
-
-  // Delete a rating by id
-  async removeById(id: string, userId: number) {
-    const rating = await this.postRatingsRepository.findOne({
-      where: { id },
-      relations: ['customer'],
-    });
-    if (!rating) throw new NotFoundException('Rating not found');
-    if (rating.customer.id !== userId)
-      throw new ForbiddenException('You cannot delete others rating');
-
-    await this.postRatingsRepository.softDelete(rating.id);
-    return { message: 'Deleted successfully by id #' + id };
+    return {
+      averageRating: stats ? Math.round(parseFloat(stats.averageRating) * 10) / 10 : 0,
+      totalReviews: stats ? parseInt(stats.totalReviews) : 0,
+    };
   }
 
-
-  // Delete a rating by post id
-  async removeByPostId(postId: string, userId: number) {
-    const rating = await this.postRatingsRepository.findOne({
+  // Check if user has already rated a post
+  async hasUserRatedPost(postId: string, userId: number): Promise<boolean> {
+    const existing = await this.postRatingsRepository.findOne({
       where: { post: { id: postId }, customer: { id: userId } },
-      relations: ['customer'],
     });
-    if (!rating) throw new NotFoundException('Rating not found');
-    if (rating.customer.id !== userId)
-      throw new ForbiddenException('You cannot delete others rating');
+    return !!existing;
+  }
 
-    
-    const deletedAt = new Date();
-    await this.postRatingsRepository.softDelete(rating.id);
+  // Get ratings given by a user (ratings they submitted)
+  async getMyRatings(userId: number, opts: { page: number; limit: number }) {
+    const { page, limit } = opts;
 
-    return { message: 'Deleted successfully for post id #' + postId };
+    const qb = this.postRatingsRepository
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.customer', 'customer')
+      .leftJoinAndSelect('r.post', 'post')
+      .leftJoinAndSelect('post.seller', 'seller')
+      .where('r.customer.id = :userId', { userId })
+      .orderBy('r.createdAt', 'DESC');
+
+    const [rows, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: PostRatingMapper.toSafeDtoArray(rows),
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  // Get ratings received by a user (as a seller)
+  async getReceivedRatings(sellerId: number, opts: { page: number; limit: number }) {
+    const { page, limit } = opts;
+
+    const qb = this.postRatingsRepository
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.customer', 'customer')
+      .leftJoinAndSelect('r.post', 'post')
+      .leftJoinAndSelect('post.seller', 'seller')
+      .where('post.seller.id = :sellerId', { sellerId })
+      .orderBy('r.createdAt', 'DESC');
+
+    const [rows, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: PostRatingMapper.toSafeDtoArray(rows),
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }

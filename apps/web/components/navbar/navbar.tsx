@@ -8,7 +8,6 @@ import { Logo } from './Logo';
 import { Navigation } from './navigation';
 import { UserActions } from './UserActions';
 import { UserSidebar } from './UserSidebar';
-import { UserModeToggle } from './UserModeToggle';
 
 // Add custom CSS animations
 const style = `
@@ -75,10 +74,9 @@ export function Navbar({ className }: HeaderProps) {
       >
         <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex h-16 items-center justify-between">
-            {/* Left: Logo + User Mode Toggle */}
+            {/* Left: Logo */}
             <div className="flex items-center gap-4">
               <Logo size="md" className="group-hover:scale-105 transition-transform duration-300" />
-              <UserModeToggle />
             </div>
 
             {/* Center: Navigation */}
@@ -115,4 +113,4 @@ export function Navbar({ className }: HeaderProps) {
 }
 
 // Export individual components for potential reuse
-export { Logo, Navigation, UserActions, UserSidebar, UserModeToggle };
+export { Logo, Navigation, UserActions, UserSidebar };

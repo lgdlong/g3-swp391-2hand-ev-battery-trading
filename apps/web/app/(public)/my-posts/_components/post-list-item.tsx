@@ -1,9 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Edit, Trash2, Eye, Package, AlertCircle } from 'lucide-react';
+import { Edit, Trash2, Eye, Package, Coins, Archive, Shield } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
-import { RequestVerificationButton } from '@/app/(public)/posts/ev/_components/RequestVerificationButton';
 
 interface PostListItemProps {
   post: Post;
@@ -11,8 +10,10 @@ interface PostListItemProps {
   onDelete?: (postId: string) => void;
   onView?: (post: Post) => void;
   onMarkAsSold?: (postId: string) => void;
+  onPayment?: (postId: string) => void;
+  onArchive?: (postId: string, postTitle: string) => void;
   onViewRejectReason?: (postId: string, postTitle: string) => void;
-  onViewVerificationRejectReason?: (postId: string, postTitle: string) => void;
+  onUploadDocuments?: (postId: string) => void;
 }
 
 const formatPrice = (priceVnd: string): string => {
@@ -92,8 +93,10 @@ export default function PostListItem({
   onDelete,
   onView,
   onMarkAsSold,
+  onPayment,
+  onArchive,
   onViewRejectReason,
-  onViewVerificationRejectReason,
+  onUploadDocuments,
 }: PostListItemProps) {
   // Get the first image URL
   const firstImageUrl =
@@ -114,18 +117,10 @@ export default function PostListItem({
       ? (post.districtNameCached as { value?: string })?.value
       : (post.districtNameCached as string);
 
-  // Check if verification was rejected
-  const isVerificationRejected =
-    post.status === 'PUBLISHED' &&
-    post.verificationRequest?.status === 'REJECTED';
-
-  // Debug log for verification rejection
-  console.log('PostListItem Debug:', {
-    postId: post.id,
-    status: post.status,
-    verificationRequest: post.verificationRequest,
-    isVerificationRejected,
-  });
+  const documentsCount = typeof post.documentsCount === 'number' ? post.documentsCount : 0;
+  const needsDocuments = documentsCount === 0;
+  // Chỉ hiển thị nút "Giấy tờ" khi ở DRAFT hoặc REJECTED (không hiển thị khi PENDING_REVIEW)
+  const canUploadDocuments = post.status === 'DRAFT' || post.status === 'REJECTED';
 
   return (
     <div className="transition-colors hover:bg-muted/50">
@@ -135,162 +130,212 @@ export default function PostListItem({
         </div>
 
         <div className="flex flex-1 flex-col justify-between gap-2 min-w-0">
-          {/* Verification Rejection Alert - inside the post box */}
-          {isVerificationRejected && (
-            <div className="mb-2 p-3 border border-orange-200 bg-orange-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-orange-600" />
-                <span className="font-medium text-orange-800 text-sm">
-                  Yêu cầu kiểm định đã bị từ chối
-                </span>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="p-0 h-auto text-orange-600 hover:text-orange-800 ml-2 text-xs"
-                  onClick={() => onViewVerificationRejectReason?.(post.id, post.title)}
-                >
-                  Xem lý do
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Title and Status Badge */}
           <div className="flex items-start justify-between gap-3">
-          <h3 className="font-medium text-base line-clamp-2 flex-1">{post.title}</h3>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge variant={getStatusBadgeVariant(post.status)} className="shrink-0">
-                {getStatusLabel(post.status)}
+            <h3 className="font-medium text-base line-clamp-2 flex-1">{post.title}</h3>
+            <div className="flex flex-col items-end gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant={getStatusBadgeVariant(post.status)} className="shrink-0">
+                    {getStatusLabel(post.status)}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getStatusTooltip(post.status)}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Badge
+                variant={needsDocuments ? 'destructive' : 'secondary'}
+                className={
+                  needsDocuments
+                    ? 'flex items-center gap-1 text-xs'
+                    : 'flex items-center gap-1 text-xs bg-green-100 text-green-800 border-green-200'
+                }
+              >
+                <Shield className="h-3 w-3" />
+                {needsDocuments ? 'Thiếu giấy tờ' : 'Đã tải giấy tờ'}
               </Badge>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{getStatusTooltip(post.status)}</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
+            </div>
+          </div>
 
-        {/* Price, Location, Date */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          <p className="font-semibold text-foreground text-red-600">
-            {formatPrice(post.priceVnd)}
-            {post.isNegotiable && (
-              <span className="text-xs font-normal text-muted-foreground ml-1">
-                (Có thể thương lượng)
-              </span>
+          {/* Price, Location, Date */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+            <p className="font-semibold text-red-600">
+              {formatPrice(post.priceVnd)}
+              {post.isNegotiable && (
+                <span className="text-xs font-normal text-muted-foreground ml-1">
+                  (Có thể thương lượng)
+                </span>
+              )}
+            </p>
+            <p className="text-muted-foreground">
+              {provinceName}
+              {districtName && `, ${districtName}`}
+            </p>
+            <p className="text-xs text-muted-foreground">Cập nhật: {formatDate(post.updatedAt)}</p>
+            <p className="text-xs text-muted-foreground">
+              Đăng: {post.reviewedAt ? formatDate(String(post.reviewedAt)) : '--'}
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Payment button - visible for DRAFT only */}
+            {post.status === 'DRAFT' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="gap-2 bg-green-600 hover:bg-green-700"
+                    onClick={() => onPayment?.(post.id)}
+                  >
+                    <Coins className="h-4 w-4" />
+                    Thanh toán
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Thanh toán để đăng bài</p>
+                </TooltipContent>
+              </Tooltip>
             )}
-          </p>
-          <p className="text-muted-foreground">
-            {provinceName}
-            {districtName && `, ${districtName}`}
-          </p>
-          <p className="text-xs text-muted-foreground">Đăng: {formatDate(post.createdAt)}</p>
+
+            {canUploadDocuments && onUploadDocuments && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                    onClick={() => onUploadDocuments(post.id)}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Giấy tờ
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Bổ sung giấy tờ xe để duyệt nhanh hơn</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Edit button - visible for DRAFT, REJECTED */}
+            {(post.status === 'DRAFT' || post.status === 'REJECTED') && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 bg-transparent"
+                    onClick={() => onEdit?.(post.id)}
+                  >
+                    <Edit className="h-4 w-4" />
+                    Sửa
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Chỉnh sửa tin đăng</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* View button - visible for PENDING_REVIEW, PUBLISHED, SOLD */}
+            {(post.status === 'PENDING_REVIEW' ||
+              post.status === 'PUBLISHED' ||
+              post.status === 'SOLD') && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 bg-transparent"
+                    onClick={() => onView?.(post)}
+                  >
+                    <Eye className="h-4 w-4" />
+                    Xem
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Xem chi tiết</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Mark as Sold button - visible for PUBLISHED */}
+            {post.status === 'PUBLISHED' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => onMarkAsSold?.(post.id)}
+                  >
+                    <Package className="h-4 w-4" />
+                    Đã bán
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Đánh dấu đã bán</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Archive button - visible for PUBLISHED */}
+            {post.status === 'PUBLISHED' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
+                    onClick={() => onArchive?.(post.id, post.title)}
+                  >
+                    <Archive className="h-4 w-4" />
+                    Thu hồi
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Thu hồi bài viết</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* View reject reason */}
+            {post.status === 'REJECTED' && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 bg-transparent"
+                    onClick={() => onViewRejectReason?.(post.id, post.title)}
+                  >
+                    <Eye className="h-4 w-4" />
+                    Xem Lý do
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Xem lý do từ chối</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Delete button - visible for DRAFT, ARCHIVED only */}
+            {(post.status === 'DRAFT' || post.status === 'ARCHIVED') && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="destructive" size="sm" onClick={() => onDelete?.(post.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Xóa tin đăng</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          {/* Edit button - visible for DRAFT, REJECTED */}
-          {(post.status === 'DRAFT' || post.status === 'REJECTED') && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 bg-transparent"
-                  onClick={() => onEdit?.(post.id)}
-                >
-                  <Edit className="h-4 w-4" />
-                  Sửa
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Chỉnh sửa tin đăng</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* View button - visible for PENDING_REVIEW, PUBLISHED, SOLD */}
-          {(post.status === 'PENDING_REVIEW' ||
-            post.status === 'PUBLISHED' ||
-            post.status === 'SOLD') && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 bg-transparent"
-                  onClick={() => onView?.(post)}
-                >
-                  <Eye className="h-4 w-4" />
-                  Xem
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Xem chi tiết</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* Mark as Sold button - visible for PUBLISHED */}
-          {post.status === 'PUBLISHED' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => onMarkAsSold?.(post.id)}
-                >
-                  <Package className="h-4 w-4" />
-                  Đã bán
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Đánh dấu đã bán</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* Verification Button - visible for PUBLISHED posts */}
-          {post.status === 'PUBLISHED' && (
-            <RequestVerificationButton post={post as any} />
-          )}
-
-          {/* View reject reason */}
-          {post.status === 'REJECTED' && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 bg-transparent"
-                  onClick={() => onViewRejectReason?.(post.id, post.title)}
-                >
-                  <Eye className="h-4 w-4" />
-                  Xem Lý do
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Xem lý do từ chối</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* Delete button - visible for DRAFT, REJECTED */}
-          {(post.status === 'DRAFT' || post.status === 'REJECTED') && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="destructive" size="sm" onClick={() => onDelete?.(post.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Xóa tin đăng</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      </div>
       </div>
     </div>
   );

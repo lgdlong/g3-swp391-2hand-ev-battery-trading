@@ -1,70 +1,61 @@
 # GitHub Copilot Instructions
 
-This document provides context, coding guidelines, and specific prompting instructions for the **2nd-hand EV Battery Trading Platform** project to help GitHub Copilot generate accurate, contextually-aware suggestions.
+**2nd-hand EV Battery Trading Platform** - TypeScript monorepo for buying/selling used EV batteries.
 
-## How to Use This Document
+## Stack
 
-GitHub Copilot should reference this document to:
+- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query
+- **Backend**: NestJS, TypeORM, PostgreSQL
+- **Auth**: JWT + Google OAuth
+- **Payments**: PayOS integration, Wallet system
+- **Real-time**: WebSocket (Chat)
 
-- Understand project architecture and conventions
-- Generate code that follows established patterns
-- Maintain consistency across the monorepo
-- Provide contextually appropriate suggestions based on the current file/module
-
-## Project Overview
-
-This is a **TypeScript monorepo** using **Turborepo** for a 2nd-hand EV Battery Trading Platform. The project enables users to buy and sell used electric vehicle batteries with detailed condition information and secure transactions.
-
-### Architecture
-
-- **Monorepo Structure**: Turborepo with pnpm workspace
-- **Frontend**: Next.js 15 with App Router (TypeScript, Tailwind CSS)
-- **Backend**: NestJS API (TypeScript, TypeORM, PostgreSQL)
-- **Database**: PostgreSQL with TypeORM migrations
-- **Authentication**: JWT + Google OAuth integration
-
-## Repository Structure
+## Architecture
 
 ```
-g3-swp391-2hand-ev-battery-trading/
-├── apps/
-│   ├── web/           # Next.js frontend application
-│   ├── api/           # NestJS backend API
-│   ├── db/            # Database scripts and migrations
-│   └── docs/          # Documentation site
-├── packages/          # Shared packages
-└── .github/          # GitHub workflows and templates
+apps/
+├── web/          # Next.js frontend
+├── api/          # NestJS backend
+└── db/           # Database migrations
 ```
 
-## Coding Standards & Conventions
+## Core Business Flow
 
-### General TypeScript Rules
+**Post Creation**: Draft → Payment (wallet deduction + fee tier) → Upload images → Publish → Review
+**Wallet System**: Top-up via PayOS → Deduct for posts/verification → Transaction logging
+**Payment**: Atomic operations (wallet + PostPayment record) via TransactionsService
 
-- Use **strict TypeScript** configuration
-- Prefer `interface` over `type` for object types
-- Use **explicit return types** for functions
-- Follow **PascalCase** for classes, interfaces, types
-- Follow **camelCase** for variables, functions, properties
-- Use **kebab-case** for file names and directories
+## Key Entities
 
-### Frontend (Next.js) Conventions
+- **Account** (USER/ADMIN), **Post** (CAR/BIKE/BATTERY), **PostPayment**, **Wallet**, **WalletTransaction**
+- **PostVerificationRequest**, **Catalog** (Brand→Model→Trim), **FeeTier** (price-based deposits)
 
-#### File Structure & Context Awareness
+## Coding Standards
 
-When working in the `apps/web/` directory, Copilot should assume:
+### TypeScript Rules
 
-- **App Router** structure: `app/(route-groups)/page.tsx`, `app/(route-groups)/layout.tsx`
-- Components in `components/` directory with `ComponentName.tsx`
-- Utilities in `lib/` directory (auth, API clients, utilities)
-- Types in `types/` directory (TypeScript interfaces and types)
-- API calls in `lib/api/` directory
-- Form validations in `validations/` directory using Zod
-- Hooks in `hooks/` directory
+- Strict mode, explicit return types, `interface` over `type`
+- **PascalCase**: classes/interfaces, **camelCase**: variables/functions, **kebab-case**: files
+- Use `Number.parseFloat()` not global `parseFloat`
+- Extract complex ternaries into functions
 
-#### React Components
+### Frontend (Next.js)
+
+**Structure**:
+
+- `app/(route-groups)/page.tsx` - App Router pages
+- `app/(route)/_components/` - Page-specific components
+- `app/(route)/_hooks/` - Page-specific hooks (e.g., `useCreatePost.ts`)
+- `components/` - Shared components
+- `lib/api/` - API functions (`featureApi.ts`)
+- `hooks/` - Global hooks (`useFeatureName.ts`)
+- `types/` - TypeScript interfaces
+- `validations/` - Zod schemas
+
+**Components**:
 
 ```typescript
-// Always use function components with explicit TypeScript interfaces
+// Function components with TypeScript
 interface ComponentProps {
   title: string;
   optional?: boolean;
@@ -78,77 +69,107 @@ export default function ComponentName({ title, optional }: ComponentProps) {
   );
 }
 
-// For page components, include metadata
+// Page metadata
 export const metadata = {
   title: 'Page Title',
   description: 'Page description',
 };
 ```
 
-#### State Management
+**State**:
 
-- Use **React Hook Form** for form handling with **Zod validation**
-- Use **TanStack Query** for server state management
-- Use **useState/useEffect** for local component state
+- **React Hook Form** + **Zod** for forms
+- **TanStack Query** for server state
+- **Custom hooks** for complex logic
 
 ```typescript
-// Form handling pattern
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema } from '@/validations/login-schema';
-
+// Form with validation
 const form = useForm({
   resolver: zodResolver(loginSchema),
   defaultValues: { email: '', password: '' },
 });
 
-// API calls pattern
-import { useMutation } from '@tanstack/react-query';
-import { loginUser } from '@/lib/api/auth';
-
-const loginMutation = useMutation({
-  mutationFn: loginUser,
-  onSuccess: (data) => router.push('/dashboard'),
-  onError: (error) => handleApiError(error, form),
+// Query with refetch safety
+const { data, isLoading, isFetching } = useQuery({
+  queryKey: ['post', postId],
+  queryFn: () => getPostById(postId),
+  enabled: !!postId,
 });
+
+// Mutation with invalidation
+const mutation = useMutation({
+  mutationFn: loginUser,
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['user'] });
+    router.push('/dashboard');
+  },
+});
+
+// Custom hooks (prefix with 'use')
+export function useCreatePost() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  // ... logic
+  return { handleSubmit, isSubmitting };
+}
 ```
 
-#### Styling
+**Styling**:
 
-- Use **Tailwind CSS** for styling
-- Use **shadcn/ui** components when available
-- Follow **mobile-first** responsive design
+- **Tailwind CSS** + **shadcn/ui** components
+- **lucide-react** for icons, **sonner** for toasts
 
 ```typescript
-// Component styling pattern
-<div className="container mx-auto px-4 py-8">
-  <Card className="w-full max-w-md mx-auto">
-    <CardHeader>
-      <CardTitle className="text-2xl font-bold text-center">
-        Login
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <Button className="w-full" type="submit" disabled={loading}>
-        {loading ? 'Signing in...' : 'Sign In'}
-      </Button>
-    </CardContent>
-  </Card>
-</div>
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+<Button disabled={loading}>
+  {loading ? (
+    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Loading...</>
+  ) : 'Submit'}
+</Button>
+
+toast.success('Success!');
+toast.error('Error', { description: 'Details', duration: 5000 });
 ```
 
-### Backend (NestJS) Conventions
+### Backend (NestJS)
 
-#### Module Structure
+**Module Structure**:
 
 ```
 src/modules/feature-name/
-├── dto/                    # Data Transfer Objects
-├── entities/              # TypeORM entities
-├── services/              # Business logic
-├── controllers/           # HTTP controllers
-├── mappers/               # Entity-to-DTO mappers
-└── feature-name.module.ts # Module definition
+├── dto/           # create/update/response DTOs
+├── entities/      # TypeORM entities
+├── services/      # Business logic
+├── controllers/   # HTTP endpoints
+└── mappers/       # Entity-to-DTO (optional)
+```
+
+**Services**:
+
+```typescript
+@Injectable()
+export class PostsService {
+  constructor(
+    @InjectRepository(Post) private readonly postsRepo: Repository<Post>,
+    private readonly transactionsService: TransactionsService,
+    private readonly dataSource: DataSource,
+  ) {}
+
+  async deductPostCreationFee(userId: number, priceVnd: number, postId: string) {
+    const post = await this.postsRepo.findOne({
+      where: { id: postId },
+      relations: ['seller'],
+    });
+
+    if (!post || post.seller.id !== userId) {
+      throw new BadRequestException('Unauthorized');
+    }
+
+    return this.transactionsService.processPostPayment(userId, postId, priceVnd);
+  }
+}
 ```
 
 #### Controllers
@@ -217,33 +238,79 @@ export class Feature {
 }
 ```
 
-#### Controllers
+**Controllers**:
 
 ```typescript
 @ApiTags('Feature')
+@ApiBearerAuth()
 @Controller('feature')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class FeatureController {
+  constructor(private readonly featureService: FeatureService) {}
+
   @Post()
   @ApiOperation({ summary: 'Create feature' })
-  @ApiResponse({ status: 201, type: FeatureResponseDto })
-  async create(@Body() dto: CreateFeatureDto): Promise<FeatureResponseDto> {
-    // Implementation
+  @ApiResponse({ status: HttpStatus.CREATED, type: FeatureResponseDto })
+  async create(
+    @Body() dto: CreateFeatureDto,
+    @CurrentUser() user: ReqUser,
+  ): Promise<FeatureResponseDto> {
+    return this.featureService.create(dto, user.sub);
   }
 }
 ```
 
-#### Services
+**Atomic Transactions**:
 
 ```typescript
 @Injectable()
-export class FeatureService {
+export class TransactionsService {
   constructor(
-    @InjectRepository(Feature)
-    private readonly featureRepo: Repository<Feature>,
+    @InjectRepository(PostPayment)
+    private readonly postPaymentRepo: Repository<PostPayment>,
+    private readonly walletsService: WalletsService,
+    private readonly feeTierService: FeeTierService,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async create(dto: CreateFeatureDto): Promise<Feature> {
-    // Implementation
+  /**
+   * Process post payment with wallet deduction and create payment record
+   * Ensures both wallet deduction and payment record creation succeed together
+   */
+  async processPostPayment(userId: number, postId: string, priceVnd: number) {
+    // Check duplicate payment
+    const existingPayment = await this.isPostPaid(postId);
+    if (existingPayment) {
+      throw new BadRequestException('Post already paid');
+    }
+
+    // Calculate fee from tier
+    const feeTiers = await this.feeTierService.findAll();
+    const applicableTier = feeTiers.find((tier) => {
+      return priceVnd >= tier.minPrice && (tier.maxPrice === null || priceVnd <= tier.maxPrice);
+    });
+
+    const depositAmount = Math.round(priceVnd * applicableTier.depositRate);
+
+    // Wallet deduction (atomic with transaction)
+    const walletResult = await this.walletsService.deduct(
+      userId,
+      depositAmount.toString(),
+      'POST_PAYMENT',
+      `Post payment #${postId}`,
+      'posts',
+      postId,
+    );
+
+    // Create payment record
+    const postPayment = await this.createPostPayment({
+      postId,
+      accountId: userId,
+      amountPaid: depositAmount.toString(),
+      walletTransactionId: walletResult.transaction.id,
+    });
+
+    return { wallet: walletResult.wallet, transaction: walletResult.transaction, postPayment };
   }
 }
 ```
@@ -283,263 +350,31 @@ export class Feature {
 }
 ```
 
-## Domain-Specific Context
+## Domain Context
 
-## Domain-Specific Context
+**API Patterns**: RESTful endpoints, DTOs, pagination (`limit`, `offset`), Swagger docs
+**Database**: TypeORM, `snake_case` columns, `camelCase` properties, audit fields
 
-### Core Business Entities
-
-- **Account**: Users with roles (USER, ADMIN)
-- **Post**: Listings for battery sales
-- **PostDetails**: Detailed specifications (car/bike/battery details)
-- **Catalogs**: Reference data for brands, models, colors, etc.
-
-### Key Features
-
-- **Authentication**: JWT + Google OAuth
-- **Posts Management**: Create, read, update posts for battery sales
-- **Catalog System**: Hierarchical data (Brand → Model → Trim)
-- **Search & Filtering**: Posts by location, price, battery specifications
-- **Admin Dashboard**: Content moderation and user management
-
-### API Patterns
-
-- Use **RESTful** endpoints: `GET /posts`, `POST /posts`, `PUT /posts/:id`
-- Return **consistent response formats** with DTOs
-- Use **pagination** for list endpoints: `ListQueryDto` with `limit`, `offset`
-- Include **Swagger documentation** for all endpoints
-
-### Database Patterns
-
-- Use **TypeORM** with decorators for entities
-- Follow **snake_case** for database column names
-- Use **camelCase** for entity properties
-- Include **audit fields**: `createdAt`, `updatedAt`
-- Use **soft deletes** where appropriate
-
-## Authentication & Authorization
-
-### JWT Strategy
-
-```typescript
-// JWT payload structure
-interface JwtPayload {
-  sub: number; // User ID
-  email: string | null;
-  phone: string | null;
-  role: AccountRole;
-}
-```
-
-### Google OAuth Flow
-
-1. Frontend: `GET /auth/google` → Backend OAuth start
-2. Google consent → `GET /auth/google-redirect` → Backend callback
-3. Backend creates/updates user → Redirects to frontend with tokens
-4. Frontend: `/oauth/google` → Extract tokens → Login user
-
-## Error Handling
-
-### Backend Exceptions
-
-```typescript
-// Use NestJS built-in exceptions
-throw new BadRequestException('Invalid input');
-throw new NotFoundException('Resource not found');
-throw new UnauthorizedException('Access denied');
-```
-
-### Frontend Error Handling
-
-```typescript
-// Use React Query error handling
-const mutation = useMutation({
-  mutationFn: apiCall,
-  onError: (error) => handleApiError(error, form, 'Operation failed'),
-});
-```
-
-## Testing Patterns
-
-### Backend Testing
-
-- Use **Jest** for unit testing
-- Test **services** with mocked repositories
-- Test **controllers** with mocked services
-- Use **supertest** for e2e testing
-
-### Frontend Testing
-
-- Use **Jest + React Testing Library**
-- Test **component behavior**, not implementation
-- Mock **API calls** with MSW or similar
-
-## Environment Variables
-
-### Backend (.env)
-
-```env
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/dbname
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRATION_TIME=15m
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# CORS
-FRONTEND_URL=http://localhost:3000
-```
-
-### Frontend (.env.local)
-
-````env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-- Return **consistent response formats** with DTOs
-- Use **pagination** for list endpoints: `ListQueryDto` with `limit`, `offset`
-- Include **Swagger documentation** for all endpoints
-
-### Database Patterns
-
-- Use **TypeORM** with decorators for entities
-- Follow **snake_case** for database column names
-- Use **camelCase** for entity properties
-- Include **audit fields**: `createdAt`, `updatedAt`
-- Use **soft deletes** where appropriate
-
-## Authentication & Authorization
-
-### JWT Strategy
-
-```typescript
-// JWT payload structure
-interface JwtPayload {
-  sub: number; // User ID
-  email: string | null;
-  phone: string | null;
-  role: AccountRole;
-}
-````
-
-### Google OAuth Flow
-
-1. Frontend: `GET /auth/google` → Backend OAuth start
-2. Google consent → `GET /auth/google-redirect` → Backend callback
-3. Backend creates/updates user → Redirects to frontend with tokens
-4. Frontend: `/oauth/google` → Extract tokens → Login user
-
-## Error Handling
-
-### Backend Exceptions
-
-```typescript
-// Use NestJS built-in exceptions
-throw new BadRequestException('Invalid input');
-throw new NotFoundException('Resource not found');
-throw new UnauthorizedException('Access denied');
-```
-
-### Frontend Error Handling
-
-```typescript
-// Use React Query error handling
-const mutation = useMutation({
-  mutationFn: apiCall,
-  onError: (error) => handleApiError(error, form, 'Operation failed'),
-});
-```
-
-## Testing Patterns
-
-### Backend Testing
-
-- Use **Jest** for unit testing
-- Test **services** with mocked repositories
-- Test **controllers** with mocked services
-- Use **supertest** for e2e testing
-
-### Frontend Testing
-
-- Use **Jest + React Testing Library**
-- Test **component behavior**, not implementation
-- Mock **API calls** with MSW or similar
-
-## Environment Variables
-
-### Backend (.env)
-
-```env
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/dbname
-
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRATION_TIME=15m
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# CORS
-FRONTEND_URL=http://localhost:3000
-```
-
-### Frontend (.env.local)
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-## Common Patterns & Anti-Patterns
+## Best Practices
 
 ### ✅ Do
 
-- Use **TypeScript strictly** with proper types
-- Implement **proper error handling** at all levels
-- Use **consistent naming conventions**
-- Follow **single responsibility principle**
-- Use **dependency injection** in NestJS
-- Implement **proper validation** with class-validator/Zod
-- Use **DTOs for API responses** instead of raw entities
+- Use `Number.parseFloat()` not global `parseFloat`
+- Extract complex ternaries into functions
+- Use `@CurrentUser()` decorator for auth context
+- Check `isFetching` to avoid race conditions in useEffect
+- Invalidate queries after mutations
+- Use optional chaining (`?.`) and nullish coalescing (`??`)
 
 ### ❌ Don't
 
-- Use `any` type unless absolutely necessary
-- Expose **database entities directly** in API responses
-- Mix **business logic** in controllers
-- Use **synchronous** operations for I/O
-- Hardcode **configuration values**
-- Skip **input validation**
-- Use **console.log** in production code (use proper logging)
-
-## Package Management
-
-- Use **pnpm** as the package manager
-- Run commands from **root directory**: `pnpm dev`, `pnpm build`
-- Use **workspace dependencies** for shared code
-- Keep dependencies **up to date** but test thoroughly
-
-## Git Workflow
-
-### Branch Naming
-
-- `feat/feature-name` - New features
-- `fix/bug-description` - Bug fixes
-- `chore/task-description` - Maintenance tasks
-- `docs/documentation-update` - Documentation changes
-
-### Commit Messages
-
-Follow conventional commits:
-
-- `feat: add user authentication`
-- `fix: resolve login redirect issue`
-- `docs: update API documentation`
-- `chore: update dependencies`
+- Nest complex ternary operations
+- Expose entities directly in API responses
+- Mix business logic in controllers
+- Run useEffect without checking `isFetching`
 
 ---
 
-This document should be updated as the project evolves to ensure GitHub Copilot has the most current context for generating relevant suggestions.
+**Package Manager**: pnpm
+**Branch Names**: `feat/`, `fix/`, `chore/`, `docs/`
+**Commits**: Conventional format (`feat:`, `fix:`, `docs:`, `chore:`)

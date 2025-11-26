@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import databaseConfig from './config/database.config';
 import { envValidationSchema } from './config/validation';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AccountsModule } from './modules/accounts/accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
@@ -12,7 +13,6 @@ import { PostsModule } from './modules/posts/posts.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { PostBookmarksModule } from './modules/post-bookmarks/post-bookmarks.module';
 import { AddressModule } from './modules/address/address.module';
-import { VerifyPostModule } from './modules/verifyPost/verify-post.module';
 import { PostReviewModule } from './modules/post-review/post-review.module';
 import { PayosModule } from './modules/payos/payos.module';
 import { PostRatingModule } from './modules/post-ratings/post-ratings.module';
@@ -20,6 +20,9 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { ServiceTypesModule } from './modules/service-types/service-types.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { ChatModule } from './modules/chat/chat.module';
+import { AdminStatisticsModule } from './modules/admin-statistics/admin-statistics.module';
+import { OrdersModule } from './modules/orders/orders.module';
 // import { DebugMiddleware } from './core/middleware/debug.middleware';
 
 @Module({
@@ -31,6 +34,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       validationSchema: envValidationSchema,
     }),
+    ScheduleModule.forRoot(), // Enable cron jobs
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
@@ -48,7 +52,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
           synchronize: isDev, // chỉ tự động đồng bộ hóa CSDL ở môi trường development
           retryAttempts: 5,
           retryDelay: 3000,
-          logging: isDev, // chỉ bật log ở môi trường development
+          // logging: isDev, // chỉ bật log ở môi trường development
           extra: {
             max: 10,
             min: 2,
@@ -67,7 +71,6 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     UploadModule,
     PostBookmarksModule,
     AddressModule,
-    VerifyPostModule,
     PostReviewModule,
     PayosModule,
     PostRatingModule,
@@ -75,6 +78,9 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
     ServiceTypesModule,
     WalletsModule,
     TransactionsModule,
+    ChatModule,
+    AdminStatisticsModule,
+    OrdersModule,
   ],
   controllers: [],
   providers: [],

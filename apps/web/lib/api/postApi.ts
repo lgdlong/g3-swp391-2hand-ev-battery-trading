@@ -12,7 +12,10 @@ import type {
   GetPostsQuery,
   FlexibleField,
   DeletePostResponse,
+  ArchivePostResponse,
 } from '@/types/api/post';
+import type { PostVerificationDocument, PostVerificationDocumentType } from '@/types/post';
+import { PostType } from '@/types/enums';
 
 // Re-export types for backward compatibility
 export type {
@@ -88,18 +91,84 @@ export async function getAdminPosts(query: GetPostsQuery = {}): Promise<PostsRes
   if (query.limit !== undefined) params.append('limit', query.limit.toString());
   if (query.page !== undefined) params.append('page', query.page.toString());
   if (query.sort) params.append('sort', query.sort);
+  if (query.order) params.append('order', query.order);
   if (query.status && query.status !== 'ALL') params.append('status', query.status);
   if (query.postType) params.append('postType', query.postType);
 
-  try {
-    const { data } = await api.get<PostsResponse>(`/posts/admin/all?${params.toString()}`, {
-      headers: getAuthHeaders(),
-    });
+  const { data } = await api.get<PostsResponse>(`/posts/admin/all?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
 
-    return data;
-  } catch (error) {
-    throw error;
-  }
+  return data;
+}
+
+/**
+ * Deduct post creation fee from user's wallet
+ * @param priceVnd - Post price in VND
+ * @param postId - Required post ID for transaction tracking
+ * @returns Object with wallet and transaction details
+ */
+export async function deductPostCreationFee(
+  priceVnd: number,
+  postId: string,
+): Promise<{ wallet: any; transaction: any }> {
+  const { data } = await api.post(
+    '/posts/deduct-fee',
+    { priceVnd, postId },
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * Create a draft car post (status = DRAFT)
+ * Requires authentication token in headers
+ */
+export async function createDraftCarPost(payload: CreateCarPostDto): Promise<Post> {
+  const { data } = await api.post<Post>('/posts/draft', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Create a draft bike post (status = DRAFT)
+ * Requires authentication token in headers
+ */
+export async function createDraftBikePost(payload: CreateBikePostDto): Promise<Post> {
+  const { data } = await api.post<Post>('/posts/draft', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Create a draft battery post (status = DRAFT)
+ * Requires authentication token in headers
+ */
+export async function createDraftBatteryPost(payload: CreateBatteryPostDto): Promise<Post> {
+  const { data } = await api.post<Post>('/posts/draft', payload, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * Publish a draft post (change status from DRAFT to PENDING_REVIEW)
+ * Should be called after successful payment
+ * Requires authentication token in headers
+ */
+export async function publishPost(postId: string): Promise<Post> {
+  const { data } = await api.patch<Post>(
+    `/posts/${postId}/publish`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
 }
 
 /**
@@ -142,7 +211,7 @@ export async function searchPosts(
   searchQuery: string,
   options: {
     provinceNameCached?: string;
-    postType?: 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
+    postType?: PostType;
     limit?: number;
     offset?: number;
     order?: 'ASC' | 'DESC';
@@ -207,6 +276,22 @@ export async function deleteMyPostById(id: string): Promise<DeletePostResponse> 
   const { data } = await api.delete<DeletePostResponse>(`/posts/${id}/me`, {
     headers: getAuthHeaders(),
   });
+  return data;
+}
+
+/**
+ * Archive (recall) a post
+ * Changes post status from PUBLISHED to ARCHIVED
+ * Triggers automatic refund processing via cron job
+ */
+export async function archivePost(postId: string): Promise<ArchivePostResponse> {
+  const { data } = await api.patch<ArchivePostResponse>(
+    `/posts/${postId}/recall`,
+    {},
+    {
+      headers: getAuthHeaders(),
+    },
+  );
   return data;
 }
 
@@ -276,7 +361,6 @@ export async function rejectPost(id: string, reason: string): Promise<Post> {
   return data;
 }
 
-
 /**
  * Upload images to a post
  * Requires authentication token in headers
@@ -284,7 +368,6 @@ export async function rejectPost(id: string, reason: string): Promise<Post> {
  * @param files - Array of File objects to upload (max 10 files)
  */
 export async function uploadPostImages(postId: string, files: File[]): Promise<FlexibleField> {
-
   // Validate files
   if (!files || files.length === 0) {
     throw new Error('No files provided for upload');
@@ -309,7 +392,6 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
   files.forEach((file, index) => {
     formData.append('files', file, file.name); // Use 'files' as per Swagger doc
   });
-
 
   try {
     // Try with native fetch first (sometimes works better with FormData)
@@ -360,6 +442,97 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
       }
     }
   }
+}
+
+/**
+ * Upload files to Cloudinary and then create verification documents
+ * These documents are only visible to admins and the post owner
+ * @param documents - Array of objects with file and type
+ */
+export async function uploadVerificationDocuments(
+  postId: string,
+  documents: Array<{ file: File; type: PostVerificationDocumentType }>,
+): Promise<PostVerificationDocument[]> {
+  if (!documents || documents.length === 0) {
+    throw new Error('No files provided for upload');
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic'];
+  const maxSize = 4 * 1024 * 1024; // 4MB per file
+
+  documents.forEach((doc, index) => {
+    const file = doc.file;
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`File ${index + 1} (${file.name}) is not a supported image type`);
+    }
+    if (file.size > maxSize) {
+      throw new Error(`File ${index + 1} (${file.name}) is too large (max 4MB)`);
+    }
+  });
+
+  // Step 1: Upload files to Cloudinary
+  const formData = new FormData();
+  documents.forEach((doc) => formData.append('files', doc.file, doc.file.name));
+
+  const uploadResponse = await api.post<{ images: Array<{ url: string }> }>(
+    '/upload/multiple',
+    formData,
+    { headers: getAuthHeaders() },
+  );
+
+  const uploadedUrls = uploadResponse.data?.images?.map((img) => img.url) ?? [];
+
+  if (uploadedUrls.length === 0) {
+    throw new Error('Failed to upload images to Cloudinary');
+  }
+
+  if (uploadedUrls.length !== documents.length) {
+    throw new Error('Mismatch between uploaded files and document metadata');
+  }
+
+  // Step 2: Create verification documents with uploaded URLs and type
+  const verificationDocs = uploadedUrls.map((url, index) => {
+    const doc = documents[index];
+    if (!doc) {
+      throw new Error(`Document metadata missing for file at index ${index}`);
+    }
+    return {
+      type: doc.type,
+      url: url,
+    };
+  });
+
+  const { data } = await api.post<{ verificationDocuments: PostVerificationDocument[] }>(
+    `/posts/${postId}/verification-documents`,
+    verificationDocs,
+    { headers: getAuthHeaders() },
+  );
+
+  return data?.verificationDocuments ?? [];
+}
+
+/**
+ * Fetch verification documents for a post (owner or admin only)
+ */
+export async function getVerificationDocuments(
+  postId: string,
+): Promise<PostVerificationDocument[]> {
+  const { data } = await api.get<{ verificationDocuments: PostVerificationDocument[] }>(
+    `/posts/${postId}/verification-documents`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data?.verificationDocuments ?? [];
+}
+
+/**
+ * Delete a verification document (soft delete)
+ */
+export async function deleteVerificationDocument(docId: string): Promise<void> {
+  await api.delete(`/posts/verification-documents/${docId}`, {
+    headers: getAuthHeaders(),
+  });
 }
 
 // ==================== BIKE SPECIFIC API FUNCTIONS ====================

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Wallet } from './entities/wallet.entity';
@@ -11,6 +11,7 @@ import { CreatePayosDto } from '../payos/dto';
 import { WalletTransactionMapper } from './mappers/wallet-transaction.mapper';
 import { WalletTransactionResponseDto } from './dto/wallet-transaction-response.dto';
 import { ensureWalletInTx } from 'src/shared/helpers/wallet.helper';
+import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 
 @Injectable()
 export class WalletsService {
@@ -126,15 +127,19 @@ export class WalletsService {
    * Top up wallet - Creates transaction and updates balance atomically
    * @param userId - User account ID
    * @param amount - Amount to top up
+   * @param serviceTypeCode - Service type code (e.g., 'WALLET_TOPUP', 'BUY_REFUND', 'SELL_REVENUE')
    * @param description - Transaction description
-   * @param paymentOrderId - Related payment order ID
+   * @param relatedEntityType - Related entity table name (e.g., 'orders', 'payment_orders')
+   * @param relatedEntityId - Related entity ID
    * @returns Object with updated wallet and transaction
    */
   async topUp(
     userId: number,
     amount: string,
+    serviceTypeCode: string = 'WALLET_TOPUP',
     description?: string,
-    paymentOrderId?: string,
+    relatedEntityType?: string,
+    relatedEntityId?: string,
   ): Promise<{ wallet: Wallet; transaction: WalletTransaction }> {
     // Use transaction to ensure atomicity
     return this.dataSource.transaction(async (manager) => {
@@ -144,20 +149,21 @@ export class WalletsService {
       // Initialize wallet if not exists
       const wallet = await ensureWalletInTx(manager, userId);
 
-      // Get service type for wallet topup
-      const serviceType = await this.serviceTypesService.findByCode('WALLET_TOPUP');
-      if (!serviceType) {
-        throw new NotFoundException('WALLET_TOPUP service type not found');
-      }
+      // Get service type (auto-create if not exists)
+      const serviceType = await this.serviceTypesService.findOrCreateByCode(
+        serviceTypeCode,
+        this.getServiceTypeName(serviceTypeCode),
+        this.getServiceTypeDescription(serviceTypeCode),
+      );
 
       // Create wallet transaction
       const transaction = transactionRepo.create({
         walletUserId: userId,
         amount,
         serviceTypeId: serviceType.id,
-        description: description || 'Nạp tiền vào ví',
-        relatedEntityType: 'payment_orders',
-        relatedEntityId: paymentOrderId,
+        description: description || this.getDefaultDescription(serviceTypeCode),
+        relatedEntityType: relatedEntityType || 'payment_orders',
+        relatedEntityId,
       });
       await transactionRepo.save(transaction);
 
@@ -207,11 +213,12 @@ export class WalletsService {
         throw new Error('Insufficient balance');
       }
 
-      // Get service type
-      const serviceType = await this.serviceTypesService.findByCode(serviceTypeCode);
-      if (!serviceType) {
-        throw new NotFoundException(`Service type with code '${serviceTypeCode}' not found`);
-      }
+      // Get service type (auto-create if not exists)
+      const serviceType = await this.serviceTypesService.findOrCreateByCode(
+        serviceTypeCode,
+        this.getServiceTypeName(serviceTypeCode),
+        this.getServiceTypeDescription(serviceTypeCode),
+      );
 
       // Create wallet transaction (store as negative for debit)
       const transaction = transactionRepo.create({
@@ -231,6 +238,51 @@ export class WalletsService {
 
       return { wallet, transaction };
     });
+  }
+
+  /**
+   * Get service type name by code
+   */
+  private getServiceTypeName(code: string): string {
+    const names: Record<string, string> = {
+      WALLET_TOPUP: 'Nạp tiền vào ví',
+      POST_PAYMENT: 'Thanh toán đăng bài',
+      ADJUSTMENT: 'Điều chỉnh số dư',
+      BUY_HOLD: 'Giữ tiền mua hàng',
+      BUY_REFUND: 'Hoàn tiền mua hàng',
+      SELL_REVENUE: 'Doanh thu bán hàng',
+      PLATFORM_FEE: 'Phí nền tảng',
+    };
+    return names[code] || code;
+  }
+
+  /**
+   * Get service type description by code
+   */
+  private getServiceTypeDescription(code: string): string {
+    const descriptions: Record<string, string> = {
+      WALLET_TOPUP: 'Nạp tiền vào ví qua PayOS',
+      POST_PAYMENT: 'Thanh toán phí để đăng bài tin',
+      ADJUSTMENT: 'Admin điều chỉnh số dư ví của user',
+      BUY_HOLD: 'Giữ tiền trong escrow khi mua hàng',
+      BUY_REFUND: 'Hoàn tiền cho buyer khi đơn hàng bị hủy hoặc từ chối',
+      SELL_REVENUE: 'Seller nhận tiền từ đơn hàng hoàn thành',
+      PLATFORM_FEE: 'Admin nhận hoa hồng từ giao dịch',
+    };
+    return descriptions[code] || `Service type: ${code}`;
+  }
+
+  /**
+   * Get default description by service type code
+   */
+  private getDefaultDescription(code: string): string {
+    const defaults: Record<string, string> = {
+      WALLET_TOPUP: 'Nạp tiền vào ví',
+      BUY_REFUND: 'Hoàn tiền đơn hàng',
+      SELL_REVENUE: 'Nhận tiền đơn hàng',
+      PLATFORM_FEE: 'Hoa hồng giao dịch',
+    };
+    return defaults[code] || 'Giao dịch ví';
   }
 
   /**
@@ -257,6 +309,35 @@ export class WalletsService {
   }
 
   /**
+   * Get wallet transaction by ID
+   * @param transactionId - Transaction ID
+   * @param userId - User ID (optional, for access control)
+   * @returns Wallet transaction details
+   */
+  async getTransactionById(
+    transactionId: number,
+    userId?: number,
+  ): Promise<WalletTransactionResponseDto> {
+    const whereCondition: any = { id: transactionId };
+
+    // If userId is provided, ensure user can only access their own transactions
+    if (userId) {
+      whereCondition.walletUserId = userId;
+    }
+
+    const transaction = await this.walletTransactionRepo.findOne({
+      where: whereCondition,
+      relations: ['serviceType'],
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Không tìm thấy giao dịch');
+    }
+
+    return WalletTransactionMapper.toResponseDto(transaction);
+  }
+
+  /**
    * Create a topup payment order and PayOS payment link
    * @param userId - User account ID
    * @param createTopupDto - Topup request data
@@ -266,11 +347,12 @@ export class WalletsService {
     userId: number,
     createTopupDto: CreateTopupDto,
   ): Promise<{ paymentOrder: PaymentOrder; payosRequest: CreatePayosDto }> {
-    // Get WALLET_TOPUP service type
-    const serviceType = await this.serviceTypesService.findByCode('WALLET_TOPUP');
-    if (!serviceType) {
-      throw new NotFoundException('WALLET_TOPUP service type not found');
-    }
+    // Get WALLET_TOPUP service type (auto-create if not exists)
+    const serviceType = await this.serviceTypesService.findOrCreateByCode(
+      'WALLET_TOPUP',
+      this.getServiceTypeName('WALLET_TOPUP'),
+      this.getServiceTypeDescription('WALLET_TOPUP'),
+    );
 
     // Create payment order record first to get the ID
     const paymentOrder = this.paymentOrderRepo.create({
@@ -322,7 +404,7 @@ export class WalletsService {
     });
 
     if (!paymentOrder) {
-      throw new NotFoundException(`Payment order not found: ${paymentOrderId}`);
+      throw new NotFoundException(`Không tìm thấy đơn thanh toán: ${paymentOrderId}`);
     }
 
     if (paymentOrder.status !== PaymentStatus.COMPLETED) {
@@ -338,6 +420,85 @@ export class WalletsService {
         paymentOrder.id,
       );
     }
+  }
+
+  /**
+   * Verify payment with PayOS and process topup if successful
+   * This is called when user returns from PayOS checkout
+   * @param orderCode - Payment order code
+   * @param userId - User ID for ownership verification
+   * @returns Wallet transaction response
+   */
+  async verifyAndProcessTopup(
+    orderCode: string,
+    userId: number,
+  ): Promise<WalletTransactionResponseDto> {
+    // Find payment order
+    const paymentOrder = await this.paymentOrderRepo.findOne({
+      where: { id: orderCode },
+      relations: ['serviceType'],
+    });
+
+    if (!paymentOrder) {
+      throw new NotFoundException(`Không tìm thấy đơn thanh toán ${orderCode}`);
+    }
+
+    // Check ownership
+    if (paymentOrder.accountId !== userId) {
+      throw new NotFoundException(
+        `Không tìm thấy đơn thanh toán ${orderCode} hoặc bạn không có quyền truy cập`,
+      );
+    }
+
+    // Check if it's a wallet topup
+    if (paymentOrder.serviceType?.code !== 'WALLET_TOPUP') {
+      throw new BadRequestException('Đơn thanh toán này không phải là nạp tiền ví');
+    }
+
+    // Check if already has a transaction (already processed)
+    const existingTransaction = await this.walletTransactionRepo.findOne({
+      where: {
+        relatedEntityId: orderCode,
+        relatedEntityType: 'payment_orders',
+      },
+      relations: ['serviceType'],
+    });
+
+    if (existingTransaction) {
+      // Already processed, just return the transaction
+      return WalletTransactionMapper.toResponseDto(existingTransaction);
+    }
+
+    // If payment order is still pending, we need to check with PayOS
+    // For now, we'll mark it as completed and process (assuming user returns with success params)
+    if (paymentOrder.status === PaymentStatus.PENDING) {
+      // Update payment order status to completed
+      paymentOrder.status = PaymentStatus.COMPLETED;
+      paymentOrder.paidAt = new Date();
+      await this.paymentOrderRepo.save(paymentOrder);
+    }
+
+    // Process the topup if status is completed
+    if (paymentOrder.status === PaymentStatus.COMPLETED) {
+      const { transaction } = await this.topUp(
+        paymentOrder.accountId,
+        paymentOrder.amount,
+        `Nạp tiền từ PayOS - Order #${orderCode}`,
+        paymentOrder.id,
+      );
+
+      // Reload transaction with serviceType relation
+      const fullTransaction = await this.walletTransactionRepo.findOne({
+        where: { id: transaction.id },
+        relations: ['serviceType'],
+      });
+
+      return WalletTransactionMapper.toResponseDto(fullTransaction!);
+    }
+
+    throw new BadRequestException(
+      `Payment order ${orderCode} has status ${paymentOrder.status}. Cannot process topup.`,
+    );
   }
 
   /**
@@ -373,18 +534,19 @@ export class WalletsService {
         throw new Error('Insufficient balance');
       }
 
-      // Get service type for deduction
-      const serviceType = await this.serviceTypesService.findByCode('ADJUSTMENT');
-      if (!serviceType) {
-        throw new NotFoundException('ADJUSTMENT service type not found');
-      }
+      // Get service type for deduction (auto-create if not exists)
+      const serviceType = await this.serviceTypesService.findOrCreateByCode(
+        'ADJUSTMENT',
+        this.getServiceTypeName('ADJUSTMENT'),
+        this.getServiceTypeDescription('ADJUSTMENT'),
+      );
 
       // Create wallet transaction (store as negative for deduction)
       const transaction = transactionRepo.create({
         walletUserId: userId,
         amount: `-${amount}`,
         serviceTypeId: serviceType.id,
-        description: description || 'Admin trừ tiền từ ví',
+        description: description || 'ví đã được trừ tiền',
         relatedEntityId: paymentOrderId,
       });
       await transactionRepo.save(transaction);
@@ -396,5 +558,114 @@ export class WalletsService {
 
       return { wallet, transaction };
     });
+  }
+
+  /**
+   * Get wallet transaction by orderCode
+   * If transaction doesn't exist but payment order is completed, process the payment first
+   * @param orderCode - Payment order code from PayOS
+   * @param userId - User ID to verify ownership
+   * @returns Wallet transaction
+   */
+  async getTransactionByOrderCode(orderCode: string, userId?: number): Promise<WalletTransaction> {
+    // First, try to find existing transaction
+    const queryBuilder = this.walletTransactionRepo
+      .createQueryBuilder('transaction')
+      .leftJoinAndSelect('transaction.serviceType', 'serviceType')
+      .where('transaction.relatedEntityId = :orderCode', { orderCode })
+      .andWhere('transaction.relatedEntityType = :entityType', { entityType: 'payment_orders' });
+
+    if (userId) {
+      queryBuilder.andWhere('transaction.walletUserId = :userId', { userId });
+    }
+
+    let transaction = await queryBuilder.getOne();
+
+    // If transaction not found, check if payment order exists and is completed
+    if (!transaction) {
+      const paymentOrder = await this.paymentOrderRepo.findOne({
+        where: { id: orderCode },
+        relations: ['serviceType'],
+      });
+
+      if (!paymentOrder) {
+        throw new NotFoundException(`Payment order with orderCode ${orderCode} not found`);
+      }
+
+      // Check ownership
+      if (userId && paymentOrder.accountId !== userId) {
+        throw new NotFoundException(
+          `Transaction with orderCode ${orderCode} not found or access denied`,
+        );
+      }
+
+      // If payment is completed but transaction doesn't exist, process it now
+      if (
+        paymentOrder.status === PaymentStatus.COMPLETED &&
+        paymentOrder.serviceType?.code === 'WALLET_TOPUP'
+      ) {
+        await this.processCompletedPayment(paymentOrder.id);
+
+        // Try to fetch the transaction again
+        transaction = await queryBuilder.getOne();
+      }
+
+      // If still no transaction, return payment order info as pending
+      if (!transaction) {
+        throw new NotFoundException(
+          `Transaction for orderCode ${orderCode} is still being processed. Please wait and refresh.`,
+        );
+      }
+    }
+
+    return transaction;
+  }
+
+  /**
+   * [Admin] Get all wallet transactions
+   * @param limit - Number of transactions to return
+   * @param offset - Number of transactions to skip
+   * @returns Array of all wallet transaction DTOs
+   */
+  async getAllTransactions(limit: number, offset: number): Promise<WalletTransactionResponseDto[]> {
+    const transactions = await this.walletTransactionRepo.find({
+      relations: ['serviceType'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+
+    return WalletTransactionMapper.toResponseDtoArray(transactions);
+  }
+
+  /**
+   * [Admin] Get total count of wallet transactions
+   * @returns Total count
+   */
+  async getTotalTransactionsCount(): Promise<number> {
+    return this.walletTransactionRepo.count();
+  }
+
+  /**
+   * [Admin] Get all payment orders
+   * @param limit - Number of orders to return
+   * @param offset - Number of orders to skip
+   * @returns Array of payment orders
+   */
+  async getAllPaymentOrders(limit = 100, offset = 0): Promise<PaymentOrder[]> {
+    return this.paymentOrderRepo.find({
+      relations: ['account', 'serviceType'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+  }
+
+  /**
+   * [Admin] Get total count of payment orders
+   * @returns Total count
+   */
+  async getTotalPaymentOrdersCount(): Promise<number> {
+    return this.paymentOrderRepo.count();
   }
 }

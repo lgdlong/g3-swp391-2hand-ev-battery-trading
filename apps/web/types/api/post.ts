@@ -92,6 +92,8 @@ export interface CreateBikePostDto {
     motor_power_kw: number;
     charge_ac_kw: number;
     battery_health_pct: number;
+    has_bundled_battery?: boolean;
+    is_original_battery?: boolean;
   };
 }
 
@@ -155,4 +157,11 @@ export interface PostCountResponse {
 export interface DeletePostResponse {
   message: string;
   deletedAt: string;
+}
+
+export interface ArchivePostResponse {
+  success: boolean;
+  postId: string;
+  newStatus: PostStatus;
+  message: string;
 }

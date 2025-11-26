@@ -7,7 +7,6 @@ import { CarDetailsResponseDto } from '../../post-details/dto/car/car-details-re
 import { BikeDetailsResponseDto } from '../../post-details/dto/bike/bike-details-response.dto';
 import { PostImageResponseDto } from './post-image-response.dto';
 import { BatteryDetailResponseDto } from 'src/modules/post-details/dto/battery/battery-detail-response.dto';
-import { VerificationRequestResponseDto } from 'src/modules/verifyPost/dto/verification-request-response.dto';
 
 export class BasePostResponseDto {
   @ApiProperty()
@@ -43,7 +42,7 @@ export class BasePostResponseDto {
   @ApiProperty()
   isNegotiable!: boolean;
 
-  @ApiProperty({ enum: PostStatus })
+  @ApiProperty({ enum: PostStatus, enumName: 'PostStatus', example: 'PUBLISHED' })
   status!: PostStatus;
 
   @ApiProperty({ nullable: true })
@@ -72,9 +71,13 @@ export class BasePostResponseDto {
   @Type(() => PostImageResponseDto)
   images?: PostImageResponseDto[];
 
-  @ApiProperty({ type: () => VerificationRequestResponseDto, required: false })
-  @Type(() => VerificationRequestResponseDto)
-  verificationRequest?: VerificationRequestResponseDto;
+  @ApiProperty({
+    type: Number,
+    description: 'Số lượng giấy tờ xe đã được người bán tải lên để phục vụ kiểm duyệt',
+    example: 2,
+    required: false,
+  })
+  documentsCount: number = 0;
 
   @ApiProperty()
   createdAt!: Date;

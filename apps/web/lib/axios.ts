@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { DEFAULT_API_BASE_URL } from '@/config/constants';
+import { DEFAULT_API_BASE_URL, ACCESS_TOKEN_KEY } from '@/config/constants';
 import { handleTokenExpiration } from '@/lib/auth-manager';
 
 export const api = axios.create({
@@ -18,6 +18,15 @@ api.interceptors.request.use((config) => {
       config.headers['Content-Type'] = 'application/json';
     }
   }
+  // Attach auth token if present
+  try {
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // localStorage may be unavailable in some contexts; ignore
+  }
   return config;
 });
 
@@ -30,7 +39,7 @@ api.interceptors.response.use(
       const hasAuthToken = Boolean(err?.config?.headers?.Authorization);
 
       if (hasAuthToken) {
-        // Token expiration case
+        // Token expiration cases
         handleTokenExpiration();
         return Promise.reject({
           code: 'TOKEN_EXPIRED',

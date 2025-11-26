@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin } from 'lucide-react';
+import { MapPin, BadgeCheckIcon } from 'lucide-react';
 import { displayValue, formatVnd } from './utils';
 import type { Post } from '@/types/api/post';
 import { HeartCallApi } from './HeartCallApi';
@@ -48,6 +48,7 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
             <div className="absolute left-4 top-4">
               <Badge className="bg-green-600 text-white border-0">Pin EV</Badge>
             </div>
+            {/* Verification badge - góc trên bên phải */}
           </div>
 
           {/* Details */}

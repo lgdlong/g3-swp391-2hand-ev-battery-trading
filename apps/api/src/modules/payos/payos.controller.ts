@@ -130,8 +130,15 @@ export class PayosController {
   @ApiBadRequestResponse({
     description: 'Invalid webhook payload or signature verification failed',
   })
-  webhook(@Body() webhookPayosDto: WebhookPayosDto, @Res() res: Response) {
-    this.payosService.handleWebhook(webhookPayosDto);
-    // return res.status(200).send('Webhook received');
+  async webhook(@Body() webhookPayosDto: WebhookPayosDto, @Res() res: Response) {
+    try {
+      await this.payosService.handleWebhook(webhookPayosDto);
+      return res.status(200).json({ success: true, message: 'Webhook processed' });
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      return res
+        .status(200)
+        .json({ success: false, message: 'Webhook received but failed to process' });
+    }
   }
 }

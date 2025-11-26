@@ -8,15 +8,6 @@ interface PostBasicInfoProps {
 }
 
 export function PostBasicInfo({ post }: PostBasicInfoProps) {
-  // Debug description data
-  console.log('Description debug:', {
-    description: post.description,
-    type: typeof post.description,
-    length: post.description?.length,
-    hasNewlines: post.description?.includes('\n'),
-    hasCarriageReturn: post.description?.includes('\r'),
-  });
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">

@@ -9,9 +9,12 @@ import {
   Index,
 } from 'typeorm';
 import type { Account } from '../../accounts/entities/account.entity';
+import { ContractStatus } from '../../../shared/enums/contract-status.enum';
 
 @Entity({ name: 'contracts' })
 @Index(['listingId'])
+@Index(['status'])
+@Index(['orderId'])
 export class Contract {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id!: string;
@@ -19,11 +22,24 @@ export class Contract {
   @Column({ name: 'listing_id', type: 'bigint', nullable: false })
   listingId!: string;
 
+  @Column({ name: 'order_id', type: 'bigint', nullable: true })
+  orderId: string | null = null;
+
   @Column({ name: 'buyer_id', type: 'int', nullable: false })
   buyerId!: number;
 
   @Column({ name: 'seller_id', type: 'int', nullable: false })
   sellerId!: number;
+
+  @Column({
+    type: 'enum',
+    enum: ContractStatus,
+    default: ContractStatus.AWAITING_CONFIRMATION,
+  })
+  status!: ContractStatus;
+
+  @Column({ name: 'is_external_transaction', type: 'boolean', default: false })
+  isExternalTransaction!: boolean;
 
   @Column({ name: 'file_path', type: 'text', nullable: true })
   filePath: string | null = null;
@@ -33,6 +49,12 @@ export class Contract {
 
   @Column({ name: 'fee_rate', type: 'decimal', precision: 5, scale: 2, nullable: true })
   feeRate: string | null = null;
+
+  @Column({ name: 'buyer_confirmed_at', type: 'timestamp', nullable: true })
+  buyerConfirmedAt: Date | null = null;
+
+  @Column({ name: 'seller_confirmed_at', type: 'timestamp', nullable: true })
+  sellerConfirmedAt: Date | null = null;
 
   @Column({ name: 'confirmed_at', type: 'timestamp', nullable: true })
   confirmedAt: Date | null = null;
@@ -57,4 +79,8 @@ export class Contract {
   @ManyToOne(() => require('../../accounts/entities/account.entity').Account)
   @JoinColumn({ name: 'seller_id' })
   seller!: Account;
+
+  @ManyToOne(() => require('../../orders/entities/order.entity').Order, { nullable: true })
+  @JoinColumn({ name: 'order_id' })
+  order?: Account | null;
 }

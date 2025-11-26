@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpDown, ArrowUp, ArrowDown, Plus, Edit2, Trash2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils/format';
 import { FeeTier } from '@/lib/api/feeTiersApi';
 
 interface FeeTierTableProps {
@@ -20,14 +21,6 @@ type SortDirection = 'asc' | 'desc';
 export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: FeeTierTableProps) {
   const [sortField, setSortField] = useState<SortField>('minPrice');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-
-  const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(num);
-  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -80,7 +73,7 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Hoa Hồng</CardTitle>
-          <CardDescription>Quản lý tỷ lệ đặt cọc dựa trên khoảng giá</CardDescription>
+          <CardDescription>Quản lý tỷ lệ phí hoa hồng dựa trên khoảng giá</CardDescription>
         </div>
         <Button onClick={onAddTier} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -115,7 +108,7 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
                     onClick={() => handleSort('depositRate')}
                     className="flex items-center gap-2 hover:text-blue-600 transition-colors"
                   >
-                    Tỷ Lệ Đặt Cọc
+                    Phí Hoa Hồng
                     {getSortIcon('depositRate')}
                   </button>
                 </th>

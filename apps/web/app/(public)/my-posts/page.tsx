@@ -8,14 +8,15 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Post, PostStatus } from '@/types/post';
-import { getMyPosts, updatePost, deleteMyPostById } from '@/lib/api/postApi';
+import { getMyPosts, deleteMyPostById, archivePost } from '@/lib/api/postApi';
 import { useAuth } from '@/lib/auth-context';
+import { updateMyPost } from '@/lib/api/postApi';
 import SearchBar from './_components/search-bar';
 import PostListItem from './_components/post-list-item';
 import PostDetailDialog from './_components/post-detail-dialog';
 import DeleteConfirmDialog from './_components/delete-confirm-dialog';
+import ArchiveConfirmDialog from './_components/archive-confirm-dialog';
 import RejectReasonDialog from './_components/reject-reason-dialog';
-import VerificationRejectReasonDialog from './_components/verification-reject-reason-dialog';
 import EmptyState from './_components/empty-state';
 import PostListSkeleton from './_components/post-list-skeleton';
 
@@ -49,73 +50,129 @@ export default function MyPostsPage() {
     id: string;
     title: string;
   } | null>(null);
-  const [verificationRejectReasonDialogOpen, setVerificationRejectReasonDialogOpen] = useState(false);
-  const [postForVerificationRejectReason, setPostForVerificationRejectReason] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [postToArchive, setPostToArchive] = useState<{ id: string; title: string } | null>(null);
 
   // Query for each status to get posts and counts
   const draftQuery = useQuery({
     queryKey: ['myPosts', 'DRAFT'],
-    queryFn: () => getMyPosts({ status: 'DRAFT', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'DRAFT', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const pendingQuery = useQuery({
     queryKey: ['myPosts', 'PENDING_REVIEW'],
-    queryFn: () => getMyPosts({ status: 'PENDING_REVIEW', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'PENDING_REVIEW', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const publishedQuery = useQuery({
     queryKey: ['myPosts', 'PUBLISHED'],
-    queryFn: () => getMyPosts({ status: 'PUBLISHED', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'PUBLISHED', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const rejectedQuery = useQuery({
     queryKey: ['myPosts', 'REJECTED'],
-    queryFn: () => getMyPosts({ status: 'REJECTED', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'REJECTED', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
   const soldQuery = useQuery({
     queryKey: ['myPosts', 'SOLD'],
-    queryFn: () => getMyPosts({ status: 'SOLD', order: 'DESC', sort: 'createdAt' }),
+    queryFn: () => getMyPosts({ status: 'SOLD', order: 'DESC', sort: 'updatedAt' }),
     enabled: isLoggedIn,
     retry: 1,
   });
 
-  // Get counts from array lengths
+  const archivedQuery = useQuery({
+    queryKey: ['myPosts', 'ARCHIVED'],
+    queryFn: () => getMyPosts({ status: 'ARCHIVED', order: 'DESC', sort: 'updatedAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
+  });
+
+  const lockedQuery = useQuery({
+    queryKey: ['myPosts', 'LOCKED'],
+    queryFn: () => getMyPosts({ status: 'LOCKED', order: 'DESC', sort: 'updatedAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
+  });
+
+  const publishedPosts = publishedQuery.data || [];
+  const soldPosts = soldQuery.data || [];
+  const publishedPostsExcludingSold = publishedPosts.filter((p) => p.status !== 'SOLD');
+
   const counts = {
     DRAFT: draftQuery.data?.length || 0,
     PENDING_REVIEW: pendingQuery.data?.length || 0,
-    PUBLISHED: publishedQuery.data?.length || 0,
+    PUBLISHED: publishedPostsExcludingSold.length || 0,
     REJECTED: rejectedQuery.data?.length || 0,
-    SOLD: soldQuery.data?.length || 0,
+    // SOLD: soldQuery.data?.length || 0,
+    SOLD: soldPosts.length || 0,
+    ARCHIVED: archivedQuery.data?.length || 0,
+    LOCKED: lockedQuery.data?.length || 0,
   };
 
-  // Get current posts based on active tab
+  // Get current posts based on active tab, filter by search query, and sort
   const getCurrentPosts = () => {
+    let posts: Post[] = [];
     switch (activeTab) {
       case 'DRAFT':
-        return draftQuery.data || [];
+        posts = draftQuery.data || [];
+        break;
       case 'PENDING_REVIEW':
-        return pendingQuery.data || [];
+        posts = pendingQuery.data || [];
+        break;
       case 'PUBLISHED':
-        return publishedQuery.data || [];
+        // Exclude sold posts from PUBLISHED tab
+        posts = publishedPostsExcludingSold;
+        break;
       case 'REJECTED':
-        return rejectedQuery.data || [];
+        posts = rejectedQuery.data || [];
+        break;
       case 'SOLD':
-        return soldQuery.data || [];
+        posts = soldPosts;
+        break;
+      case 'ARCHIVED':
+        posts = archivedQuery.data || [];
+        break;
+      case 'LOCKED':
+        posts = lockedQuery.data || [];
+        break;
       default:
-        return [];
+        posts = [];
     }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      posts = posts.filter(
+        (post) =>
+          post.title.toLowerCase().includes(query) ||
+          post.description.toLowerCase().includes(query),
+      );
+    }
+
+    // Apply sorting
+    return [...posts].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        case 'oldest':
+          return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+        case 'price-asc':
+          return parseFloat(a.priceVnd || '0') - parseFloat(b.priceVnd || '0');
+        case 'price-desc':
+          return parseFloat(b.priceVnd || '0') - parseFloat(a.priceVnd || '0');
+        default:
+          return 0;
+      }
+    });
   };
 
   const posts = getCurrentPosts();
@@ -124,7 +181,9 @@ export default function MyPostsPage() {
     pendingQuery.isLoading ||
     publishedQuery.isLoading ||
     rejectedQuery.isLoading ||
-    soldQuery.isLoading;
+    soldQuery.isLoading ||
+    archivedQuery.isLoading ||
+    lockedQuery.isLoading;
 
   const deleteMutation = useMutation({
     mutationFn: (postId: string) => deleteMyPostById(postId),
@@ -140,15 +199,45 @@ export default function MyPostsPage() {
   });
 
   const markAsSoldMutation = useMutation({
-    mutationFn: (postId: string) => updatePost(postId, { status: 'SOLD' }),
+    mutationFn: (postId: string) => updateMyPost(postId, { status: 'SOLD' }),
     onSuccess: () => {
-      toast.success('Đã đánh dấu bài đăng là đã bán');
+      toast.success(
+        'Đã đánh dấu bài đăng là đã bán. Bài đăng đã được chuyển vào tab "Đã bán" trong Quản lý đơn hàng.',
+      );
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
-    onError: () => {
-      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại.');
+    onError: (error: any) => {
+      const errorMessage =
+        error?.response?.data?.message || 'Đánh dấu đã bán thất bại. Vui lòng thử lại.';
+      toast.error(errorMessage);
     },
   });
+
+  const archiveMutation = useMutation({
+    mutationFn: (postId: string) => archivePost(postId),
+    onSuccess: () => {
+      toast.success('Đã thu hồi bài viết thành công');
+      queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+      setArchiveDialogOpen(false);
+      setPostToArchive(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Thu hồi bài viết thất bại. Vui lòng thử lại.');
+    },
+  });
+
+  // const archiveMutation = useMutation({
+  //   mutationFn: (postId: string) => archivePost(postId),
+  //   onSuccess: () => {
+  //     toast.success('Đã thu hồi bài viết thành công');
+  //     queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+  //     setArchiveDialogOpen(false);
+  //     setPostToArchive(null);
+  //   },
+  //   onError: (error: Error) => {
+  //     toast.error(error.message || 'Thu hồi bài viết thất bại. Vui lòng thử lại.');
+  //   },
+  // });
 
   const handleTabChange = (value: string) => {
     setActiveTab(value as PostStatus);
@@ -175,6 +264,9 @@ export default function MyPostsPage() {
   const handleEdit = (postId: string) => {
     router.push(`/my-posts/${postId}/edit`);
   };
+  const handlePayment = (postId: string) => {
+    router.push(`/posts/create/payment/${postId}`);
+  };
   const handleCreateNew = () => {
     router.push('/posts/create');
   };
@@ -183,9 +275,18 @@ export default function MyPostsPage() {
     setRejectReasonDialogOpen(true);
   };
 
-  const handleViewVerificationRejectReason = (postId: string, postTitle: string) => {
-    setPostForVerificationRejectReason({ id: postId, title: postTitle });
-    setVerificationRejectReasonDialogOpen(true);
+  const handleArchive = (postId: string, postTitle: string) => {
+    setPostToArchive({ id: postId, title: postTitle });
+    setArchiveDialogOpen(true);
+  };
+  const handleUploadDocuments = (postId: string) => {
+    router.push(`/posts/create/upload-documents/${postId}`);
+  };
+
+  const confirmArchive = () => {
+    if (postToArchive) {
+      archiveMutation.mutate(postToArchive.id);
+    }
   };
 
   // Show loading state while auth is initializing
@@ -203,7 +304,7 @@ export default function MyPostsPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background md:p-8">
-        <div className="mx-auto max-w-6xl p-6 bg-white rounded-2xl shadow">
+        <div className="mx-auto max-w-7xl p-6 bg-white rounded-2xl shadow">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-6">Quản lý tin đăng</h1>
             <SearchBar
@@ -215,7 +316,7 @@ export default function MyPostsPage() {
             />
           </div>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-auto grid-cols-5 mb-8 p-1 h-auto bg-background">
+            <TabsList className="grid w-auto grid-cols-7 mb-8 p-1 h-auto bg-background">
               <TabsTrigger
                 value="PUBLISHED"
                 className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
@@ -224,6 +325,17 @@ export default function MyPostsPage() {
                 {counts.PUBLISHED > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
                     {counts.PUBLISHED}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="LOCKED"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
+                ĐANG XÁC THỰC
+                {counts.LOCKED > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
+                    {counts.LOCKED}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -271,40 +383,68 @@ export default function MyPostsPage() {
                   </Badge>
                 )}
               </TabsTrigger>
+              <TabsTrigger
+                value="ARCHIVED"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
+                ĐÃ THU HỒI
+                {counts.ARCHIVED > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
+                    {counts.ARCHIVED}
+                  </Badge>
+                )}
+              </TabsTrigger>
             </TabsList>
-            {(['PENDING_REVIEW', 'PUBLISHED', 'REJECTED', 'SOLD', 'DRAFT'] as PostStatus[]).map(
-              (status) => (
-                <TabsContent key={status} value={status} className="mt-0">
-                  {isLoading ? (
-                    <PostListSkeleton />
-                  ) : posts.length === 0 ? (
-                    <EmptyState status={status} onCreateNew={handleCreateNew} />
-                  ) : (
-                    <div className="space-y-0">
-                      {posts.map((post, index) => (
-                        <div key={post.id} className={index !== posts.length - 1 ? 'border-b' : ''}>
-                          <PostListItem
-                            post={post}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            onView={handleViewDetail}
-                            onMarkAsSold={handleMarkAsSold}
-                            onViewRejectReason={handleViewRejectReason}
-                            onViewVerificationRejectReason={handleViewVerificationRejectReason}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-              ),
-            )}
+            {(
+              [
+                'PENDING_REVIEW',
+                'PUBLISHED',
+                'LOCKED',
+                'REJECTED',
+                'SOLD',
+                'DRAFT',
+                'ARCHIVED',
+              ] as PostStatus[]
+            ).map((status) => (
+              <TabsContent key={status} value={status} className="mt-0">
+                {isLoading ? (
+                  <PostListSkeleton />
+                ) : posts.length === 0 ? (
+                  <EmptyState status={status} onCreateNew={handleCreateNew} />
+                ) : (
+                  <div className="space-y-0">
+                    {posts.map((post, index) => (
+                      <div key={post.id} className={index !== posts.length - 1 ? 'border-b' : ''}>
+                        <PostListItem
+                          post={post}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onView={handleViewDetail}
+                          onMarkAsSold={handleMarkAsSold}
+                          onPayment={handlePayment}
+                          onArchive={handleArchive}
+                          onViewRejectReason={handleViewRejectReason}
+                          onUploadDocuments={handleUploadDocuments}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            ))}
           </Tabs>
         </div>
         <DeleteConfirmDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           onConfirm={confirmDelete}
+        />
+        <ArchiveConfirmDialog
+          open={archiveDialogOpen}
+          onOpenChange={setArchiveDialogOpen}
+          onConfirm={confirmArchive}
+          postTitle={postToArchive?.title || ''}
+          isArchiving={archiveMutation.isPending}
         />
         <PostDetailDialog
           open={viewDialogOpen}
@@ -316,12 +456,6 @@ export default function MyPostsPage() {
           onOpenChange={setRejectReasonDialogOpen}
           postId={postForRejectReason?.id || ''}
           postTitle={postForRejectReason?.title || ''}
-        />
-        <VerificationRejectReasonDialog
-          open={verificationRejectReasonDialogOpen}
-          onOpenChange={setVerificationRejectReasonDialogOpen}
-          postId={postForVerificationRejectReason?.id || ''}
-          postTitle={postForVerificationRejectReason?.title || ''}
         />
       </div>
     </TooltipProvider>
