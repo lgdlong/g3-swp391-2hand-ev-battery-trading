@@ -84,12 +84,6 @@ export default function RejectReasonDialog({
               <div className="p-4 rounded-sm bg-zinc-300">
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{rejectionLog.reason}</p>
               </div>
-
-              {rejectionLog.actor?.displayName && (
-                <p className="text-xs text-muted-foreground">
-                  Từ chối bởi: {rejectionLog.actor.displayName}
-                </p>
-              )}
             </div>
           ) : (
             <div className="text-center py-8">
