@@ -76,8 +76,6 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
     { label: 'Quản lý đơn hàng', href: '/my-orders', icon: ShoppingBag },
     { label: 'Đánh giá', href: '/rating', icon: Star },
     { label: 'Lịch sử giao dịch', href: '/wallet', icon: Clock },
-    { label: 'Thông báo', href: '/notifications', icon: Bell },
-    { label: 'Cài đặt', href: '/settings', icon: Settings },
   ];
 
   const handleTopupClick = () => {
