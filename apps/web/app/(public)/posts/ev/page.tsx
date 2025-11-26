@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { LoadingGrid, EmptyState, PageHeader, PostGrid, toStringValue } from './_components';
-import { usePostOrdersFilter, filterPostsByOrderStatus } from '@/hooks/usePostOrdersFilter';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
@@ -90,9 +89,6 @@ function EvPostsContent() {
 
   // Breadcrumb function reference
   const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
-
-  // Get post IDs that should be excluded based on order statuses
-  const excludedPostIds = usePostOrdersFilter();
 
   useEffect(() => {
     setQuery(searchParams.get('q') || '');
@@ -217,9 +213,6 @@ function EvPostsContent() {
   // Client-side filtering (additional filtering beyond API)
   const filtered = useMemo(() => {
     let data = [...allEvPosts];
-
-    // Filter out posts that have orders with statuses: PROCESSING, COMPLETED, CANCELLED, DISPUTE
-    data = filterPostsByOrderStatus(data, excludedPostIds);
 
     // Additional client-side filtering for location and brand
     if (location) {
@@ -402,7 +395,7 @@ function EvPostsContent() {
     }
 
     return data;
-  }, [allEvPosts, location, brand, min, max, sort, appliedFilters, excludedPostIds]);
+  }, [allEvPosts, location, brand, min, max, sort, appliedFilters]);
 
   // Loading state
   if (isLoading) {
