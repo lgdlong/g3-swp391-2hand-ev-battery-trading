@@ -1,7 +1,6 @@
 export enum WalletTransactionType {
   TOP_UP = 'TOP_UP',
   POST_PAYMENT = 'POST_PAYMENT',
-  DEPOSIT_REFUND = 'DEPOSIT_REFUND',
   WITHDRAWAL = 'WITHDRAWAL',
   ADJUSTMENT = 'ADJUSTMENT',
 }

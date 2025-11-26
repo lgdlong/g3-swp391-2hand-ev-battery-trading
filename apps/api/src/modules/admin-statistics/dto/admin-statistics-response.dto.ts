@@ -47,51 +47,10 @@ export class FinancialOverviewDto {
   totalVerificationFees: string;
 
   @ApiProperty({
-    description: 'Total amount refunded to users',
-    example: '2500000',
-  })
-  totalRefundAmount: string;
-
-  @ApiProperty({
-    description: 'Net revenue after refunds',
+    description: 'Net revenue',
     example: '12500000',
   })
   netRevenue: string;
-}
-
-/**
- * Fraud & Risk Statistics Response DTO
- */
-export class FraudOverviewDto {
-  @ApiProperty({
-    description: 'Total number of posts flagged as fraud',
-    example: 12,
-  })
-  totalFraudFlags: number;
-
-  @ApiProperty({
-    description: 'Number of suspected fraud posts',
-    example: 8,
-  })
-  suspectedCount: number;
-
-  @ApiProperty({
-    description: 'Number of confirmed fraud posts',
-    example: 4,
-  })
-  confirmedCount: number;
-
-  @ApiProperty({
-    description: 'Refund rate percentage',
-    example: 15.5,
-  })
-  refundRate: number;
-
-  @ApiProperty({
-    description: 'Total posts with refunds processed',
-    example: 45,
-  })
-  totalRefundedPosts: number;
 }
 
 /**
@@ -138,12 +97,6 @@ export class AdminDashboardStatsDto {
     type: FinancialOverviewDto,
   })
   financial: FinancialOverviewDto;
-
-  @ApiProperty({
-    description: 'Fraud and risk statistics',
-    type: FraudOverviewDto,
-  })
-  fraud: FraudOverviewDto;
 
   @ApiProperty({
     description: 'Transaction statistics',

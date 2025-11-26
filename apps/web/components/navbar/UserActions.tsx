@@ -4,20 +4,10 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { User, Bookmark, Bell, ChevronDown, MessageCircle } from 'lucide-react';
+import { User, Bookmark, ChevronDown, MessageCircle } from 'lucide-react';
 import { Account } from '@/types/account';
 import { isValidAvatarUrl } from '@/lib/validation/file-validation';
-import { useQuery } from '@tanstack/react-query';
-import { chatApi } from '@/lib/api/chatApi';
-import { useRouter } from 'next/navigation';
 
 interface UserActionsProps {
   className?: string;
@@ -32,16 +22,6 @@ export function UserActions({
   user,
   onUserMenuToggle,
 }: UserActionsProps) {
-  const router = useRouter();
-  // Fetch unread message count
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unreadMessageCount'],
-    queryFn: () => chatApi.getUnreadMessageCount(),
-    enabled: isLoggedIn && !!user,
-    refetchInterval: 30000, // Refetch every 30 seconds
-    retry: 1,
-  });
-
   if (isLoggedIn) {
     return (
       <div className={cn('flex items-center gap-2 sm:gap-3 flex-wrap', className)}>
@@ -60,43 +40,18 @@ export function UserActions({
               </Link>
             </Button>
 
-            {/* Notifications Button - Dropdown with message notification */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 group relative rounded-full p-2 h-9 w-9"
-                  title="Thông báo"
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 flex items-center justify-center text-[10px] font-bold rounded-full animate-pulse"
-                    >
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </Badge>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {unreadCount > 0 ? (
-                  <DropdownMenuItem
-                    onClick={() => router.push('/chat')}
-                    className="cursor-pointer"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    <span>Bạn có tin nhắn</span>
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem disabled className="text-gray-500">
-                    <Bell className="h-4 w-4 mr-2" />
-                    <span>Không có thông báo mới</span>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Messages Button */}
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 group relative rounded-full p-2 h-9 w-9"
+              title="Tin nhắn"
+            >
+              <Link href="/chat" className="flex items-center justify-center">
+                <MessageCircle className="h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         )}
 

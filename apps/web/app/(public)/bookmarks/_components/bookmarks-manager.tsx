@@ -213,14 +213,6 @@ export function BookmarksManager() {
             </div>
 
             <div className="flex items-center justify-end gap-2 mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-emerald-500 text-emerald-600 hover:bg-emerald-50"
-              >
-                Chat
-              </Button>
-
               <button
                 onClick={() => handleUnsave(b)}
                 disabled={busyId === b.id}

@@ -1,10 +1,12 @@
 'use client';
 
-import { CheckCircle2, Package } from 'lucide-react';
+import { CheckCircle2, Package, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RatingForm } from './RatingForm';
 import { ContractStatus } from '@/lib/api/transactionApi';
+import { checkUserRatedPost } from '@/lib/api/ratingApi';
+import { useQuery } from '@tanstack/react-query';
 
 interface ContractActionsCardProps {
   isBuyer: boolean;
@@ -23,12 +25,36 @@ export function ContractActionsCard({
   contractStatus,
   postId,
 }: ContractActionsCardProps) {
-  const showRatingForm = isBuyer && contractStatus === ContractStatus.SUCCESS;
+  // Check if user has already rated this post
+  const { data: ratingStatus, isLoading: isCheckingRating } = useQuery({
+    queryKey: ['ratingStatus', postId],
+    queryFn: () => checkUserRatedPost(postId),
+    enabled: isBuyer && contractStatus === ContractStatus.SUCCESS,
+  });
+
+  const isContractSuccess = contractStatus === ContractStatus.SUCCESS;
+  const hasAlreadyRated = ratingStatus?.hasRated === true;
+  const showRatingForm = isBuyer && isContractSuccess && !hasAlreadyRated && !isCheckingRating;
 
   return (
     <>
       {/* Rating Form - Show above actions for successful buyer orders */}
       {showRatingForm && <RatingForm postId={postId} />}
+
+      {/* Show rated message if already rated */}
+      {isBuyer && isContractSuccess && hasAlreadyRated && (
+        <Card className="border-none shadow-none bg-green-50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 text-green-700">
+              <CheckCircle className="h-6 w-6" />
+              <div>
+                <p className="font-medium">Bạn đã đánh giá sản phẩm này</p>
+                <p className="text-sm text-green-600">Cảm ơn bạn đã đánh giá!</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-none shadow-none">
         <CardContent className="p-6">
@@ -49,9 +75,7 @@ export function ContractActionsCard({
               className="w-full"
               size="lg"
               variant="default"
-              style={
-                isBuyer ? { backgroundColor: '#2563eb' } : { backgroundColor: '#16a34a' }
-              }
+              style={isBuyer ? { backgroundColor: '#2563eb' } : { backgroundColor: '#16a34a' }}
             >
               {isBuyer ? (
                 <>
@@ -71,4 +95,3 @@ export function ContractActionsCard({
     </>
   );
 }
-
