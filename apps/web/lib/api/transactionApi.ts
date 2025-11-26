@@ -265,3 +265,50 @@ export async function agreeToContract(contractId: string): Promise<Contract> {
   );
   return data;
 }
+
+/**
+ * Get total POST_PAYMENT amount
+ * Requires admin authentication
+ */
+export async function getPostPaymentTotal(): Promise<string> {
+  const { data } = await api.get<{ total: string }>('/admin/statistics/post-payment-total', {
+    headers: getAuthHeaders(),
+  });
+  return data.total;
+}
+
+/**
+ * Get total PLATFORM_FEE amount
+ * Requires admin authentication
+ */
+export async function getPlatformFeeTotal(): Promise<string> {
+  const { data } = await api.get<{ total: string }>('/admin/statistics/platform-fee-total', {
+    headers: getAuthHeaders(),
+  });
+  return data.total;
+}
+
+/**
+ * Get total revenue (POST_PAYMENT + PLATFORM_FEE)
+ * Requires admin authentication
+ */
+export async function getTotalRevenue(): Promise<string> {
+  const { data } = await api.get<{ total: string }>('/admin/statistics/total-revenue', {
+    headers: getAuthHeaders(),
+  });
+  return data.total;
+}
+
+/**
+ * Get monthly revenue (POST_PAYMENT + PLATFORM_FEE grouped by month)
+ * Requires admin authentication
+ */
+export async function getMonthlyRevenue(): Promise<Array<{ month: string; revenue: string }>> {
+  const { data } = await api.get<Array<{ month: string; revenue: string }>>(
+    '/admin/statistics/monthly-revenue',
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}

@@ -7,6 +7,7 @@ import {
   RecentTables,
   FinancialStatsCards,
   FraudStatsCards,
+  RevenueChart,
 } from './_components';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -118,6 +119,9 @@ export default function AdminDashboard() {
       {adminStats?.financial && (
         <FinancialStatsCards financial={adminStats.financial} isLoading={adminStatsLoading} />
       )}
+
+      {/* Revenue Chart */}
+      <RevenueChart />
 
       {/* Fraud & Risk Statistics Cards */}
       {adminStats?.fraud && (
