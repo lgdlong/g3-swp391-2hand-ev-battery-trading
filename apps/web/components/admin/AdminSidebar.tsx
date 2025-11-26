@@ -16,6 +16,7 @@ import {
   X,
   LogOut,
   DollarSign,
+  ShoppingCart,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -30,19 +31,31 @@ const navigationItems = [
     badge: null,
   },
   {
-    name: 'Users',
+    name: 'Quản lý Users',
     href: '/admin/accounts',
     icon: Users,
     badge: null,
   },
   {
-    name: 'Posts',
+    name: 'Tin đăng (Posts)',
     href: '/admin/posts',
     icon: FileText,
     badge: null,
   },
   {
-    name: 'Settings',
+    name: 'Giao dịch (Orders)',
+    href: '/admin/orders',
+    icon: ShoppingCart,
+    badge: null,
+  },
+  {
+    name: 'Tài chính (Finance)',
+    href: '/admin/finance',
+    icon: DollarSign,
+    badge: null,
+  },
+  {
+    name: 'Cài đặt (Settings)',
     href: '/admin/settings',
     icon: Settings,
     badge: null,

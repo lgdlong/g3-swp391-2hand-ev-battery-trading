@@ -143,3 +143,108 @@ export async function verifyAndProcessTopup(orderCode: string): Promise<WalletTr
   );
   return data;
 }
+
+/**
+ * [Admin] Get wallet transactions by user ID
+ */
+export async function getUserTransactions(userId: number): Promise<WalletTransaction[]> {
+  const { data } = await api.get<WalletTransaction[]>(`/wallets/transactions/${userId}`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * [Admin] Get wallet by user ID
+ */
+export async function getUserWallet(userId: number): Promise<Wallet> {
+  const { data } = await api.get<Wallet>(`/wallets/${userId}`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * [Admin] Get all wallet transactions across the platform
+ */
+export async function getAllTransactions(
+  limit: number = 100,
+  offset: number = 0,
+): Promise<WalletTransaction[]> {
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  params.append('offset', offset.toString());
+
+  const { data } = await api.get<WalletTransaction[]>(
+    `/wallets/transactions/all?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * [Admin] Get total count of wallet transactions
+ */
+export async function getTotalTransactionsCount(): Promise<number> {
+  const { data } = await api.get<number>('/wallets/transactions/all/count', {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+// Payment Order types
+export interface PaymentOrder {
+  id: string;
+  accountId: number;
+  serviceTypeId: number;
+  orderCode: string | null;
+  amount: string;
+  status: 'PENDING' | 'PROCESSING' | 'PAID' | 'CANCELLED';
+  payableId: string | null;
+  payableType: string | null;
+  paymentRef: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  account?: {
+    id: number;
+    fullName: string;
+    email: string | null;
+  };
+  serviceType?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+}
+
+/**
+ * [Admin] Get all payment orders across the platform
+ */
+export async function getAllPaymentOrders(
+  limit: number = 100,
+  offset: number = 0,
+): Promise<PaymentOrder[]> {
+  const params = new URLSearchParams();
+  params.append('limit', limit.toString());
+  params.append('offset', offset.toString());
+
+  const { data } = await api.get<PaymentOrder[]>(
+    `/wallets/payment-orders/all?${params.toString()}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
+ * [Admin] Get total count of payment orders
+ */
+export async function getTotalPaymentOrdersCount(): Promise<number> {
+  const { data } = await api.get<number>('/wallets/payment-orders/all/count', {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}

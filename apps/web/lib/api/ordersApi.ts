@@ -178,3 +178,67 @@ export async function checkBuyerOrderForPost(postId: string): Promise<Order | nu
     return null;
   }
 }
+
+/**
+ * [Admin] Lấy tất cả đơn hàng
+ */
+export async function getAllOrders(status?: OrderStatus): Promise<Order[]> {
+  const params = new URLSearchParams();
+  if (status) {
+    params.append('status', status);
+  }
+
+  const { data } = await api.get<Order[]>(`/orders?${params.toString()}`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+}
+
+/**
+ * [Admin] Lấy thống kê đơn hàng
+ */
+export interface OrderStats {
+  totalOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  processingOrders: number;
+  waitingConfirmOrders: number;
+  gmv: string; // Gross Merchandise Value - Tổng giá trị giao dịch thành công
+  totalEscrow: string; // Tiền đang tạm giữ (WAITING_SELLER_CONFIRM + PROCESSING)
+  totalCommission: string; // Tổng hoa hồng thu được
+}
+
+export async function getOrderStats(): Promise<OrderStats> {
+  const orders = await getAllOrders();
+
+  const completedOrders = orders.filter((o) => o.status === OrderStatus.COMPLETED);
+  const cancelledOrders = orders.filter((o) => o.status === OrderStatus.CANCELLED);
+  const processingOrders = orders.filter((o) => o.status === OrderStatus.PROCESSING);
+  const waitingConfirmOrders = orders.filter(
+    (o) => o.status === OrderStatus.WAITING_SELLER_CONFIRM,
+  );
+
+  // GMV = Tổng giá trị đơn hàng thành công
+  const gmv = completedOrders.reduce((sum, o) => sum + Number.parseFloat(o.amount || '0'), 0);
+
+  // Escrow = Tiền đang tạm giữ (orders đang WAITING_SELLER_CONFIRM hoặc PROCESSING)
+  const escrowOrders = [...waitingConfirmOrders, ...processingOrders];
+  const totalEscrow = escrowOrders.reduce((sum, o) => sum + Number.parseFloat(o.amount || '0'), 0);
+
+  // Tổng hoa hồng từ đơn hoàn thành
+  const totalCommission = completedOrders.reduce(
+    (sum, o) => sum + Number.parseFloat(o.commissionFee || '0'),
+    0,
+  );
+
+  return {
+    totalOrders: orders.length,
+    completedOrders: completedOrders.length,
+    cancelledOrders: cancelledOrders.length,
+    processingOrders: processingOrders.length,
+    waitingConfirmOrders: waitingConfirmOrders.length,
+    gmv: gmv.toString(),
+    totalEscrow: totalEscrow.toString(),
+    totalCommission: totalCommission.toString(),
+  };
+}

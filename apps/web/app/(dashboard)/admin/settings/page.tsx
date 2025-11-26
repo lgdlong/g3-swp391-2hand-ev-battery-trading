@@ -102,7 +102,7 @@ export default function AdminSettingsPage() {
     }
 
     if (isNaN(depositRate) || depositRate < 0 || depositRate > 1) {
-      toast.error('Tỷ lệ đặt cọc phải từ 0 đến 100%');
+      toast.error('Tỷ lệ phí hoa hồng phải từ 0 đến 100%');
       return;
     }
 

@@ -14,10 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import type { FeeTier } from '@/types/api/fee-tier';
-import {
-  FEE_TIER_PRICE_CONSTANTS,
-  FEE_TIER_DEPOSIT_RATE_CONSTANTS,
-} from './constants';
+import { FEE_TIER_PRICE_CONSTANTS, FEE_TIER_DEPOSIT_RATE_CONSTANTS } from './constants';
 
 export interface FeeTierFormData {
   minPrice: string;
@@ -134,7 +131,7 @@ export function FeeTierDialog({
             <DialogDescription>
               {editingTier
                 ? 'Cập nhật thông tin hoa hồng'
-                : 'Tạo mới một mức hoa hồng với tỷ lệ đặt cọc theo khoảng giá'}
+                : 'Tạo mới một mức hoa hồng với tỷ lệ phí theo khoảng giá'}
             </DialogDescription>
           </DialogHeader>
 
@@ -172,7 +169,7 @@ export function FeeTierDialog({
 
             <div className="grid gap-2">
               <Label htmlFor="depositRate">
-                Tỷ lệ đặt cọc (%) <span className="text-red-500">*</span>
+                Tỷ lệ phí hoa hồng (%) <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="depositRate"
@@ -186,7 +183,8 @@ export function FeeTierDialog({
                 required
               />
               <p className="text-xs text-gray-500">
-                Từ {FEE_TIER_DEPOSIT_RATE_CONSTANTS.MIN}% đến {FEE_TIER_DEPOSIT_RATE_CONSTANTS.MAX}% (có thể nhập 0.01, 0.001, v.v.)
+                Từ {FEE_TIER_DEPOSIT_RATE_CONSTANTS.MIN}% đến {FEE_TIER_DEPOSIT_RATE_CONSTANTS.MAX}%
+                (có thể nhập 0.01, 0.001, v.v.)
               </p>
             </div>
 

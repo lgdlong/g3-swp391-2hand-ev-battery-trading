@@ -11,6 +11,7 @@ import { CreatePayosDto } from '../payos/dto';
 import { WalletTransactionMapper } from './mappers/wallet-transaction.mapper';
 import { WalletTransactionResponseDto } from './dto/wallet-transaction-response.dto';
 import { ensureWalletInTx } from 'src/shared/helpers/wallet.helper';
+import { ListQueryDto } from 'src/shared/dto/list-query.dto';
 
 @Injectable()
 export class WalletsService {
@@ -616,5 +617,53 @@ export class WalletsService {
     }
 
     return transaction;
+  }
+
+  /**
+   * [Admin] Get all wallet transactions
+   * @param limit - Number of transactions to return
+   * @param offset - Number of transactions to skip
+   * @returns Array of all wallet transaction DTOs
+   */
+  async getAllTransactions(limit: number, offset: number): Promise<WalletTransactionResponseDto[]> {
+    const transactions = await this.walletTransactionRepo.find({
+      relations: ['serviceType'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+
+    return WalletTransactionMapper.toResponseDtoArray(transactions);
+  }
+
+  /**
+   * [Admin] Get total count of wallet transactions
+   * @returns Total count
+   */
+  async getTotalTransactionsCount(): Promise<number> {
+    return this.walletTransactionRepo.count();
+  }
+
+  /**
+   * [Admin] Get all payment orders
+   * @param limit - Number of orders to return
+   * @param offset - Number of orders to skip
+   * @returns Array of payment orders
+   */
+  async getAllPaymentOrders(limit = 100, offset = 0): Promise<PaymentOrder[]> {
+    return this.paymentOrderRepo.find({
+      relations: ['account', 'serviceType'],
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+  }
+
+  /**
+   * [Admin] Get total count of payment orders
+   * @returns Total count
+   */
+  async getTotalPaymentOrdersCount(): Promise<number> {
+    return this.paymentOrderRepo.count();
   }
 }
