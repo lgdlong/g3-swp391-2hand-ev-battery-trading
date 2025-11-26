@@ -1,6 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository, DataSource } from 'typeorm';
+import { ILike, Repository, DataSource, IsNull } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { PostType, PostStatus } from '../../shared/enums/post.enum';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
@@ -14,6 +19,7 @@ import { PostsQueryDto } from './dto/posts-query.dto';
 import { PostMapper } from './mappers/post.mapper';
 import { BasePostResponseDto } from './dto/base-post-response.dto';
 import { PostImage } from './entities/post-image.entity';
+import { PostVerificationDocument } from './entities/post-verification-document.entity';
 import { CloudinaryService } from '../upload/cloudinary/cloudinary.service';
 import { CreatePostImageDto } from './dto/create-post-image.dto';
 import { PostImageResponseDto } from './dto/post-image-response.dto';
@@ -30,6 +36,10 @@ import { WalletsService } from '../wallets/wallets.service';
 import { FeeTierService } from '../settings/service/fee-tier.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
+import type { AuthUser } from '../../core/guards/roles.guard';
+import { AccountRole } from '../../shared/enums/account-role.enum';
+import { CreateVerificationDocumentDto } from './dto/create-verification-document.dto';
+import { VerificationDocumentResponseDto } from './dto/verification-document-response.dto';
 
 // Union type for all post creation DTOs
 type CreateAnyPostDto = CreateCarPostDto | CreateBikePostDto | CreateBatteryPostDto;
@@ -42,14 +52,12 @@ export class PostsService {
   private readonly BATTERY_DETAILS = 'batteryDetails';
   private readonly SELLER = 'seller';
   private readonly IMAGES = 'images';
-  private readonly VERIFICATION_REQUEST = 'verificationRequest';
   private readonly POST_FULL_RELATIONS = [
     this.CAR_DETAILS,
     this.BIKE_DETAILS,
     this.BATTERY_DETAILS,
     this.SELLER,
     this.IMAGES,
-    this.VERIFICATION_REQUEST,
   ];
 
   constructor(
@@ -57,6 +65,8 @@ export class PostsService {
     private readonly postsRepo: Repository<Post>,
     @InjectRepository(PostImage)
     private readonly imagesRepo: Repository<PostImage>,
+    @InjectRepository(PostVerificationDocument)
+    private readonly verificationDocsRepo: Repository<PostVerificationDocument>,
     private readonly bikeDetailsService: BikeDetailsService,
     private readonly carDetailsService: CarDetailsService,
     private readonly batteryDetailsService: BatteryDetailsService,
@@ -170,7 +180,8 @@ export class PostsService {
       throw new NotFoundException('Không tìm thấy bài đăng sau khi cập nhật');
     }
 
-    return PostMapper.toBasePostResponseDto(updatedPost);
+    const dto = PostMapper.toBasePostResponseDto(updatedPost);
+    return dto;
   }
 
   /**
@@ -287,7 +298,7 @@ export class PostsService {
         postType: PostType.EV_CAR,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
+      relations: [this.CAR_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -308,7 +319,7 @@ export class PostsService {
         postType: PostType.EV_BIKE,
         status: DISPLAYABLE_POST_STATUS, // Only return published posts
       },
-      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
+      relations: [this.BIKE_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -368,7 +379,7 @@ export class PostsService {
         postType: PostType.BATTERY,
         status: DISPLAYABLE_POST_STATUS,
       },
-      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES, this.VERIFICATION_REQUEST],
+      relations: [this.BATTERY_DETAILS, this.SELLER, this.IMAGES],
       order: { createdAt: query.order || 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -465,7 +476,9 @@ export class PostsService {
       skip: offset,
     });
 
-    return PostMapper.toBasePostResponseDtoArray(rows);
+    const dtos = PostMapper.toBasePostResponseDtoArray(rows);
+    await this.hydrateVerificationDocumentCounts(dtos);
+    return dtos;
   }
 
   async getPostById(id: string): Promise<BasePostResponseDto> {
@@ -478,7 +491,9 @@ export class PostsService {
       throw new NotFoundException('Post not found');
     }
 
-    return PostMapper.toBasePostResponseDto(post);
+    const dto = PostMapper.toBasePostResponseDto(post);
+    await this.hydrateVerificationDocumentCounts([dto]);
+    return dto;
   }
 
   async getAllPostsForAdmin(query: AdminListPostsQueryDto): Promise<{
@@ -527,8 +542,11 @@ export class PostsService {
     const limit = query.limit || 20;
     const totalPages = Math.ceil(total / limit);
 
+    const data = PostMapper.toBasePostResponseDtoArray(rows);
+    await this.hydrateVerificationDocumentCounts(data);
+
     return {
-      data: PostMapper.toBasePostResponseDtoArray(rows),
+      data,
       total,
       page,
       limit,
@@ -549,11 +567,29 @@ export class PostsService {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
 
+    if (post.status !== PostStatus.PENDING_REVIEW) {
+      throw new BadRequestException('Chỉ có thể duyệt bài đăng ở trạng thái PENDING_REVIEW');
+    }
+
+    // Kiểm tra verification documents (giấy tờ xe để kiểm duyệt)
+    // Yêu cầu ít nhất 1 ảnh giấy tờ
+    const verificationDocCount = await this.verificationDocsRepo.count({
+      where: { post_id: id, deleted_at: IsNull() },
+    });
+
+    if (verificationDocCount === 0) {
+      throw new BadRequestException(
+        'Bài đăng chưa có giấy tờ xe phục vụ kiểm duyệt. Vui lòng yêu cầu người bán bổ sung cà vẹt/giấy tờ xe.',
+      );
+    }
+
     post.status = DISPLAYABLE_POST_STATUS;
     post.reviewedAt = new Date();
     await this.postsRepo.save(post);
 
-    return PostMapper.toBasePostResponseDto(post);
+    const dto = PostMapper.toBasePostResponseDto(post);
+    dto.documentsCount = verificationDocCount;
+    return dto;
   }
 
   /**
@@ -589,7 +625,8 @@ export class PostsService {
       action: ReviewActionEnum.REJECTED,
     });
 
-    return PostMapper.toBasePostResponseDto(post);
+    const dto = PostMapper.toBasePostResponseDto(post);
+    return dto;
   }
 
   async deletePostById(id: string, userId: number): Promise<Date> {
@@ -630,7 +667,8 @@ export class PostsService {
     const isOnlyStatusUpdate =
       post.status === PostStatus.PUBLISHED &&
       updateDto.status === PostStatus.SOLD &&
-      Object.keys(updateDto).filter((key) => updateDto[key as keyof typeof updateDto] !== undefined).length === 1 &&
+      Object.keys(updateDto).filter((key) => updateDto[key as keyof typeof updateDto] !== undefined)
+        .length === 1 &&
       updateDto.status !== undefined;
 
     // Only allow updating posts in DRAFT or REJECTED status, or PUBLISHED -> SOLD status update
@@ -772,6 +810,142 @@ export class PostsService {
         message:
           'Bài viết đã được thu hồi. Yêu cầu hoàn phí (nếu đủ điều kiện) sẽ được xử lý tự động.',
       };
+    });
+  }
+
+  /**
+   * Thêm verification documents (giấy tờ xe) cho bài đăng
+   * CHỈ owner của post hoặc admin mới được upload
+   */
+  async addVerificationDocuments(
+    postId: string,
+    userId: number,
+    documents: CreateVerificationDocumentDto[],
+  ): Promise<VerificationDocumentResponseDto[]> {
+    if (!documents?.length) {
+      return [];
+    }
+
+    const post = await this.postsRepo.findOne({
+      where: { id: postId },
+      relations: [this.SELLER],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Không tìm thấy bài đăng');
+    }
+
+    if (post.seller.id !== userId) {
+      throw new ForbiddenException('Bạn không có quyền tải giấy tờ cho bài đăng này');
+    }
+
+    const entities = documents.map((doc) =>
+      this.verificationDocsRepo.create({
+        post_id: postId,
+        type: doc.type,
+        url: doc.url,
+        uploaded_by: userId,
+        uploaded_at: new Date(),
+      }),
+    );
+
+    const saved = await this.verificationDocsRepo.save(entities);
+    return saved.map((doc) => this.toVerificationDocumentResponse(doc));
+  }
+
+  /**
+   * Lấy danh sách verification documents của một bài đăng
+   * CHỈ admin hoặc owner được xem
+   */
+  async listVerificationDocuments(
+    postId: string,
+    userId: number,
+    userRole: AccountRole,
+  ): Promise<VerificationDocumentResponseDto[]> {
+    const post = await this.postsRepo.findOne({
+      where: { id: postId },
+      relations: [this.SELLER],
+    });
+
+    if (!post) {
+      throw new NotFoundException('Không tìm thấy bài đăng');
+    }
+
+    // CHỈ admin hoặc owner được xem verification documents
+    if (userRole !== AccountRole.ADMIN && post.seller.id !== userId) {
+      throw new ForbiddenException('Bạn không có quyền xem giấy tờ của bài đăng này');
+    }
+
+    const docs = await this.verificationDocsRepo.find({
+      where: { post_id: postId },
+      order: { created_at: 'ASC' },
+    });
+
+    return docs.map((doc) => this.toVerificationDocumentResponse(doc));
+  }
+
+  /**
+   * Xóa verification document (soft delete)
+   * CHỈ owner hoặc admin được xóa
+   */
+  async deleteVerificationDocument(
+    docId: string,
+    userId: number,
+    userRole: AccountRole,
+  ): Promise<void> {
+    const doc = await this.verificationDocsRepo.findOne({
+      where: { id: docId },
+      relations: ['post', 'post.seller'],
+    });
+
+    if (!doc) {
+      throw new NotFoundException('Không tìm thấy giấy tờ');
+    }
+
+    // CHỈ admin hoặc owner được xóa
+    if (userRole !== AccountRole.ADMIN && doc.post.seller.id !== userId) {
+      throw new ForbiddenException('Bạn không có quyền xóa giấy tờ này');
+    }
+
+    await this.verificationDocsRepo.softDelete(docId);
+  }
+
+  private toVerificationDocumentResponse(
+    doc: PostVerificationDocument,
+  ): VerificationDocumentResponseDto {
+    return {
+      id: doc.id,
+      postId: doc.post_id,
+      type: doc.type,
+      url: doc.url,
+      uploadedAt: doc.uploaded_at,
+      uploadedBy: doc.uploaded_by,
+      createdAt: doc.created_at,
+    };
+  }
+
+  /**
+   * Hydrate verification document counts for posts
+   * Count số lượng giấy tờ xe đã upload cho mỗi bài viết
+   */
+  private async hydrateVerificationDocumentCounts(dtos: BasePostResponseDto[]): Promise<void> {
+    if (!dtos.length) {
+      return;
+    }
+
+    const ids = dtos.map((dto) => String(dto.id));
+    const rows = await this.verificationDocsRepo
+      .createQueryBuilder('doc')
+      .select('doc.post_id', 'postId')
+      .addSelect('COUNT(doc.id)', 'count')
+      .where('doc.post_id IN (:...ids)', { ids })
+      .andWhere('doc.deleted_at IS NULL') // Chỉ đếm những document chưa bị xóa (soft delete)
+      .groupBy('doc.post_id')
+      .getRawMany<{ postId: string; count: string }>();
+
+    const map = new Map(rows.map((row) => [String(row.postId), Number(row.count)]));
+    dtos.forEach((dto) => {
+      dto.documentsCount = map.get(String(dto.id)) ?? 0;
     });
   }
 }

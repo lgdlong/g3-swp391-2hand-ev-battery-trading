@@ -7,7 +7,6 @@ import { getFlexibleFieldValue } from '../utils/utils';
 
 export function useEVFormState(post: Post) {
   const isEVPost = post.postType === 'EV_CAR' || post.postType === 'EV_BIKE';
-  const isCarPost = post.postType === 'EV_CAR';
 
   const [evFormData, setEvFormData] = useState(() => {
     if (post.postType === 'EV_CAR' || post.postType === 'EV_BIKE') {
@@ -54,9 +53,17 @@ export function useEVFormState(post: Post) {
             : '',
         batteryHealthPct: getFlexibleFieldValue(detail?.battery_health_pct) || '',
         hasBundledBattery:
-          post.postType === 'EV_CAR' ? ((detail as CarDetail)?.has_bundled_battery ?? false) : false,
+          post.postType === 'EV_CAR'
+            ? ((detail as CarDetail)?.has_bundled_battery ?? false)
+            : post.postType === 'EV_BIKE'
+              ? ((detail as BikeDetail)?.has_bundled_battery ?? false)
+              : false,
         isOriginalBattery:
-          post.postType === 'EV_CAR' ? ((detail as CarDetail)?.is_original_battery ?? false) : false,
+          post.postType === 'EV_CAR'
+            ? ((detail as CarDetail)?.is_original_battery ?? false)
+            : post.postType === 'EV_BIKE'
+              ? ((detail as BikeDetail)?.is_original_battery ?? false)
+              : false,
       };
     }
     return {
@@ -83,6 +90,9 @@ export function useEVFormState(post: Post) {
       isOriginalBattery: false,
     };
   });
+
+  // Determine if current vehicle type is car based on form data (reactive to user changes)
+  const isCarPost = evFormData.vehicleType === 'xe_hoi';
 
   const { data: brands = [], isLoading: loadingBrands } = useQuery({
     queryKey: isCarPost ? ['car-brands'] : ['bike-brands'],

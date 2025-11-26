@@ -29,7 +29,7 @@ export class FinancialOverviewDto {
   totalTransactions: number;
 
   @ApiProperty({
-    description: 'Total fees collected (deposits + verifications)',
+    description: 'Total fees collected từ phí đăng bài',
     example: '15000000',
   })
   totalFeesCollected: string;
@@ -81,11 +81,6 @@ export class TransactionStatsDto {
   })
   totalTopups: number;
 
-  @ApiProperty({
-    description: 'Total verification transactions',
-    example: 123,
-  })
-  totalVerifications: number;
 }
 
 /**

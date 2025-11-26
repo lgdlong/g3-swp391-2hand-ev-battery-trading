@@ -21,6 +21,19 @@ export type PostStatus =
 /** Origin type for vehicles */
 export type PostOrigin = 'NOI_DIA' | 'NHAP_KHAU';
 
+/** Post verification document type enum matching backend */
+export type PostVerificationDocumentType = 'REGISTRATION_CERTIFICATE' | 'INSURANCE' | 'OTHER';
+
+export interface PostVerificationDocument {
+  id: string;
+  postId: string;
+  type: PostVerificationDocumentType;
+  url: string;
+  uploadedAt: string;
+  uploadedBy: number;
+  createdAt: string;
+}
+
 // ===== Vehicle Detail Enums =====
 
 /** Car body style types */
@@ -126,6 +139,8 @@ export interface BikeDetail {
   motor_power_kw: FlexibleField;
   charge_ac_kw: FlexibleField;
   battery_health_pct: FlexibleField;
+  has_bundled_battery?: boolean;
+  is_original_battery?: boolean;
 }
 
 // ===== BatteryDetail =====
@@ -180,6 +195,9 @@ export interface BikeDetailUI {
   range_km?: number;
   license_plate?: string;
   origin?: Origin;
+  // Bundled battery info
+  has_bundled_battery?: boolean;
+  is_original_battery?: boolean;
 }
 
 /** Post image reference for UI */
@@ -216,13 +234,7 @@ export interface PostUI {
   updatedAt: string;
   submittedAt?: string;
   reviewedAt?: string;
-  // Verification data from relation
-  verificationRequest?: {
-    status: 'PENDING' | 'APPROVED' | 'REJECTED';
-    requestedAt: string;
-    reviewedAt?: string;
-    rejectReason?: string;
-  };
+  documentsCount?: number;
 }
 
 // ===== Main Post Interface =====
@@ -255,13 +267,7 @@ export interface Post {
   updatedAt: string;
   submittedAt: FlexibleField;
   reviewedAt: FlexibleField;
-  // Verification data from relation
-  verificationRequest?: {
-    status: 'PENDING' | 'APPROVED' | 'REJECTED';
-    requestedAt: string;
-    reviewedAt?: string;
-    rejectReason?: string;
-  };
+  documentsCount?: number;
 }
 
 // ===== Legacy/Alternative Interfaces =====

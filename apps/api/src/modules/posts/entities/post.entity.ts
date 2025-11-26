@@ -16,8 +16,8 @@ import { PostStatus, PostType } from '../../../shared/enums/post.enum';
 import type { PostEvCarDetails } from '../../post-details/entities/post-ev-car-details.entity';
 import type { PostEvBikeDetails } from '../../post-details/entities/post-ev-bike-details.entity';
 import type { PostBatteryDetails } from '../../post-details/entities/post-battery-details.entity';
-import type { PostVerificationRequest } from '../../verifyPost/entities/post-verification-request.entity';
 import { PostImage } from './post-image.entity';
+import type { PostVerificationDocument } from './post-verification-document.entity';
 
 @Entity({ name: 'posts' })
 @Index(['wardCode'])
@@ -121,17 +121,16 @@ export class Post {
   )
   batteryDetails?: PostBatteryDetails;
 
-  @OneToOne(
-    () => require('../../verifyPost/entities/post-verification-request.entity').PostVerificationRequest,
-    (verificationRequest: PostVerificationRequest) => verificationRequest.post,
-    { cascade: true },
-  )
-  verificationRequest?: PostVerificationRequest;
-
   // ---------------------------
   // One-to-many relations
   // ---------------------------
 
   @OneToMany(() => require('./post-image.entity').PostImage, (image: PostImage) => image.post)
   images!: PostImage[];
+
+  @OneToMany(
+    () => require('./post-verification-document.entity').PostVerificationDocument,
+    (doc: PostVerificationDocument) => doc.post,
+  )
+  verificationDocuments!: PostVerificationDocument[];
 }

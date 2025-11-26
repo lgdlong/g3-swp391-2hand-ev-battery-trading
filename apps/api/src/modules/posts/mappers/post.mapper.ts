@@ -57,20 +57,6 @@ export class PostMapper {
       dto.images = PostImageMapper.toResponseDtoArray(post.images);
     }
 
-    // Map verification request if available
-    if (post.verificationRequest) {
-      dto.verificationRequest = {
-        postId: post.verificationRequest.postId,
-        requestedBy: post.verificationRequest.requestedBy,
-        requestedAt: post.verificationRequest.requestedAt,
-        status: post.verificationRequest.status,
-        reviewedAt: post.verificationRequest.reviewedAt || undefined,
-        rejectReason: post.verificationRequest.rejectReason || undefined,
-        createdAt: post.verificationRequest.createdAt,
-        updatedAt: post.verificationRequest.updatedAt,
-      };
-    }
-
     return dto;
   }
 

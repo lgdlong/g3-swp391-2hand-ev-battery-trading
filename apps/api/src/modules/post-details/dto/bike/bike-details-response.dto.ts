@@ -43,4 +43,10 @@ export class BikeDetailsResponseDto {
 
   @ApiProperty({ nullable: true })
   battery_health_pct!: number | null;
+
+  @ApiProperty({ description: 'Xe có kèm pin hay không', default: false })
+  has_bundled_battery!: boolean;
+
+  @ApiProperty({ description: 'Pin là pin gốc hãng không', default: false })
+  is_original_battery!: boolean;
 }

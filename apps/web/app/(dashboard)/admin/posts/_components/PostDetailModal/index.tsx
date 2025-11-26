@@ -9,6 +9,18 @@ import { PostTimeInfo } from './PostTimeInfo';
 import { PostVehicleDetails } from './PostVehicleDetails';
 import { PostDetailActions } from './PostDetailActions';
 import { Post } from '@/types/post';
+import { useQuery } from '@tanstack/react-query';
+import { getVerificationDocuments } from '@/lib/api/postApi';
+import type { PostVerificationDocument } from '@/types/post';
+import Image from 'next/image';
+import { Badge } from '@/components/ui/badge';
+import { Shield } from 'lucide-react';
+
+const DOCUMENT_LABELS: Record<string, string> = {
+  REGISTRATION_CERTIFICATE: 'Cà vẹt / Giấy đăng ký xe',
+  INSURANCE: 'Bảo hiểm xe',
+  OTHER: 'Giấy tờ khác',
+};
 
 export interface PostDetailModalProps {
   isOpen: boolean;
@@ -31,20 +43,17 @@ export function PostDetailModal({
 }: PostDetailModalProps) {
   if (!post) return null;
 
-  // Debug log để kiểm tra dữ liệu
-  console.log('PostDetailModal - Post data:', {
-    id: post.id,
-    title: post.title,
-    description: post.description,
-    images: post.images,
-    imagesLength: post.images?.length,
-    provinceNameCached: post.provinceNameCached,
-    districtNameCached: post.districtNameCached,
-    wardNameCached: post.wardNameCached,
-    seller: post.seller,
-    carDetails: post.carDetails,
-    bikeDetails: post.bikeDetails,
+  const {
+    data: documents,
+    isLoading: isLoadingDocuments,
+  } = useQuery({
+    queryKey: ['admin-post-verification-documents', post.id],
+    queryFn: () => getVerificationDocuments(String(post.id)),
+    enabled: isOpen,
   });
+
+  const documentCount = documents?.length ?? 0;
+  const canApprove = post.status === 'PENDING_REVIEW' && documentCount > 0;
 
   return (
     <>
@@ -86,6 +95,45 @@ export function PostDetailModal({
               {/* Chi tiết xe (nếu có) */}
               <PostVehicleDetails carDetails={post.carDetails} bikeDetails={post.bikeDetails} />
 
+              {/* Documents Section */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-gray-900">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                  Giấy tờ xe do người bán cung cấp
+                </h3>
+                {isLoadingDocuments ? (
+                  <p className="text-sm text-muted-foreground">Đang tải giấy tờ...</p>
+                ) : documents && documents.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {documents.map((doc: PostVerificationDocument) => (
+                      <div
+                        key={doc.id}
+                        className="border rounded-lg p-3 bg-gray-50 hover:bg-white transition-colors"
+                      >
+                        <div className="relative aspect-[4/3] rounded-md overflow-hidden mb-3">
+                          <Image
+                            src={doc.url}
+                            alt={DOCUMENT_LABELS[doc.type] || doc.type}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <Badge variant="outline" className="text-xs mb-1">
+                          {DOCUMENT_LABELS[doc.type] || doc.type}
+                        </Badge>
+                        <p className="text-[11px] text-muted-foreground">
+                          Tải lúc {new Date(doc.uploadedAt).toLocaleString('vi-VN')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-red-600 border border-red-100 rounded-lg p-3 bg-red-50">
+                    Người bán chưa tải giấy tờ. Vui lòng yêu cầu bổ sung trước khi duyệt bài đăng.
+                  </div>
+                )}
+              </div>
+
               {/* Action Footer */}
               <PostDetailActions
                 postId={post.id}
@@ -95,6 +143,12 @@ export function PostDetailModal({
                 onClose={onClose}
                 isApproving={isApproving}
                 isRejecting={isRejecting}
+                canApprove={canApprove}
+                approveDisabledReason={
+                  post.status === 'PENDING_REVIEW' && !canApprove
+                    ? 'Cần ít nhất 1 giấy tờ xe để duyệt bài đăng'
+                    : undefined
+                }
               />
             </div>
           </div>

@@ -170,7 +170,9 @@ export class OrdersService {
         await this.walletsService.topUp(
           order.buyerId,
           order.amount,
+          'BUY_REFUND',
           `Hoàn tiền - Seller từ chối đơn ${order.code}`,
+          'orders',
           order.id,
         );
 
@@ -229,7 +231,9 @@ export class OrdersService {
       await this.walletsService.topUp(
         order.sellerId,
         sellerReceiveAmount.toString(),
+        'SELL_REVENUE',
         `Nhận tiền đơn hàng ${order.code}`,
+        'orders',
         order.id,
       );
 
@@ -238,7 +242,9 @@ export class OrdersService {
         await this.walletsService.topUp(
           ADMIN_COMMISSION_ACCOUNT_ID,
           commissionFee.toString(),
+          'PLATFORM_FEE',
           `Hoa hồng đơn hàng ${order.code}`,
+          'orders',
           order.id,
         );
       }
@@ -298,7 +304,9 @@ export class OrdersService {
       await this.walletsService.topUp(
         order.buyerId,
         order.amount,
+        'BUY_REFUND',
         `Hoàn tiền - Buyer hủy đơn ${order.code}`,
+        'orders',
         order.id,
       );
 

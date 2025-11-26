@@ -10,7 +10,6 @@ export interface FinancialOverview {
   totalTransactions: number;
   totalFeesCollected: string;
   totalDepositCollected: string;
-  totalVerificationFees: string;
   totalRefundAmount: string;
   netRevenue: string;
 }
@@ -34,7 +33,6 @@ export interface TransactionStats {
   transactionsToday: number;
   totalPostPayments: number;
   totalTopups: number;
-  totalVerifications: number;
 }
 
 /**

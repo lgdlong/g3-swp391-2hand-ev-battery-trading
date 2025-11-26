@@ -7,7 +7,6 @@ import { displayValue, formatVnd } from './utils';
 import type { Post } from '@/types/api/post';
 import { HeartCallApi } from './HeartCallApi';
 import { DEFAULT_IMAGE } from '@/constants/images';
-import { VerificationBadge } from '@/components/VerificationBadge';
 
 interface BatteryPostCardProps {
   item: Post;
@@ -50,9 +49,6 @@ export function BatteryPostCard({ item, onTitleClick }: BatteryPostCardProps) {
               <Badge className="bg-green-600 text-white border-0">Pin EV</Badge>
             </div>
             {/* Verification badge - góc trên bên phải */}
-            {item.verificationRequest?.status === 'APPROVED' && (
-              <VerificationBadge className="absolute top-3 right-3" />
-            )}
           </div>
 
           {/* Details */}

@@ -14,6 +14,7 @@ import type {
   DeletePostResponse,
   ArchivePostResponse,
 } from '@/types/api/post';
+import type { PostVerificationDocument, PostVerificationDocumentType } from '@/types/post';
 
 // Re-export types for backward compatibility
 export type {
@@ -440,6 +441,95 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
       }
     }
   }
+}
+
+/**
+ * Upload files to Cloudinary and then create verification documents
+ * These documents are only visible to admins and the post owner
+ * @param documents - Array of objects with file and type
+ */
+export async function uploadVerificationDocuments(
+  postId: string,
+  documents: Array<{ file: File; type: PostVerificationDocumentType }>,
+): Promise<PostVerificationDocument[]> {
+  if (!documents || documents.length === 0) {
+    throw new Error('No files provided for upload');
+  }
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic'];
+  const maxSize = 4 * 1024 * 1024; // 4MB per file
+
+  documents.forEach((doc, index) => {
+    const file = doc.file;
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`File ${index + 1} (${file.name}) is not a supported image type`);
+    }
+    if (file.size > maxSize) {
+      throw new Error(`File ${index + 1} (${file.name}) is too large (max 4MB)`);
+    }
+  });
+
+  // Step 1: Upload files to Cloudinary
+  const formData = new FormData();
+  documents.forEach((doc) => formData.append('files', doc.file, doc.file.name));
+
+  const uploadResponse = await api.post<{ images: Array<{ url: string }> }>(
+    '/upload/multiple',
+    formData,
+    { headers: getAuthHeaders() },
+  );
+
+  const uploadedUrls = uploadResponse.data?.images?.map((img) => img.url) ?? [];
+
+  if (uploadedUrls.length === 0) {
+    throw new Error('Failed to upload images to Cloudinary');
+  }
+
+  if (uploadedUrls.length !== documents.length) {
+    throw new Error('Mismatch between uploaded files and document metadata');
+  }
+
+  // Step 2: Create verification documents with uploaded URLs and type
+  const verificationDocs = uploadedUrls.map((url, index) => {
+    const doc = documents[index];
+    if (!doc) {
+      throw new Error(`Document metadata missing for file at index ${index}`);
+    }
+    return {
+      type: doc.type,
+      url: url,
+    };
+  });
+
+  const { data } = await api.post<{ verificationDocuments: PostVerificationDocument[] }>(
+    `/posts/${postId}/verification-documents`,
+    verificationDocs,
+    { headers: getAuthHeaders() },
+  );
+
+  return data?.verificationDocuments ?? [];
+}
+
+/**
+ * Fetch verification documents for a post (owner or admin only)
+ */
+export async function getVerificationDocuments(postId: string): Promise<PostVerificationDocument[]> {
+  const { data } = await api.get<{ verificationDocuments: PostVerificationDocument[] }>(
+    `/posts/${postId}/verification-documents`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data?.verificationDocuments ?? [];
+}
+
+/**
+ * Delete a verification document (soft delete)
+ */
+export async function deleteVerificationDocument(docId: string): Promise<void> {
+  await api.delete(`/posts/verification-documents/${docId}`, {
+    headers: getAuthHeaders(),
+  });
 }
 
 // ==================== BIKE SPECIFIC API FUNCTIONS ====================

@@ -13,7 +13,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { getMyWallet } from '@/lib/api/walletApi';
 import { getPostById, deductPostCreationFee, publishPost } from '@/lib/api/postApi';
-import { getAllFeeTiers } from '@/lib/api/feeTiersApi';
+import { checkPostPayment } from '@/lib/api/transactionApi';
+import { POST_FEE } from '@/constants/post';
 
 export default function PostPaymentPage() {
   const router = useRouter();
@@ -47,11 +48,14 @@ export default function PostPaymentPage() {
     enabled: !!user,
   });
 
-  // Fetch fee tiers
-  const { data: feeTiers, isLoading: isLoadingFeeTiers } = useQuery({
-    queryKey: ['feeTiers'],
-    queryFn: getAllFeeTiers,
+  // Check if post has already been paid
+  const { data: paymentStatus, isLoading: isLoadingPaymentStatus } = useQuery({
+    queryKey: ['postPaymentStatus', postId],
+    queryFn: () => checkPostPayment(postId),
+    enabled: !!postId,
   });
+
+  const isAlreadyPaid = paymentStatus?.isPaid ?? false;
 
   // Check if post was already paid - only redirect if status is not DRAFT and not PENDING_REVIEW
   // PENDING_REVIEW means payment was just completed, user should go to upload images
@@ -72,32 +76,9 @@ export default function PostPaymentPage() {
     }
   }, [post, router, isRefetchingPost]);
 
-  // Calculate fee based on fee tiers (matching backend logic)
+  // Fixed post fee from constants
   const postPrice = post ? Number.parseFloat(post.priceVnd) : 0;
-  const depositFee = (() => {
-    if (!feeTiers || feeTiers.length === 0) return 0;
-
-    // Find applicable fee tier
-    const applicableTier = feeTiers.find((tier) => {
-      const minPrice =
-        typeof tier.minPrice === 'string' ? Number.parseFloat(tier.minPrice) : tier.minPrice;
-      const maxPrice = tier.maxPrice
-        ? typeof tier.maxPrice === 'string'
-          ? Number.parseFloat(tier.maxPrice)
-          : tier.maxPrice
-        : Infinity;
-      return postPrice >= minPrice && postPrice <= maxPrice;
-    });
-
-    if (!applicableTier) return 0;
-
-    // Calculate deposit amount using depositRate
-    const depositRate =
-      typeof applicableTier.depositRate === 'string'
-        ? Number.parseFloat(applicableTier.depositRate)
-        : applicableTier.depositRate;
-    return Math.round(postPrice * depositRate);
-  })();
+  const depositFee = POST_FEE;
 
   const currentBalance = wallet ? Number.parseFloat(wallet.balance) : 0;
   const hasEnoughBalance = currentBalance >= depositFee;
@@ -121,9 +102,7 @@ export default function PostPaymentPage() {
       await deductPostCreationFee(postPrice, postId);
       toast.success('Thanh toán thành công!');
 
-      // Step 2: Update post status to PENDING_REVIEW
-      await publishPost(postId);
-      toast.success('Bài đăng đã được gửi để chờ duyệt!');
+      // Không tự động publish, giữ ở DRAFT để user có thể lưu nháp hoặc đăng bài sau
 
       // Invalidate queries
       await queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
@@ -135,16 +114,21 @@ export default function PostPaymentPage() {
         queryFn: () => getPostById(postId),
       });
 
-      // Check if post has images
+      // Check if post has images and documents
       const hasImages =
         updatedPost?.images && Array.isArray(updatedPost.images) && updatedPost.images.length > 0;
+      const hasDocuments =
+        typeof updatedPost?.documentsCount === 'number' && updatedPost.documentsCount > 0;
 
-      if (hasImages) {
-        // Post already has images, go directly to my-posts
-        toast.success('Bài đăng đã sẵn sàng!');
-        router.push(`/my-posts`);
+      if (hasImages && hasDocuments) {
+        // Post already has both images and documents, publish and redirect to my-posts
+        await publishPost(postId);
+        toast.success('Bài đăng đã được gửi duyệt!', {
+          description: 'Bạn đã có hình ảnh và giấy tờ. Đang chuyển về trang quản lý tin đăng.',
+        });
+        router.push('/my-posts');
       } else {
-        // No images, redirect to upload page
+        // Missing images or documents, redirect to upload page
         router.push(`/posts/create/upload-images/${postId}`);
       }
     } catch (error: unknown) {
@@ -161,7 +145,31 @@ export default function PostPaymentPage() {
     return new Intl.NumberFormat('vi-VN').format(amount);
   };
 
-  if (isLoadingPost || isLoadingWallet || isLoadingFeeTiers || isRefetchingPost) {
+  // Handle continue to upload images (for already paid posts)
+  const handleContinueToUpload = async () => {
+    // Check if post already has images and documents
+    const hasImages = post?.images && Array.isArray(post.images) && post.images.length > 0;
+    const hasDocuments = typeof post?.documentsCount === 'number' && post.documentsCount > 0;
+
+    if (hasImages && hasDocuments) {
+      // Post already has both images and documents, publish and redirect to my-posts
+      try {
+        await publishPost(postId);
+        toast.success('Bài đăng đã được gửi duyệt!', {
+          description: 'Bạn đã có hình ảnh và giấy tờ. Đang chuyển về trang quản lý tin đăng.',
+        });
+        router.push('/my-posts');
+      } catch (error) {
+        console.error('Failed to publish post:', error);
+        toast.error('Không thể đăng bài. Vui lòng thử lại.');
+      }
+    } else {
+      // Missing images or documents, redirect to upload page
+      router.push(`/posts/create/upload-images/${postId}`);
+    }
+  };
+
+  if (isLoadingPost || isLoadingWallet || isLoadingPaymentStatus || isRefetchingPost) {
     return (
       <div className="min-h-screen bg-gray-50">
         <section className="relative bg-[#1a2332] text-white overflow-hidden">
@@ -333,7 +341,7 @@ export default function PostPaymentPage() {
               <h3 className="font-semibold text-gray-700 mb-3">Chi tiết thanh toán</h3>
               <div className="space-y-2">
                 <div className="flex justify-between text-gray-600">
-                  <span>Phí đặt cọc đăng bài</span>
+                  <span>Phí đăng bài</span>
                   <span className="font-medium">{formatCurrency(depositFee)} ₫</span>
                 </div>
                 <Separator className="my-2" />
@@ -344,30 +352,56 @@ export default function PostPaymentPage() {
               </div>
             </div>
 
-            {/* Payment Button */}
-            <Button
-              onClick={handlePayment}
-              className={`w-full h-14 text-lg font-semibold ${
-                hasEnoughBalance && !isPendingReview
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-gray-400 cursor-not-allowed'
-              }`}
-              disabled={isProcessing || !hasEnoughBalance || isLoadingWallet || isPendingReview}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Đang xử lý...
-                </>
-              ) : isPendingReview ? (
-                <>
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  Đã thanh toán - Tiếp tục upload ảnh
-                </>
-              ) : (
-                `${formatCurrency(depositFee)} ₫ - THANH TOÁN`
-              )}
-            </Button>
+            {/* Already Paid Notice - Show when post is already paid but status is DRAFT */}
+            {isAlreadyPaid && post?.status === 'DRAFT' && (
+              <div className="p-4 bg-green-50 border-2 border-green-500 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-green-900">Bạn đã thanh toán rồi!</p>
+                    <p className="text-sm text-green-800 mt-1">
+                      Bài đăng này đã được thanh toán trước đó. Bạn chỉ cần tiếp tục đăng bài mà
+                      không cần thanh toán lại.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Payment/Continue Button */}
+            {isAlreadyPaid ? (
+              <Button
+                onClick={handleContinueToUpload}
+                className="w-full h-14 text-lg font-semibold bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Tiếp tục đăng bài
+              </Button>
+            ) : (
+              <Button
+                onClick={handlePayment}
+                className={`w-full h-14 text-lg font-semibold ${
+                  hasEnoughBalance && !isPendingReview
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-gray-400 cursor-not-allowed'
+                }`}
+                disabled={isProcessing || !hasEnoughBalance || isLoadingWallet || isPendingReview}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Đang xử lý...
+                  </>
+                ) : isPendingReview ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Đã thanh toán - Tiếp tục upload ảnh
+                  </>
+                ) : (
+                  `${formatCurrency(depositFee)} ₫ - THANH TOÁN`
+                )}
+              </Button>
+            )}
 
             {/* Info */}
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -384,7 +418,7 @@ export default function PostPaymentPage() {
               </div>
             </div>
 
-            {/* Already Paid Warning */}
+            {/* Already Paid Warning - Show when status is PENDING_REVIEW */}
             {isPendingReview && (
               <div className="p-4 bg-green-50 border-2 border-green-500 rounded-lg">
                 <div className="flex items-start gap-3">

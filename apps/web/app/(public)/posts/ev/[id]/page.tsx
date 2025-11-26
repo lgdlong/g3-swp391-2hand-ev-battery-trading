@@ -11,7 +11,6 @@ import { usePost, useAccount } from '../_queries';
 import { useAuth } from '@/lib/auth-context';
 import { Specifications } from './_components';
 import { PostHeader, SellerInfo, PostContractsList } from '@/app/(public)/posts/_components';
-import { VerificationBadge } from '@/components/VerificationBadge';
 import { RatingsList } from '@/components/RatingsList';
 
 interface Props {
@@ -109,7 +108,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
                     >
                       {isCarPost ? 'Ô tô điện' : 'Xe máy điện'}
                     </Badge>
-                    {post.verificationRequest?.status === 'APPROVED' && <VerificationBadge />}
                   </div>
                 </div>
                 {post.images?.length > 1 && (

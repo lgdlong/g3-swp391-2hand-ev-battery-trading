@@ -77,6 +77,8 @@ function adaptBikeDetails(dto: PostDtoRaw['bikeDetails']): BikeDetailUI | undefi
     range_km: dto.range_km ? toNumber(dto.range_km) : undefined,
     license_plate: dto.license_plate ? toString(dto.license_plate) : undefined,
     origin: dto.origin as Origin | undefined,
+    has_bundled_battery: dto.has_bundled_battery ?? false,
+    is_original_battery: dto.is_original_battery ?? false,
   };
 }
 
@@ -176,12 +178,6 @@ export function adaptPostDto(dto: PostDtoRaw): PostUI {
     updatedAt: dto.updatedAt,
     submittedAt: toStringOrUndefined(dto.submittedAt),
     reviewedAt: toStringOrUndefined(dto.reviewedAt),
-    // Verification data from relation
-    verificationRequest: dto.verificationRequest ? {
-      status: dto.verificationRequest.status as 'PENDING' | 'APPROVED' | 'REJECTED',
-      requestedAt: dto.verificationRequest.requestedAt,
-      reviewedAt: dto.verificationRequest.reviewedAt ? new Date(dto.verificationRequest.reviewedAt).toISOString() : undefined,
-      rejectReason: dto.verificationRequest.rejectReason || undefined,
-    } : undefined,
+    documentsCount: typeof dto.documentsCount === 'number' ? dto.documentsCount : 0,
   };
 }
