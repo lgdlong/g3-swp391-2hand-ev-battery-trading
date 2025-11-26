@@ -189,6 +189,9 @@ export function useCreatePost() {
               motor_power_kw: parseFloat(formData.motorPowerKw) || 0,
               charge_ac_kw: parseFloat(formData.chargeAcKw) || 0,
               battery_health_pct: parseFloat(formData.batteryHealthPct) || 0,
+              // Bundled battery fields
+              has_bundled_battery: formData.hasBundledBattery,
+              is_original_battery: formData.isOriginalBattery,
             },
           };
 
@@ -351,8 +354,9 @@ export function useCreatePost() {
   // Load brands when vehicle type changes
   useEffect(() => {
     if (postType === 'ev' && formData.vehicleType) {
-      // Reset brand ID when vehicle type changes
+      // Reset brand ID and models when vehicle type changes
       setFormData((prev) => ({ ...prev, brandId: '', modelId: '' }));
+      setModels([]); // Clear models immediately to prevent stale data
 
       setLoadingBrands(true);
       const loadBrands = async () => {

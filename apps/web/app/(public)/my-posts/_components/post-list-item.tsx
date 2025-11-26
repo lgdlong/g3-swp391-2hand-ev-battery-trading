@@ -120,8 +120,7 @@ export default function PostListItem({
   const documentsCount = typeof post.documentsCount === 'number' ? post.documentsCount : 0;
   const needsDocuments = documentsCount === 0;
   // Chỉ hiển thị nút "Giấy tờ" khi ở DRAFT hoặc REJECTED (không hiển thị khi PENDING_REVIEW)
-  const canUploadDocuments =
-    post.status === 'DRAFT' || post.status === 'REJECTED';
+  const canUploadDocuments = post.status === 'DRAFT' || post.status === 'REJECTED';
 
   return (
     <div className="transition-colors hover:bg-muted/50">
@@ -322,8 +321,8 @@ export default function PostListItem({
               </Tooltip>
             )}
 
-            {/* Delete button - visible for DRAFT, REJECTED */}
-            {(post.status === 'DRAFT' || post.status === 'REJECTED') && (
+            {/* Delete button - visible for DRAFT, ARCHIVED only */}
+            {(post.status === 'DRAFT' || post.status === 'ARCHIVED') && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="destructive" size="sm" onClick={() => onDelete?.(post.id)}>

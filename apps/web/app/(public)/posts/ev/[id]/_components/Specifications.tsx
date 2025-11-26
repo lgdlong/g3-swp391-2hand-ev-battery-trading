@@ -100,10 +100,51 @@ export function Specifications({ post }: SpecificationsProps) {
             </h3>
             <div className="space-y-2 text-sm">
               <p className="text-gray-600">Xe này được bán kèm pin điện</p>
-              {post.carDetails.is_original_battery && (
-                <p className="text-gray-600">Pin là pin gốc hãng</p>
+              {post.carDetails.is_original_battery ? (
+                <p className="text-green-600 font-medium">✓ Pin là pin gốc hãng</p>
+              ) : (
+                <p className="text-orange-600 font-medium">⚠ Pin không phải pin gốc hãng</p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Bundled Battery Section for Bike - Show if has bundled battery */}
+        {!isCarPost && post.bikeDetails && post.bikeDetails.has_bundled_battery === true && (
+          <div className="mt-8 pt-6 border-t">
+            <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+              <Battery className="h-5 w-5 text-blue-600" />
+              Bao gồm pin điện
+            </h3>
+            <div className="space-y-2 text-sm">
+              <p className="text-gray-600">Xe này được bán kèm pin điện</p>
+              {post.bikeDetails.is_original_battery ? (
+                <p className="text-green-600 font-medium">✓ Pin là pin gốc hãng</p>
+              ) : (
+                <p className="text-orange-600 font-medium">⚠ Pin không phải pin gốc hãng</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* No bundled battery notice */}
+        {isCarPost && post.carDetails && !post.carDetails.has_bundled_battery && (
+          <div className="mt-8 pt-6 border-t">
+            <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+              <Battery className="h-5 w-5 text-gray-400" />
+              Thông tin pin
+            </h3>
+            <p className="text-sm text-muted-foreground">Xe không kèm pin điện</p>
+          </div>
+        )}
+
+        {!isCarPost && post.bikeDetails && !post.bikeDetails.has_bundled_battery && (
+          <div className="mt-8 pt-6 border-t">
+            <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+              <Battery className="h-5 w-5 text-gray-400" />
+              Thông tin pin
+            </h3>
+            <p className="text-sm text-muted-foreground">Xe không kèm pin điện</p>
           </div>
         )}
       </CardContent>

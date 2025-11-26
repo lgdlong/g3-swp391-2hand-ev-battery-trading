@@ -88,17 +88,20 @@ export default function BasicInfoForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="priceVnd">
-                Giá (VNĐ) <span className="text-red-500">*</span>
+                Giá (VNĐ){' '}
+                <span className="text-muted-foreground text-xs">(không thể thay đổi)</span>
               </Label>
               <Input
                 id="priceVnd"
                 type="number"
                 value={basicData.priceVnd}
-                onChange={(e) => onInputChange('priceVnd', e.target.value)}
-                placeholder="150000000"
-                min="0"
-                required
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Giá không thể thay đổi sau khi đăng tin
+              </p>
             </div>
 
             <div className="flex items-center space-x-2 pt-6">

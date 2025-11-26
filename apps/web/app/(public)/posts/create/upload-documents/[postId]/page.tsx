@@ -9,6 +9,7 @@ import {
   getVerificationDocuments,
   deleteVerificationDocument,
   publishPost,
+  updateMyPost,
 } from '@/lib/api/postApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,7 @@ export default function UploadDocumentsPage() {
   const [isUploadingDocs, setIsUploadingDocs] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
 
   // Fetch post data
   const {
@@ -192,10 +194,25 @@ export default function UploadDocumentsPage() {
     }
   };
 
-  // Lưu nháp - giữ ở DRAFT, không publish
-  const handleSaveDraft = () => {
-    toast.success('Đã lưu nháp');
-    router.push('/my-posts');
+  // Lưu nháp - chuyển status về DRAFT
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
+    try {
+      // Update post status to DRAFT
+      await updateMyPost(postId, { status: 'DRAFT' });
+
+      // Invalidate queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['post', postId] });
+      await queryClient.invalidateQueries({ queryKey: ['myPosts'] });
+
+      toast.success('Đã lưu nháp');
+      router.push('/my-posts');
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+      toast.error('Không thể lưu nháp. Vui lòng thử lại.');
+    } finally {
+      setIsSavingDraft(false);
+    }
   };
 
   // Đăng bài - chuyển sang PENDING_REVIEW
@@ -501,15 +518,26 @@ export default function UploadDocumentsPage() {
               <Button
                 onClick={handleSaveDraft}
                 variant="outline"
-                disabled={isPublishing}
+                disabled={isPublishing || isSavingDraft}
                 className="flex-1 sm:flex-initial"
               >
-                Lưu nháp
+                {isSavingDraft ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  'Lưu nháp'
+                )}
               </Button>
               <Button
                 onClick={handlePublish}
-                disabled={isPublishing}
-                className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-initial"
+                disabled={
+                  isPublishing ||
+                  isSavingDraft ||
+                  (documents?.length || 0) + newDocuments.length < 1
+                }
+                className="flex-1 sm:flex-initial"
               >
                 {isPublishing ? (
                   <>

@@ -53,6 +53,25 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
   };
 
   const handleEvInputChange = (field: string, value: string | boolean) => {
+    // Reset brandId and modelId when vehicleType changes
+    if (field === 'vehicleType') {
+      setEvFormData((prev) => ({
+        ...prev,
+        vehicleType: value as 'xe_hoi' | 'xe_may',
+        brandId: '',
+        modelId: '',
+      }));
+      return;
+    }
+    // Reset modelId when brandId changes
+    if (field === 'brandId') {
+      setEvFormData((prev) => ({
+        ...prev,
+        brandId: value as string,
+        modelId: '',
+      }));
+      return;
+    }
     setEvFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -219,6 +238,9 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
         batteryHealthPct: evFormData.batteryHealthPct
           ? parseInt(evFormData.batteryHealthPct)
           : undefined,
+        // Bundled battery fields
+        hasBundledBattery: evFormData.hasBundledBattery,
+        isOriginalBattery: evFormData.isOriginalBattery,
       };
     } else if (post.postType === 'BATTERY') {
       updateData.batteryDetails = {
@@ -286,7 +308,7 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
         </Button>
 
         <Button
-          type="submit"
+          type="button"
           disabled={updateMutation.isPending}
           onClick={() => handleSubmit(undefined, 'DRAFT')}
         >
@@ -299,16 +321,10 @@ export default function UpdatePostForm({ post, imageDiff }: UpdatePostFormProps)
             <>Lưu nháp</>
           )}
         </Button>
-
-        <Button
-          type="button"
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-          disabled={updateMutation.isPending}
-          onClick={() => handleSubmit(undefined, 'PENDING_REVIEW')}
-        >
-          {updateMutation.isPending ? 'Đang xử lý...' : 'Đăng tin'}
-        </Button>
       </div>
+      <p className="text-sm text-muted-foreground text-right mt-2">
+        Để đăng tin, vui lòng thanh toán tại trang Quản lý tin đăng
+      </p>
     </form>
   );
 }

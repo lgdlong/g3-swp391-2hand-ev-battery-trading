@@ -12,7 +12,7 @@ import { ArrowLeft, Coins, RefreshCw, CheckCircle, Loader2, AlertCircle } from '
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { getMyWallet } from '@/lib/api/walletApi';
-import { getPostById, deductPostCreationFee } from '@/lib/api/postApi';
+import { getPostById, deductPostCreationFee, publishPost } from '@/lib/api/postApi';
 import { checkPostPayment } from '@/lib/api/transactionApi';
 import { POST_FEE } from '@/constants/post';
 
@@ -114,15 +114,21 @@ export default function PostPaymentPage() {
         queryFn: () => getPostById(postId),
       });
 
-      // Check if post has images
+      // Check if post has images and documents
       const hasImages =
         updatedPost?.images && Array.isArray(updatedPost.images) && updatedPost.images.length > 0;
+      const hasDocuments =
+        typeof updatedPost?.documentsCount === 'number' && updatedPost.documentsCount > 0;
 
-      if (hasImages) {
-        // Post already has images, redirect to upload page để user có thể chọn lưu nháp hoặc đăng bài
-        router.push(`/posts/create/upload-images/${postId}`);
+      if (hasImages && hasDocuments) {
+        // Post already has both images and documents, publish and redirect to my-posts
+        await publishPost(postId);
+        toast.success('Bài đăng đã được gửi duyệt!', {
+          description: 'Bạn đã có hình ảnh và giấy tờ. Đang chuyển về trang quản lý tin đăng.',
+        });
+        router.push('/my-posts');
       } else {
-        // No images, redirect to upload page
+        // Missing images or documents, redirect to upload page
         router.push(`/posts/create/upload-images/${postId}`);
       }
     } catch (error: unknown) {
@@ -140,8 +146,27 @@ export default function PostPaymentPage() {
   };
 
   // Handle continue to upload images (for already paid posts)
-  const handleContinueToUpload = () => {
-    router.push(`/posts/create/upload-images/${postId}`);
+  const handleContinueToUpload = async () => {
+    // Check if post already has images and documents
+    const hasImages = post?.images && Array.isArray(post.images) && post.images.length > 0;
+    const hasDocuments = typeof post?.documentsCount === 'number' && post.documentsCount > 0;
+
+    if (hasImages && hasDocuments) {
+      // Post already has both images and documents, publish and redirect to my-posts
+      try {
+        await publishPost(postId);
+        toast.success('Bài đăng đã được gửi duyệt!', {
+          description: 'Bạn đã có hình ảnh và giấy tờ. Đang chuyển về trang quản lý tin đăng.',
+        });
+        router.push('/my-posts');
+      } catch (error) {
+        console.error('Failed to publish post:', error);
+        toast.error('Không thể đăng bài. Vui lòng thử lại.');
+      }
+    } else {
+      // Missing images or documents, redirect to upload page
+      router.push(`/posts/create/upload-images/${postId}`);
+    }
   };
 
   if (isLoadingPost || isLoadingWallet || isLoadingPaymentStatus || isRefetchingPost) {

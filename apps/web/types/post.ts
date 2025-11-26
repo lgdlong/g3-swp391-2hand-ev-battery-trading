@@ -22,10 +22,7 @@ export type PostStatus =
 export type PostOrigin = 'NOI_DIA' | 'NHAP_KHAU';
 
 /** Post verification document type enum matching backend */
-export type PostVerificationDocumentType =
-  | 'REGISTRATION_CERTIFICATE'
-  | 'INSURANCE'
-  | 'OTHER';
+export type PostVerificationDocumentType = 'REGISTRATION_CERTIFICATE' | 'INSURANCE' | 'OTHER';
 
 export interface PostVerificationDocument {
   id: string;
@@ -142,6 +139,8 @@ export interface BikeDetail {
   motor_power_kw: FlexibleField;
   charge_ac_kw: FlexibleField;
   battery_health_pct: FlexibleField;
+  has_bundled_battery?: boolean;
+  is_original_battery?: boolean;
 }
 
 // ===== BatteryDetail =====
@@ -196,6 +195,9 @@ export interface BikeDetailUI {
   range_km?: number;
   license_plate?: string;
   origin?: Origin;
+  // Bundled battery info
+  has_bundled_battery?: boolean;
+  is_original_battery?: boolean;
 }
 
 /** Post image reference for UI */
