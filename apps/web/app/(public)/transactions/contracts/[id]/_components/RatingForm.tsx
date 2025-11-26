@@ -27,6 +27,8 @@ export function RatingForm({ postId, onSuccess }: RatingFormProps) {
     onSuccess: () => {
       toast.success('Đánh giá thành công!');
       queryClient.invalidateQueries({ queryKey: ['ratings', postId] });
+      queryClient.invalidateQueries({ queryKey: ['ratingStatus', postId] });
+      queryClient.invalidateQueries({ queryKey: ['myGivenRatings'] });
       setRating(0);
       setContent('');
       setHoveredRating(0);

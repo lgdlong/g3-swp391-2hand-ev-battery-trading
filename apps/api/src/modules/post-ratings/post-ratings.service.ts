@@ -119,4 +119,64 @@ export class PostRatingService {
       totalReviews: stats ? parseInt(stats.totalReviews) : 0,
     };
   }
+
+  // Check if user has already rated a post
+  async hasUserRatedPost(postId: string, userId: number): Promise<boolean> {
+    const existing = await this.postRatingsRepository.findOne({
+      where: { post: { id: postId }, customer: { id: userId } },
+    });
+    return !!existing;
+  }
+
+  // Get ratings given by a user (ratings they submitted)
+  async getMyRatings(userId: number, opts: { page: number; limit: number }) {
+    const { page, limit } = opts;
+
+    const qb = this.postRatingsRepository
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.customer', 'customer')
+      .leftJoinAndSelect('r.post', 'post')
+      .leftJoinAndSelect('post.seller', 'seller')
+      .where('r.customer.id = :userId', { userId })
+      .orderBy('r.createdAt', 'DESC');
+
+    const [rows, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: PostRatingMapper.toSafeDtoArray(rows),
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  // Get ratings received by a user (as a seller)
+  async getReceivedRatings(sellerId: number, opts: { page: number; limit: number }) {
+    const { page, limit } = opts;
+
+    const qb = this.postRatingsRepository
+      .createQueryBuilder('r')
+      .leftJoinAndSelect('r.customer', 'customer')
+      .leftJoinAndSelect('r.post', 'post')
+      .leftJoinAndSelect('post.seller', 'seller')
+      .where('post.seller.id = :sellerId', { sellerId })
+      .orderBy('r.createdAt', 'DESC');
+
+    const [rows, total] = await qb
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: PostRatingMapper.toSafeDtoArray(rows),
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / limit),
+    };
+  }
 }
