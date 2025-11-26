@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { LoadingGrid, EmptyState, PostGrid } from './_components';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { filterAndSortPosts, type AppliedFilters, type SortKey, SORT_OPTIONS } from './utils';
+import { usePostOrdersFilter, filterPostsByOrderStatus } from '@/hooks/usePostOrdersFilter';
 
 // Constants
 const QUERY_KEYS = {
@@ -38,6 +39,9 @@ function BatteryPostsContent() {
 
   // Breadcrumb function reference
   const setSubcategoryRef = useRef<((subcategory: string) => void) | null>(null);
+
+  // Get post IDs that should be excluded based on order statuses
+  const excludedPostIds = usePostOrdersFilter();
 
   // Extract search parameters on mount and when they change
   useEffect(() => {
@@ -91,7 +95,7 @@ function BatteryPostsContent() {
   const filteredBatteryPosts = useMemo(() => {
     if (!batteryPostsData) return [];
 
-    return filterAndSortPosts(
+    let filtered = filterAndSortPosts(
       batteryPostsData,
       query,
       location,
@@ -101,7 +105,12 @@ function BatteryPostsContent() {
       sort,
       appliedFilters,
     );
-  }, [batteryPostsData, query, location, brand, min, max, sort, appliedFilters]);
+
+    // Filter out posts that have orders with statuses: PROCESSING, COMPLETED, CANCELLED, DISPUTE
+    filtered = filterPostsByOrderStatus(filtered, excludedPostIds);
+
+    return filtered;
+  }, [batteryPostsData, query, location, brand, min, max, sort, appliedFilters, excludedPostIds]);
 
   const handleTitleClick = (title: string) => {
     console.log('Title clicked:', title);
