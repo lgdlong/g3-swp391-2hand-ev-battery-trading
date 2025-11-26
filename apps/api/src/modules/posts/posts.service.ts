@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository, DataSource, IsNull } from 'typeorm';
 import { Post } from './entities/post.entity';
@@ -567,20 +572,14 @@ export class PostsService {
     }
 
     // Kiểm tra verification documents (giấy tờ xe để kiểm duyệt)
-    // Yêu cầu ít nhất 2 ảnh giấy tờ
-    const verificationDocCount = await this.verificationDocsRepo.count({ 
-      where: { post_id: id, deleted_at: IsNull() } 
+    // Yêu cầu ít nhất 1 ảnh giấy tờ
+    const verificationDocCount = await this.verificationDocsRepo.count({
+      where: { post_id: id, deleted_at: IsNull() },
     });
-    
+
     if (verificationDocCount === 0) {
       throw new BadRequestException(
         'Bài đăng chưa có giấy tờ xe phục vụ kiểm duyệt. Vui lòng yêu cầu người bán bổ sung cà vẹt/giấy tờ xe.',
-      );
-    }
-
-    if (verificationDocCount < 2) {
-      throw new BadRequestException(
-        'Bài đăng cần ít nhất 2 ảnh giấy tờ (mặt trước và mặt sau). Vui lòng yêu cầu người bán bổ sung.',
       );
     }
 
@@ -668,7 +667,8 @@ export class PostsService {
     const isOnlyStatusUpdate =
       post.status === PostStatus.PUBLISHED &&
       updateDto.status === PostStatus.SOLD &&
-      Object.keys(updateDto).filter((key) => updateDto[key as keyof typeof updateDto] !== undefined).length === 1 &&
+      Object.keys(updateDto).filter((key) => updateDto[key as keyof typeof updateDto] !== undefined)
+        .length === 1 &&
       updateDto.status !== undefined;
 
     // Only allow updating posts in DRAFT or REJECTED status, or PUBLISHED -> SOLD status update
@@ -910,7 +910,9 @@ export class PostsService {
     await this.verificationDocsRepo.softDelete(docId);
   }
 
-  private toVerificationDocumentResponse(doc: PostVerificationDocument): VerificationDocumentResponseDto {
+  private toVerificationDocumentResponse(
+    doc: PostVerificationDocument,
+  ): VerificationDocumentResponseDto {
     return {
       id: doc.id,
       postId: doc.post_id,

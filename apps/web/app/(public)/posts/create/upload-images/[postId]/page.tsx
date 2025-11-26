@@ -3,10 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  getPostById,
-  uploadPostImages,
-} from '@/lib/api/postApi';
+import { getPostById, uploadPostImages } from '@/lib/api/postApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
@@ -224,86 +221,86 @@ export default function UploadImagesPage() {
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-                {/* File Input */}
-                <div>
-                  <label
-                    htmlFor="file-upload"
-                    className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="h-10 w-10 text-gray-400 mb-3" />
-                      <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Nhấn để chọn ảnh</span> hoặc kéo thả
-                      </p>
-                      <p className="text-xs text-gray-400">PNG, JPG, JPEG (Tối đa 5MB mỗi ảnh)</p>
-                    </div>
-                    <input
-                      id="file-upload"
-                      type="file"
-                      className="hidden"
-                      multiple
-                      accept="image/*"
-                      onChange={handleFileSelect}
-                      disabled={isUploading}
-                    />
-                  </label>
-                </div>
-
-                {/* Preview Grid */}
-                {previewUrls.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-3">Đã chọn {selectedFiles.length} ảnh</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {previewUrls.map((url, index) => (
-                        <div key={index} className="relative group aspect-square">
-                          <Image
-                            src={url}
-                            alt={`Preview ${index + 1}`}
-                            fill
-                            className="object-cover rounded-lg"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                            disabled={isUploading}
-                            aria-label="Xóa ảnh"
-                            title="Xóa ảnh"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+              {/* File Input */}
+              <div>
+                <label
+                  htmlFor="file-upload"
+                  className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="h-10 w-10 text-gray-400 mb-3" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Nhấn để chọn ảnh</span> hoặc kéo thả
+                    </p>
+                    <p className="text-xs text-gray-400">PNG, JPG, JPEG (Tối đa 5MB mỗi ảnh)</p>
                   </div>
-                )}
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    disabled={isUploading}
+                  />
+                </label>
+              </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <Button
-                    onClick={handleUpload}
-                    disabled={isUploading || selectedFiles.length === 0}
-                    className="flex-1 bg-primary hover:bg-primary/90"
-                  >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang tải lên...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Tải {selectedFiles.length} ảnh lên
-                      </>
-                    )}
-                  </Button>
+              {/* Preview Grid */}
+              {previewUrls.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Đã chọn {selectedFiles.length} ảnh</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {previewUrls.map((url, index) => (
+                      <div key={index} className="relative group aspect-square">
+                        <Image
+                          src={url}
+                          alt={`Preview ${index + 1}`}
+                          fill
+                          className="object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          disabled={isUploading}
+                          aria-label="Xóa ảnh"
+                          title="Xóa ảnh"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
 
-                <p className="text-xs text-muted-foreground text-center">
-                  Bạn có thể thêm hoặc chỉnh sửa ảnh sau trong phần quản lý bài đăng
-                </p>
-              </CardContent>
-            </Card>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button
+                  onClick={handleUpload}
+                  disabled={isUploading || selectedFiles.length === 0}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Đang tải lên...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Tải {selectedFiles.length} ảnh lên
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center">
+                Bạn có thể thêm hoặc chỉnh sửa ảnh sau trong phần quản lý bài đăng
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Next Step: Upload Documents */}
           <Card className="mt-6">
@@ -315,7 +312,7 @@ export default function UploadImagesPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Bạn cần tải ít nhất 2 ảnh giấy tờ xe (mặt trước và mặt sau) để bài đăng được duyệt.
+                Bạn cần tải ít nhất 1 ảnh giấy tờ xe để bài đăng được duyệt.
               </p>
               <Button
                 onClick={() => router.push(`/posts/create/upload-documents/${postId}`)}

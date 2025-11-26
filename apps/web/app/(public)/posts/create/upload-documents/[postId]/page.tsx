@@ -15,7 +15,13 @@ import { Button } from '@/components/ui/button';
 import { Upload, X, Loader2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { PostVerificationDocumentType } from '@/types/post';
 import { Badge } from '@/components/ui/badge';
 
@@ -106,7 +112,7 @@ export default function UploadDocumentsPage() {
 
     setNewDocuments((prev) => [...prev, ...newDocs]);
     toast.success(`Đã thêm ${validFiles.length} giấy tờ`);
-    
+
     // Reset input
     if (e.target) {
       e.target.value = '';
@@ -125,9 +131,7 @@ export default function UploadDocumentsPage() {
   };
 
   const updateDocumentType = (tempId: string, type: PostVerificationDocumentType) => {
-    setNewDocuments((prev) =>
-      prev.map((doc) => (doc.tempId === tempId ? { ...doc, type } : doc)),
-    );
+    setNewDocuments((prev) => prev.map((doc) => (doc.tempId === tempId ? { ...doc, type } : doc)));
   };
 
   const handleUploadDocuments = async () => {
@@ -146,14 +150,14 @@ export default function UploadDocumentsPage() {
       await uploadVerificationDocuments(postId, documentsToUpload);
 
       toast.success(`Đã tải lên ${newDocuments.length} giấy tờ thành công!`);
-      
+
       // Cleanup preview URLs
       newDocuments.forEach((doc) => {
         if (doc.previewUrl) {
           URL.revokeObjectURL(doc.previewUrl);
         }
       });
-      
+
       setNewDocuments([]);
       await refetchDocuments();
     } catch (error: unknown) {
@@ -196,11 +200,11 @@ export default function UploadDocumentsPage() {
 
   // Đăng bài - chuyển sang PENDING_REVIEW
   const handlePublish = async () => {
-    // Validate: ít nhất 2 ảnh giấy tờ (mặt trước và mặt sau)
+    // Validate: ít nhất 1 ảnh giấy tờ
     const allDocuments = [...(documents || []), ...newDocuments];
-    
-    if (allDocuments.length < 2) {
-      toast.error('Vui lòng tải ít nhất 2 ảnh giấy tờ (mặt trước và mặt sau)');
+
+    if (allDocuments.length < 1) {
+      toast.error('Vui lòng tải ít nhất 1 ảnh giấy tờ xe');
       return;
     }
 
@@ -214,14 +218,14 @@ export default function UploadDocumentsPage() {
         }));
 
         await uploadVerificationDocuments(postId, documentsToUpload);
-        
+
         // Cleanup preview URLs
         newDocuments.forEach((doc) => {
           if (doc.previewUrl) {
             URL.revokeObjectURL(doc.previewUrl);
           }
         });
-        
+
         setNewDocuments([]);
         await refetchDocuments();
       } catch (error: unknown) {
@@ -238,10 +242,10 @@ export default function UploadDocumentsPage() {
     try {
       await publishPost(postId);
       toast.success('Bài đăng đã được gửi để chờ duyệt!');
-      
+
       // Invalidate queries để cập nhật UI
       await queryClient.invalidateQueries({ queryKey: ['post', postId] });
-      
+
       router.push('/my-posts');
     } catch (error: unknown) {
       console.error('Publish failed:', error);
@@ -456,7 +460,8 @@ export default function UploadDocumentsPage() {
               ) : (
                 !isLoadingDocuments && (
                   <div className="border border-dashed border-gray-300 rounded-lg p-4 text-sm text-muted-foreground text-center">
-                    Chưa có giấy tờ nào. Vui lòng tải ít nhất 2 ảnh giấy tờ (mặt trước và mặt sau) để bài đăng được duyệt.
+                    Chưa có giấy tờ nào. Vui lòng tải ít nhất 1 ảnh giấy tờ xe để bài đăng được
+                    duyệt.
                   </div>
                 )
               )}
@@ -488,9 +493,9 @@ export default function UploadDocumentsPage() {
 
           <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-sm text-muted-foreground">
-              {documents && documents.length >= 2
+              {documents && documents.length >= 1
                 ? 'Bạn có thể cập nhật giấy tờ bất cứ lúc nào trong trang quản lý tin đăng.'
-                : 'Bạn cần tải ít nhất 2 ảnh giấy tờ (mặt trước và mặt sau) để bài đăng được duyệt.'}
+                : 'Bạn cần tải ít nhất 1 ảnh giấy tờ xe để bài đăng được duyệt.'}
             </p>
             <div className="flex gap-3">
               <Button
@@ -522,4 +527,3 @@ export default function UploadDocumentsPage() {
     </div>
   );
 }
-
