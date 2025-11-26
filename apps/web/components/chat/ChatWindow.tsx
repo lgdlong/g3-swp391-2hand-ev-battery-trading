@@ -7,9 +7,7 @@ import { Conversation, Message } from '@/types/chat';
 import ProductBanner from './ProductBanner';
 import MessageBubble from './MessageBubble';
 import ChatComposer from './ChatComposer';
-import { ChatActionBar } from './ChatActionBar';
 import { BuyerActionBar } from './BuyerActionBar';
-import { ConfirmationCard } from './ConfirmationCard';
 
 interface ChatWindowProps {
   conversation: Conversation | null;
@@ -18,13 +16,6 @@ interface ChatWindowProps {
   onSendMessage: (message: string) => void;
   existingContract?: any;
   isLoadingContract?: boolean;
-  confirmationCard?: {
-    contractId: string;
-    actionParty?: 'BUYER' | 'SELLER';
-    isFinal?: boolean;
-    pdfUrl?: string;
-    timestamp?: string;
-  } | null;
 }
 
 export default function ChatWindow({
@@ -34,7 +25,6 @@ export default function ChatWindow({
   onSendMessage,
   existingContract,
   isLoadingContract = false,
-  confirmationCard,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -45,7 +35,7 @@ export default function ChatWindow({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Auto-scroll when new messages arrive or confirmation card appears
+  // Auto-scroll when new messages arrive
   useEffect(() => {
     const currentCount = messages.length;
     const lastCount = lastMessageCountRef.current;
@@ -60,7 +50,7 @@ export default function ChatWindow({
       // Messages were removed (conversation changed) or initial load
       lastMessageCountRef.current = currentCount;
     }
-  }, [messages, confirmationCard]);
+  }, [messages]);
 
   if (!conversation) {
     return (
@@ -100,16 +90,6 @@ export default function ChatWindow({
         </div>
       </div>
 
-      {/* Action Bar for Seller - Flow F confirmation */}
-      {conversation && (
-        <ChatActionBar
-          conversation={conversation}
-          currentUserId={currentUserId}
-          existingContract={existingContract}
-          isLoadingContract={isLoadingContract}
-        />
-      )}
-
       {/* Action Bar for Buyer - Xác nhận đã nhận hàng */}
       {conversation && (
         <BuyerActionBar
@@ -143,16 +123,6 @@ export default function ChatWindow({
                 <MessageBubble key={message.id} message={message} isCurrentUser={isCurrentUser} />
               );
             })
-          )}
-
-          {/* 🆕 Flow F: Render Confirmation Card */}
-          {confirmationCard && conversation && (
-            <ConfirmationCard
-              cardData={confirmationCard}
-              currentUserId={currentUserId}
-              buyerId={conversation.buyerId}
-              sellerId={conversation.sellerId}
-            />
           )}
 
           {/* Invisible element to scroll to */}
