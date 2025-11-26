@@ -490,10 +490,16 @@ export async function uploadVerificationDocuments(
   }
 
   // Step 2: Create verification documents with uploaded URLs and type
-  const verificationDocs = uploadedUrls.map((url, index) => ({
-    type: documents[index].type,
-    url: url,
-  }));
+  const verificationDocs = uploadedUrls.map((url, index) => {
+    const doc = documents[index];
+    if (!doc) {
+      throw new Error(`Document metadata missing for file at index ${index}`);
+    }
+    return {
+      type: doc.type,
+      url: url,
+    };
+  });
 
   const { data } = await api.post<{ verificationDocuments: PostVerificationDocument[] }>(
     `/posts/${postId}/verification-documents`,
