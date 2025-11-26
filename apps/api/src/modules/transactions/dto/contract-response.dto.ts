@@ -16,6 +16,8 @@ export class ContractResponseDto {
 
   @ApiProperty({
     enum: ContractStatus,
+    enumName: 'ContractStatus',
+    example: 'PENDING',
     description: 'Trạng thái hợp đồng',
   })
   status!: ContractStatus;
@@ -65,5 +67,3 @@ export class ContractResponseDto {
   @ApiProperty({ description: 'Thời gian cập nhật' })
   updatedAt!: Date;
 }
-
-

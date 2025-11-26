@@ -1,5 +1,53 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderStatus } from '../../../shared/enums/order-status.enum';
+import { Type } from 'class-transformer';
+
+// Nested DTOs for OrderWithRelationsDto
+export class OrderAccountDto {
+  @ApiProperty({ example: 1 })
+  id!: number;
+
+  @ApiProperty({ example: 'Nguyễn Văn A' })
+  fullName!: string;
+
+  @ApiPropertyOptional({ example: 'user@example.com', nullable: true })
+  email!: string | null;
+
+  @ApiPropertyOptional({ example: '0901234567', nullable: true })
+  phone!: string | null;
+
+  @ApiPropertyOptional({ example: 'https://example.com/avatar.jpg', nullable: true })
+  avatarUrl!: string | null;
+}
+
+export class OrderPostImageDto {
+  @ApiProperty({ example: '1' })
+  id!: string;
+
+  @ApiProperty({ example: 'https://example.com/image.jpg' })
+  url!: string;
+
+  @ApiProperty({ example: 0 })
+  position!: number;
+}
+
+export class OrderPostDto {
+  @ApiProperty({ example: '123' })
+  id!: string;
+
+  @ApiProperty({ example: 'Xe điện VinFast VF8' })
+  title!: string;
+
+  @ApiProperty({ example: '50000000.00' })
+  priceVnd!: string;
+
+  @ApiProperty({ example: 'EV_CAR' })
+  postType!: string;
+
+  @ApiProperty({ type: () => [OrderPostImageDto] })
+  @Type(() => OrderPostImageDto)
+  images!: OrderPostImageDto[];
+}
 
 export class OrderResponseDto {
   @ApiProperty({ example: '1' })
@@ -26,7 +74,11 @@ export class OrderResponseDto {
   @ApiProperty({ example: '47500000.00' })
   sellerReceiveAmount!: string;
 
-  @ApiProperty({ enum: OrderStatus, example: OrderStatus.PENDING })
+  @ApiProperty({
+    enum: OrderStatus,
+    enumName: 'OrderStatus',
+    example: 'PENDING',
+  })
   status!: OrderStatus;
 
   @ApiProperty({ example: '2024-01-01T00:00:00Z' })
@@ -46,34 +98,15 @@ export class OrderResponseDto {
 }
 
 export class OrderWithRelationsDto extends OrderResponseDto {
-  @ApiPropertyOptional({ description: 'Thông tin buyer' })
-  buyer?: {
-    id: number;
-    fullName: string;
-    email: string | null;
-    phone: string | null;
-    avatarUrl: string | null;
-  };
+  @ApiPropertyOptional({ type: () => OrderAccountDto, description: 'Thông tin buyer' })
+  @Type(() => OrderAccountDto)
+  buyer?: OrderAccountDto;
 
-  @ApiPropertyOptional({ description: 'Thông tin seller' })
-  seller?: {
-    id: number;
-    fullName: string;
-    email: string | null;
-    phone: string | null;
-    avatarUrl: string | null;
-  };
+  @ApiPropertyOptional({ type: () => OrderAccountDto, description: 'Thông tin seller' })
+  @Type(() => OrderAccountDto)
+  seller?: OrderAccountDto;
 
-  @ApiPropertyOptional({ description: 'Thông tin bài đăng' })
-  post?: {
-    id: string;
-    title: string;
-    priceVnd: string;
-    postType: string;
-    images: Array<{
-      id: string;
-      url: string;
-      position: number;
-    }>;
-  };
+  @ApiPropertyOptional({ type: () => OrderPostDto, description: 'Thông tin bài đăng' })
+  @Type(() => OrderPostDto)
+  post?: OrderPostDto;
 }

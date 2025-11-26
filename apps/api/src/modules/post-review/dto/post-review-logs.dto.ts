@@ -12,15 +12,20 @@ export class PostReviewLogDto {
   @IsString()
   postId!: string;
 
-  @ApiProperty({ enum: ReviewActionEnum, example: ReviewActionEnum.REJECTED })
+  @ApiProperty({ enum: ReviewActionEnum, enumName: 'ReviewActionEnum', example: 'REJECTED' })
   @IsEnum(ReviewActionEnum)
   action!: ReviewActionEnum;
 
-  @ApiProperty({ enum: PostStatus, nullable: true, example: PostStatus.PENDING_REVIEW })
+  @ApiProperty({
+    enum: PostStatus,
+    enumName: 'PostStatus',
+    nullable: true,
+    example: 'PENDING_REVIEW',
+  })
   @IsEnum(PostStatus)
   oldStatus!: PostStatus | null;
 
-  @ApiProperty({ enum: PostStatus, nullable: true, example: PostStatus.PUBLISHED })
+  @ApiProperty({ enum: PostStatus, enumName: 'PostStatus', nullable: true, example: 'PUBLISHED' })
   newStatus!: PostStatus | null;
 
   @ApiProperty({ nullable: true, example: 'SPAM' })
