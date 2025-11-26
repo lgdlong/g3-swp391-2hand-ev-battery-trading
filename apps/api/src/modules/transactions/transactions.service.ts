@@ -19,9 +19,9 @@ import { PostPayment } from './entities/post-payment.entity';
 import { CreatePostPaymentDto } from './dto/create-post-payment.dto';
 import { PostPaymentResponseDto } from './dto/post-payment-response.dto';
 import { WalletsService } from '../wallets/wallets.service';
-import { FeeTierService } from '../settings/service/fee-tier.service';
 import { ChatGateway } from '../chat/chat.gateway';
 import { ChatService } from '../chat/chat.service';
+import { POST_FEE } from '../../shared/constants/post';
 
 @Injectable()
 export class TransactionsService {
@@ -33,7 +33,6 @@ export class TransactionsService {
     @InjectRepository(PostPayment)
     private readonly postPaymentRepository: Repository<PostPayment>,
     private readonly walletsService: WalletsService,
-    private readonly feeTierService: FeeTierService,
     private readonly entityManager: EntityManager,
     @Inject(forwardRef(() => ChatGateway))
     private readonly chatGateway: ChatGateway,
@@ -502,7 +501,7 @@ export class TransactionsService {
    * This method ensures both wallet deduction and post payment creation happen together
    * @param userId - User ID
    * @param postId - Post ID
-   * @param priceVnd - Post price in VND for fee calculation
+   * @param priceVnd - Post price in VND (not used for fee calculation anymore)
    * @returns Combined wallet transaction and post payment information
    */
   async processPostPayment(
@@ -516,21 +515,8 @@ export class TransactionsService {
       throw new BadRequestException('Bài đăng này đã được thanh toán rồi');
     }
 
-    // Find applicable fee tier
-    const feeTiers = await this.feeTierService.findAll();
-    const applicableTier = feeTiers.find((tier) => {
-      const minPrice = tier.minPrice;
-      const maxPrice = tier.maxPrice;
-      return priceVnd >= minPrice && (maxPrice === null || priceVnd <= maxPrice);
-    });
-
-    if (!applicableTier) {
-      throw new BadRequestException('Không tìm thấy bậc phí phù hợp với giá bài đăng');
-    }
-
-    // Calculate deposit amount
-    const depositRate = applicableTier.depositRate;
-    const depositAmount = Math.round(priceVnd * depositRate);
+    // Fixed post fee amount (20,000 VND)
+    const depositAmount = POST_FEE;
 
     // Execute wallet deduction and post payment creation in sequence
     // Note: WalletsService.deduct already uses a transaction internally

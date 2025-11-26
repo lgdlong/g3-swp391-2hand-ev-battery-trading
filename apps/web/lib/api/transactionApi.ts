@@ -101,6 +101,21 @@ export async function getContractByOrderId(orderId: string): Promise<Contract | 
 }
 
 /**
+ * Check if a post has been paid for
+ */
+export async function checkPostPayment(
+  postId: string,
+): Promise<{ postId: string; isPaid: boolean }> {
+  const { data } = await api.get<{ postId: string; isPaid: boolean }>(
+    `/transactions/post-payments/check/${postId}`,
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
+
+/**
  * Get contract by buyer and listing ID (for buyer to see their contract)
  */
 export async function getContractByBuyerAndListing(listingId: string): Promise<Contract | null> {
