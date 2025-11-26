@@ -55,14 +55,14 @@ export class TransactionsService {
     }
 
     if (post.status !== PostStatus.PUBLISHED) {
-      throw new BadRequestException('Post is not published and cannot be purchased');
+      throw new BadRequestException('Bài đăng chưa được xuất bản và không thể mua');
     }
 
     const sellerId = typeof post.seller === 'object' ? post.seller.id : post.seller;
 
     // Check if buyer is not the seller
     if (sellerId === buyerId) {
-      throw new BadRequestException('You cannot purchase your own post');
+      throw new BadRequestException('Bạn không thể mua bài đăng của chính mình');
     }
 
     // Check if contract already exists for this listing and buyer
@@ -75,7 +75,7 @@ export class TransactionsService {
     });
 
     if (existingContract) {
-      throw new BadRequestException('A contract already exists for this listing');
+      throw new BadRequestException('Đã tồn tại hợp đồng cho bài đăng này');
     }
 
     // Create contract with post snapshot
@@ -127,16 +127,16 @@ export class TransactionsService {
 
     // Check if user is the seller
     if (postSellerId !== sellerId) {
-      throw new ForbiddenException('Only the seller can create contract for this post');
+      throw new ForbiddenException('Chỉ người bán mới có thể tạo hợp đồng cho bài đăng này');
     }
 
     if (post.status !== PostStatus.PUBLISHED) {
-      throw new BadRequestException('Post is not published and cannot be purchased');
+      throw new BadRequestException('Bài đăng chưa được xuất bản và không thể mua');
     }
 
     // Check if buyer is not the seller
     if (postSellerId === buyerId) {
-      throw new BadRequestException('Buyer cannot be the seller');
+      throw new BadRequestException('Người mua không thể là người bán');
     }
 
     // Check if contract already exists for this listing and buyer
@@ -149,7 +149,7 @@ export class TransactionsService {
     });
 
     if (existingContract) {
-      throw new BadRequestException('A contract already exists for this listing and buyer');
+      throw new BadRequestException('Đã tồn tại hợp đồng cho bài đăng và người mua này');
     }
 
     // Create contract with post snapshot
@@ -228,7 +228,7 @@ export class TransactionsService {
 
     // Check if user is the seller
     if (sellerId !== userId) {
-      throw new ForbiddenException('Only the seller can view contracts for this post');
+      throw new ForbiddenException('Chỉ người bán mới có thể xem hợp đồng của bài đăng này');
     }
 
     // Get contract for this listing and buyer
@@ -261,7 +261,7 @@ export class TransactionsService {
 
     // Check if user is the seller
     if (sellerId !== userId) {
-      throw new ForbiddenException('Only the seller can view contracts for this post');
+      throw new ForbiddenException('Chỉ người bán mới có thể xem hợp đồng của bài đăng này');
     }
 
     // Get all contracts for this listing
@@ -310,12 +310,12 @@ export class TransactionsService {
     });
 
     if (!contract) {
-      throw new NotFoundException(`Contract with ID ${contractId} not found`);
+      throw new NotFoundException(`Không tìm thấy hợp đồng với ID ${contractId}`);
     }
 
     // Check if user is buyer or seller
     if (contract.buyerId !== userId && contract.sellerId !== userId) {
-      throw new ForbiddenException('You are not authorized to view this contract');
+      throw new ForbiddenException('Bạn không được phép xem hợp đồng này');
     }
 
     return contract;
@@ -339,7 +339,7 @@ export class TransactionsService {
 
     // Check if user is the buyer
     if (contract.buyerId !== userId) {
-      throw new ForbiddenException('Only the buyer can confirm receipt');
+      throw new ForbiddenException('Chỉ người mua mới có thể xác nhận nhận hàng');
     }
 
     // Check if contract is in a valid state
@@ -347,12 +347,12 @@ export class TransactionsService {
       contract.status !== ContractStatus.AWAITING_CONFIRMATION &&
       contract.status !== ContractStatus.PENDING_REFUND
     ) {
-      throw new BadRequestException(`Cannot confirm. Contract status is ${contract.status}`);
+      throw new BadRequestException(`Không thể xác nhận. Trạng thái hợp đồng là ${contract.status}`);
     }
 
     // Check if buyer already confirmed
     if (contract.buyerConfirmedAt) {
-      throw new BadRequestException('Buyer has already confirmed');
+      throw new BadRequestException('Người mua đã xác nhận rồi');
     }
 
     // Update buyer confirmation
@@ -387,7 +387,7 @@ export class TransactionsService {
 
     // Check if user is the seller
     if (contract.sellerId !== userId) {
-      throw new ForbiddenException('Only the seller can confirm delivery');
+      throw new ForbiddenException('Chỉ người bán mới có thể xác nhận giao hàng');
     }
 
     // Check if contract is in a valid state
@@ -395,12 +395,12 @@ export class TransactionsService {
       contract.status !== ContractStatus.AWAITING_CONFIRMATION &&
       contract.status !== ContractStatus.PENDING_REFUND
     ) {
-      throw new BadRequestException(`Cannot confirm. Contract status is ${contract.status}`);
+      throw new BadRequestException(`Không thể xác nhận. Trạng thái hợp đồng là ${contract.status}`);
     }
 
     // Check if seller already confirmed
     if (contract.sellerConfirmedAt) {
-      throw new BadRequestException('Seller has already confirmed');
+      throw new BadRequestException('Người bán đã xác nhận rồi');
     }
 
     // Update seller confirmation
@@ -431,7 +431,7 @@ export class TransactionsService {
 
     // Check if user is the seller
     if (contract.sellerId !== userId) {
-      throw new ForbiddenException('Only the seller can report external sale');
+      throw new ForbiddenException('Chỉ người bán mới có thể báo cáo bán ngoài hệ thống');
     }
 
     // Check if contract is in a valid state
@@ -439,7 +439,7 @@ export class TransactionsService {
       contract.status !== ContractStatus.AWAITING_CONFIRMATION &&
       contract.status !== ContractStatus.PENDING_REFUND
     ) {
-      throw new BadRequestException(`Cannot forfeit. Contract status is ${contract.status}`);
+      throw new BadRequestException(`Không thể hủy bỏ. Trạng thái hợp đồng là ${contract.status}`);
     }
 
     // Update contract status to FORFEITED_EXTERNAL and mark as external transaction
@@ -928,7 +928,7 @@ export class TransactionsService {
 
     // Check if user is buyer or seller
     if (contract.buyerId !== userId && contract.sellerId !== userId) {
-      throw new ForbiddenException('You are not authorized to view this contract');
+      throw new ForbiddenException('Bạn không được phép xem hợp đồng này');
     }
 
     return contract;
