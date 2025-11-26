@@ -6,7 +6,7 @@ export class CreateVerificationDocumentDto {
   @ApiProperty({
     enum: PostVerificationDocumentType,
     description: 'Loại giấy tờ xe',
-    example: PostVerificationDocumentType.CAVET,
+    example: PostVerificationDocumentType.REGISTRATION_CERTIFICATE,
   })
   @IsEnum(PostVerificationDocumentType)
   @IsNotEmpty()

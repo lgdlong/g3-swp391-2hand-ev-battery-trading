@@ -108,7 +108,7 @@ export function PostCard({ post, onViewDetails }: PostCardProps) {
                 >
                   <Shield className="w-3 h-3" />
                   {post.documentsCount && post.documentsCount > 0
-                    ? `Đã tải ${post.documentsCount} giấy tờ`
+                    ? 'Đã tải giấy tờ'
                     : 'Thiếu giấy tờ'}
                 </Badge>
               </div>

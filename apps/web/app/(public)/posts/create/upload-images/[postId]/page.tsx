@@ -2,40 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getPostById,
   uploadPostImages,
-  uploadVerificationDocuments,
-  getVerificationDocuments,
 } from '@/lib/api/postApi';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, Shield } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { PostVerificationDocumentType } from '@/types/post';
-import { Badge } from '@/components/ui/badge';
-
-const DOCUMENT_LABELS: Record<PostVerificationDocumentType, string> = {
-  REGISTRATION_CERTIFICATE: 'Cà vẹt / Giấy đăng ký xe',
-  INSURANCE: 'Bảo hiểm xe',
-  OTHER: 'Giấy tờ khác',
-};
 
 export default function UploadImagesPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const postId = params.postId as string;
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [documentType, setDocumentType] = useState<PostVerificationDocumentType>('REGISTRATION_CERTIFICATE');
-  const [selectedDocFiles, setSelectedDocFiles] = useState<File[]>([]);
-  const [docPreviewUrls, setDocPreviewUrls] = useState<string[]>([]);
-  const [isUploadingDocs, setIsUploadingDocs] = useState(false);
 
   // Fetch post data
   const {
@@ -49,20 +35,10 @@ export default function UploadImagesPage() {
     enabled: !!postId,
   });
 
-  const {
-    data: documents,
-    isLoading: isLoadingDocuments,
-    refetch: refetchDocuments,
-  } = useQuery({
-    queryKey: ['post-verification-documents', postId],
-    queryFn: () => getVerificationDocuments(postId),
-    enabled: !!postId,
-  });
-
-  // Redirect if post status is not PENDING_REVIEW
+  // Allow access for PENDING_REVIEW, REJECTED, and DRAFT statuses
   useEffect(() => {
-    if (post && post.status !== 'PENDING_REVIEW') {
-      toast.error('Bài đăng không ở trạng thái chờ tải ảnh');
+    if (post && !['PENDING_REVIEW', 'REJECTED', 'DRAFT'].includes(post.status)) {
+      toast.error('Bài đăng không ở trạng thái có thể tải ảnh');
       router.push(`/my-posts`);
     }
   }, [post, router]);
@@ -109,68 +85,6 @@ export default function UploadImagesPage() {
 
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleDocumentFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    if (selectedDocFiles.length + files.length > 5) {
-      toast.error('Chỉ được chọn tối đa 5 giấy tờ mỗi lần tải lên');
-      return;
-    }
-
-    const validFiles = files.filter((file) => {
-      if (!file.type.startsWith('image/')) {
-        toast.error(`${file.name} không phải là tệp hình ảnh`);
-        return false;
-      }
-      if (file.size > 4 * 1024 * 1024) {
-        toast.error(`${file.name} vượt quá kích thước 4MB`);
-        return false;
-      }
-      return true;
-    });
-
-    if (validFiles.length === 0) return;
-
-    const newPreviewUrls = validFiles.map((file) => URL.createObjectURL(file));
-    setSelectedDocFiles((prev) => [...prev, ...validFiles]);
-    setDocPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
-  };
-
-  const removeDocumentPreview = (index: number) => {
-    if (docPreviewUrls[index]) {
-      URL.revokeObjectURL(docPreviewUrls[index]);
-    }
-
-    setSelectedDocFiles((prev) => prev.filter((_, i) => i !== index));
-    setDocPreviewUrls((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleUploadDocuments = async () => {
-    if (selectedDocFiles.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 giấy tờ');
-      return;
-    }
-
-    setIsUploadingDocs(true);
-    try {
-      await uploadVerificationDocuments(postId, selectedDocFiles, documentType);
-      toast.success('Tải giấy tờ thành công!');
-      docPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-      setSelectedDocFiles([]);
-      setDocPreviewUrls([]);
-      await refetchDocuments();
-    } catch (error: unknown) {
-      console.error('Failed to upload documents:', error);
-      type ApiError = { response?: { data?: { message?: string } }; message?: string };
-      const err = error as ApiError;
-      const errorMessage = err?.response?.data?.message || err?.message || 'Tải giấy tờ thất bại';
-      toast.error(`Tải giấy tờ thất bại: ${errorMessage}`);
-    } finally {
-      setIsUploadingDocs(false);
-    }
   };
 
   const handleUpload = async () => {
@@ -238,21 +152,23 @@ export default function UploadImagesPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Success Message */}
-          <Card className="mb-6 border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-green-900 mb-1">Thanh toán thành công!</h3>
-                  <p className="text-sm text-green-700">
-                    Bài đăng của bạn đang chờ phê duyệt. Hãy tải ảnh và giấy tờ xe để đội ngũ kiểm
-                    duyệt xử lý nhanh hơn.
-                  </p>
+          {/* Success Message - Only show if post is PENDING_REVIEW (newly created) */}
+          {post?.status === 'PENDING_REVIEW' && (!post?.images || post.images.length === 0) && (
+            <Card className="mb-6 border-green-200 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-green-900 mb-1">Thanh toán thành công!</h3>
+                    <p className="text-sm text-green-700">
+                      Bài đăng của bạn đang chờ phê duyệt. Hãy tải ảnh và giấy tờ xe để đội ngũ kiểm
+                      duyệt xử lý nhanh hơn.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Post Info */}
           <Card className="mb-6">
@@ -291,44 +207,24 @@ export default function UploadImagesPage() {
             </CardContent>
           </Card>
 
-          {/* Image Upload Section */}
+          {/* Image Upload Section - Always show to allow adding more images */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ImageIcon className="h-5 w-5" />
-                {post?.images && post.images.length > 0 ? 'Ảnh hiện tại' : 'Tải ảnh lên (tùy chọn)'}
+                Tải ảnh lên (tùy chọn)
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-2">
-                {post?.images && post.images.length > 0
-                  ? `Bài đăng của bạn đã có ${post.images.length} ảnh. Bạn có thể thêm ảnh khác hoặc tiếp tục.`
-                  : 'Thêm hình ảnh để tăng độ tin cậy của bài đăng. Tối đa 10 ảnh, mỗi ảnh tối đa 5MB.'}
+                Thêm hình ảnh để tăng độ tin cậy của bài đăng. Tối đa 10 ảnh, mỗi ảnh tối đa 5MB.
+                {post?.images && post.images.length > 0 && (
+                  <span className="block mt-1 text-green-600">
+                    Đã tải {post.images.length} ảnh. Bạn có thể thêm ảnh nữa.
+                  </span>
+                )}
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Show existing images if any */}
-              {post?.images && post.images.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium mb-3">Ảnh hiện tại ({post.images.length})</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {post.images.map((image: { url?: string; id?: string }, index: number) => (
-                      <div key={image.id || index} className="relative aspect-square">
-                        <Image
-                          src={image.url || ''}
-                          alt={`Image ${index + 1}`}
-                          fill
-                          className="object-cover rounded-lg"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-4">
-                    Để thay đổi ảnh, vui lòng liên hệ với quản trị viên.
-                  </p>
-                </div>
-              )}
-
-              {/* File Input - only show if post doesn't have images */}
-              {!post?.images || post.images.length === 0 ? (
+                {/* File Input */}
                 <div>
                   <label
                     htmlFor="file-upload"
@@ -352,212 +248,27 @@ export default function UploadImagesPage() {
                     />
                   </label>
                 </div>
-              ) : null}
 
-              {/* Preview Grid */}
-              {previewUrls.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium mb-3">Đã chọn {selectedFiles.length} ảnh</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {previewUrls.map((url, index) => (
-                      <div key={index} className="relative group aspect-square">
-                        <Image
-                          src={url}
-                          alt={`Preview ${index + 1}`}
-                          fill
-                          className="object-cover rounded-lg"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                          disabled={isUploading}
-                          aria-label="Xóa ảnh"
-                          title="Xóa ảnh"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                {post?.images && post.images.length > 0 ? (
-                  // Post already has images
-                  <Button onClick={handleSkip} className="flex-1 bg-primary hover:bg-primary/90">
-                    Hoàn tất
-                  </Button>
-                ) : (
-                  // No images yet
-                  <>
-                    <Button
-                      onClick={handleUpload}
-                      disabled={isUploading || selectedFiles.length === 0}
-                      className="flex-1 bg-primary hover:bg-primary/90"
-                    >
-                      {isUploading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Đang tải lên...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          Tải {selectedFiles.length} ảnh lên
-                        </>
-                      )}
-                    </Button>
-                    {/* <Button
-                      onClick={handleSkip}
-                      variant="outline"
-                      disabled={isUploading}
-                      className="flex-1"
-                    >
-                      Bỏ qua, thêm sau
-                    </Button> */}
-                  </>
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground text-center">
-                Bạn có thể thêm hoặc chỉnh sửa ảnh sau trong phần quản lý bài đăng
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Document Upload Section */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Giấy tờ xe (bắt buộc)
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-2">
-                Các giấy tờ như cà vẹt, đăng ký xe, bảo hiểm sẽ chỉ hiển thị với quản trị viên.
-                Bạn có thể làm mờ thông tin nhạy cảm trước khi tải lên.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {isLoadingDocuments ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang tải giấy tờ hiện có...
-                </div>
-              ) : documents && documents.length > 0 ? (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-medium">Giấy tờ đã tải ({documents.length})</h4>
-                    {post?.status === 'PENDING_REVIEW' && (
-                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                        <Loader2 className="h-3 w-3 mr-1" />
-                        Chờ kiểm duyệt
-                      </Badge>
-                    )}
-                    {post?.status === 'PUBLISHED' && (
-                      <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Đã duyệt
-                      </Badge>
-                    )}
-                    {post?.status === 'REJECTED' && (
-                      <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
-                        <X className="h-3 w-3 mr-1" />
-                        Bị từ chối
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {documents.map((doc) => (
-                      <div key={doc.id} className="space-y-2">
-                        <div className="relative aspect-[4/3] rounded-lg overflow-hidden border">
-                          <Image
-                            src={doc.url}
-                            alt={DOCUMENT_LABELS[doc.type] || doc.type}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <Badge variant="outline" className="text-xs w-fit">
-                          {DOCUMENT_LABELS[doc.type] || doc.type}
-                        </Badge>
-                        <p className="text-[11px] text-muted-foreground">
-                          {new Date(doc.uploadedAt).toLocaleString('vi-VN')}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="border border-dashed border-gray-300 rounded-lg p-4 text-sm text-muted-foreground">
-                  Chưa có giấy tờ nào. Vui lòng tải ít nhất 1 giấy tờ xe để bài đăng được duyệt.
-                </div>
-              )}
-
-              <div className="grid gap-4">
-                <div>
-                  <p className="text-sm font-medium mb-2">Loại giấy tờ</p>
-                  <Select
-                    value={documentType}
-                    onValueChange={(value) => setDocumentType(value as PostVerificationDocumentType)}
-                  >
-                    <SelectTrigger className="w-full sm:w-72">
-                      <SelectValue placeholder="Chọn loại giấy tờ" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(DOCUMENT_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <input
-                    id="document-upload"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleDocumentFileSelect}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="document-upload"
-                    className="cursor-pointer flex flex-col items-center gap-2"
-                  >
-                    <Shield className="h-8 w-8 text-gray-400" />
-                    <span className="font-semibold text-gray-700">Chọn giấy tờ</span>
-                    <span className="text-xs text-muted-foreground">
-                      PNG, JPG, JPEG (tối đa 4MB mỗi ảnh)
-                    </span>
-                  </label>
-                </div>
-
-                {docPreviewUrls.length > 0 && (
+                {/* Preview Grid */}
+                {previewUrls.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium mb-2">
-                      Đã chọn {selectedDocFiles.length} giấy tờ (
-                      {DOCUMENT_LABELS[documentType]})
-                    </h4>
+                    <h4 className="text-sm font-medium mb-3">Đã chọn {selectedFiles.length} ảnh</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {docPreviewUrls.map((url, index) => (
-                        <div key={url} className="relative group aspect-[4/3]">
+                      {previewUrls.map((url, index) => (
+                        <div key={index} className="relative group aspect-square">
                           <Image
                             src={url}
-                            alt={`Document preview ${index + 1}`}
+                            alt={`Preview ${index + 1}`}
                             fill
                             className="object-cover rounded-lg"
                           />
                           <button
                             type="button"
-                            onClick={() => removeDocumentPreview(index)}
+                            onClick={() => removeImage(index)}
                             className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                            disabled={isUploadingDocs}
-                            aria-label="Xóa giấy tờ"
+                            disabled={isUploading}
+                            aria-label="Xóa ảnh"
+                            title="Xóa ảnh"
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -567,57 +278,54 @@ export default function UploadImagesPage() {
                   </div>
                 )}
 
-                <div className="flex flex-col sm:flex-row gap-3">
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <Button
-                    onClick={handleUploadDocuments}
-                    disabled={isUploadingDocs || selectedDocFiles.length === 0}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={handleUpload}
+                    disabled={isUploading || selectedFiles.length === 0}
+                    className="flex-1 bg-primary hover:bg-primary/90"
                   >
-                    {isUploadingDocs ? (
+                    {isUploading ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Đang tải giấy tờ...
+                        Đang tải lên...
                       </>
                     ) : (
                       <>
                         <Upload className="h-4 w-4 mr-2" />
-                        Tải {selectedDocFiles.length} giấy tờ
+                        Tải {selectedFiles.length} ảnh lên
                       </>
                     )}
                   </Button>
-                  {selectedDocFiles.length > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        docPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-                        setSelectedDocFiles([]);
-                        setDocPreviewUrls([]);
-                      }}
-                      disabled={isUploadingDocs}
-                    >
-                      Xóa lựa chọn
-                    </Button>
-                  )}
                 </div>
-              </div>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  Bạn có thể thêm hoặc chỉnh sửa ảnh sau trong phần quản lý bài đăng
+                </p>
+              </CardContent>
+            </Card>
+
+          {/* Next Step: Upload Documents */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Bước tiếp theo: Tải giấy tờ xe
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Bạn cần tải ít nhất 2 ảnh giấy tờ xe (mặt trước và mặt sau) để bài đăng được duyệt.
+              </p>
+              <Button
+                onClick={() => router.push(`/posts/create/upload-documents/${postId}`)}
+                className="w-full sm:w-auto"
+              >
+                Tải giấy tờ xe
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
             </CardContent>
           </Card>
-
-          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              {documents && documents.length > 0
-                ? 'Bạn có thể cập nhật giấy tờ bất cứ lúc nào trong trang quản lý tin đăng.'
-                : 'Bạn cần tải ít nhất 1 giấy tờ xe để bài đăng được duyệt.'}
-            </p>
-            <Button
-              onClick={() => router.push('/my-posts')}
-              disabled={!documents || documents.length === 0}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              Hoàn tất
-            </Button>
-          </div>
         </div>
       </div>
     </div>

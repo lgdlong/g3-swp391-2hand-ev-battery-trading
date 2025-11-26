@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository, DataSource } from 'typeorm';
+import { ILike, Repository, DataSource, IsNull } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { PostType, PostStatus } from '../../shared/enums/post.enum';
 import { BikeDetailsService } from '../post-details/services/bike-details.service';
@@ -567,10 +567,20 @@ export class PostsService {
     }
 
     // Kiểm tra verification documents (giấy tờ xe để kiểm duyệt)
-    const verificationDocCount = await this.verificationDocsRepo.count({ where: { post_id: id } });
+    // Yêu cầu ít nhất 2 ảnh giấy tờ
+    const verificationDocCount = await this.verificationDocsRepo.count({ 
+      where: { post_id: id, deleted_at: IsNull() } 
+    });
+    
     if (verificationDocCount === 0) {
       throw new BadRequestException(
         'Bài đăng chưa có giấy tờ xe phục vụ kiểm duyệt. Vui lòng yêu cầu người bán bổ sung cà vẹt/giấy tờ xe.',
+      );
+    }
+
+    if (verificationDocCount < 2) {
+      throw new BadRequestException(
+        'Bài đăng cần ít nhất 2 ảnh giấy tờ (mặt trước và mặt sau). Vui lòng yêu cầu người bán bổ sung.',
       );
     }
 

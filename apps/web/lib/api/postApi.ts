@@ -446,20 +446,21 @@ export async function uploadPostImages(postId: string, files: File[]): Promise<F
 /**
  * Upload files to Cloudinary and then create verification documents
  * These documents are only visible to admins and the post owner
+ * @param documents - Array of objects with file and type
  */
 export async function uploadVerificationDocuments(
   postId: string,
-  files: File[],
-  documentType: PostVerificationDocumentType,
+  documents: Array<{ file: File; type: PostVerificationDocumentType }>,
 ): Promise<PostVerificationDocument[]> {
-  if (!files || files.length === 0) {
+  if (!documents || documents.length === 0) {
     throw new Error('No files provided for upload');
   }
 
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic'];
   const maxSize = 4 * 1024 * 1024; // 4MB per file
 
-  files.forEach((file, index) => {
+  documents.forEach((doc, index) => {
+    const file = doc.file;
     if (!allowedTypes.includes(file.type)) {
       throw new Error(`File ${index + 1} (${file.name}) is not a supported image type`);
     }
@@ -470,7 +471,7 @@ export async function uploadVerificationDocuments(
 
   // Step 1: Upload files to Cloudinary
   const formData = new FormData();
-  files.forEach((file) => formData.append('files', file, file.name));
+  documents.forEach((doc) => formData.append('files', doc.file, doc.file.name));
 
   const uploadResponse = await api.post<{ images: Array<{ url: string }> }>(
     '/upload/multiple',
@@ -484,9 +485,13 @@ export async function uploadVerificationDocuments(
     throw new Error('Failed to upload images to Cloudinary');
   }
 
-  // Step 2: Create verification documents with uploaded URLs
-  const verificationDocs = uploadedUrls.map((url) => ({
-    type: documentType,
+  if (uploadedUrls.length !== documents.length) {
+    throw new Error('Mismatch between uploaded files and document metadata');
+  }
+
+  // Step 2: Create verification documents with uploaded URLs and type
+  const verificationDocs = uploadedUrls.map((url, index) => ({
+    type: documents[index].type,
     url: url,
   }));
 
@@ -516,7 +521,7 @@ export async function getVerificationDocuments(postId: string): Promise<PostVeri
  * Delete a verification document (soft delete)
  */
 export async function deleteVerificationDocument(docId: string): Promise<void> {
-  await api.delete(`/verification-documents/${docId}`, {
+  await api.delete(`/posts/verification-documents/${docId}`, {
     headers: getAuthHeaders(),
   });
 }
