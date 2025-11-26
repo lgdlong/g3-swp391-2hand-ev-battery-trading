@@ -1,16 +1,18 @@
 'use client';
 import { useMemo, useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getBatteryPostsWithQuery } from '@/lib/api/postApi';
+import { getBatteryPostsWithQuery, searchPosts } from '@/lib/api/postApi';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { LoadingGrid, EmptyState, PostGrid } from './_components';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { filterAndSortPosts, type AppliedFilters, type SortKey, SORT_OPTIONS } from './utils';
+import { PostType } from '@/types/enums';
 
 // Constants
 const QUERY_KEYS = {
   BATTERY_POSTS: 'batteryPosts',
+  SEARCH_POSTS: 'searchPosts',
 } as const;
 
 const POST_STATUS = {
@@ -42,7 +44,8 @@ function BatteryPostsContent() {
   // Extract search parameters on mount and when they change
   useEffect(() => {
     setQuery(searchParams.get('q') || '');
-    setLocation(searchParams.get('loc') || '');
+    // Support both 'location' (from searchbar) and 'loc' (legacy) params
+    setLocation(searchParams.get('location') || searchParams.get('loc') || '');
     setBrand(searchParams.get('brand') || '');
     const minParam = searchParams.get('min');
     const maxParam = searchParams.get('max');
@@ -50,7 +53,30 @@ function BatteryPostsContent() {
     setMax(maxParam ? Number(maxParam) : null);
   }, [searchParams]);
 
-  // Fetch battery posts using TanStack Query
+  // Determine if we should use search
+  const shouldUseSearch = !!query;
+
+  // Search posts when query exists
+  const {
+    data: searchResults = [],
+    isLoading: isLoadingSearch,
+    error: searchError,
+  } = useQuery({
+    queryKey: [QUERY_KEYS.SEARCH_POSTS, query, location, sort],
+    queryFn: async () => {
+      if (!query) return [];
+      return await searchPosts(query, {
+        provinceNameCached: location || undefined,
+        postType: PostType.BATTERY,
+        limit: 50,
+        order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+      });
+    },
+    enabled: shouldUseSearch,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch battery posts using TanStack Query (only when not searching)
   const {
     data: batteryPostsData,
     isLoading: loadingBatteryPosts,
@@ -77,22 +103,38 @@ function BatteryPostsContent() {
       }),
     staleTime: CACHE_TIME.STALE_TIME,
     retry: 2,
+    enabled: !shouldUseSearch, // Only fetch when not searching
   });
 
   // Handle API errors
   useEffect(() => {
-    if (errorBatteryPosts) {
+    if (errorBatteryPosts && !shouldUseSearch) {
       console.error('Error loading battery posts:', batteryPostsError);
       toast.error('Không thể tải danh sách bài đăng pin. Vui lòng thử lại sau.');
     }
-  }, [errorBatteryPosts, batteryPostsError]);
+    if (searchError && shouldUseSearch) {
+      console.error('Error searching battery posts:', searchError);
+      toast.error('Không thể tìm kiếm. Vui lòng thử lại.');
+    }
+  }, [errorBatteryPosts, batteryPostsError, searchError, shouldUseSearch]);
+
+  // Combine loading states
+  const isLoading = shouldUseSearch ? isLoadingSearch : loadingBatteryPosts;
+
+  // Combine battery posts or search results
+  const allBatteryPosts = useMemo(() => {
+    if (shouldUseSearch) {
+      return searchResults;
+    }
+    return batteryPostsData || [];
+  }, [batteryPostsData, searchResults, shouldUseSearch]);
 
   // Filter and sort battery posts using utility functions
   const filteredBatteryPosts = useMemo(() => {
-    if (!batteryPostsData) return [];
+    if (!allBatteryPosts) return [];
 
     return filterAndSortPosts(
-      batteryPostsData,
+      allBatteryPosts,
       query,
       location,
       brand,
@@ -101,13 +143,13 @@ function BatteryPostsContent() {
       sort,
       appliedFilters,
     );
-  }, [batteryPostsData, query, location, brand, min, max, sort, appliedFilters]);
+  }, [allBatteryPosts, query, location, brand, min, max, sort, appliedFilters]);
 
   const handleTitleClick = (title: string) => {
     // Handle title click if needed
   };
 
-  if (loadingBatteryPosts) {
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <LoadingGrid />

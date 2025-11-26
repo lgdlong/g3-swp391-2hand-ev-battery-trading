@@ -55,7 +55,6 @@ import { AdminListPostsQueryDto } from './dto/admin-query-post.dto';
 import { DeletePostResponseDto } from './dto/delete-post-response.dto';
 import { DeductPostFeeDto } from './dto/deduct-post-fee.dto';
 import { ArchivePostResponseDto } from './dto/archive-post-response.dto';
-import { PostVerificationDocumentType } from '../../shared/enums/post-verification-document-type.enum';
 import { CreateVerificationDocumentDto } from './dto/create-verification-document.dto';
 import { VerificationDocumentResponseDto } from './dto/verification-document-response.dto';
 

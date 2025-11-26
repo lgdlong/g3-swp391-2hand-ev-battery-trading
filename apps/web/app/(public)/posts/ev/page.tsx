@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { LoadingGrid, EmptyState, PageHeader, PostGrid, toStringValue } from './_components';
+import { PostType } from '@/types/enums';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
@@ -113,10 +114,26 @@ function EvPostsContent() {
     queryKey: [QUERY_KEYS.SEARCH_POSTS, query, location, sort],
     queryFn: async () => {
       if (!query) return [];
-      return await searchPosts(query, {
-        provinceNameCached: location || undefined,
-        limit: PAGINATION.SEARCH_LIMIT,
-        order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+      // Gọi 2 API song song cho EV_CAR và EV_BIKE, sau đó gộp kết quả
+      const [carResults, bikeResults] = await Promise.all([
+        searchPosts(query, {
+          provinceNameCached: location || undefined,
+          postType: PostType.EV_CAR,
+          limit: PAGINATION.SEARCH_LIMIT,
+          order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+        }),
+        searchPosts(query, {
+          provinceNameCached: location || undefined,
+          postType: PostType.EV_BIKE,
+          limit: PAGINATION.SEARCH_LIMIT,
+          order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+        }),
+      ]);
+      // Gộp kết quả và sắp xếp theo ngày tạo mới nhất
+      return [...carResults, ...bikeResults].sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA;
       });
     },
     enabled: shouldUseSearch, // Only run when there's a search query

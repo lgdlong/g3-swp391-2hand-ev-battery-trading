@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LocationSelector } from './LocationSelector';
 import { FilterDropdown } from './FilterDropdown';
 import { searchPosts } from '@/lib/api/postApi';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
+import { PostType } from '@/types/enums';
 
 interface SearchBarProps {
   className?: string;
@@ -17,11 +18,22 @@ interface SearchBarProps {
 
 export function SearchBar({ className, showFilters = true }: SearchBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState('/posts/ev');
+
+  // Detect current route based on pathname
+  useEffect(() => {
+    if (pathname.includes('/posts/batteries')) {
+      setCurrentRoute('/posts/batteries');
+    } else if (pathname.includes('/posts/ev')) {
+      setCurrentRoute('/posts/ev');
+    }
+  }, [pathname]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -31,26 +43,51 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
 
     setIsSearching(true);
     try {
-      const results = await searchPosts(searchQuery, {
-        provinceNameCached: selectedLocation || undefined,
-        limit: 20,
-        order: 'DESC',
-      });
+      let results;
 
-      console.log('Search results:', results);
+      if (currentRoute === '/posts/batteries') {
+        // Trang pin: Chỉ search BATTERY
+        results = await searchPosts(searchQuery, {
+          provinceNameCached: selectedLocation || undefined,
+          postType: PostType.BATTERY,
+          limit: 20,
+          order: 'DESC',
+        });
+      } else if (currentRoute === '/posts/ev') {
+        // Trang xe điện: Gọi 2 API song song cho EV_CAR và EV_BIKE, sau đó gộp kết quả
+        const [carResults, bikeResults] = await Promise.all([
+          searchPosts(searchQuery, {
+            provinceNameCached: selectedLocation || undefined,
+            postType: PostType.EV_CAR,
+            limit: 20,
+            order: 'DESC',
+          }),
+          searchPosts(searchQuery, {
+            provinceNameCached: selectedLocation || undefined,
+            postType: PostType.EV_BIKE,
+            limit: 20,
+            order: 'DESC',
+          }),
+        ]);
 
-      // Store search results and navigate to results page
-      // You can either:
-      // 1. Navigate to a dedicated search results page with query params
+        // Gộp kết quả và sắp xếp theo ngày tạo mới nhất
+        results = [...carResults, ...bikeResults].sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime();
+          const dateB = new Date(b.createdAt).getTime();
+          return dateB - dateA;
+        });
+      }
+
+      // Build query params for URL
       const params = new URLSearchParams();
       params.append('q', searchQuery);
       if (selectedLocation) params.append('location', selectedLocation);
       if (selectedBrand) params.append('brand', selectedBrand);
 
-      router.push(`/posts/ev?${params.toString()}`);
+      router.push(`${currentRoute}?${params.toString()}`);
 
-      // 2. Or show results in a modal/dropdown (implement later)
-      toast.success(`Tìm thấy ${results.length} kết quả`);
+      // Show results count
+      // toast.success(`Tìm thấy ${results?.length || 0} kết quả`);
     } catch (error) {
       console.error('Search error:', error);
       toast.error('Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại.');
@@ -60,7 +97,6 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
   };
 
   const handlePriceRange = (priceTag: any) => {
-    console.log('Price range:', priceTag);
     // TODO: Implement price range logic
   };
 
@@ -76,8 +112,8 @@ export function SearchBar({ className, showFilters = true }: SearchBarProps) {
     setSelectedLocation('');
     setSelectedBrand('');
     setIsFilterOpen(false);
-    // Navigate back to default list
-    router.push('/posts/ev');
+    // Navigate back to current route
+    router.push(currentRoute);
     toast.success('Đã xóa bộ lọc tìm kiếm');
   };
 
