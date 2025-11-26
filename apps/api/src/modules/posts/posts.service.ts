@@ -399,7 +399,7 @@ export class PostsService {
 
     // đảm bảo post tồn tại (đơn giản, không transaction)
     const exists = await this.postsRepo.exists({ where: { id: postId } });
-    if (!exists) throw new NotFoundException('Post not found');
+    if (!exists) throw new NotFoundException('Không tìm thấy bài đăng');
 
     // lấy vị trí hiện tại để append (đơn giản)
     const last = await this.imagesRepo
@@ -488,7 +488,7 @@ export class PostsService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException('Không tìm thấy bài đăng');
     }
 
     const dto = PostMapper.toBasePostResponseDto(post);
@@ -636,7 +636,7 @@ export class PostsService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found or you do not have permission to delete it');
+      throw new NotFoundException('Không tìm thấy bài đăng hoặc bạn không có quyền xóa');
     }
 
     const deletedAt = new Date();
@@ -660,7 +660,7 @@ export class PostsService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found or you do not have permission to update it');
+      throw new NotFoundException('Không tìm thấy bài đăng hoặc bạn không có quyền cập nhật');
     }
 
     // Allow updating status from PUBLISHED to SOLD (only status field)
@@ -790,7 +790,7 @@ export class PostsService {
 
       // 2. Validation
       if (!post) {
-        throw new NotFoundException('Post not found or you do not have permission to recall it');
+        throw new NotFoundException('Không tìm thấy bài đăng hoặc bạn không có quyền thu hồi');
       }
 
       if (post.status !== PostStatus.PUBLISHED) {

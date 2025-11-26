@@ -26,7 +26,7 @@ export class UploadService {
 
   async removeImage(imageId: string) {
     const img = await this.imagesRepo.findOne({ where: { id: imageId } });
-    if (!img) throw new NotFoundException('Image not found');
+    if (!img) throw new NotFoundException('Không tìm thấy hình ảnh');
 
     await this.cloudinary.delete(img.public_id).catch(() => null);
     await this.imagesRepo.delete({ id: imageId });

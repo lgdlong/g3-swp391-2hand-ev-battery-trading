@@ -33,21 +33,18 @@ class ChatWebSocketService {
     // Rate limiting: prevent too frequent connection attempts
     const now = Date.now();
     if (now - this.lastConnectionAttempt < this.minConnectionInterval) {
-      console.log('🔌 Rate limiting: connection attempt too soon, skipping');
       return;
     }
     this.lastConnectionAttempt = now;
 
     // If token changed, disconnect and reconnect with new token
     if (this.currentToken !== token && this.socket?.connected) {
-      console.log('🔌 Token changed, disconnecting and reconnecting');
       this.disconnect();
     }
 
     this.currentToken = token;
 
     if (this.socket?.connected) {
-      console.log('🔌 Socket already connected, skipping connection attempt');
       return;
     }
 
@@ -57,13 +54,6 @@ class ChatWebSocketService {
     // Connect to the backend WebSocket server
     const serverUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     const wsUrl = `${serverUrl}/chat`;
-
-    console.log(
-      '🔌 Connecting to WebSocket:',
-      wsUrl,
-      'with token:',
-      token.substring(0, 20) + '...',
-    );
 
     this.socket = io(wsUrl, {
       forceNew: true,
@@ -80,27 +70,19 @@ class ChatWebSocketService {
   private setupEventHandlers() {
     if (!this.socket) return;
 
-    console.log('🔌 Setting up WebSocket event handlers');
-
     this.socket.on('connect', () => {
-      console.log('🔌 Connected to chat WebSocket');
       this.reconnectAttempts = 0;
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('🔌 Disconnected from chat WebSocket:', reason);
-
       // Handle different disconnect reasons
       if (reason === 'io server disconnect') {
         // Server disconnected, try to reconnect
-        console.log('🔌 Server initiated disconnect, attempting reconnection...');
         this.handleReconnection();
       } else if (reason === 'transport close') {
-        console.log('🔌 Transport closed, this might be due to authentication or network issues');
         // Don't auto-reconnect for transport close as it might be auth-related
         console.warn('🔌 Not attempting reconnection due to transport close (likely auth issue)');
       } else if (reason === 'transport error') {
-        console.log('🔌 Transport error, attempting reconnection...');
         this.handleReconnection();
       }
     });
@@ -148,7 +130,6 @@ class ChatWebSocketService {
   private handleReconnection() {
     // Don't attempt reconnection if max attempts is 0 (disabled due to auth errors)
     if (this.maxReconnectAttempts === 0) {
-      console.log('🔌 Reconnection disabled due to authentication errors');
       return;
     }
 
@@ -156,20 +137,12 @@ class ChatWebSocketService {
       this.reconnectAttempts++;
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
 
-      console.log(`🔌 Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-
       setTimeout(() => {
         if (this.currentToken) {
           // Reconnect with stored token
           this.connect(this.currentToken);
         }
       }, delay);
-    } else if (!this.currentToken) {
-      console.warn('🔌 Cannot reconnect: No token available');
-    } else {
-      console.warn(
-        `🔌 Max reconnection attempts (${this.maxReconnectAttempts}) reached. Stopping reconnection.`,
-      );
     }
   }
 
@@ -229,7 +202,6 @@ class ChatWebSocketService {
 
   // Force disconnect and prevent reconnection (for auth errors)
   forceDisconnect() {
-    console.log('🔌 Force disconnecting due to authentication error');
     this.maxReconnectAttempts = 0; // Prevent further reconnection attempts
     this.disconnect();
   }

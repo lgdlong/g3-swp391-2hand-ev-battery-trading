@@ -68,7 +68,7 @@ export class BikeCatalogService {
 
   async createModel(dto: CreateModelDto): Promise<LiteItem> {
     const brandId = dto.brandId;
-    if (!brandId) throw new BadRequestException('brandId is required');
+    if (!brandId) throw new BadRequestException('brandId là bắt buộc');
 
     const brand = await this.brandRepo.findOne({ where: { id: brandId } });
     if (!brand) throw new NotFoundException(`Brand ${brandId} not found`);

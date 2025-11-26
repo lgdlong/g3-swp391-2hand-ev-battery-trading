@@ -19,7 +19,7 @@ export class FeeTierService {
       createFeeTierDto.maxPrice !== undefined &&
       createFeeTierDto.minPrice > createFeeTierDto.maxPrice
     ) {
-      throw new BadRequestException('maxPrice must be greater than or equal to minPrice');
+      throw new BadRequestException('Giá tối đa phải lớn hơn hoặc bằng giá tối thiểu');
     }
     // Check for overlapping tiers
     await this.validateTierRange(createFeeTierDto.minPrice, createFeeTierDto.maxPrice ?? null);
@@ -112,7 +112,7 @@ export class FeeTierService {
 
     const overlapping = await query.getOne();
     if (overlapping) {
-      throw new BadRequestException('Fee tier price range overlaps with existing tier');
+      throw new BadRequestException('Khoảng giá của mức phí này trùng với mức phí hiện có');
     }
   }
 }

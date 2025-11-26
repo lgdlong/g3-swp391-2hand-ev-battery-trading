@@ -37,7 +37,6 @@ export function pickPrice(p: any): number | null {
  * @returns Formatted time string (e.g., "Hôm nay", "3 ngày trước")
  */
 export function formatTimeAgo(dateString: string): string {
-  console.log('Formatting date:', dateString);
   try {
     const date = new Date(dateString);
     const now = new Date();

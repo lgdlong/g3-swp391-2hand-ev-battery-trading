@@ -82,6 +82,19 @@ export function ComparePageClient() {
     return '';
   };
 
+  // Get the label for comparison count display
+  const getComparisonCountLabel = (): string => {
+    if (posts.length === 0) return 'sản phẩm';
+    const types = new Set(posts.map((p) => p.type));
+    if (types.size === 1) {
+      const type = Array.from(types)[0];
+      if (type === 'CAR') return 'xe điện';
+      if (type === 'BIKE') return 'xe máy điện';
+      if (type === 'BATTERY') return 'pin';
+    }
+    return 'sản phẩm';
+  };
+
   const getBreadcrumbItems = (): BreadcrumbItem[] => {
     const items: BreadcrumbItem[] = [
       { label: 'So sánh sản phẩm', onClick: () => router.push('/compare') },
@@ -183,7 +196,7 @@ export function ComparePageClient() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <p className="text-gray-600 text-lg font-medium">
-              {posts.length} sản phẩm đã được so sánh
+              {posts.length} {getComparisonCountLabel()} đã được so sánh
             </p>
           </div>
           <Button
@@ -207,7 +220,7 @@ export function ComparePageClient() {
                   <td className="border-r border-b p-0 w-[200px] flex-shrink-0">
                     <div className="aspect-square bg-gray-50 flex flex-col items-center justify-center p-6 min-h-[280px]">
                       <p className="text-gray-700 text-sm mb-4 font-bold text-center">
-                        {posts.length} xe đã được so sánh
+                        {posts.length} {getComparisonCountLabel()} đã được so sánh
                       </p>
                       <Button
                         onClick={() => {

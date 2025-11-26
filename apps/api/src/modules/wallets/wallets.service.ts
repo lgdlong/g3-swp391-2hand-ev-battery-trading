@@ -331,7 +331,7 @@ export class WalletsService {
     });
 
     if (!transaction) {
-      throw new NotFoundException('Transaction not found');
+      throw new NotFoundException('Không tìm thấy giao dịch');
     }
 
     return WalletTransactionMapper.toResponseDto(transaction);
@@ -404,7 +404,7 @@ export class WalletsService {
     });
 
     if (!paymentOrder) {
-      throw new NotFoundException(`Payment order not found: ${paymentOrderId}`);
+      throw new NotFoundException(`Không tìm thấy đơn thanh toán: ${paymentOrderId}`);
     }
 
     if (paymentOrder.status !== PaymentStatus.COMPLETED) {
@@ -440,17 +440,19 @@ export class WalletsService {
     });
 
     if (!paymentOrder) {
-      throw new NotFoundException(`Payment order ${orderCode} not found`);
+      throw new NotFoundException(`Không tìm thấy đơn thanh toán ${orderCode}`);
     }
 
     // Check ownership
     if (paymentOrder.accountId !== userId) {
-      throw new NotFoundException(`Payment order ${orderCode} not found or access denied`);
+      throw new NotFoundException(
+        `Không tìm thấy đơn thanh toán ${orderCode} hoặc bạn không có quyền truy cập`,
+      );
     }
 
     // Check if it's a wallet topup
     if (paymentOrder.serviceType?.code !== 'WALLET_TOPUP') {
-      throw new BadRequestException('This payment order is not a wallet topup');
+      throw new BadRequestException('Đơn thanh toán này không phải là nạp tiền ví');
     }
 
     // Check if already has a transaction (already processed)
