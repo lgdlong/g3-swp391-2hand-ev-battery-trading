@@ -246,10 +246,13 @@ export default function UploadImagesPage() {
                 </label>
               </div>
 
-              {/* Preview Grid */}
+              {/* Preview Grid - Show selected images before upload */}
               {previewUrls.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium mb-3">Đã chọn {selectedFiles.length} ảnh</h4>
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Ảnh đã chọn ({selectedFiles.length})
+                  </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {previewUrls.map((url, index) => (
                       <div key={index} className="relative group aspect-square">
@@ -276,7 +279,7 @@ export default function UploadImagesPage() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={handleUpload}
                   disabled={isUploading || selectedFiles.length === 0}
@@ -290,7 +293,7 @@ export default function UploadImagesPage() {
                   ) : (
                     <>
                       <Upload className="h-4 w-4 mr-2" />
-                      Tải {selectedFiles.length} ảnh lên
+                      Tải {selectedFiles.length > 0 ? `${selectedFiles.length} ảnh` : 'ảnh'} lên
                     </>
                   )}
                 </Button>
@@ -302,23 +305,27 @@ export default function UploadImagesPage() {
             </CardContent>
           </Card>
 
-          {/* Next Step: Upload Documents */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                Bước tiếp theo: Tải giấy tờ xe
-              </CardTitle>
+          {/* Next Step: Upload Documents - Improved UX */}
+          <Card className="mt-6 border-2 border-primary/20 bg-primary/5">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-sm font-bold">
+                  2
+                </div>
+                <CardTitle className="text-lg">Tải giấy tờ xe (Bắt buộc)</CardTitle>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-0">
               <p className="text-sm text-muted-foreground mb-4">
-                Bạn cần tải ít nhất 1 ảnh giấy tờ xe để bài đăng được duyệt.
+                Để bài đăng được duyệt, bạn cần tải lên <strong>ít nhất 1 ảnh giấy tờ xe</strong>{' '}
+                (cà vẹt, đăng ký xe, hoặc giấy tờ liên quan).
               </p>
               <Button
                 onClick={() => router.push(`/posts/create/upload-documents/${postId}`)}
                 className="w-full sm:w-auto"
+                size="lg"
               >
-                Tải giấy tờ xe
+                Tiếp tục tải giấy tờ
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </CardContent>

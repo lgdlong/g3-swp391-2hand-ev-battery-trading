@@ -263,7 +263,7 @@ export class PostsController {
   //-----------------------------------------
 
   @Post('deduct-fee')
-  @ApiOperation({ summary: 'Trừ phí đặt cọc đăng bài từ ví người dùng' })
+  @ApiOperation({ summary: 'Trừ phí đăng bài từ ví người dùng' })
   @ApiBearerAuth()
   @ApiCreatedResponse({
     description: 'Trừ tiền thành công',
@@ -515,7 +515,11 @@ export class PostsController {
       throw new BadRequestException('postId không hợp lệ');
     }
 
-    const verificationDocuments = await this.postsService.addVerificationDocuments(postId, user.sub, body);
+    const verificationDocuments = await this.postsService.addVerificationDocuments(
+      postId,
+      user.sub,
+      body,
+    );
 
     return { verificationDocuments };
   }

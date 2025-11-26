@@ -341,7 +341,7 @@ export default function PostPaymentPage() {
               <h3 className="font-semibold text-gray-700 mb-3">Chi tiết thanh toán</h3>
               <div className="space-y-2">
                 <div className="flex justify-between text-gray-600">
-                  <span>Phí đặt cọc đăng bài</span>
+                  <span>Phí đăng bài</span>
                   <span className="font-medium">{formatCurrency(depositFee)} ₫</span>
                 </div>
                 <Separator className="my-2" />

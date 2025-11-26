@@ -25,7 +25,7 @@ export class DeductWalletDto {
 
   @ApiPropertyOptional({
     description: 'Description for the deduction transaction',
-    example: 'Phí đặt cọc đăng bài',
+    example: 'Phí đăng bài',
   })
   @IsOptional()
   @IsString()
