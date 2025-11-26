@@ -229,38 +229,6 @@ export class ChatService {
   }
 
   /**
-   * Get unread message count for a user
-   * Counts messages in user's conversations where senderId !== userId
-   * and message was created after conversation's updatedAt (simple heuristic)
-   */
-  async getUnreadMessageCount(userId: number): Promise<number> {
-    // Get all conversations for user
-    const conversations = await this.conversationRepo.find({
-      where: [{ buyerId: userId }, { sellerId: userId }],
-      select: ['id', 'updatedAt'],
-    });
-
-    if (conversations.length === 0) {
-      return 0;
-    }
-
-    const conversationIds = conversations.map((conv) => conv.id);
-
-    // Count messages where:
-    // 1. Message is in user's conversations
-    // 2. Message sender is not the current user (someone else sent it)
-    // 3. Message was created after conversation's updatedAt (heuristic: if conversation was updated after message, user likely saw it)
-    // Actually, simpler: just count all messages from others in user's conversations
-    const unreadCount = await this.messageRepo
-      .createQueryBuilder('message')
-      .where('message.conversationId IN (:...conversationIds)', { conversationIds })
-      .andWhere('message.senderId != :userId', { userId })
-      .getCount();
-
-    return unreadCount;
-  }
-
-  /**
    * Check if a post has any chat activity (conversations with messages)
    * Used by refunds system to detect "shadow sales"
    *

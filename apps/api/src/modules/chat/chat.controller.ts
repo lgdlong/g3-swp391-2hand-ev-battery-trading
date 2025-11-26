@@ -86,29 +86,6 @@ export class ChatController {
   }
 
   /**
-   * Get unread message count for current user
-   * GET /conversations/unread/count
-   */
-  @Get('unread/count')
-  @ApiOperation({
-    summary: 'Get unread message count',
-    description: 'Get total count of unread messages for current user',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Unread count retrieved successfully',
-  })
-  async getUnreadMessageCount(@User() user: AuthUser) {
-    const count = await this.chatService.getUnreadMessageCount(user.sub);
-
-    return {
-      success: true,
-      data: { count },
-      message: 'Unread count retrieved successfully',
-    };
-  }
-
-  /**
    * FR-CHAT-M4: Get messages for a conversation
    * GET /conversations/:id/messages
    */

@@ -863,4 +863,88 @@ export class TransactionsService {
       return contract;
     });
   }
+
+  /**
+   * Create a contract for a completed order
+   * Called when buyer confirms receipt and order status becomes COMPLETED
+   */
+  async createContractForOrder(
+    orderId: string,
+    postId: string,
+    buyerId: number,
+    sellerId: number,
+    amount: string,
+    commissionFee: string,
+    manager?: EntityManager,
+  ): Promise<Contract> {
+    const repo = manager ? manager.getRepository(Contract) : this.contractRepo;
+    const postRepo = manager ? manager.getRepository(Post) : this.postRepo;
+
+    // Get post snapshot
+    const post = await postRepo.findOne({
+      where: { id: postId },
+    });
+
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${postId} not found`);
+    }
+
+    // Check if contract already exists for this order
+    const existingContract = await repo.findOne({
+      where: { orderId },
+    });
+
+    if (existingContract) {
+      return existingContract;
+    }
+
+    // Create contract with SUCCESS status (order already completed)
+    const contract = repo.create({
+      orderId,
+      listingId: postId,
+      buyerId,
+      sellerId,
+      listingSnapshot: {
+        id: post.id,
+        title: post.title,
+        priceVnd: post.priceVnd,
+        postType: post.postType,
+        description: post.description,
+        createdAt: post.createdAt,
+        amount,
+        commissionFee,
+      },
+      status: ContractStatus.SUCCESS,
+      isExternalTransaction: false,
+      buyerConfirmedAt: new Date(),
+      sellerConfirmedAt: new Date(),
+      confirmedAt: new Date(),
+      filePath: `/contracts/order-${orderId}.pdf`,
+    });
+
+    const savedContract = await repo.save(contract);
+
+    return savedContract;
+  }
+
+  /**
+   * Get contract by order ID
+   */
+  async getContractByOrderId(orderId: string, userId: number): Promise<Contract | null> {
+    const contract = await this.contractRepo.findOne({
+      where: { orderId },
+      relations: ['buyer', 'seller'],
+    });
+
+    if (!contract) {
+      return null;
+    }
+
+    // Check if user is buyer or seller
+    if (contract.buyerId !== userId && contract.sellerId !== userId) {
+      throw new ForbiddenException('You are not authorized to view this contract');
+    }
+
+    return contract;
+  }
 }

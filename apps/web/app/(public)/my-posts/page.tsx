@@ -103,6 +103,13 @@ export default function MyPostsPage() {
     retry: 1,
   });
 
+  const lockedQuery = useQuery({
+    queryKey: ['myPosts', 'LOCKED'],
+    queryFn: () => getMyPosts({ status: 'LOCKED', order: 'DESC', sort: 'updatedAt' }),
+    enabled: isLoggedIn,
+    retry: 1,
+  });
+
   const publishedPosts = publishedQuery.data || [];
   const soldPosts = soldQuery.data || [];
   const publishedPostsExcludingSold = publishedPosts.filter((p) => p.status !== 'SOLD');
@@ -115,6 +122,7 @@ export default function MyPostsPage() {
     // SOLD: soldQuery.data?.length || 0,
     SOLD: soldPosts.length || 0,
     ARCHIVED: archivedQuery.data?.length || 0,
+    LOCKED: lockedQuery.data?.length || 0,
   };
 
   // Get current posts based on active tab, filter by search query, and sort
@@ -139,6 +147,9 @@ export default function MyPostsPage() {
         break;
       case 'ARCHIVED':
         posts = archivedQuery.data || [];
+        break;
+      case 'LOCKED':
+        posts = lockedQuery.data || [];
         break;
       default:
         posts = [];
@@ -178,7 +189,8 @@ export default function MyPostsPage() {
     publishedQuery.isLoading ||
     rejectedQuery.isLoading ||
     soldQuery.isLoading ||
-    archivedQuery.isLoading;
+    archivedQuery.isLoading ||
+    lockedQuery.isLoading;
 
   const deleteMutation = useMutation({
     mutationFn: (postId: string) => deleteMyPostById(postId),
@@ -196,11 +208,14 @@ export default function MyPostsPage() {
   const markAsSoldMutation = useMutation({
     mutationFn: (postId: string) => updateMyPost(postId, { status: 'SOLD' }),
     onSuccess: () => {
-      toast.success('Đã đánh dấu bài đăng là đã bán. Bài đăng đã được chuyển vào tab "Đã bán" trong Quản lý đơn hàng.');
+      toast.success(
+        'Đã đánh dấu bài đăng là đã bán. Bài đăng đã được chuyển vào tab "Đã bán" trong Quản lý đơn hàng.',
+      );
       queryClient.invalidateQueries({ queryKey: ['myPosts'] });
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || 'Đánh dấu đã bán thất bại. Vui lòng thử lại.';
+      const errorMessage =
+        error?.response?.data?.message || 'Đánh dấu đã bán thất bại. Vui lòng thử lại.';
       toast.error(errorMessage);
     },
   });
@@ -298,7 +313,7 @@ export default function MyPostsPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background md:p-8">
-        <div className="mx-auto max-w-6xl p-6 bg-white rounded-2xl shadow">
+        <div className="mx-auto max-w-7xl p-6 bg-white rounded-2xl shadow">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-6">Quản lý tin đăng</h1>
             <SearchBar
@@ -310,7 +325,7 @@ export default function MyPostsPage() {
             />
           </div>
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-auto grid-cols-6 mb-8 p-1 h-auto bg-background">
+            <TabsList className="grid w-auto grid-cols-7 mb-8 p-1 h-auto bg-background">
               <TabsTrigger
                 value="PUBLISHED"
                 className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
@@ -319,6 +334,17 @@ export default function MyPostsPage() {
                 {counts.PUBLISHED > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
                     {counts.PUBLISHED}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="LOCKED"
+                className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
+              >
+                ĐANG XÁC THỰC
+                {counts.LOCKED > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
+                    {counts.LOCKED}
                   </Badge>
                 )}
               </TabsTrigger>
@@ -382,6 +408,7 @@ export default function MyPostsPage() {
               [
                 'PENDING_REVIEW',
                 'PUBLISHED',
+                'LOCKED',
                 'REJECTED',
                 'SOLD',
                 'DRAFT',

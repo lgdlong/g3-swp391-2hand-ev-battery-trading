@@ -2,7 +2,19 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { User, Bookmark, Bell, Settings, LogOut, Wallet, Plus, Clock, FileText, ShoppingBag } from 'lucide-react';
+import {
+  User,
+  Bookmark,
+  Bell,
+  Settings,
+  LogOut,
+  Wallet,
+  Plus,
+  Clock,
+  FileText,
+  ShoppingBag,
+  Star,
+} from 'lucide-react';
 import { Account } from '@/types/account';
 import Image from 'next/image';
 import { isValidAvatarUrl } from '@/lib/validation/file-validation';
@@ -40,7 +52,8 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
 
   // Count contracts waiting for buyer confirmation
   const pendingOrdersCount = (buyerContracts || []).filter(
-    (contract) => contract.status === ContractStatus.AWAITING_CONFIRMATION && !contract.buyerConfirmedAt,
+    (contract) =>
+      contract.status === ContractStatus.AWAITING_CONFIRMATION && !contract.buyerConfirmedAt,
   ).length;
 
   // Reset modal state when sidebar closes
@@ -61,9 +74,8 @@ export function UserSidebar({ isOpen, onClose, user, onLogout }: UserSidebarProp
     { label: 'Hồ sơ', href: '/profile', icon: User },
     { label: 'Bookmarks', href: '/bookmarks', icon: Bookmark },
     { label: 'Quản lý đơn hàng', href: '/my-orders', icon: ShoppingBag },
+    { label: 'Đánh giá', href: '/rating', icon: Star },
     { label: 'Lịch sử giao dịch', href: '/wallet', icon: Clock },
-    { label: 'Thông báo', href: '/notifications', icon: Bell },
-    { label: 'Cài đặt', href: '/settings', icon: Settings },
   ];
 
   const handleTopupClick = () => {
