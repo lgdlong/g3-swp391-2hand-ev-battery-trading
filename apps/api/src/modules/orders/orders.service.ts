@@ -325,33 +325,6 @@ export class OrdersService {
   }
 
   /**
-   * Tạo tranh chấp
-   */
-  async createDispute(orderId: string, userId: number, note: string): Promise<OrderResponseDto> {
-    const order = await this.orderRepo.findOne({
-      where: { id: orderId },
-    });
-
-    if (!order) {
-      throw new NotFoundException('Đơn hàng không tồn tại');
-    }
-
-    if (order.buyerId !== userId && order.sellerId !== userId) {
-      throw new ForbiddenException('Bạn không có quyền tạo tranh chấp');
-    }
-
-    if (order.status !== OrderStatus.PROCESSING) {
-      throw new BadRequestException('Chỉ có thể tạo tranh chấp khi đơn hàng đang giao');
-    }
-
-    order.status = OrderStatus.DISPUTE;
-    order.note = order.note ? `${order.note} | Tranh chấp: ${note}` : `Tranh chấp: ${note}`;
-
-    const savedOrder = await this.orderRepo.save(order);
-    return OrderMapper.toResponseDto(savedOrder);
-  }
-
-  /**
    * Lấy đơn hàng theo ID
    */
   async findOne(orderId: string): Promise<OrderWithRelationsDto> {

@@ -18,16 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  Truck,
-  AlertTriangle,
-  FileText,
-  Star,
-  Phone,
-} from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Truck, FileText, Star, Phone } from 'lucide-react';
 import { type Order, OrderStatus, SellerAction } from '@/lib/api/ordersApi';
 import { useSellerConfirm, useCompleteOrder, useCancelOrder } from '@/hooks/useOrders';
 import { useState } from 'react';
@@ -64,11 +55,6 @@ const statusConfig: Record<OrderStatus, { label: string; color: string; icon: Re
     label: 'Đã hủy',
     color: 'bg-red-100 text-red-800',
     icon: <XCircle className="h-4 w-4" />,
-  },
-  [OrderStatus.DISPUTE]: {
-    label: 'Tranh chấp',
-    color: 'bg-orange-100 text-orange-800',
-    icon: <AlertTriangle className="h-4 w-4" />,
   },
   [OrderStatus.REFUNDED]: {
     label: 'Đã hoàn tiền',

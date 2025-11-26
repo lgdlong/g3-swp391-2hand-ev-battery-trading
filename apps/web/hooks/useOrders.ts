@@ -5,7 +5,6 @@ import {
   sellerConfirm,
   completeOrder,
   cancelOrder,
-  createDispute,
   getMyOrders,
   getOrderById,
   checkBuyerOrderForPost,
@@ -154,29 +153,6 @@ export function useCancelOrder() {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['wallet'] });
       queryClient.invalidateQueries({ queryKey: ['post', order.postId] });
-    },
-    onError: (error: unknown) => {
-      const errorMessage =
-        error && typeof error === 'object' && 'response' in error
-          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-          : 'Có lỗi xảy ra';
-      toast.error(errorMessage);
-    },
-  });
-}
-
-/**
- * Hook để tạo tranh chấp
- */
-export function useCreateDispute() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ orderId, note }: { orderId: string; note: string }) =>
-      createDispute(orderId, note),
-    onSuccess: () => {
-      toast.warning('Đã tạo tranh chấp. Admin sẽ xử lý sớm nhất.');
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error: unknown) => {
       const errorMessage =
