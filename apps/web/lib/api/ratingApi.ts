@@ -18,10 +18,7 @@ import type {
  * Endpoint: POST /ratings/post/:id
  * Auth: Required (JWT)
  */
-export async function submitRating(
-  postId: string,
-  data: CreateRatingDto
-): Promise<RatingResponse> {
+export async function submitRating(postId: string, data: CreateRatingDto): Promise<RatingResponse> {
   try {
     const response = await api.post<RatingResponse>(`/ratings/post/${postId}`, data);
     return response.data;
@@ -38,7 +35,7 @@ export async function submitRating(
  */
 export async function getPostRatings(
   postId: string,
-  params?: GetRatingsParams
+  params?: GetRatingsParams,
 ): Promise<RatingListResponse> {
   try {
     const response = await api.get<RatingListResponse>(`/ratings/post/${postId}`, {
@@ -71,3 +68,82 @@ export async function getRatingById(ratingId: string): Promise<RatingResponse> {
   }
 }
 
+/**
+ * Check if current user has rated a post
+ * Endpoint: GET /ratings/check/:postId
+ * Auth: Required (JWT)
+ */
+export async function checkUserRatedPost(postId: string): Promise<{ hasRated: boolean }> {
+  try {
+    const response = await api.get<{ hasRated: boolean }>(`/ratings/check/${postId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error checking rating status:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get ratings given by the current user
+ * Endpoint: GET /ratings/my/given
+ * Auth: Required (JWT)
+ */
+export async function getMyGivenRatings(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<RatingListResponse> {
+  try {
+    const response = await api.get<RatingListResponse>('/ratings/my/given', {
+      params: {
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my given ratings:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get ratings received by the current user (as seller)
+ * Endpoint: GET /ratings/my/received
+ * Auth: Required (JWT)
+ */
+export async function getMyReceivedRatings(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<RatingListResponse> {
+  try {
+    const response = await api.get<RatingListResponse>('/ratings/my/received', {
+      params: {
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my received ratings:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get seller rating statistics
+ * Endpoint: GET /ratings/seller/:sellerId/stats
+ * Auth: Not required (Public)
+ */
+export async function getSellerRatingStats(
+  sellerId: number,
+): Promise<{ averageRating: number; totalReviews: number }> {
+  try {
+    const response = await api.get<{ averageRating: number; totalReviews: number }>(
+      `/ratings/seller/${sellerId}/stats`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching seller rating stats:', error);
+    throw error;
+  }
+}

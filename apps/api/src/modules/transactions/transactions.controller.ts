@@ -155,6 +155,22 @@ export class TransactionsController {
     return this.transactionsService.getBuyerContracts(user.sub);
   }
 
+  @ApiOperation({ summary: 'Lấy hợp đồng theo Order ID' })
+  @ApiParam({ name: 'orderId', type: String, description: 'Order ID' })
+  @ApiOkResponse({
+    description: 'Hợp đồng của đơn hàng (null nếu chưa có)',
+    type: ContractResponseDto,
+  })
+  @ApiUnauthorizedResponse({ description: 'Thiếu/không hợp lệ JWT' })
+  @ApiForbiddenResponse({ description: 'Không có quyền xem hợp đồng này' })
+  @Get('contracts/by-order/:orderId')
+  async getContractByOrderId(
+    @Param('orderId') orderId: string,
+    @CurrentUser() user: ReqUser,
+  ): Promise<Contract | null> {
+    return this.transactionsService.getContractByOrderId(orderId, user.sub);
+  }
+
   @ApiOperation({ summary: 'Lấy thông tin hợp đồng' })
   @ApiParam({ name: 'id', type: String, description: 'Contract ID' })
   @ApiOkResponse({

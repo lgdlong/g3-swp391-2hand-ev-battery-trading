@@ -120,4 +120,62 @@ export class PostRatingController {
   async getSellerRatingStats(@Param('sellerId') sellerId: string) {
     return this.postRatingService.getSellerRatingStats(Number(sellerId));
   }
+
+  @ApiOperation({ summary: 'Check if current user has rated a post' })
+  @ApiParam({ name: 'postId', description: 'Post ID', example: '123' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns whether user has rated the post',
+    schema: {
+      type: 'object',
+      properties: {
+        hasRated: { type: 'boolean', example: true },
+      },
+    },
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('check/:postId')
+  async checkUserRatedPost(@Param('postId') postId: string, @CurrentUser() user: ReqUser) {
+    const hasRated = await this.postRatingService.hasUserRatedPost(postId, user.sub);
+    return { hasRated };
+  }
+
+  @ApiOperation({ summary: 'Get ratings given by the current user' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page', example: 20 })
+  @ApiResponse({
+    status: 200,
+    description: 'My ratings retrieved successfully',
+    type: PostRatingListResponseDto,
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('my/given')
+  async getMyRatings(
+    @CurrentUser() user: ReqUser,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.postRatingService.getMyRatings(user.sub, { page, limit });
+  }
+
+  @ApiOperation({ summary: 'Get ratings received by the current user (as seller)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number', example: 1 })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page', example: 20 })
+  @ApiResponse({
+    status: 200,
+    description: 'Received ratings retrieved successfully',
+    type: PostRatingListResponseDto,
+  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('my/received')
+  async getReceivedRatings(
+    @CurrentUser() user: ReqUser,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+  ) {
+    return this.postRatingService.getReceivedRatings(user.sub, { page, limit });
+  }
 }

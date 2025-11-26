@@ -1,12 +1,7 @@
 import { Controller, Get, HttpStatus, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminStatisticsService } from './admin-statistics.service';
-import {
-  FinancialOverviewDto,
-  FraudOverviewDto,
-  TransactionStatsDto,
-  AdminDashboardStatsDto,
-} from './dto';
+import { FinancialOverviewDto, TransactionStatsDto, AdminDashboardStatsDto } from './dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
 import { Roles } from '../../core/decorators/roles.decorator';
@@ -34,7 +29,6 @@ export class AdminStatisticsController {
     summary: 'Get complete admin dashboard statistics',
     description: `Get comprehensive statistics for admin dashboard including:
     - Financial overview (wallet balances, fees, revenue)
-    - Fraud detection statistics
     - Transaction statistics
 
     This endpoint aggregates data from multiple sources to provide a complete overview.`,
@@ -62,7 +56,6 @@ export class AdminStatisticsController {
     - Total wallet balance across all users
     - Total topup amount via PayOS
     - Total fees collected (deposits + verifications)
-    - Total refund amount
     - Net revenue`,
   })
   @ApiResponse({
@@ -72,27 +65,6 @@ export class AdminStatisticsController {
   })
   async getFinancialOverview(): Promise<FinancialOverviewDto> {
     return this.adminStatsService.getFinancialOverview();
-  }
-
-  /**
-   * Get fraud and risk statistics
-   */
-  @Get('fraud')
-  @ApiOperation({
-    summary: 'Get fraud and risk statistics',
-    description: `Get fraud detection statistics including:
-    - Total fraud flags
-    - Suspected fraud count
-    - Confirmed fraud count
-    - Refund rate percentage`,
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Fraud statistics retrieved successfully',
-    type: FraudOverviewDto,
-  })
-  async getFraudOverview(): Promise<FraudOverviewDto> {
-    return this.adminStatsService.getFraudOverview();
   }
 
   /**
@@ -196,29 +168,5 @@ export class AdminStatisticsController {
   async getTotalDepositCollected(): Promise<{ totalDeposit: string }> {
     const totalDeposit = await this.adminStatsService.getTotalDepositCollected();
     return { totalDeposit };
-  }
-
-  /**
-   * Get fraud count
-   */
-  @Get('fraud-count')
-  @ApiOperation({
-    summary: 'Get fraud flag count',
-    description: 'Get count of all fraud flags by status',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Fraud count retrieved',
-    schema: {
-      type: 'object',
-      properties: {
-        total: { type: 'number', example: 12 },
-        suspected: { type: 'number', example: 8 },
-        confirmed: { type: 'number', example: 4 },
-      },
-    },
-  })
-  async getFraudCount(): Promise<{ total: number; suspected: number; confirmed: number }> {
-    return this.adminStatsService.getFraudCount();
   }
 }

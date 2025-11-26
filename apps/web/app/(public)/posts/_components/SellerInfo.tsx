@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Calendar, MapPin, User, Phone, ShoppingCart } from 'lucide-react';
+import { Calendar, MapPin, User, Phone, ShoppingCart, Lock } from 'lucide-react';
 import { relativeTime } from '@/lib/utils/format';
 import type { PostUI } from '@/types/post';
 import type { AccountUI } from '@/types/account';
@@ -8,13 +8,14 @@ import { useAuth } from '@/lib/auth-context';
 import { useCreateConversation } from '@/hooks/useChat';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createContract } from '@/lib/api/transactionApi';
+import { useQuery } from '@tanstack/react-query';
 import { BuyerContractInfo } from './BuyerContractInfo';
 import { SellerRatingDisplay } from '@/components/SellerRatingDisplay';
 import { useSellerRating } from '@/hooks/useSellerRating';
 import { getMyWallet } from '@/lib/api/walletApi';
 import { TopupModal } from '@/components/TopupModal';
+import { useBuyNow, useBuyerOrderForPost } from '@/hooks/useOrders';
+import { OrderStatus } from '@/lib/api/ordersApi';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,8 +40,8 @@ interface SellerInfoProps {
 export function SellerInfo({ account, post }: SellerInfoProps) {
   const { user, isLoggedIn } = useAuth();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const createConversationMutation = useCreateConversation();
+  const buyNowMutation = useBuyNow();
 
   // State for buy now flow
   const [showBuyConfirm, setShowBuyConfirm] = useState(false);
@@ -54,29 +55,18 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
     isLoading: ratingLoading,
   } = useSellerRating(account?.id?.toString());
 
+  // Check if buyer has active order for this post
+  const { data: buyerOrder } = useBuyerOrderForPost(post.id);
+
+  // Check if buyer can see phone (has PROCESSING or COMPLETED order)
+  const canSeePhone =
+    buyerOrder && [OrderStatus.PROCESSING, OrderStatus.COMPLETED].includes(buyerOrder.status);
+
   // Fetch wallet balance
   const { refetch: refetchWallet } = useQuery({
     queryKey: ['wallet', 'me'],
     queryFn: getMyWallet,
     enabled: isLoggedIn && showBuyConfirm,
-  });
-
-  // Create contract mutation
-  const createContractMutation = useMutation({
-    mutationFn: (listingId: string) => createContract(listingId),
-    onSuccess: () => {
-      toast.success('Mua xe thành công!');
-      queryClient.invalidateQueries({ queryKey: ['contracts'] });
-      router.push('/my-orders');
-    },
-    onError: (error: unknown) => {
-      console.error('Error creating contract:', error);
-      const errorMessage =
-        error && typeof error === 'object' && 'response' in error
-          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-          : undefined;
-      toast.error(errorMessage || 'Có lỗi xảy ra khi mua xe');
-    },
   });
 
   const handleContactSeller = async () => {
@@ -133,11 +123,22 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       const carPrice = parseFloat(post.priceVnd);
 
       if (currentBalance >= carPrice) {
-        // Enough balance, create contract directly
-        await createContractMutation.mutateAsync(post.id);
+        // Enough balance, call buyNow API
+        const order = await buyNowMutation.mutateAsync({ postId: post.id });
+        router.push('/my-orders');
       } else {
-        // Insufficient balance, calculate missing amount and open topup modal
+        // Insufficient balance - show notification first
         const missingAmount = Math.ceil(carPrice - currentBalance);
+        const formattedMissing = new Intl.NumberFormat('vi-VN').format(missingAmount);
+        const formattedBalance = new Intl.NumberFormat('vi-VN').format(currentBalance);
+        const formattedPrice = new Intl.NumberFormat('vi-VN').format(carPrice);
+
+        toast.error('Số dư ví không đủ', {
+          description: `Giá: ${formattedPrice}₫ | Số dư: ${formattedBalance}₫ | Cần nạp thêm: ${formattedMissing}₫`,
+          duration: 5000,
+        });
+
+        // Calculate missing amount and open topup modal
         setTopupAmount(missingAmount);
         // Store post ID in localStorage to complete purchase after topup
         localStorage.setItem('pendingBuyPostId', post.id);
@@ -147,7 +148,6 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
       }
     } catch (error) {
       console.error('Error in buy flow:', error);
-      toast.error('Có lỗi xảy ra khi xử lý mua xe');
     }
   };
 
@@ -213,7 +213,14 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
         {account.phone ? (
           <div className="flex items-center gap-2">
             <Phone className="h-4 w-4" />
-            <span>{account.phone}</span>
+            {canSeePhone ? (
+              <span>{account.phone}</span>
+            ) : (
+              <span className="text-gray-400 flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                Mua để xem SĐT
+              </span>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -248,28 +255,56 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
               ? 'Đang tạo cuộc trò chuyện...'
               : 'Liên hệ người bán'}
           </button>
-          {account.phone ? (
-            <button className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors">
+
+          {/* Phone Button - show real phone if user has active order */}
+          {account.phone && canSeePhone ? (
+            <a
+              href={`tel:${account.phone}`}
+              className="w-full border border-[#048C73] text-[#048C73] hover:bg-[#048C73] hover:text-white py-2 px-4 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              <Phone className="h-4 w-4" />
               {account.phone}
-            </button>
+            </a>
           ) : (
             <button
               disabled
-              className="w-full border border-gray-300 text-gray-400 py-2 px-4 rounded-lg font-medium cursor-not-allowed"
+              className="w-full border border-gray-300 text-gray-400 py-2 px-4 rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Không có số điện thoại
+              <Lock className="h-4 w-4" />
+              Mua ngay để xem SĐT
             </button>
           )}
 
-          {/* Buy Now Button */}
-          <button
-            onClick={handleBuyNow}
-            disabled={createContractMutation.isPending}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {createContractMutation.isPending ? 'Đang xử lý...' : 'Mua ngay'}
-          </button>
+          {/* Buy Now Button - hide if already has order */}
+          {!buyerOrder && (
+            <button
+              onClick={handleBuyNow}
+              disabled={buyNowMutation.isPending}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {buyNowMutation.isPending ? 'Đang xử lý...' : 'MUA NGAY'}
+            </button>
+          )}
+
+          {/* Show order status if exists */}
+          {buyerOrder && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700 font-medium">
+                {buyerOrder.status === OrderStatus.WAITING_SELLER_CONFIRM &&
+                  'Đang chờ người bán xác nhận...'}
+                {buyerOrder.status === OrderStatus.PROCESSING &&
+                  'Đang giao dịch - Vui lòng liên hệ người bán'}
+                {buyerOrder.status === OrderStatus.COMPLETED && 'Giao dịch đã hoàn tất'}
+              </p>
+              <a
+                href="/my-orders"
+                className="text-sm text-blue-600 hover:underline mt-1 inline-block"
+              >
+                Xem chi tiết đơn hàng →
+              </a>
+            </div>
+          )}
         </div>
       )}
 
@@ -278,14 +313,27 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận mua xe</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn mua xe này với giá{' '}
-              {new Intl.NumberFormat('vi-VN').format(parseFloat(post.priceVnd))} ₫ không?
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Số tiền{' '}
+                <span className="font-bold text-orange-600">
+                  {new Intl.NumberFormat('vi-VN').format(parseFloat(post.priceVnd))} ₫
+                </span>{' '}
+                sẽ được tạm giữ trong ví của bạn.
+              </p>
+              <p className="text-sm">
+                Tiền sẽ được chuyển cho người bán sau khi bạn xác nhận đã nhận được xe.
+              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmBuy}>Xác nhận</AlertDialogAction>
+            <AlertDialogAction
+              onClick={handleConfirmBuy}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              Xác nhận mua
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

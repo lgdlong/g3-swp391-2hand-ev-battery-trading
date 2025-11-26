@@ -43,6 +43,11 @@ export interface RatingResponse {
   userId: number;
   customer?: SafeAccountDto | null;
   seller?: SafeAccountDto | null;
+  post?: {
+    id: string;
+    title: string;
+    priceVnd: string;
+  } | null;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -114,4 +119,3 @@ export interface RatingStats {
     5: number;
   };
 }
-

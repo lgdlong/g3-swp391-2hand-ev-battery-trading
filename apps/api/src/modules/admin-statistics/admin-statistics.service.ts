@@ -4,14 +4,8 @@ import { Repository } from 'typeorm';
 import { Wallet } from '../wallets/entities/wallet.entity';
 import { WalletTransaction } from '../wallets/entities/wallet-transaction.entity';
 import { PostPayment } from '../transactions/entities';
-import { PostFraudFlag } from '../post-fraud-flags/entities/post-fraud-flag.entity';
 import { ServiceType } from '../service-types/entities/service-type.entity';
-import {
-  FinancialOverviewDto,
-  FraudOverviewDto,
-  TransactionStatsDto,
-  AdminDashboardStatsDto,
-} from './dto';
+import { FinancialOverviewDto, TransactionStatsDto, AdminDashboardStatsDto } from './dto';
 
 @Injectable()
 export class AdminStatisticsService {
@@ -22,8 +16,6 @@ export class AdminStatisticsService {
     private readonly walletTransactionRepo: Repository<WalletTransaction>,
     @InjectRepository(PostPayment)
     private readonly postPaymentRepo: Repository<PostPayment>,
-    @InjectRepository(PostFraudFlag)
-    private readonly fraudFlagRepo: Repository<PostFraudFlag>,
     @InjectRepository(ServiceType)
     private readonly serviceTypeRepo: Repository<ServiceType>,
   ) {}
@@ -74,15 +66,11 @@ export class AdminStatisticsService {
     // Calculate total fees collected
     const totalFeesCollected = Number.parseFloat(totalDepositCollected).toString();
 
-    // Get total refund amount (from wallet transactions with positive amounts after post creation)
-    // This would need to track refund transactions specifically
-    // For now, we'll calculate based on refund-related transactions
-    const totalRefundAmount = '0'; // TODO: Implement refund tracking
+    // Total verification fees (feature removed - set to 0)
+    const totalVerificationFees = '0';
 
-    // Calculate net revenue
-    const netRevenue = (
-      Number.parseFloat(totalFeesCollected) - Number.parseFloat(totalRefundAmount)
-    ).toString();
+    // Net revenue equals total fees collected
+    const netRevenue = totalFeesCollected;
 
     return {
       totalWalletBalance,
@@ -91,44 +79,8 @@ export class AdminStatisticsService {
       totalTransactions,
       totalFeesCollected,
       totalDepositCollected,
-      totalRefundAmount,
+      totalVerificationFees,
       netRevenue,
-    };
-  }
-
-  /**
-   * Get fraud and risk statistics
-   */
-  async getFraudOverview(): Promise<FraudOverviewDto> {
-    // Get total fraud flags
-    const totalFraudFlags = await this.fraudFlagRepo.count();
-
-    // Get suspected fraud count
-    const suspectedCount = await this.fraudFlagRepo.count({
-      where: { status: 'SUSPECTED' },
-    });
-
-    // Get confirmed fraud count
-    const confirmedCount = await this.fraudFlagRepo.count({
-      where: { status: 'CONFIRMED' },
-    });
-
-    // Calculate refund rate
-    // Total posts with payments
-    const totalPostPayments = await this.postPaymentRepo.count();
-
-    // Total refunded posts (this would need a refund tracking table)
-    // For now, we'll estimate based on cancelled posts with fraud flags
-    const totalRefundedPosts = 0; // TODO: Implement refund tracking
-
-    const refundRate = totalPostPayments > 0 ? (totalRefundedPosts / totalPostPayments) * 100 : 0;
-
-    return {
-      totalFraudFlags,
-      suspectedCount,
-      confirmedCount,
-      refundRate: Number(refundRate.toFixed(2)),
-      totalRefundedPosts,
     };
   }
 
@@ -176,15 +128,13 @@ export class AdminStatisticsService {
    * Get complete admin dashboard statistics
    */
   async getAdminDashboardStats(): Promise<AdminDashboardStatsDto> {
-    const [financial, fraud, transactions] = await Promise.all([
+    const [financial, transactions] = await Promise.all([
       this.getFinancialOverview(),
-      this.getFraudOverview(),
       this.getTransactionStats(),
     ]);
 
     return {
       financial,
-      fraud,
       transactions,
     };
   }
@@ -231,20 +181,5 @@ export class AdminStatisticsService {
       .getRawOne();
 
     return result?.total || '0';
-  }
-
-  /**
-   * Get fraud count
-   */
-  async getFraudCount(): Promise<{ total: number; suspected: number; confirmed: number }> {
-    const total = await this.fraudFlagRepo.count();
-    const suspected = await this.fraudFlagRepo.count({
-      where: { status: 'SUSPECTED' },
-    });
-    const confirmed = await this.fraudFlagRepo.count({
-      where: { status: 'CONFIRMED' },
-    });
-
-    return { total, suspected, confirmed };
   }
 }
