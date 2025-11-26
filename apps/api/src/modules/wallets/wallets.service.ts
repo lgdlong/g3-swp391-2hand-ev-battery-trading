@@ -444,7 +444,9 @@ export class WalletsService {
 
     // Check ownership
     if (paymentOrder.accountId !== userId) {
-      throw new NotFoundException(`Không tìm thấy đơn thanh toán ${orderCode} hoặc bạn không có quyền truy cập`);
+      throw new NotFoundException(
+        `Không tìm thấy đơn thanh toán ${orderCode} hoặc bạn không có quyền truy cập`,
+      );
     }
 
     // Check if it's a wallet topup

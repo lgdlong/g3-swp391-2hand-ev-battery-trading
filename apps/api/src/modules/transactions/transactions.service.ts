@@ -347,7 +347,9 @@ export class TransactionsService {
       contract.status !== ContractStatus.AWAITING_CONFIRMATION &&
       contract.status !== ContractStatus.PENDING_REFUND
     ) {
-      throw new BadRequestException(`Không thể xác nhận. Trạng thái hợp đồng là ${contract.status}`);
+      throw new BadRequestException(
+        `Không thể xác nhận. Trạng thái hợp đồng là ${contract.status}`,
+      );
     }
 
     // Check if buyer already confirmed
@@ -395,7 +397,9 @@ export class TransactionsService {
       contract.status !== ContractStatus.AWAITING_CONFIRMATION &&
       contract.status !== ContractStatus.PENDING_REFUND
     ) {
-      throw new BadRequestException(`Không thể xác nhận. Trạng thái hợp đồng là ${contract.status}`);
+      throw new BadRequestException(
+        `Không thể xác nhận. Trạng thái hợp đồng là ${contract.status}`,
+      );
     }
 
     // Check if seller already confirmed
