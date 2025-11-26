@@ -126,15 +126,19 @@ export class WalletsService {
    * Top up wallet - Creates transaction and updates balance atomically
    * @param userId - User account ID
    * @param amount - Amount to top up
+   * @param serviceTypeCode - Service type code (e.g., 'WALLET_TOPUP', 'BUY_REFUND', 'SELL_REVENUE')
    * @param description - Transaction description
-   * @param paymentOrderId - Related payment order ID
+   * @param relatedEntityType - Related entity table name (e.g., 'orders', 'payment_orders')
+   * @param relatedEntityId - Related entity ID
    * @returns Object with updated wallet and transaction
    */
   async topUp(
     userId: number,
     amount: string,
+    serviceTypeCode: string = 'WALLET_TOPUP',
     description?: string,
-    paymentOrderId?: string,
+    relatedEntityType?: string,
+    relatedEntityId?: string,
   ): Promise<{ wallet: Wallet; transaction: WalletTransaction }> {
     // Use transaction to ensure atomicity
     return this.dataSource.transaction(async (manager) => {
@@ -144,11 +148,11 @@ export class WalletsService {
       // Initialize wallet if not exists
       const wallet = await ensureWalletInTx(manager, userId);
 
-      // Get service type for wallet topup (auto-create if not exists)
+      // Get service type (auto-create if not exists)
       const serviceType = await this.serviceTypesService.findOrCreateByCode(
-        'WALLET_TOPUP',
-        this.getServiceTypeName('WALLET_TOPUP'),
-        this.getServiceTypeDescription('WALLET_TOPUP'),
+        serviceTypeCode,
+        this.getServiceTypeName(serviceTypeCode),
+        this.getServiceTypeDescription(serviceTypeCode),
       );
 
       // Create wallet transaction
@@ -156,9 +160,9 @@ export class WalletsService {
         walletUserId: userId,
         amount,
         serviceTypeId: serviceType.id,
-        description: description || 'Nạp tiền vào ví',
-        relatedEntityType: 'payment_orders',
-        relatedEntityId: paymentOrderId,
+        description: description || this.getDefaultDescription(serviceTypeCode),
+        relatedEntityType: relatedEntityType || 'payment_orders',
+        relatedEntityId,
       });
       await transactionRepo.save(transaction);
 
@@ -243,6 +247,10 @@ export class WalletsService {
       WALLET_TOPUP: 'Nạp tiền vào ví',
       POST_PAYMENT: 'Thanh toán đăng bài',
       ADJUSTMENT: 'Điều chỉnh số dư',
+      BUY_HOLD: 'Giữ tiền mua hàng',
+      BUY_REFUND: 'Hoàn tiền mua hàng',
+      SELL_REVENUE: 'Doanh thu bán hàng',
+      PLATFORM_FEE: 'Phí nền tảng',
     };
     return names[code] || code;
   }
@@ -255,8 +263,25 @@ export class WalletsService {
       WALLET_TOPUP: 'Nạp tiền vào ví qua PayOS',
       POST_PAYMENT: 'Thanh toán phí để đăng bài tin',
       ADJUSTMENT: 'Admin điều chỉnh số dư ví của user',
+      BUY_HOLD: 'Giữ tiền trong escrow khi mua hàng',
+      BUY_REFUND: 'Hoàn tiền cho buyer khi đơn hàng bị hủy hoặc từ chối',
+      SELL_REVENUE: 'Seller nhận tiền từ đơn hàng hoàn thành',
+      PLATFORM_FEE: 'Admin nhận hoa hồng từ giao dịch',
     };
     return descriptions[code] || `Service type: ${code}`;
+  }
+
+  /**
+   * Get default description by service type code
+   */
+  private getDefaultDescription(code: string): string {
+    const defaults: Record<string, string> = {
+      WALLET_TOPUP: 'Nạp tiền vào ví',
+      BUY_REFUND: 'Hoàn tiền đơn hàng',
+      SELL_REVENUE: 'Nhận tiền đơn hàng',
+      PLATFORM_FEE: 'Hoa hồng giao dịch',
+    };
+    return defaults[code] || 'Giao dịch ví';
   }
 
   /**

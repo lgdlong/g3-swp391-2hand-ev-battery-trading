@@ -4,5 +4,3 @@ export enum ContractStatus {
   FORFEITED_EXTERNAL = 'FORFEITED_EXTERNAL',
   PENDING_REFUND = 'PENDING_REFUND',
 }
-
-
