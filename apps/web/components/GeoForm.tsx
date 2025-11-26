@@ -13,12 +13,6 @@ export default function GeoForm() {
   const provincesQ = useProvinces();
 
   const handleSubmit = () => {
-    console.log('Address submitted:', {
-      provinceCode,
-      districtCode,
-      wardCode,
-      specificAddress
-    });
     setIsOpen(false);
   };
   const districtsQ = useDistricts(provinceCode || undefined);

@@ -85,8 +85,6 @@ export function TopupModal({ isOpen, onClose, initialAmount, returnUrl }: TopupM
         cancelUrl: `${window.location.origin}/wallet`,
       });
 
-      console.log('Topup response:', response);
-
       if (response?.data?.checkoutUrl) {
         window.location.href = response.data.checkoutUrl;
       } else {

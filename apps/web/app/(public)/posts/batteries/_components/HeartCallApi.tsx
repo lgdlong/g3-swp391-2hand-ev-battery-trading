@@ -53,18 +53,14 @@ export function HeartCallApi({
             (err as { message?: string })?.message === 'Authentication using token required!'
           ) {
             router.push('/login');
-            console.log('User not logged in, redirecting to login page.');
             setTimeout(() => window.location.assign('/login'), 300); //ép buộc chuyển trang vì push phế
           } else {
-            console.log(err);
             console.warn('[Create] failed:', err);
           }
         }
       } else {
         if (!bookmark) return; // chưa có thì thôi
-        console.log('[Delete] id:', bookmark.id, 'postId:', postId);
         await deleteBookmark(bookmark.id);
-        console.log('[Delete] success');
         setBookmark(null);
       }
     } finally {

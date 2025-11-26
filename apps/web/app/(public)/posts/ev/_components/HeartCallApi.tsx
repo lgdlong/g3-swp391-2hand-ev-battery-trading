@@ -4,7 +4,13 @@ import { createBookmark, deleteBookmark, getAllBookmarks } from '@/lib/api/bookm
 import type { Bookmark } from '@/types/bookmark';
 import { useRouter } from 'next/navigation';
 
-export function HeartCallApi({ postId, initialBookmark }: { postId: number; initialBookmark?: Bookmark | null }) {
+export function HeartCallApi({
+  postId,
+  initialBookmark,
+}: {
+  postId: number;
+  initialBookmark?: Bookmark | null;
+}) {
   const [bookmark, setBookmark] = useState<Bookmark | null>(initialBookmark ?? null);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
@@ -16,48 +22,39 @@ export function HeartCallApi({ postId, initialBookmark }: { postId: number; init
         const list = await getAllBookmarks(); // cần token
         const existing = list.find((b) => Number(b.postId) === Number(postId));
         if (existing) setBookmark(existing);
-      } catch {
-      }
+      } catch {}
     })();
   }, [postId]); // thêm [authReady] nếu bạn có biến báo token sẵn sàng
-
 
   const handleChange = async (liked: boolean) => {
     if (busy) return;
     setBusy(true);
     try {
       if (liked) {
-        //nếu có thì return 
-        if (bookmark) return; 
+        //nếu có thì return
+        if (bookmark) return;
         try {
           const created = await createBookmark({ postId });
           setBookmark(created);
         } catch (err: any) {
           // Nếu server báo đã tồn tại (409) -> đồng bộ lại từ server
           const status = err?.response?.status ?? err?.status;
-           
+
           if (status === 409) {
             // đồng bộ lại
             const list = await getAllBookmarks();
             const existing = list.find((b) => Number(b.postId) === Number(postId));
             if (existing) setBookmark(existing);
-            
           } else if (err?.message === 'Authentication using token required!') {
             router.push('/login');
-            console.log('User not logged in, redirecting to login page.');
             setTimeout(() => window.location.assign('/login'), 300); //ép buộc chuyển trang vì push phế
-            
-            
           } else {
-            console.log(err)
             console.warn('[Create] failed:', err);
           }
         }
       } else {
         if (!bookmark) return; // chưa có thì thôi
-        console.log('[Delete] id:', bookmark.id, 'postId:', postId);
         await deleteBookmark(bookmark.id);
-        console.log('[Delete] success');
         setBookmark(null);
       }
     } finally {

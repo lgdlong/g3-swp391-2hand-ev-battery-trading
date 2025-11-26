@@ -104,15 +104,9 @@ export default function ChatPage() {
     if (!onNewMessage || !activeChatId) return;
 
     const handleNewMessage = (message: Message) => {
-      console.log('🚀 Received new message via WebSocket:', message);
-
-      // ✅ FIX: Only add message if it belongs to the current conversation
+      // Only add message if it belongs to the current conversation
       if (message.conversationId === activeChatId) {
         setNewMessages((prev) => [...prev, message]);
-      } else {
-        console.log(
-          `⚠️ Ignoring message from different conversation. Current: ${activeChatId}, Message: ${message.conversationId}`,
-        );
       }
     };
 
@@ -126,7 +120,6 @@ export default function ChatPage() {
   useEffect(() => {
     if (!activeChatId) return;
 
-    console.log('🔄 Active chat changed, resetting new messages state and refetching messages');
     setNewMessages([]);
 
     // Invalidate and refetch messages from server to ensure we have all messages
@@ -178,7 +171,6 @@ export default function ChatPage() {
   // Redirect to first conversation if no specific chat is selected
   useEffect(() => {
     if (!conversationsLoading && conversations.length > 0 && !activeChatId) {
-      console.log('📝 No active chat selected, redirecting to first conversation');
       const firstConversation = conversations[0];
       if (firstConversation) {
         router.replace(`/chat/${firstConversation.id}`);
@@ -205,12 +197,7 @@ export default function ChatPage() {
 
   // Handle sending message
   const handleSendMessage = (message: string) => {
-    console.log('[DEBUG] Sending message to conversation:', activeChatId);
-    console.log('[DEBUG] Message content:', message);
-    console.log('[DEBUG] WebSocket connected status:', isConnected);
-
     if (!activeChatId || !isConnected) {
-      console.warn('❌ Cannot send message: No active chat or WebSocket not connected');
       return;
     }
 

@@ -53,7 +53,6 @@ export default function AdminDashboard() {
         setLoading(true);
         setError(null);
         const data = await getAccounts();
-        console.log(data.length);
         setAccounts(data);
       } catch (err) {
         setError('Không thể tải danh sách tài khoản');

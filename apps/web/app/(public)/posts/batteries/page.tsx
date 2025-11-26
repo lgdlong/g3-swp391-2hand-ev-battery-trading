@@ -104,7 +104,7 @@ function BatteryPostsContent() {
   }, [batteryPostsData, query, location, brand, min, max, sort, appliedFilters]);
 
   const handleTitleClick = (title: string) => {
-    console.log('Title clicked:', title);
+    // Handle title click if needed
   };
 
   if (loadingBatteryPosts) {
