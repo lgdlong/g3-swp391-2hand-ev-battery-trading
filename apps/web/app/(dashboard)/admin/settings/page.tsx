@@ -10,21 +10,19 @@ import {
   deleteFeeTier,
   type FeeTier,
 } from '@/lib/api/feeTiersApi';
-import { getSingleRefundPolicy, type RefundPolicy } from '@/lib/api/refundPolicy';
 import { getSinglePostLifecycle, type PostLifecycle } from '@/lib/api/postLifecycleApi';
 import {
   FeeTierStatsCards,
   FeeTierTable,
   FeeTierDialog,
   FeeTierActions,
-  RefundPolicyCard,
   PostLifecycleCard,
 } from './_components';
 import type { FeeTierFormData } from './_components/FeeTierDialog';
 
 export default function AdminSettingsPage() {
   const [feeTiers, setFeeTiers] = useState<FeeTier[]>([]);
-  const [refundPolicy, setRefundPolicy] = useState<RefundPolicy | null>(null);
+  // refund policy removed from admin settings UI
   const [postLifecycle, setPostLifecycle] = useState<PostLifecycle | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -37,28 +35,34 @@ export default function AdminSettingsPage() {
   }, []);
 
   const fetchAllData = async () => {
+    setLoading(true);
+    // Fetch fee tiers and post lifecycle configuration separately so a failing call
+    // in one does not block the others and we can provide specific error messages.
+    let feeTiersData: FeeTier[] = [];
+    let lifecycleData: PostLifecycle | null = null;
+
     try {
-      setLoading(true);
-      const [feeTiersData, refundData, lifecycleData] = await Promise.all([
-        getAllFeeTiers(),
-        getSingleRefundPolicy(),
-        getSinglePostLifecycle(),
-      ]);
-
-      // Sort fee tiers by minPrice ascending
-      const sortedFeeTiers = feeTiersData.sort(
-        (a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice),
-      );
-
-      setFeeTiers(sortedFeeTiers);
-      setRefundPolicy(refundData);
-      setPostLifecycle(lifecycleData);
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-      toast.error('Không thể tải cài đặt');
-    } finally {
-      setLoading(false);
+      feeTiersData = await getAllFeeTiers();
+    } catch (err) {
+      console.error('Error fetching fee tiers:', err);
+      toast.error('Không thể tải thông tin hoa hồng');
     }
+
+    try {
+      lifecycleData = await getSinglePostLifecycle();
+    } catch (err) {
+      console.error('Error fetching post lifecycle:', err);
+      toast.error('Không thể tải vòng đời bài đăng');
+    }
+
+    // Sort fee tiers by minPrice ascending
+    const sortedFeeTiers = feeTiersData.sort(
+      (a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice),
+    );
+
+    setFeeTiers(sortedFeeTiers);
+    setPostLifecycle(lifecycleData);
+    setLoading(false);
   };
 
   const handleOpenAddDialog = () => {
@@ -98,7 +102,7 @@ export default function AdminSettingsPage() {
     }
 
     if (isNaN(depositRate) || depositRate < 0 || depositRate > 1) {
-      toast.error('Tỷ lệ đặt cọc phải từ 0 đến 100%');
+      toast.error('Tỷ lệ phí hoa hồng phải từ 0 đến 100%');
       return;
     }
 
@@ -182,13 +186,11 @@ export default function AdminSettingsPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="fee-tiers" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger className="data-[state=active]:bg-white" value="fee-tiers">
             Hoa Hồng
           </TabsTrigger>
-          <TabsTrigger className="data-[state=active]:bg-white" value="refund-policy">
-            Chính Sách Hoàn Tiền
-          </TabsTrigger>
+          {/* Refund policy tab removed */}
           <TabsTrigger className="data-[state=active]:bg-white" value="listing-lifecycle">
             Vòng Đời Bài Đăng
           </TabsTrigger>
@@ -205,10 +207,7 @@ export default function AdminSettingsPage() {
           />
         </TabsContent>
 
-        {/* Refund Policy Tab */}
-        <TabsContent value="refund-policy" className="space-y-4">
-          <RefundPolicyCard refundPolicy={refundPolicy} onUpdate={fetchAllData} />
-        </TabsContent>
+        {/* Refund Policy has been removed */}
 
         {/* Listing Lifecycle Tab */}
         <TabsContent value="listing-lifecycle" className="space-y-4">

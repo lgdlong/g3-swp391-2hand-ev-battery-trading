@@ -21,6 +21,7 @@ import { OrderStatus } from '../../shared/enums/order-status.enum';
 import { PostStatus } from '../../shared/enums/post.enum';
 import { WalletsService } from '../wallets/wallets.service';
 import { TransactionsService } from '../transactions/transactions.service';
+import { FeeTierService } from '../settings/service/fee-tier.service';
 import { OrderMapper } from './mappers';
 
 // Admin ID nhận hoa hồng
@@ -36,6 +37,7 @@ export class OrdersService {
     private readonly walletsService: WalletsService,
     @Inject(forwardRef(() => TransactionsService))
     private readonly transactionsService: TransactionsService,
+    private readonly feeTierService: FeeTierService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -193,7 +195,7 @@ export class OrdersService {
 
   /**
    * API 3: Hoàn tất đơn hàng (Buyer xác nhận nhận hàng)
-   * - Tính commission 2%
+   * - Lấy commission rate từ FeeTier phù hợp với giá order
    * - Chuyển tiền cho seller (amount - commission)
    * - Chuyển commission cho Admin
    * - Status -> COMPLETED
@@ -221,9 +223,22 @@ export class OrdersService {
         throw new BadRequestException('Đơn hàng không ở trạng thái đang giao');
       }
 
-      // Tính phí hoa hồng 2%
-      const commissionRate = 0.02;
+      // Tính phí hoa hồng từ FeeTier
       const amount = Number.parseFloat(order.amount);
+
+      // Lấy tất cả fee tiers và tìm tier phù hợp với giá order
+      const feeTiers = await this.feeTierService.findAll();
+      const applicableTier = feeTiers.find((tier) => {
+        const tierMinPrice = Number.parseFloat(tier.minPrice.toString());
+        const tierMaxPrice = tier.maxPrice ? Number.parseFloat(tier.maxPrice.toString()) : Infinity;
+        return amount >= tierMinPrice && amount <= tierMaxPrice;
+      });
+
+      if (!applicableTier) {
+        throw new BadRequestException('Không tìm thấy bảng phí phù hợp cho giá đơn hàng');
+      }
+
+      const commissionRate = Number.parseFloat(applicableTier.depositRate.toString());
       const commissionFee = Math.round(amount * commissionRate);
       const sellerReceiveAmount = amount - commissionFee;
 

@@ -73,12 +73,10 @@ export default function SignupPage() {
       const account: Account = await createAccount(payload);
 
       // show success toast
-      toast.success('Account created successfully! Please log in.');
+      toast.success('Đã tạo tài khoản thành công! Vui lòng đăng nhập.');
 
       // navigate to login page after successful signup
       router.push('/login');
-
-      console.log('[DEBUG] Account create successful: ', account);
     } catch (e) {
       handleApiError(e, form, 'Create account failed');
     }
@@ -98,30 +96,12 @@ export default function SignupPage() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="flex flex-col gap-8">
-          {/* Logo and Branding */}
-          <div className="text-center space-y-4">
-            <div className="flex justify-center items-center gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 bg-[#048C73] rounded-xl flex items-center justify-center">
-                  <Battery className="h-6 w-6 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#048C73] rounded-full flex items-center justify-center">
-                  <Car className="h-3 w-3 text-white" />
-                </div>
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">EV Trading</h1>
-              <p className="text-gray-600 text-sm">Second-hand EV Battery Trading Platform</p>
-            </div>
-          </div>
-
           {/* Sign Up Card */}
           <Card className="bg-white border border-gray-200 shadow-lg">
             <CardHeader className="text-center pb-4">
-              <CardTitle className="text-2xl font-semibold text-gray-900">Create Account</CardTitle>
+              <CardTitle className="text-2xl font-semibold text-gray-900">Tạo tài khoản</CardTitle>
               <CardDescription className="text-gray-600">
-                Enter your information to create your account
+                Nhập thông tin của bạn để tạo tài khoản
               </CardDescription>
             </CardHeader>
 
@@ -152,7 +132,7 @@ export default function SignupPage() {
                   } ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <Phone className="h-4 w-4" />
-                  Phone
+                  Số điện thoại
                 </button>
               </div>
 
@@ -175,7 +155,7 @@ export default function SignupPage() {
                           <FormControl>
                             <Input
                               type="email"
-                              placeholder="Enter your email"
+                              placeholder="Nhập email của bạn"
                               autoComplete="email"
                               className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 transition-all duration-200"
                               {...field}
@@ -193,12 +173,12 @@ export default function SignupPage() {
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
                             <Phone className="h-4 w-4" />
-                            Phone Number
+                            Số điện thoại
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="tel"
-                              placeholder="Enter your phone number"
+                              placeholder="Nhập số điện thoại"
                               autoComplete="tel"
                               className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 transition-all duration-200"
                               {...field}
@@ -218,11 +198,11 @@ export default function SignupPage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <User className="h-4 w-4" />
-                          Full Name
+                          Họ và tên
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter your full name"
+                            placeholder="Nhập họ và tên"
                             autoComplete="name"
                             className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 transition-all duration-200"
                             {...field}
@@ -241,13 +221,13 @@ export default function SignupPage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Lock className="h-4 w-4" />
-                          Password
+                          Mật khẩu
                         </FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showPassword ? 'text' : 'password'}
-                              placeholder="Enter your password"
+                              placeholder="Nhập mật khẩu"
                               autoComplete="new-password"
                               className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 transition-all duration-200 pr-10"
                               {...field}
@@ -281,13 +261,13 @@ export default function SignupPage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Lock className="h-4 w-4" />
-                          Confirm Password
+                          Xác nhận mật khẩu
                         </FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               type={showConfirmPassword ? 'text' : 'password'}
-                              placeholder="Confirm your password"
+                              placeholder="Nhập lại mật khẩu"
                               autoComplete="new-password"
                               className="h-11 border-gray-300 focus:border-[#048C73] focus:ring-2 focus:ring-[#048C73]/20 transition-all duration-200 pr-10"
                               {...field}
@@ -329,10 +309,10 @@ export default function SignupPage() {
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
                         <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                        Creating Account...
+                        Đang tạo tài khoản...
                       </span>
                     ) : (
-                      'Create Account'
+                      'Tạo tài khoản'
                     )}
                   </Button>
                 </form>
@@ -342,38 +322,17 @@ export default function SignupPage() {
               <div className="space-y-4">
                 <Separator />
                 <p className="text-center text-sm text-gray-600">
-                  Already have an account?{' '}
+                  Đã có tài khoản?{' '}
                   <Link
                     href="/login"
                     className="font-medium text-[#048C73] hover:text-[#037A66] transition-colors"
                   >
-                    Login
+                    Đăng nhập
                   </Link>
                 </p>
               </div>
             </CardContent>
           </Card>
-
-          {/* Footer */}
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-              <Link href="/about" className="hover:text-gray-700 transition-colors">
-                About
-              </Link>
-              <Link href="/privacy" className="hover:text-gray-700 transition-colors">
-                Privacy
-              </Link>
-              <Link href="/terms" className="hover:text-gray-700 transition-colors">
-                Terms
-              </Link>
-              <Link href="/support" className="hover:text-gray-700 transition-colors">
-                Support
-              </Link>
-            </div>
-            <p className="text-xs text-gray-400">
-              © 2024 EV Trading Platform. All rights reserved.
-            </p>
-          </div>
         </div>
       </div>
     </div>

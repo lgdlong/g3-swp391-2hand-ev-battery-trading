@@ -231,4 +231,69 @@ export async function forfeitExternal(contractId: string): Promise<Contract> {
   );
   return data;
 }
+/**
+ * Initiate contract confirmation flow (Seller starts Flow F)
+ * @param listingId - Post/listing ID
+ * @param conversationId - Conversation ID with the buyer
+ */
+export async function initiateConfirmation(
+  listingId: string,
+  conversationId: number,
+): Promise<Contract> {
+  const { data } = await api.post<Contract>(
+    '/transactions/contracts/initiate-confirmation',
+    { listingId, conversationId },
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}
 
+
+/**
+ * Get total POST_PAYMENT amount
+ * Requires admin authentication
+ */
+export async function getPostPaymentTotal(): Promise<string> {
+  const { data } = await api.get<{ total: string }>('/admin/statistics/post-payment-total', {
+    headers: getAuthHeaders(),
+  });
+  return data.total;
+}
+
+/**
+ * Get total PLATFORM_FEE amount
+ * Requires admin authentication
+ */
+export async function getPlatformFeeTotal(): Promise<string> {
+  const { data } = await api.get<{ total: string }>('/admin/statistics/platform-fee-total', {
+    headers: getAuthHeaders(),
+  });
+  return data.total;
+}
+
+/**
+ * Get total revenue (POST_PAYMENT + PLATFORM_FEE)
+ * Requires admin authentication
+ */
+export async function getTotalRevenue(): Promise<string> {
+  const { data } = await api.get<{ total: string }>('/admin/statistics/total-revenue', {
+    headers: getAuthHeaders(),
+  });
+  return data.total;
+}
+
+/**
+ * Get monthly revenue (POST_PAYMENT + PLATFORM_FEE grouped by month)
+ * Requires admin authentication
+ */
+export async function getMonthlyRevenue(): Promise<Array<{ month: string; revenue: string }>> {
+  const { data } = await api.get<Array<{ month: string; revenue: string }>>(
+    '/admin/statistics/monthly-revenue',
+    {
+      headers: getAuthHeaders(),
+    },
+  );
+  return data;
+}

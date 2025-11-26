@@ -169,4 +169,119 @@ export class AdminStatisticsController {
     const totalDeposit = await this.adminStatsService.getTotalDepositCollected();
     return { totalDeposit };
   }
+
+  /**
+   * Get total POST_PAYMENT amount
+   */
+  @Get('post-payment-total')
+  @ApiOperation({
+    summary: 'Get total POST_PAYMENT amount',
+    description: 'Get sum of all POST_PAYMENT transactions',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Total POST_PAYMENT amount retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        total: {
+          type: 'string',
+          example: '640000',
+          description: 'Total POST_PAYMENT amount in VND',
+        },
+      },
+    },
+  })
+  async getPostPaymentTotal(): Promise<{ total: string }> {
+    const total = await this.adminStatsService.getPostPaymentTotal();
+    return { total };
+  }
+
+  /**
+   * Get total PLATFORM_FEE amount
+   */
+  @Get('platform-fee-total')
+  @ApiOperation({
+    summary: 'Get total PLATFORM_FEE amount',
+    description: 'Get sum of all PLATFORM_FEE transactions',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Total PLATFORM_FEE amount retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        total: {
+          type: 'string',
+          example: '50000',
+          description: 'Total PLATFORM_FEE amount in VND',
+        },
+      },
+    },
+  })
+  async getPlatformFeeTotal(): Promise<{ total: string }> {
+    const total = await this.adminStatsService.getPlatformFeeTotal();
+    return { total };
+  }
+
+  /**
+   * Get total revenue (POST_PAYMENT + PLATFORM_FEE)
+   */
+  @Get('total-revenue')
+  @ApiOperation({
+    summary: 'Get total revenue',
+    description: 'Get sum of POST_PAYMENT and PLATFORM_FEE transactions',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Total revenue retrieved',
+    schema: {
+      type: 'object',
+      properties: {
+        total: {
+          type: 'string',
+          example: '690000',
+          description: 'Total revenue in VND',
+        },
+      },
+    },
+  })
+  async getTotalRevenue(): Promise<{ total: string }> {
+    const total = await this.adminStatsService.getTotalRevenue();
+    return { total };
+  }
+
+  /**
+   * Get monthly revenue
+   */
+  @Get('monthly-revenue')
+  @ApiOperation({
+    summary: 'Get monthly revenue',
+    description: 'Get revenue grouped by month (POST_PAYMENT + PLATFORM_FEE)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Monthly revenue retrieved',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          month: {
+            type: 'string',
+            example: '2025-01',
+            description: 'Month in YYYY-MM format',
+          },
+          revenue: {
+            type: 'string',
+            example: '1000000',
+            description: 'Total revenue for the month in VND',
+          },
+        },
+      },
+    },
+  })
+  async getMonthlyRevenue(): Promise<Array<{ month: string; revenue: string }>> {
+    return this.adminStatsService.getMonthlyRevenue();
+  }
 }

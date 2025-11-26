@@ -41,7 +41,7 @@ export class AccountsService {
   async create(dto: CreateAccountDto): Promise<CreateAccountResponseDto> {
     // 0) Yêu cầu ít nhất 1 trong 2
     if (!dto.email && !dto.phone) {
-      throw new BadRequestException('Email or phone is required!');
+      throw new BadRequestException('Email hoặc số điện thoại là bắt buộc!');
     }
 
     // 1) Chuẩn hoá + check trùng
@@ -50,11 +50,11 @@ export class AccountsService {
 
     if (normalizedEmail) {
       const exists = await this.repo.findOne({ where: { email: normalizedEmail } });
-      if (exists) throw new ConflictException('Email already registered!');
+      if (exists) throw new ConflictException('Email đã được đăng ký!');
     }
     if (normalizedPhone) {
       const pExists = await this.repo.findOne({ where: { phone: normalizedPhone } });
-      if (pExists) throw new ConflictException('Phone number already registered!');
+      if (pExists) throw new ConflictException('Số điện thoại đã được đăng ký!');
     }
 
     // 2) Hash password
@@ -143,7 +143,7 @@ export class AccountsService {
   async findMe(userId: number): Promise<SafeAccountDto> {
     if (!userId || userId <= 0) throw new NotFoundException(`Invalid account id: ${userId}`);
     const acc = await this.repo.findOne({ where: { id: userId } });
-    if (!acc) throw new NotFoundException('Account not found');
+    if (!acc) throw new NotFoundException('Không tìm thấy tài khoản');
     return AccountMapper.toSafeDto(acc);
   }
 
@@ -153,17 +153,17 @@ export class AccountsService {
         where: { phone: dto.phone, id: Not(userId) },
       });
       if (existingAccount) {
-        throw new ConflictException('Phone number already in use.');
+        throw new ConflictException('Số điện thoại đã được sử dụng.');
       }
     }
 
     const result = await this.repo.update({ id: userId }, dto);
     if (result.affected === 0) {
-      throw new NotFoundException(`Account with id ${userId} not found`);
+      throw new NotFoundException(`Không tìm thấy tài khoản với id ${userId}`);
     }
 
     const updated = await this.repo.findOne({ where: { id: userId } });
-    if (!updated) throw new NotFoundException('Account not found after update');
+    if (!updated) throw new NotFoundException('Không tìm thấy tài khoản sau khi cập nhật');
     return AccountMapper.toSafeDto(updated);
   }
 
@@ -199,18 +199,18 @@ export class AccountsService {
         where: { phone: updateAccountPhone, id: Not(accountId) },
       });
       if (existingAccount) {
-        throw new ConflictException('Phone number already in use.');
+        throw new ConflictException('Số điện thoại đã được sử dụng.');
       }
     }
 
     const result = await this.repo.update({ id: accountId }, updateAccountDto);
     if (result.affected === 0) {
-      throw new NotFoundException(`Account with id ${accountId} not found`);
+      throw new NotFoundException(`Không tìm thấy tài khoản với id ${accountId}`);
     }
 
     const updated = await this.repo.findOne({ where: { id: accountId } });
     if (!updated) {
-      throw new NotFoundException('Account not found after update');
+      throw new NotFoundException('Không tìm thấy tài khoản sau khi cập nhật');
     }
 
     return AccountMapper.toSafeDto(updated);
@@ -277,7 +277,7 @@ export class AccountsService {
     if (account.role === AccountRole.ADMIN && roleUpdate === AccountRole.USER) {
       const adminCount = await this.repo.count({ where: { role: AccountRole.ADMIN } });
       if (adminCount <= 1) {
-        throw new ForbiddenException('Cannot demote the last admin.');
+        throw new ForbiddenException('Không thể hạ cấp admin cuối cùng.');
       }
     }
 
@@ -292,7 +292,7 @@ export class AccountsService {
 
   async updateAvatar(accountId: number, file: Express.Multer.File): Promise<SafeAccountDto> {
     const account = await this.repo.findOne({ where: { id: accountId } });
-    if (!account) throw new NotFoundException('Account not found');
+    if (!account) throw new NotFoundException('Không tìm thấy tài khoản');
 
     const oldPublicId = account.avatarPublicId;
 

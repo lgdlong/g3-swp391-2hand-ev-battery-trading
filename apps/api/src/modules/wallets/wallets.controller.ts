@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   HttpStatus,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +26,7 @@ import {
   DeductWalletDto,
   DeductResponseDto,
 } from './dto';
+import { ListQueryDto } from '../../shared/dto/list-query.dto';
 import { CreateTopupDto } from './dto/create-topup.dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { CurrentUser } from '../../core/decorators/current-user.decorator';
@@ -297,5 +299,66 @@ export class WalletsController {
     @Param('transactionId', new ParseIntPipe({ errorHttpStatusCode: 400 })) transactionId: number,
   ): Promise<WalletTransactionResponseDto> {
     return this.walletsService.getTransactionById(transactionId);
+  }
+
+  @Get('transactions/all')
+  @UseGuards(RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  // @ApiOperation({ summary: 'Get all wallet transactions (Admin only)' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'All transactions retrieved successfully',
+  //   type: [WalletTransactionResponseDto],
+  // })
+  async getAllTransactions(
+    // @Query() query: ListQueryDto
+
+    @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
+    @Query('offset', new DefaultValuePipe(0), ParseIntPipe) offset: number,
+  ): Promise<WalletTransactionResponseDto[]> {
+    return this.walletsService.getAllTransactions(limit, offset);
+  }
+
+  @Get('transactions/all/count')
+  @UseGuards(RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiOperation({ summary: 'Get total count of wallet transactions (Admin only)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Total count retrieved successfully',
+    schema: { type: 'number' },
+  })
+  async getTotalTransactionsCount(): Promise<number> {
+    return this.walletsService.getTotalTransactionsCount();
+  }
+
+  @Get('payment-orders/all')
+  @UseGuards(RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiOperation({ summary: 'Get all payment orders (Admin only)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 100 })
+  @ApiQuery({ name: 'offset', required: false, type: Number, example: 0 })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'All payment orders retrieved successfully',
+  })
+  async getAllPaymentOrders(
+    @Query('limit', ParseIntPipe) limit?: number,
+    @Query('offset', ParseIntPipe) offset?: number,
+  ) {
+    return this.walletsService.getAllPaymentOrders(limit, offset);
+  }
+
+  @Get('payment-orders/all/count')
+  @UseGuards(RolesGuard)
+  @Roles(AccountRole.ADMIN)
+  @ApiOperation({ summary: 'Get total count of payment orders (Admin only)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Total count retrieved successfully',
+    schema: { type: 'number' },
+  })
+  async getTotalPaymentOrdersCount(): Promise<number> {
+    return this.walletsService.getTotalPaymentOrdersCount();
   }
 }

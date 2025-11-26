@@ -21,16 +21,16 @@ export class PostRatingService {
   // Create a new rating
   async create(postId: string, customerId: number, dto: CreatePostRatingDto) {
     const post = await this.postsRepository.findOne({ where: { id: postId } });
-    if (!post) throw new NotFoundException('Post not found');
+    if (!post) throw new NotFoundException('Không tìm thấy bài đăng');
 
     // Check if user already rated this post
     const existing = await this.postRatingsRepository.findOne({
       where: { post: { id: postId }, customer: { id: customerId } },
     });
-    if (existing) throw new BadRequestException('You have already rated this post');
+    if (existing) throw new BadRequestException('Bạn đã đánh giá bài đăng này rồi');
 
     const customer = await this.accountRepository.findOne({ where: { id: customerId } });
-    if (!customer) throw new NotFoundException('Customer not found');
+    if (!customer) throw new NotFoundException('Không tìm thấy khách hàng');
 
     // Create a new rating entity
     const rating = this.postRatingsRepository.create({
@@ -90,11 +90,11 @@ export class PostRatingService {
       relations: ['post', 'customer'],
       withDeleted: true,
     });
-    if (!review) throw new NotFoundException('Rating not found');
+    if (!review) throw new NotFoundException('Không tìm thấy đánh giá');
 
     // Hide deleted reviews for non-owners
     if ((review as any).deletedAt && review.customer?.id !== currentUserId)
-      throw new NotFoundException('Rating not found');
+      throw new NotFoundException('Không tìm thấy đánh giá');
 
     return PostRatingMapper.toSafeDto(review);
   }
@@ -102,7 +102,7 @@ export class PostRatingService {
   // Get seller rating statistics (average rating + total reviews)
   async getSellerRatingStats(sellerId: number) {
     if (!sellerId || sellerId <= 0) {
-      throw new BadRequestException('Invalid seller ID');
+      throw new BadRequestException('ID người bán không hợp lệ');
     }
 
     const stats = await this.postRatingsRepository

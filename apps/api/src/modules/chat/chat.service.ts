@@ -46,14 +46,14 @@ export class ChatService {
     });
 
     if (!post) {
-      throw new NotFoundException('Post not found');
+      throw new NotFoundException('Không tìm thấy bài đăng');
     }
 
     const sellerId = post.seller.id;
 
     // Prevent buyer from chatting with themselves
     if (buyerId === sellerId) {
-      throw new BadRequestException('You cannot chat with yourself');
+      throw new BadRequestException('Bạn không thể chat với chính mình');
     }
 
     // Try to find existing conversation
@@ -85,7 +85,7 @@ export class ChatService {
     });
 
     if (!result) {
-      throw new NotFoundException('Failed to create conversation');
+      throw new NotFoundException('Không thể tạo cuộc trò chuyện');
     }
 
     return mapConversationToDto(result);
@@ -134,11 +134,11 @@ export class ChatService {
     });
 
     if (!conversation) {
-      throw new NotFoundException('Conversation not found');
+      throw new NotFoundException('Không tìm thấy cuộc trò chuyện');
     }
 
     if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
-      throw new ForbiddenException('You do not have access to this conversation');
+      throw new ForbiddenException('Bạn không có quyền truy cập cuộc trò chuyện này');
     }
 
     // Get messages with pagination
@@ -166,11 +166,11 @@ export class ChatService {
     });
 
     if (!conversation) {
-      throw new NotFoundException('Conversation not found');
+      throw new NotFoundException('Không tìm thấy cuộc trò chuyện');
     }
 
     if (conversation.buyerId !== senderId && conversation.sellerId !== senderId) {
-      throw new ForbiddenException('You do not have access to this conversation');
+      throw new ForbiddenException('Bạn không có quyền truy cập cuộc trò chuyện này');
     }
 
     // Create and save message
@@ -194,7 +194,7 @@ export class ChatService {
     });
 
     if (!result) {
-      throw new NotFoundException('Failed to create message');
+      throw new NotFoundException('Không thể tạo tin nhắn');
     }
 
     return result;
@@ -274,7 +274,7 @@ export class ChatService {
 
     // Verify user has access to this conversation
     if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
-      throw new ForbiddenException('You do not have access to this conversation');
+      throw new ForbiddenException('Bạn không có quyền truy cập cuộc trò chuyện này');
     }
 
     return conversation;

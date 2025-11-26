@@ -8,14 +8,6 @@ interface PostImagesGalleryProps {
 }
 
 export function PostImagesGallery({ post }: PostImagesGalleryProps) {
-  // Debug images data
-  console.log('Images debug:', {
-    images: post.images,
-    isArray: Array.isArray(post.images),
-    length: post.images?.length,
-    firstImage: post.images?.[0],
-  });
-
   const hasImages =
     post.images &&
     Array.isArray(post.images) &&

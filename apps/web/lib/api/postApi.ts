@@ -15,6 +15,7 @@ import type {
   ArchivePostResponse,
 } from '@/types/api/post';
 import type { PostVerificationDocument, PostVerificationDocumentType } from '@/types/post';
+import { PostType } from '@/types/enums';
 
 // Re-export types for backward compatibility
 export type {
@@ -210,7 +211,7 @@ export async function searchPosts(
   searchQuery: string,
   options: {
     provinceNameCached?: string;
-    postType?: 'EV_CAR' | 'EV_BIKE' | 'BATTERY';
+    postType?: PostType;
     limit?: number;
     offset?: number;
     order?: 'ASC' | 'DESC';
@@ -513,7 +514,9 @@ export async function uploadVerificationDocuments(
 /**
  * Fetch verification documents for a post (owner or admin only)
  */
-export async function getVerificationDocuments(postId: string): Promise<PostVerificationDocument[]> {
+export async function getVerificationDocuments(
+  postId: string,
+): Promise<PostVerificationDocument[]> {
   const { data } = await api.get<{ verificationDocuments: PostVerificationDocument[] }>(
     `/posts/${postId}/verification-documents`,
     {

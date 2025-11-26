@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { FilterButtons } from '@/components/breadcrumb-filter';
 import { LoadingGrid, EmptyState, PageHeader, PostGrid, toStringValue } from './_components';
+import { PostType } from '@/types/enums';
 
 type SortKey = 'newest' | 'price-asc' | 'price-desc';
 
@@ -113,10 +114,26 @@ function EvPostsContent() {
     queryKey: [QUERY_KEYS.SEARCH_POSTS, query, location, sort],
     queryFn: async () => {
       if (!query) return [];
-      return await searchPosts(query, {
-        provinceNameCached: location || undefined,
-        limit: PAGINATION.SEARCH_LIMIT,
-        order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+      // Gọi 2 API song song cho EV_CAR và EV_BIKE, sau đó gộp kết quả
+      const [carResults, bikeResults] = await Promise.all([
+        searchPosts(query, {
+          provinceNameCached: location || undefined,
+          postType: PostType.EV_CAR,
+          limit: PAGINATION.SEARCH_LIMIT,
+          order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+        }),
+        searchPosts(query, {
+          provinceNameCached: location || undefined,
+          postType: PostType.EV_BIKE,
+          limit: PAGINATION.SEARCH_LIMIT,
+          order: sort === 'newest' ? 'DESC' : sort === 'price-asc' ? 'ASC' : 'DESC',
+        }),
+      ]);
+      // Gộp kết quả và sắp xếp theo ngày tạo mới nhất
+      return [...carResults, ...bikeResults].sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA;
       });
     },
     enabled: shouldUseSearch, // Only run when there's a search query
@@ -141,7 +158,6 @@ function EvPostsContent() {
         status: POST_STATUS.PUBLISHED,
       };
       const response = await getCarPostsWithQuery(queryParams);
-      console.log('Car posts response:', response);
 
       // Check for duplicates
       const postIds = response.map((post: any) => post.id);
@@ -150,7 +166,7 @@ function EvPostsContent() {
         console.warn('Duplicate posts detected!', {
           total: postIds.length,
           unique: uniqueIds.length,
-          duplicates: postIds.filter((id, index) => postIds.indexOf(id) !== index)
+          duplicates: postIds.filter((id, index) => postIds.indexOf(id) !== index),
         });
       }
 
@@ -238,7 +254,6 @@ function EvPostsContent() {
     }
 
     // Apply new filter system
-    console.log('Applied filters:', appliedFilters);
     if (appliedFilters.status) {
       data = data.filter((p) => (p as any).status === appliedFilters.status);
     }
@@ -277,7 +292,6 @@ function EvPostsContent() {
     }
 
     if (appliedFilters.capacity) {
-      console.log('Filtering by capacity:', appliedFilters.capacity);
       switch (appliedFilters.capacity) {
         case BATTERY_CAPACITY_RANGES.UNDER_30:
           data = data.filter((p) => (p as any).batteryCapacityKWh < 30);
@@ -301,7 +315,6 @@ function EvPostsContent() {
           data = data.filter((p) => (p as any).batteryCapacityKWh > 100);
           break;
       }
-      console.log('After capacity filtering, data length:', data.length);
     }
 
     if (appliedFilters.cycles) {
