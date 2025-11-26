@@ -61,4 +61,10 @@ export class PostEvCarDetails {
 
   @Column({ type: 'numeric', precision: 5, scale: 2, nullable: true })
   battery_health_pct: number | null = null;
+
+  @Column({ type: 'boolean', default: false })
+  has_bundled_battery: boolean = false;
+
+  @Column({ type: 'boolean', default: false })
+  is_original_battery: boolean = false;
 }

@@ -1,5 +1,5 @@
 // create-car-details.dto.ts
-import { IsEnum, IsIn, IsInt, IsOptional, MaxLength } from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, MaxLength, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BodyStyle, Origin, VehicleColor } from '../../../../shared/enums/vehicle.enum';
@@ -155,4 +155,22 @@ export class CreateCarDetailsDto {
   })
   @IsOptional()
   battery_health_pct?: number;
+
+  @ApiPropertyOptional({
+    description: 'Xe có kèm pin hay không',
+    type: Boolean,
+    default: false,
+    example: true,
+  })
+  @IsOptional()
+  has_bundled_battery?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Pin là pin gốc hãng không',
+    type: Boolean,
+    default: false,
+    example: true,
+  })
+  @IsOptional()
+  is_original_battery?: boolean;
 }

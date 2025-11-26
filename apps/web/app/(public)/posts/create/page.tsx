@@ -81,7 +81,7 @@ export default function CreatePostPage() {
               {/* EV Specific Fields */}
               {postType === 'ev' && (
                 <EVDetailsForm
-                  formData={formData}
+                  formData={formData as any}
                   brands={brands}
                   models={models}
                   loadingBrands={loadingBrands}
