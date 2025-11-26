@@ -1,7 +1,6 @@
 'use client';
 
 import { PostDetailModalHeader } from './PostDetailModalHeader';
-import { PostDebugPanel } from './PostDebugPanel';
 import { PostImagesGallery } from './PostImagesGallery';
 import { PostBasicInfo } from './PostBasicInfo';
 import { PostSellerInfo } from './PostSellerInfo';
@@ -43,10 +42,7 @@ export function PostDetailModal({
 }: PostDetailModalProps) {
   if (!post) return null;
 
-  const {
-    data: documents,
-    isLoading: isLoadingDocuments,
-  } = useQuery({
+  const { data: documents, isLoading: isLoadingDocuments } = useQuery({
     queryKey: ['admin-post-verification-documents', post.id],
     queryFn: () => getVerificationDocuments(String(post.id)),
     enabled: isOpen,
@@ -62,9 +58,6 @@ export function PostDetailModal({
           <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
             <PostDetailModalHeader onClose={onClose} />
-
-            {/* Debug Panel - Remove this in production */}
-            <PostDebugPanel post={post} />
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">

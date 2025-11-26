@@ -182,4 +182,95 @@ export class AdminStatisticsService {
 
     return result?.total || '0';
   }
+
+  /**
+   * Get total amount for POST_PAYMENT service type
+   */
+  async getPostPaymentTotal(): Promise<string> {
+    const postPaymentService = await this.serviceTypeRepo.findOne({
+      where: { code: 'POST_PAYMENT' },
+    });
+
+    if (!postPaymentService) {
+      return '0';
+    }
+
+    const result = await this.walletTransactionRepo
+      .createQueryBuilder('wt')
+      .select('SUM(ABS(CAST(wt.amount AS DECIMAL)))', 'total')
+      .where('wt.service_type_id = :serviceTypeId', {
+        serviceTypeId: postPaymentService.id,
+      })
+      .getRawOne();
+
+    return result?.total || '0';
+  }
+
+  /**
+   * Get total amount for PLATFORM_FEE service type
+   */
+  async getPlatformFeeTotal(): Promise<string> {
+    const platformFeeService = await this.serviceTypeRepo.findOne({
+      where: { code: 'PLATFORM_FEE' },
+    });
+
+    if (!platformFeeService) {
+      return '0';
+    }
+
+    const result = await this.walletTransactionRepo
+      .createQueryBuilder('wt')
+      .select('SUM(ABS(CAST(wt.amount AS DECIMAL)))', 'total')
+      .where('wt.service_type_id = :serviceTypeId', {
+        serviceTypeId: platformFeeService.id,
+      })
+      .getRawOne();
+
+    return result?.total || '0';
+  }
+
+  /**
+   * Get total revenue (sum of POST_PAYMENT and PLATFORM_FEE)
+   */
+  async getTotalRevenue(): Promise<string> {
+    const [postPaymentTotal, platformFeeTotal] = await Promise.all([
+      this.getPostPaymentTotal(),
+      this.getPlatformFeeTotal(),
+    ]);
+
+    const total =
+      Number.parseFloat(postPaymentTotal || '0') + Number.parseFloat(platformFeeTotal || '0');
+
+    return total.toString();
+  }
+
+  /**
+   * Get monthly revenue (POST_PAYMENT + PLATFORM_FEE grouped by month)
+   */
+  async getMonthlyRevenue(): Promise<Array<{ month: string; revenue: string }>> {
+    const [postPaymentService, platformFeeService] = await Promise.all([
+      this.serviceTypeRepo.findOne({ where: { code: 'POST_PAYMENT' } }),
+      this.serviceTypeRepo.findOne({ where: { code: 'PLATFORM_FEE' } }),
+    ]);
+
+    if (!postPaymentService || !platformFeeService) {
+      return [];
+    }
+
+    const result = await this.walletTransactionRepo
+      .createQueryBuilder('wt')
+      .select("TO_CHAR(wt.created_at, 'YYYY-MM')", 'month')
+      .addSelect('SUM(ABS(CAST(wt.amount AS DECIMAL)))', 'revenue')
+      .where('wt.service_type_id IN (:...serviceTypeIds)', {
+        serviceTypeIds: [postPaymentService.id, platformFeeService.id],
+      })
+      .groupBy("TO_CHAR(wt.created_at, 'YYYY-MM')")
+      .orderBy("TO_CHAR(wt.created_at, 'YYYY-MM')", 'ASC')
+      .getRawMany();
+
+    return result.map((row) => ({
+      month: row.month,
+      revenue: row.revenue || '0',
+    }));
+  }
 }

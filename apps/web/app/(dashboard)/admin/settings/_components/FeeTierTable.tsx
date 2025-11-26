@@ -73,7 +73,7 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Hoa Hồng</CardTitle>
-          <CardDescription>Quản lý tỷ lệ đặt cọc dựa trên khoảng giá</CardDescription>
+          <CardDescription>Quản lý tỷ lệ phí hoa hồng dựa trên khoảng giá</CardDescription>
         </div>
         <Button onClick={onAddTier} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -108,7 +108,7 @@ export function FeeTierTable({ feeTiers, onAddTier, onEditTier, onDeleteTier }: 
                     onClick={() => handleSort('depositRate')}
                     className="flex items-center gap-2 hover:text-blue-600 transition-colors"
                   >
-                    Tỷ Lệ Đặt Cọc
+                    Phí Hoa Hồng
                     {getSortIcon('depositRate')}
                   </button>
                 </th>
