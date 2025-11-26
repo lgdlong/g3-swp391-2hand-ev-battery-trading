@@ -119,8 +119,9 @@ export default function PostListItem({
 
   const documentsCount = typeof post.documentsCount === 'number' ? post.documentsCount : 0;
   const needsDocuments = documentsCount === 0;
+  // Chỉ hiển thị nút "Giấy tờ" khi ở DRAFT hoặc REJECTED (không hiển thị khi PENDING_REVIEW)
   const canUploadDocuments =
-    post.status === 'DRAFT' || post.status === 'PENDING_REVIEW' || post.status === 'REJECTED';
+    post.status === 'DRAFT' || post.status === 'REJECTED';
 
   return (
     <div className="transition-colors hover:bg-muted/50">
@@ -153,7 +154,7 @@ export default function PostListItem({
                 }
               >
                 <Shield className="h-3 w-3" />
-                {needsDocuments ? 'Thiếu giấy tờ' : `Đã tải ${documentsCount} giấy tờ`}
+                {needsDocuments ? 'Thiếu giấy tờ' : 'Đã tải giấy tờ'}
               </Badge>
             </div>
           </div>

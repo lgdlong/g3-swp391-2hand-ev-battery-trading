@@ -280,7 +280,7 @@ export default function MyPostsPage() {
     setArchiveDialogOpen(true);
   };
   const handleUploadDocuments = (postId: string) => {
-    router.push(`/posts/create/upload-images/${postId}`);
+    router.push(`/posts/create/upload-documents/${postId}`);
   };
 
   const confirmArchive = () => {

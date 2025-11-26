@@ -12,7 +12,7 @@ import { ArrowLeft, Coins, RefreshCw, CheckCircle, Loader2, AlertCircle } from '
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 import { getMyWallet } from '@/lib/api/walletApi';
-import { getPostById, deductPostCreationFee, publishPost } from '@/lib/api/postApi';
+import { getPostById, deductPostCreationFee } from '@/lib/api/postApi';
 import { getAllFeeTiers } from '@/lib/api/feeTiersApi';
 
 export default function PostPaymentPage() {
@@ -121,9 +121,7 @@ export default function PostPaymentPage() {
       await deductPostCreationFee(postPrice, postId);
       toast.success('Thanh toán thành công!');
 
-      // Step 2: Update post status to PENDING_REVIEW
-      await publishPost(postId);
-      toast.success('Bài đăng đã được gửi để chờ duyệt!');
+      // Không tự động publish, giữ ở DRAFT để user có thể lưu nháp hoặc đăng bài sau
 
       // Invalidate queries
       await queryClient.invalidateQueries({ queryKey: ['wallet', 'me'] });
@@ -140,9 +138,8 @@ export default function PostPaymentPage() {
         updatedPost?.images && Array.isArray(updatedPost.images) && updatedPost.images.length > 0;
 
       if (hasImages) {
-        // Post already has images, go directly to my-posts
-        toast.success('Bài đăng đã sẵn sàng!');
-        router.push(`/my-posts`);
+        // Post already has images, redirect to upload page để user có thể chọn lưu nháp hoặc đăng bài
+        router.push(`/posts/create/upload-images/${postId}`);
       } else {
         // No images, redirect to upload page
         router.push(`/posts/create/upload-images/${postId}`);
