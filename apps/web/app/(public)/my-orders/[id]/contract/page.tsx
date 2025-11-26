@@ -4,10 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getOrderById } from '@/lib/api/ordersApi';
-import {
-  getContractByBuyerAndListing,
-  getContractByListingAndBuyer,
-} from '@/lib/api/transactionApi';
+import { getContractByOrderId } from '@/lib/api/transactionApi';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { Loader2, FileText, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -55,24 +52,11 @@ export default function OrderContractPage() {
     enabled: !!orderId && isLoggedIn,
   });
 
-  // Fetch contract based on order's postId
-  // For buyer: use getContractByBuyerAndListing
-  // For seller: use getContractByListingAndBuyer
+  // Fetch contract by orderId
   const { data: contract, isLoading: contractLoading } = useQuery({
-    queryKey: ['contract', 'order', order?.postId, order?.buyerId, user?.id],
-    queryFn: async () => {
-      if (!order) return null;
-      // If user is buyer, get their contract
-      if (order.buyerId === user?.id) {
-        return getContractByBuyerAndListing(order.postId);
-      }
-      // If user is seller, get contract with the buyer
-      if (order.sellerId === user?.id) {
-        return getContractByListingAndBuyer(order.postId, order.buyerId);
-      }
-      return null;
-    },
-    enabled: !!order?.postId && isLoggedIn && !!user?.id,
+    queryKey: ['contract', 'by-order', orderId],
+    queryFn: () => getContractByOrderId(orderId),
+    enabled: !!orderId && isLoggedIn,
   });
 
   // Fetch post details for contract display

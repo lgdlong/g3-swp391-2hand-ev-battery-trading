@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
@@ -18,6 +20,7 @@ import {
 import { OrderStatus } from '../../shared/enums/order-status.enum';
 import { PostStatus } from '../../shared/enums/post.enum';
 import { WalletsService } from '../wallets/wallets.service';
+import { TransactionsService } from '../transactions/transactions.service';
 import { OrderMapper } from './mappers';
 
 // Admin ID nhận hoa hồng
@@ -31,6 +34,8 @@ export class OrdersService {
     @InjectRepository(Post)
     private readonly postRepo: Repository<Post>,
     private readonly walletsService: WalletsService,
+    @Inject(forwardRef(() => TransactionsService))
+    private readonly transactionsService: TransactionsService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -191,6 +196,7 @@ export class OrdersService {
    * - Chuyển commission cho Admin
    * - Status -> COMPLETED
    * - Post -> SOLD
+   * - Tạo Contract cho đơn hàng
    */
   async completeOrder(orderId: string, buyerId: number): Promise<OrderResponseDto> {
     return this.dataSource.transaction(async (manager) => {
@@ -245,6 +251,17 @@ export class OrdersService {
 
       // Cập nhật post thành SOLD
       await postRepo.update(order.postId, { status: PostStatus.SOLD });
+
+      // Tạo Contract cho đơn hàng hoàn thành (gọi TransactionsService)
+      await this.transactionsService.createContractForOrder(
+        order.id,
+        order.postId,
+        order.buyerId,
+        order.sellerId,
+        order.amount,
+        commissionFee.toString(),
+        manager,
+      );
 
       const savedOrder = await orderRepo.save(order);
       return OrderMapper.toResponseDto(savedOrder);

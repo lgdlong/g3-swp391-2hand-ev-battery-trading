@@ -127,8 +127,18 @@ export function SellerInfo({ account, post }: SellerInfoProps) {
         const order = await buyNowMutation.mutateAsync({ postId: post.id });
         router.push('/my-orders');
       } else {
-        // Insufficient balance, calculate missing amount and open topup modal
+        // Insufficient balance - show notification first
         const missingAmount = Math.ceil(carPrice - currentBalance);
+        const formattedMissing = new Intl.NumberFormat('vi-VN').format(missingAmount);
+        const formattedBalance = new Intl.NumberFormat('vi-VN').format(currentBalance);
+        const formattedPrice = new Intl.NumberFormat('vi-VN').format(carPrice);
+
+        toast.error('Số dư ví không đủ', {
+          description: `Giá: ${formattedPrice}₫ | Số dư: ${formattedBalance}₫ | Cần nạp thêm: ${formattedMissing}₫`,
+          duration: 5000,
+        });
+
+        // Calculate missing amount and open topup modal
         setTopupAmount(missingAmount);
         // Store post ID in localStorage to complete purchase after topup
         localStorage.setItem('pendingBuyPostId', post.id);

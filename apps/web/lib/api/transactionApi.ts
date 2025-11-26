@@ -13,6 +13,7 @@ export enum ContractStatus {
 export interface Contract {
   id: string;
   listingId: string;
+  orderId: string | null;
   buyerId: number;
   sellerId: number;
   status: ContractStatus;
@@ -86,6 +87,16 @@ export async function createContractBySeller(
       headers: getAuthHeaders(),
     },
   );
+  return data;
+}
+
+/**
+ * Get contract by order ID
+ */
+export async function getContractByOrderId(orderId: string): Promise<Contract | null> {
+  const { data } = await api.get<Contract | null>(`/transactions/contracts/by-order/${orderId}`, {
+    headers: getAuthHeaders(),
+  });
   return data;
 }
 
