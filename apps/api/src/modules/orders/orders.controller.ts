@@ -98,30 +98,17 @@ export class OrdersController {
   }
 
   /**
-   * Tạo tranh chấp
-   */
-  @Put(':id/dispute')
-  @ApiOperation({
-    summary: 'Tạo tranh chấp',
-    description: 'Báo cáo tranh chấp khi đơn hàng đang giao',
-  })
-  @ApiParam({ name: 'id', description: 'Order ID' })
-  @ApiResponse({ status: HttpStatus.OK, type: OrderResponseDto })
-  async createDispute(
-    @CurrentUser() user: ReqUser,
-    @Param('id') orderId: string,
-    @Body('note') note: string,
-  ) {
-    return this.ordersService.createDispute(orderId, user.sub, note);
-  }
-
-  /**
    * Lấy đơn hàng của tôi
    */
   @Get('my')
   @ApiOperation({ summary: 'Lấy đơn hàng của tôi' })
   @ApiQuery({ name: 'role', enum: ['buyer', 'seller', 'all'], required: false })
-  @ApiQuery({ name: 'status', enum: OrderStatus, required: false })
+  @ApiQuery({
+    name: 'status',
+    enum: OrderStatus,
+    enumName: 'OrderStatus',
+    required: false,
+  })
   @ApiResponse({ status: HttpStatus.OK, type: [OrderWithRelationsDto] })
   async findMyOrders(
     @CurrentUser() user: ReqUser,
@@ -159,7 +146,12 @@ export class OrdersController {
   @Get()
   @Roles(AccountRole.ADMIN)
   @ApiOperation({ summary: '[Admin] Lấy tất cả đơn hàng' })
-  @ApiQuery({ name: 'status', enum: OrderStatus, required: false })
+  @ApiQuery({
+    name: 'status',
+    enum: OrderStatus,
+    enumName: 'OrderStatus',
+    required: false,
+  })
   @ApiResponse({ status: HttpStatus.OK, type: [OrderWithRelationsDto] })
   async findAll(@Query('status') status?: OrderStatus) {
     return this.ordersService.findAll(status);

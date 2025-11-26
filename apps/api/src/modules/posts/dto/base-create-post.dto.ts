@@ -20,10 +20,11 @@ export class BaseCreatePostDto {
 
   @ApiPropertyOptional({
     enum: PostStatus,
+    enumName: 'PostStatus',
     description:
       'Trạng thái bài đăng - mặc định là PENDING_REVIEW để gửi duyệt, có thể chọn DRAFT để lưu nháp',
-    example: PostStatus.PENDING_REVIEW,
-    default: PostStatus.PENDING_REVIEW,
+    example: 'PENDING_REVIEW',
+    default: 'PENDING_REVIEW',
   })
   @IsOptional()
   @IsEnum(PostStatus)

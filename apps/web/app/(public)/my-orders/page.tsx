@@ -36,10 +36,7 @@ export default function MyOrdersPage() {
       processing: orders.filter((o) => o.status === OrderStatus.PROCESSING),
       completed: orders.filter((o) => o.status === OrderStatus.COMPLETED),
       cancelled: orders.filter(
-        (o) =>
-          o.status === OrderStatus.CANCELLED ||
-          o.status === OrderStatus.DISPUTE ||
-          o.status === OrderStatus.REFUNDED,
+        (o) => o.status === OrderStatus.CANCELLED || o.status === OrderStatus.REFUNDED,
       ),
     };
   };

@@ -8,7 +8,8 @@ export class PostsQueryDto extends ListQueryDto {
   @ApiPropertyOptional({
     description: 'Trạng thái bài đăng',
     enum: PostStatus,
-    example: PostStatus.PUBLISHED,
+    enumName: 'PostStatus',
+    example: 'PUBLISHED',
   })
   @IsOptional()
   @IsEnum(PostStatus)

@@ -9,7 +9,6 @@ export enum OrderStatus {
   PROCESSING = 'PROCESSING',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED',
-  DISPUTE = 'DISPUTE',
   REFUNDED = 'REFUNDED',
 }
 
@@ -112,20 +111,6 @@ export async function completeOrder(orderId: string): Promise<Order> {
 export async function cancelOrder(orderId: string, note?: string): Promise<Order> {
   const { data } = await api.put<Order>(
     `/orders/${orderId}/cancel`,
-    { note },
-    {
-      headers: getAuthHeaders(),
-    },
-  );
-  return data;
-}
-
-/**
- * Tạo tranh chấp
- */
-export async function createDispute(orderId: string, note: string): Promise<Order> {
-  const { data } = await api.put<Order>(
-    `/orders/${orderId}/dispute`,
     { note },
     {
       headers: getAuthHeaders(),
