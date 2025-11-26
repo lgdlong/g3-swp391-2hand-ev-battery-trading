@@ -96,7 +96,6 @@ export default function ChatPage() {
     leaveConversation,
     isConnected,
     onNewMessage, // ✨ NEW: Get callback to listen for new messages
-    confirmationCard, // ✨ Flow F: Confirmation card state
   } = useChatWebSocket();
 
   // ✨ NEW: Listen for WebSocket messages and update state only
@@ -284,7 +283,6 @@ export default function ChatPage() {
         onSendMessage={handleSendMessage}
         existingContract={existingContract || undefined}
         isLoadingContract={isLoadingContract}
-        confirmationCard={confirmationCard}
       />
     </div>
   );
