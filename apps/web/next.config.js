@@ -31,6 +31,8 @@ const nextConfig = {
       },
     ],
   },
+  // Disable development indicators in production
+  devIndicators: false,
   // Security headers including CSP
   async headers() {
     return [
