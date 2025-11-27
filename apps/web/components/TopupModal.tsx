@@ -161,8 +161,7 @@ export function TopupModal({ isOpen, onClose, initialAmount, returnUrl }: TopupM
             Bằng việc thanh toán dịch vụ, bạn đồng ý với{' '}
             <span className="text-[#048C73] font-medium cursor-pointer hover:underline">
               Điều khoản sử dụng
-            </span>{' '}
-            của
+            </span>
           </div>
         </div>
 
