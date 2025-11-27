@@ -73,8 +73,16 @@ export default function UploadDocumentsPage() {
   });
 
   // Allow access for PENDING_REVIEW, REJECTED, and DRAFT statuses
+  // Skip upload-documents step for BATTERY posts
   useEffect(() => {
-    if (post && !['PENDING_REVIEW', 'REJECTED', 'DRAFT'].includes(post.status)) {
+    if (!post) return;
+    if (post.postType === 'BATTERY') {
+      // Redirect to next step or my-posts if battery post
+      router.replace(`/my-posts`);
+      toast.info('Không cần tải giấy tờ cho bài đăng pin.');
+      return;
+    }
+    if (!['PENDING_REVIEW', 'REJECTED', 'DRAFT'].includes(post.status)) {
       toast.error('Bài đăng không ở trạng thái có thể tải giấy tờ');
       router.push(`/my-posts`);
     }
