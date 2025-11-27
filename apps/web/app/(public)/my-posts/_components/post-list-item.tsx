@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Edit, Trash2, Eye, Package, Coins, Archive, Shield } from 'lucide-react';
+import { Edit, Trash2, Eye, Coins, Archive, Shield } from 'lucide-react';
 import type { Post, PostStatus } from '@/types/post';
 
 interface PostListItemProps {
@@ -119,8 +119,9 @@ export default function PostListItem({
 
   const documentsCount = typeof post.documentsCount === 'number' ? post.documentsCount : 0;
   const needsDocuments = documentsCount === 0;
-  // Chỉ hiển thị nút "Giấy tờ" khi ở DRAFT hoặc REJECTED (không hiển thị khi PENDING_REVIEW)
-  const canUploadDocuments = post.status === 'DRAFT' || post.status === 'REJECTED';
+  // Chỉ hiển thị nút "Giấy tờ" khi ở DRAFT hoặc REJECTED và KHÔNG phải bài đăng pin
+  const canUploadDocuments =
+    (post.status === 'DRAFT' || post.status === 'REJECTED') && post.postType !== 'BATTERY';
 
   return (
     <div className="transition-colors hover:bg-muted/50">
@@ -257,26 +258,6 @@ export default function PostListItem({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Xem chi tiết</p>
-                </TooltipContent>
-              </Tooltip>
-            )}
-
-            {/* Mark as Sold button - visible for PUBLISHED */}
-            {post.status === 'PUBLISHED' && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => onMarkAsSold?.(post.id)}
-                  >
-                    <Package className="h-4 w-4" />
-                    Đã bán
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Đánh dấu đã bán</p>
                 </TooltipContent>
               </Tooltip>
             )}
