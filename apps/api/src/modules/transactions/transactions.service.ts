@@ -51,7 +51,7 @@ export class TransactionsService {
     });
 
     if (!post) {
-      throw new NotFoundException(`Post with ID ${listingId} not found`);
+      throw new NotFoundException(`Không tìm thấy post với ID ${listingId}`);
     }
 
     if (post.status !== PostStatus.PUBLISHED) {
