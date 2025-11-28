@@ -332,7 +332,7 @@ export default function MyPostsPage() {
                 value="LOCKED"
                 className="gap-2 text-base font-semibold h-full data-[state=active]:bg-white"
               >
-                ĐANG XÁC THỰC
+                ĐANG GIAO DỊCH
                 {counts.LOCKED > 0 && (
                   <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
                     {counts.LOCKED}

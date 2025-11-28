@@ -11,7 +11,6 @@ import { usePost, useAccount } from '../_queries';
 import { useAuth } from '@/lib/auth-context';
 import { Specifications } from './_components';
 import { PostHeader, SellerInfo, PostContractsList } from '@/app/(public)/posts/_components';
-import { RatingsList } from '@/components/RatingsList';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -176,8 +175,6 @@ export default function EvDetailPage({ params, searchParams }: Props) {
             )}
 
             <Specifications post={post} />
-
-            <RatingsList postId={post.id} limit={10} />
           </div>
         </div>
       </div>

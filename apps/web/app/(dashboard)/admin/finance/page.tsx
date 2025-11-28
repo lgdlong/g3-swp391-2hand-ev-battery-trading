@@ -263,14 +263,6 @@ export default function AdminFinancePage() {
                     Đang hoạt động
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Đơn thành công</span>
-                  <Badge variant="outline">Coming soon</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Đơn thất bại</span>
-                  <Badge variant="outline">Coming soon</Badge>
-                </div>
               </CardContent>
             </Card>
           </div>

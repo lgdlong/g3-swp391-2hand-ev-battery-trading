@@ -230,8 +230,16 @@ export class OrdersService {
       const feeTiers = await this.feeTierService.findAll();
       const applicableTier = feeTiers.find((tier) => {
         const tierMinPrice = Number.parseFloat(tier.minPrice.toString());
-        const tierMaxPrice = tier.maxPrice ? Number.parseFloat(tier.maxPrice.toString()) : Infinity;
-        return amount >= tierMinPrice && amount <= tierMaxPrice;
+        // Nếu maxPrice là null hoặc 0 thì coi là không giới hạn trên
+        const tierMaxPrice =
+          tier.maxPrice && Number.parseFloat(tier.maxPrice.toString()) > 0
+            ? Number.parseFloat(tier.maxPrice.toString())
+            : null;
+
+        const minCheck = amount >= tierMinPrice;
+        // Nếu maxPrice là null (không giới hạn) thì luôn đúng, ngược lại phải <= maxPrice
+        const maxCheck = tierMaxPrice === null || amount <= tierMaxPrice;
+        return minCheck && maxCheck;
       });
 
       if (!applicableTier) {

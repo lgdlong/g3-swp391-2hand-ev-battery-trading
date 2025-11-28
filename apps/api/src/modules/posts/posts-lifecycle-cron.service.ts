@@ -29,7 +29,7 @@ export class PostsLifecycleCronService {
    * - reviewedAt + expirationDays <= now
    * - Chưa có refund record (để tránh xung đột với cron refund)
    */
-  @Cron(CronExpression.EVERY_MINUTE, {
+  @Cron(CronExpression.EVERY_5_MINUTES, {
     name: 'auto-archive-expired-posts',
     timeZone: 'Asia/Ho_Chi_Minh',
   })
