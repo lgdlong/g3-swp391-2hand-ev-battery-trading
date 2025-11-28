@@ -253,7 +253,7 @@ export async function getRecentPosts(limit: number = 10): Promise<Post[]> {
         headers: getAuthHeaders(),
       },
     );
-
+    console.log(data);
     // Backend already sorts by createdAt DESC, just return the data array
     return data.data;
   } catch (error) {
