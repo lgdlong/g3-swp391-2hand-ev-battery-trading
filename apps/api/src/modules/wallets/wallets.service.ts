@@ -87,43 +87,6 @@ export class WalletsService {
   }
 
   /**
-   * Update wallet balance
-   * @param userId - User account ID
-   * @param amount - Amount to add (positive) or subtract (negative)
-   * @returns Updated wallet
-   */
-  //   async updateWalletBalance(userId: number, amount: string, description?: string, relatedEntityId?: string): Promise<{ wallet: Wallet; transaction: WalletTransaction }> {
-  //   return this.dataSource.transaction(async (manager) => {
-  //     //const walletRepo = manager.getRepository(Wallet);
-  //     const transactionRepo = manager.getRepository(WalletTransaction);
-
-  //    const wallet = await ensureWalletInTx(manager, userId);
-
-  //     const currentBalance = parseFloat(wallet.balance);
-  //     const delta = parseInt(amount, 10);
-  //     const newBalance = currentBalance + delta;
-
-  //     if (newBalance < 0) {
-  //       throw new Error('Insufficient balance');
-  //     }
-
-  //     const serviceType = await this.serviceTypesService.findByCode('ADJUSTMENT');
-  //     const transaction = transactionRepo.create({
-  //       walletUserId: userId,
-  //       amount: delta.toString(),
-  //       serviceTypeId: serviceType?.id,
-  //       description: description || (delta >= 0 ? 'Admin credit' : 'Admin debit'),
-  //       relatedEntityId,
-  //     });
-  //     await transactionRepo.save(transaction);
-
-  //     wallet.balance = newBalance.toFixed(2);
-  //     await this.walletRepo.save(wallet);
-  //     return { wallet, transaction };
-  //   });
-  // }
-
-  /**
    * Top up wallet - Creates transaction and updates balance atomically
    * @param userId - User account ID
    * @param amount - Amount to top up
